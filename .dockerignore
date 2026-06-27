@@ -1,0 +1,21 @@
+# Docker build kontekstidan chiqariladi (image kichik va tez bo'lishi uchun)
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+.env
+.git/
+.github/
+.idea/
+.vscode/
+logs/
+media/
+staticfiles/
+
+# Flutter ilova backend image'ga kerak emas
+mobile/
+
+# Hujjatlar
+*.md
+!README.md

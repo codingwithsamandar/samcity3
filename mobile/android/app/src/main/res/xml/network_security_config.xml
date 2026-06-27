@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ishlab chiqarish (prod) xavfsizligi:
+  - Standart: cleartext (HTTP) TAQIQLANGAN — faqat HTTPS.
+  - Istisno: faqat lokal ishlab chiqish hostlari (emulyator/qurilma) uchun HTTP.
+  Shu sabab prod API majburiy HTTPS bo'ladi, dev esa ishlayveradi.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>     <!-- Android emulyator -> host -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

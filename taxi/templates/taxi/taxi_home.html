@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}Taksi — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .yx-order { position: relative; overflow: hidden; border-radius: var(--radius-xl); padding: 2rem;
+    background: linear-gradient(150deg, var(--accent), var(--violet) 70%, var(--accent-d)); color: #fff; box-shadow: var(--shadow-xl); }
+  .yx-order::after { content:""; position:absolute; inset:0;
+    background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 40px 40px; mask-image: radial-gradient(80% 80% at 70% 20%, #000, transparent); }
+  .yx-order h1 { color:#fff; font-size: clamp(1.7rem,3.5vw,2.3rem); position: relative; z-index: 1; }
+  .yx-order .sub { color: rgba(255,255,255,.86); margin-top: .4rem; font-size: .96rem; position: relative; z-index: 1; max-width: 520px; }
+  .yx-route { background: rgba(255,255,255,.96); border-radius: 18px; padding: .2rem 1.1rem; margin-top: 1.4rem; position: relative; z-index: 1; box-shadow: var(--shadow-lg); }
+  .yx-field { display: flex; align-items: center; gap: .85rem; padding: .9rem 0; }
+  .yx-field + .yx-field { border-top: 1px solid var(--border); }
+  .yx-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .yx-dot.a { background: var(--green); box-shadow: 0 0 0 4px rgba(14,159,110,.16); }
+  .yx-dot.b { background: var(--red); border-radius: 3px; box-shadow: 0 0 0 4px rgba(229,72,77,.14); }
+  .yx-field input { flex: 1; background: none; border: none; color: var(--text); font-size: 1rem; padding: 0; font-family: inherit; }
+  .yx-field input:focus { outline: none; }
+  .yx-field .frm { color: var(--text2); font-size: 1rem; font-weight: 600; }
+  .yx-go { width: 100%; margin-top: 1rem; position: relative; z-index: 1; }
+
+  .yx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+  .yx-svc { display: flex; align-items: center; gap: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.1rem 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); }
+  .yx-svc:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #cfd8ee; }
+  .yx-num { width: 58px; height: 58px; flex-shrink: 0; border-radius: 16px; background: linear-gradient(140deg, #efbb52, #c98f1d); color: #3a2a05;
+    display: grid; place-items: center; font-weight: 800; font-size: 1.05rem; box-shadow: var(--shadow-gold); }
+  .yx-svc .name { font-weight: 700; font-size: 1.1rem; }
+  .yx-svc .meta { color: var(--text2); font-size: .84rem; margin-top: .15rem; display:flex; gap:.6rem; flex-wrap:wrap; }
+  .yx-svc .price { font-weight: 700; font-size: .95rem; margin-top: .5rem; color: var(--text); }
+  .yx-svc .price small { color: var(--text3); font-weight: 500; }
+  .yx-chev { color: var(--text3); flex-shrink: 0; }
+  .yx-rate { display: inline-flex; align-items: center; gap: .3rem; background: var(--gold-l); color: var(--gold-d); padding: .26rem .55rem; border-radius: 8px; font-weight: 700; font-size: .8rem; }
+  .yx-rate .c { color: var(--text3); font-weight: 500; }
+
+  .yx-tx { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); }
+  .yx-tx:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #cfd8ee; }
+  .yx-tx-top { display: flex; align-items: center; gap: .9rem; }
+  .yx-av { width: 54px; height: 54px; flex-shrink: 0; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 1.3rem; }
+  .yx-tx .nm { font-weight: 700; font-size: 1.06rem; }
+  .yx-tx .cr { color: var(--text2); font-size: .83rem; margin-top: .1rem; }
+  .yx-trips { margin-left: auto; text-align: center; background: var(--surface2); border-radius: 12px; padding: .45rem .7rem; }
+  .yx-trips b { display: block; color: var(--accent); font-size: 1.15rem; font-weight: 800; line-height: 1; }
+  .yx-trips span { color: var(--text3); font-size: .66rem; }
+  .yx-routes { margin-top: 1rem; display: flex; flex-direction: column; gap: .5rem; }
+  .yx-rc { display: flex; align-items: center; justify-content: space-between; gap: .6rem; background: var(--surface2); border-radius: 12px; padding: .6rem .85rem; }
+  .yx-rc .pth { font-weight: 600; font-size: .9rem; }
+  .yx-rc .pth .ar { color: var(--accent); margin: 0 .25rem; }
+  .yx-rc .pr { font-weight: 700; font-size: .88rem; white-space: nowrap; }
+  .yx-rc .pr small { color: var(--text3); font-weight: 500; }
+  .yx-more { color: var(--text3); font-size: .8rem; padding-left: .2rem; }
+  .yx-tx-foot { display: flex; align-items: center; justify-content: space-between; margin-top: .9rem; }
+  @media (max-width: 480px) { .yx-list { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="yx-order">
+    <h1>Qayerga borasiz?</h1>
+    <div class="sub">Shahar bo'ylab taksi xizmatlari va haydovchilar — narx, reyting va sharhlar bilan.</div>
+    <form method="get">
+      <div class="yx-route">
+        <div class="yx-field"><span class="yx-dot a"></span><span class="frm">Joriy joylashuv</span></div>
+        <div class="yx-field"><span class="yx-dot b"></span><input type="text" name="q" value="{{ q }}" placeholder="Manzil, xizmat raqami (1265) yoki marshrut"></div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-lg yx-go"><svg class="ic"><use href="#i-search"/></svg> {% if q %}Qidirish{% else %}Taksi topish{% endif %}</button>
+    </form>
+    <a href="{% url 'taxi:map' %}" class="btn btn-outline btn-lg" style="margin-top:.7rem;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4);position:relative;z-index:1;"><svg class="ic"><use href="#i-map"/></svg> Xaritadan chaqirish</a>
+    {% if user.is_authenticated %}
+    <div style="margin-top:1rem;display:flex;gap:1.2rem;flex-wrap:wrap;position:relative;z-index:1;">
+      <a href="{% url 'taxi:my_trips' %}" style="color:#fff;font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.3rem;"><svg class="ic"><use href="#i-pin"/></svg> Mening sayohatlarim</a>
+      <a href="{% url 'taxi:taxist_manage' %}" style="color:#fff;font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.3rem;"><svg class="ic"><use href="#i-car"/></svg> Haydovchi bo'lish</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="segmented" id="taxiTabs" style="margin:1.75rem 0 1.25rem;">
+    <!-- Haydovchilar default ko'rinadi (ilgari xizmatlar ortida yashiringan edi) -->
+    <button type="button" class="active" data-target="taxists"><svg class="ic" style="vertical-align:-3px"><use href="#i-user"/></svg> Haydovchilar · {{ taxists|length }}</button>
+    <button type="button" data-target="services"><svg class="ic" style="vertical-align:-3px"><use href="#i-phone"/></svg> Xizmatlar · {{ services|length }}</button>
+  </div>
+
+  <section id="sec-services" style="display:none;">
+    {% if services %}
+    <div class="yx-list">
+      {% for s in services %}
+      <a href="{% url 'taxi:service_detail' s.pk %}" class="yx-svc">
+        <div class="yx-num">{{ s.short_number|default:"🚕" }}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="name">{{ s.name }}</div>
+          <div class="meta"><span><svg class="ic" style="width:.85em;height:.85em;color:var(--text3)"><use href="#i-pin"/></svg> {{ s.region }}</span><span><svg class="ic" style="width:.85em;height:.85em;color:var(--text3)"><use href="#i-clock"/></svg> {{ s.working_hours }}</span></div>
+          <div class="price">{{ s.base_price|som }} so'm <small>dan · {{ s.price_per_km|som }} so'm/km</small></div>
+          <div style="margin-top:.5rem;"><span class="yx-rate"><svg class="ic" style="width:.9em;height:.9em;color:var(--gold-d)"><use href="#i-star"/></svg> {{ s.avg_rating }} <span class="c">({{ s.review_count }})</span></span></div>
+        </div>
+        <span class="yx-chev"><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-phone"/></svg></div><h3>Xizmat topilmadi</h3></div>
+    {% endif %}
+  </section>
+
+  <section id="sec-taxists">
+    {% if taxists %}
+    <div class="yx-list">
+      {% for t in taxists %}
+      <a href="{% url 'taxi:taxist_detail' t.pk %}" class="yx-tx" style="color:inherit;">
+        <div class="yx-tx-top">
+          {% if t.photo %}<img src="{{ t.photo.url }}" class="yx-av" alt="">{% else %}<div class="yx-av">{{ t.full_name|first }}</div>{% endif %}
+          <div style="min-width:0;flex:1;">
+            <div class="nm">{{ t.full_name }}</div>
+            <div class="cr"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-car"/></svg> {{ t.car_model|default:t.car.brand|default:"—" }}{% if t.car.plate_number %} · <b style="color:var(--text);letter-spacing:.5px;">{{ t.car.plate_number }}</b>{% endif %}</div>
+            <div class="cr"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-phone"/></svg> {{ t.phone }}</div>
+          </div>
+          <div class="yx-trips"><b>{{ t.trips_count }}</b><span>yo'lovchi</span></div>
+        </div>
+        <div class="yx-routes">
+          {% for route in t.routes.all|slice:":2" %}
+          <div class="yx-rc">
+            <span class="pth">{{ route.point_a }}<span class="ar">→</span>{{ route.point_b }}</span>
+            <span class="pr">{{ route.passenger_price|som }} so'm{% if route.delivery_price %} <small>· 📦 {{ route.delivery_price|som }}</small>{% endif %}</span>
+          </div>
+          {% endfor %}
+          {% if t.routes.count > 2 %}<div class="yx-more">+ yana {{ t.routes.count|add:"-2" }} ta marshrut</div>{% endif %}
+        </div>
+        <div class="yx-tx-foot">
+          <span class="yx-rate"><svg class="ic" style="width:.9em;height:.9em;color:var(--gold-d)"><use href="#i-star"/></svg> {{ t.avg_rating }} <span class="c">({{ t.review_count }} baho)</span></span>
+          <span class="yx-chev"><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-user"/></svg></div><h3>Haydovchi topilmadi</h3></div>
+    {% endif %}
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('#taxiTabs button');
+  var secs = { services: document.getElementById('sec-services'), taxists: document.getElementById('sec-taxists') };
+  function show(target) {
+    tabs.forEach(function (x) { x.classList.toggle('active', x.dataset.target === target); });
+    Object.keys(secs).forEach(function (k) { if (secs[k]) secs[k].style.display = (k === target ? '' : 'none'); });
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.target); }); });
+
+  // "Taksi topish": qidiruv bo'sh bo'lsa — shunchaki qayta yuklash o'rniga
+  // haydovchilar ro'yxatiga o'tib, pastga scroll qiladi.
+  var form = document.querySelector('.yx-order form');
+  var input = form ? form.querySelector('input[name="q"]') : null;
+  if (form && input) {
+    form.addEventListener('submit', function (e) {
+      if (!input.value.trim()) {
+        e.preventDefault();
+        show('taxists');
+        var sec = document.getElementById('taxiTabs');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}{% if job %}Ish e'lonini tahrirlash{% else %}Ish e'loni berish{% endif %} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  .job-type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
+  .jt-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .jt-btn:hover { border-color: var(--accent); }
+  .jt-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .jt-btn .jt-ico { font-size: 1.4rem; }
+  .jt-btn .jt-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
+  .jt-btn.active .jt-lbl { color: var(--accent); }
+
+  .salary-row { display: flex; align-items: center; gap: 0.75rem; }
+  .salary-row .form-control { flex: 1; }
+  .salary-sep { color: var(--text2); font-size: 0.9rem; white-space: nowrap; }
+
+  .char-counter { text-align: right; font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .form-hint { font-size: 0.78rem; color: var(--text2); margin-top: 0.3rem; }
+  .required-star { color: var(--red); margin-left: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a> <span>›</span>
+    <a href="{% url 'job_list' %}">Ish e'lonlari</a> <span>›</span>
+    <span style="color:var(--text);">{% if job %}Tahrirlash{% else %}Yangi e'lon{% endif %}</span>
+  </div>
+
+  <div class="page-header">
+    <h1>{% if job %}✏️ Ish e'lonini tahrirlash{% else %}💼 Ish e'loni berish{% endif %}</h1>
+    <p>{% if job %}E'lon ma'lumotlarini yangilang{% else %}Vakansiya haqida to'liq ma'lumot kiriting{% endif %}</p>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="flash flash-{% if 'error' in msg.tags %}error{% elif 'warning' in msg.tags %}warning{% elif 'info' in msg.tags %}info{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {% with jt=job.job_type|default:'full_time' %}
+    <input type="hidden" name="job_type" id="jobTypeInput" value="{{ jt }}">
+
+    <!-- 1. Ish turi -->
+    <div class="form-card">
+      <div class="form-card-title">🏷️ Ish turi</div>
+      <div class="job-type-grid">
+        <div class="jt-btn {% if jt == 'full_time' or not jt %}active{% endif %}" onclick="selectJobType('full_time', this)">
+          <span class="jt-ico">🕐</span><span class="jt-lbl">To'liq stavka</span>
+        </div>
+        <div class="jt-btn {% if jt == 'part_time' %}active{% endif %}" onclick="selectJobType('part_time', this)">
+          <span class="jt-ico">⏰</span><span class="jt-lbl">Yarim stavka</span>
+        </div>
+        <div class="jt-btn {% if jt == 'remote' %}active{% endif %}" onclick="selectJobType('remote', this)">
+          <span class="jt-ico">🌐</span><span class="jt-lbl">Masofaviy</span>
+        </div>
+        <div class="jt-btn {% if jt == 'contract' %}active{% endif %}" onclick="selectJobType('contract', this)">
+          <span class="jt-ico">📄</span><span class="jt-lbl">Shartnoma</span>
+        </div>
+        <div class="jt-btn {% if jt == 'temporary' %}active{% endif %}" onclick="selectJobType('temporary', this)">
+          <span class="jt-ico">🔄</span><span class="jt-lbl">Vaqtinchalik</span>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+
+    <!-- 2. Asosiy ma'lumotlar -->
+    <div class="form-card">
+      <div class="form-card-title">📝 Asosiy ma'lumotlar</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Lavozim nomi<span class="required-star">*</span></label>
+          <input class="form-control" type="text" name="title" placeholder="Masalan: Frontend dasturchi" value="{{ job.title|default:'' }}" required maxlength="200">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kompaniya nomi<span class="required-star">*</span></label>
+          <input class="form-control" type="text" name="company" placeholder="Masalan: SamTech LLC" value="{{ job.company|default:'' }}" required maxlength="200">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kompaniya haqida</label>
+        <textarea class="form-control" name="company_description" rows="3" placeholder="Kompaniya faoliyati, jamoa, afzalliklar...">{{ job.company_description|default:'' }}</textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Menejer ismi</label>
+          <input class="form-control" type="text" name="manager_name" placeholder="Masalan: Alisher Karimov" value="{{ job.manager_name|default:'' }}" maxlength="120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Menejer telefoni</label>
+          <input class="form-control" type="tel" name="manager_phone" placeholder="+998901234567" value="{{ job.manager_phone|default:'' }}" maxlength="30">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Joylashuv / Manzil</label>
+        <input class="form-control" type="text" name="location" placeholder="Masalan: Samarqand, Mirzo Ulugbek ko'chasi" value="{{ job.location|default:'' }}" maxlength="200">
+      </div>
+    </div>
+
+    <!-- 3. Maosh -->
+    <div class="form-card">
+      <div class="form-card-title">💰 Maosh diapazoni</div>
+      <div class="form-group">
+        <label class="form-label">Oylik maosh (so'm)</label>
+        <div class="salary-row">
+          <input class="form-control" type="number" name="salary_min" placeholder="Minimal: 3 000 000" value="{{ job.salary_min|default:'' }}" min="0">
+          <span class="salary-sep">—</span>
+          <input class="form-control" type="number" name="salary_max" placeholder="Maksimal: 8 000 000" value="{{ job.salary_max|default:'' }}" min="0">
+        </div>
+        <div class="form-hint">Bo'sh qoldiring — "Kelishiladi" ko'rsatiladi</div>
+      </div>
+    </div>
+
+    <!-- 4. Tavsif -->
+    <div class="form-card">
+      <div class="form-card-title">📋 Vakansiya tavsifi</div>
+      <div class="form-group">
+        <label class="form-label">Tavsif<span class="required-star">*</span></label>
+        <textarea class="form-control" name="description" rows="6" placeholder="Ish haqida batafsil ma'lumot, mas'uliyatlar, ish sharoitlari..." required id="descField" oninput="countChars('descField','descCount')">{{ job.description|default:'' }}</textarea>
+        <div class="char-counter"><span id="descCount">0</span> belgi</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Talablar</label>
+        <textarea class="form-control" name="requirements" rows="5" placeholder="Har bir talabni yangi qatorga yozing:&#10;- Kamida 2 yil tajriba&#10;- Python/Django bilimi&#10;- Ingliz tili B2" id="reqField" oninput="countChars('reqField','reqCount')">{{ job.requirements|default:'' }}</textarea>
+        <div class="char-counter"><span id="reqCount">0</span> belgi</div>
+        <div class="form-hint">Har bir talabni alohida qatorga yozing</div>
+      </div>
+    </div>
+
+    <!-- 5. Deadline + kontakt -->
+    <div class="form-card">
+      <div class="form-card-title">📅 Muddat va bog'lanish</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ariza topshirish muddati</label>
+          <input class="form-control" type="date" name="deadline" value="{{ job.deadline|date:'Y-m-d'|default:'' }}">
+          <div class="form-hint">Ixtiyoriy — ko'rsatilmasa "ochiq" hisoblanadi</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">📞 Telefon raqam</label>
+          <input class="form-control" type="tel" name="contact_phone" placeholder="+998901234567" value="{{ job.contact_phone|default:user.phone }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">✈️ Telegram username</label>
+        <input class="form-control" type="text" name="contact_telegram" placeholder="username (@ belgisisiz)" value="{{ job.contact_telegram|default:'' }}">
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button type="submit" class="btn btn-accent" style="padding:0.7rem 2rem; font-size:1rem;">
+        {% if job %}✅ Yangilash{% else %}📢 E'lon berish{% endif %}
+      </button>
+      <a href="{% if job %}/jobs/{{ job.pk }}/{% else %}/jobs/{% endif %}" class="btn btn-ghost">Bekor qilish</a>
+      {% if job %}
+      <a href="{% url 'job_delete' job.pk  %}" class="btn btn-red" style="margin-left:auto;">🗑 O'chirish</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectJobType(val, el) {
+  document.getElementById('jobTypeInput').value = val;
+  document.querySelectorAll('.jt-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function countChars(fieldId, counterId) {
+  const len = document.getElementById(fieldId).value.length;
+  document.getElementById(counterId).textContent = len.toLocaleString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  countChars('descField', 'descCount');
+  countChars('reqField', 'reqCount');
+});
+</script>
+{% endblock %}

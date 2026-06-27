@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Buyurtma — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'delivery:my_orders' %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> Buyurtmalarim</a>
+
+  <div class="card card-pad">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;">
+      <h1 style="font-size:1.4rem;">Buyurtma #{{ order.id|stringformat:'s'|slice:':8' }}</h1>
+      <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}">{{ order.get_status_display }}</span>
+    </div>
+
+    {% if order.status != 'delivered' and order.status != 'cancelled' and order.status != 'pending' %}
+    <a href="{% url 'delivery:order_track' order.id %}" class="btn btn-accent btn-block" style="margin:1rem 0;"><svg class="ic"><use href="#i-map"/></svg> Jonli kuzatish — haydovchini xaritada ko'ring</a>
+    {% endif %}
+
+    {% include 'delivery/_order_timeline.html' %}
+
+    {% if order.driver %}
+    <div class="card card-pad" style="background:var(--accent-l);border-color:#cdd6f7;display:flex;align-items:center;gap:.8rem;">
+      <div class="svc-ic g-indigo" style="width:44px;height:44px;border-radius:12px;"><svg class="ic"><use href="#i-car"/></svg></div>
+      <div style="font-size:.9rem;">Haydovchi: <b>{{ order.driver.full_name }}</b> · {{ order.driver.get_vehicle_type_display }}{% if order.driver.phone %} · <a href="tel:{{ order.driver.phone }}" style="color:var(--accent);">{{ order.driver.phone }}</a>{% endif %}</div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:1.25rem;">
+      {% for it in order.items.all %}
+      <div style="display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.92rem;">
+        <span>{{ it.product_name }} <span style="color:var(--text3);">× {{ it.quantity }}</span><br><span style="color:var(--text3);font-size:.78rem;">{{ it.store_name }}</span></span>
+        <span style="font-weight:700;white-space:nowrap;">{{ it.get_line_total|floatformat:0 }} so'm</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top:1rem;">
+      <div class="summary-line"><span>Mahsulotlar</span><span>{{ order.subtotal }} so'm</span></div>
+      <div class="summary-line"><span>Yetkazish</span><span>{{ order.delivery_fee }} so'm</span></div>
+      <div class="summary-line total"><span>Jami</span><span>{{ order.total }} so'm</span></div>
+    </div>
+
+    <div class="card card-pad" style="margin-top:1.25rem;background:var(--surface2);font-size:.9rem;color:var(--text2);display:flex;flex-direction:column;gap:.45rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> {{ order.address }}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-phone"/></svg> {{ order.phone }}</div>
+      {% if order.note %}<div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-chat"/></svg> {{ order.note }}</div>{% endif %}
+      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-card"/></svg> {{ order.get_payment_method_display }} · {% if order.is_paid %}<span style="color:var(--green);font-weight:600;">✓ To'langan{% if order.card_last4 %} ({{ order.card_brand }} •••• {{ order.card_last4 }}){% endif %}</span>{% else %}To'lanmagan{% endif %}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-clock"/></svg> {{ order.created_at|date:"d.m.Y H:i" }}</div>
+    </div>
+  </div>
+
+  <a href="{% url 'delivery:store_list' %}" class="btn btn-accent" style="margin-top:1rem;"><svg class="ic"><use href="#i-building"/></svg> Yana xarid qilish</a>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}To'lov — {{ booking.venue.name }}{% endblock %}
+
+{% block content %}
+<div class="container-narrow" style="max-width:520px;">
+  <div class="page-header" style="text-align:center;"><h1>Bron uchun to'lov</h1><p>{{ booking.venue.name }}</p></div>
+
+  <div class="card card-pad">
+    <div class="info-row"><svg class="ic"><use href="#i-building"/></svg><span>Joy</span><b>{{ booking.venue.name }}</b></div>
+    {% if booking.service %}<div class="info-row"><svg class="ic"><use href="#i-sparkle"/></svg><span>Xizmat</span><b>{{ booking.service.name }}</b></div>{% endif %}
+    {% if booking.staff %}<div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>Usta</span><b>{{ booking.staff.name }}</b></div>{% endif %}
+    <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Vaqt</span><b>{{ booking.booking_date|date:"d.m.Y" }}{% if booking.start_time %} · {{ booking.start_time|time:"H:i" }}{% endif %}</b></div>
+    <div class="info-row"><svg class="ic"><use href="#i-card"/></svg><span>Summa</span><b style="color:var(--accent);font-size:1.1rem;">{{ booking.total_amount|floatformat:0 }} so'm</b></div>
+
+    <div style="margin-top:1.3rem;display:flex;flex-direction:column;gap:.7rem;">
+      <a href="{{ payme_url }}" class="btn btn-block btn-lg" style="background:#33cccc;color:#03121a;font-weight:800;">Payme orqali to'lash</a>
+      <a href="{{ click_url }}" class="btn btn-block btn-lg" style="background:#0094ff;color:#fff;font-weight:800;">Click orqali to'lash</a>
+    </div>
+    <p style="font-size:.78rem;color:var(--text3);text-align:center;margin-top:1rem;line-height:1.5;">To'lovdan so'ng bron avtomatik tasdiqlanadi. Bekor qilinsa yoki kelinmasa {{ booking.venue.penalty_percent }}% ushlab qolinadi.</p>
+    <a href="{% url 'my_venue_bookings' %}" class="btn btn-ghost btn-block" style="margin-top:.8rem;">Keyinroq to'layman</a>
+  </div>
+</div>
+{% endblock %}

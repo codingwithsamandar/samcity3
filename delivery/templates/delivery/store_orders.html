@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Do'kon buyurtmalari — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:880px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-doc"/></svg> Boshqaruv</span>
+      <h1 style="margin-top:.6rem;">Do'kon buyurtmalari</h1>
+    </div>
+    <a href="{% url 'delivery:my_stores' %}" class="btn btn-outline"><svg class="ic"><use href="#i-building"/></svg> Do'konlarim</a>
+  </div>
+
+  {% for order in orders %}
+  <div class="card card-pad" style="margin-bottom:.75rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700;">Buyurtma #{{ order.id|stringformat:'s'|slice:':8' }}</div>
+        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-phone"/></svg> {{ order.phone }}</span><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ order.address }}</span><span>{{ order.created_at|date:"d.m.Y H:i" }}</span></div>
+        <div style="color:var(--text3);font-size:.82rem;margin-top:.3rem;">{% for it in order.items.all %}{{ it.product_name }} ×{{ it.quantity }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Plus Jakarta Sans';font-weight:800;color:var(--text);">{{ order.total }} so'm</div>
+        <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="margin-top:.3rem;">{{ order.get_status_display }}</span>
+      </div>
+    </div>
+    <form method="post" action="{% url 'delivery:store_order_status' order.id %}" style="margin-top:.9rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+      {% csrf_token %}
+      <select name="status" class="form-control" style="width:auto;">
+        {% for s in status_flow %}<option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>cancelled</option>
+      </select>
+      <button type="submit" class="btn btn-accent">Holatni yangilash</button>
+    </form>
+  </div>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-doc"/></svg></div><h3>Buyurtma yo'q</h3><p>Do'konlaringizga hali buyurtma kelmagan.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

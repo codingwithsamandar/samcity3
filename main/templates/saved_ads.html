@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Saqlangan e'lonlar — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-heart"/></svg> Saqlangan</span>
+    <h1 style="margin-top:.6rem;">Saqlangan e'lonlar</h1>
+  </div>
+
+  {% if favorites %}
+  <div class="grid-4">
+    {% for f in favorites %}
+    <a href="{% url 'ad_detail' f.ad.pk %}" class="lcard reveal">
+      <div class="lc-media">
+        {% if f.ad.images.all %}<img src="{{ f.ad.images.first.image.url }}" alt="{{ f.ad.title }}">{% else %}<div class="media-ph"><svg class="ic" style="width:38px;height:38px;"><use href="#i-tag"/></svg></div>{% endif %}
+      </div>
+      <div class="lc-body">
+        <div class="lc-price">{% if f.ad.price_type == 'free' %}<span style="color:var(--green)">Bepul</span>{% elif f.ad.price %}{{ f.ad.price|floatformat:0 }} <small>so'm</small>{% else %}Kelishiladi{% endif %}</div>
+        <div class="lc-title" style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;">{{ f.ad.title }}</div>
+        {% if f.ad.location %}<div class="lc-sub"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3);"><use href="#i-pin"/></svg> {{ f.ad.location|truncatechars:20 }}</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-heart"/></svg></div><h3>Saqlangan e'lon yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'all_ads' %}" class="btn btn-accent">E'lonlarni ko'rish</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}

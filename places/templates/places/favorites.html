@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Sevimli joylar — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-heart"/></svg> Saqlangan</span>
+    <h1 style="margin-top:.6rem;">Sevimli joylar</h1>
+    <p>Siz saqlagan joylar</p>
+  </div>
+
+  {% if favorites %}
+  <div class="grid-3">
+    {% for f in favorites %}
+    <a href="{% url 'places:place_detail' f.place.pk %}" class="lcard reveal">
+      <div class="lc-media">
+        {% if f.place.image %}<img src="{{ f.place.image.url }}" alt="{{ f.place.name }}">{% else %}<div class="media-ph" style="font-size:2.8rem;">{{ f.place.icon }}</div>{% endif %}
+        <div class="lc-badges"><span class="badge badge-gray">{{ f.place.icon }} {{ f.place.get_category_display }}</span></div>
+      </div>
+      <div class="lc-body">
+        <div class="lc-title">{{ f.place.name }}</div>
+        {% if f.place.address %}<div class="lc-sub"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg> {{ f.place.address }}</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-heart"/></svg></div><h3>Sevimli joylar yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'places:place_list' %}" class="btn btn-accent">Joylarni ko'rish</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}

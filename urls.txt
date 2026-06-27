@@ -1,0 +1,59 @@
+Found URLs:
+/
+/accounts/login/?next=/chat/
+/accounts/login/?next=/chat/{{ room.pk }}/
+/ads/
+/ads/?cat={{ ad.category }}
+/ads/new/
+/ads/{{ ad.pk }}/
+/ads/{{ ad.pk }}/boost/
+/ads/{{ ad.pk }}/delete/
+/ads/{{ ad.pk }}/edit/
+/ads/{{ ad.pk }}/mark-sold/
+/ads/{{ booking.ad.pk }}/
+/bookings/{{ booking.pk }}/
+/bookings/{{ booking.pk }}/cancel/
+/business/
+/business/new/
+/business/{{ biz.pk }}/
+/business/{{ biz.pk }}/edit/
+/business/{{ business.pk }}/edit/
+/business/{{ business.pk }}/review/
+/chat/
+/chat/{{ nbhd.chat_room.pk }}/
+/courses/
+/courses/new/
+/courses/{% if request.GET.fmt %}?fmt={{ request.GET.fmt }}{% endif %}
+/courses/{{ course.pk }}/
+/courses/{{ course.pk }}/delete/
+/courses/{{ course.pk }}/edit/
+/jobs/
+/jobs/new/
+/jobs/{{ job.pk }}/
+/jobs/{{ job.pk }}/delete/
+/jobs/{{ job.pk }}/edit/
+/login/
+/logout/
+/my-ads/
+/my-bookings/
+/profile/
+/profile/delete/
+/profile/edit/
+/profile/update/
+/profile/{{ ad.user.pk }}/
+/profile/{{ job.user.pk }}/
+/profile/{{ resume.user.pk }}/
+/received-bookings/
+/register/
+/resumes/
+/resumes/add/
+/resumes/{{ resume.pk }}/
+/resumes/{{ resume.pk }}/delete/
+/resumes/{{ resume.pk }}/edit/
+/resumes/{{ resume.pk }}/mark-hired/
+/transport/
+/transport/add/
+/utilities/
+/utilities/add/
+/utilities/{{ payment.pk }}/delete/
+/utilities/{{ payment.pk }}/edit/

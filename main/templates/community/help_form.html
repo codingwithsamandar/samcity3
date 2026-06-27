@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Yordam e'loni — Mahalla{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:620px;">
+  {% for m in messages %}<div class="flash flash-error"><svg class="ic"><use href="#i-x"/></svg>{{ m }}</div>{% endfor %}
+  <div class="page-header"><h1>Yordam e'loni</h1></div>
+
+  <form method="post" enctype="multipart/form-data" class="card card-pad">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Turi</label>
+        <select name="kind" class="form-control">{% for k, l in kinds %}<option value="{{ k }}">{{ l }}</option>{% endfor %}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Kategoriya</label>
+        <select name="category" class="form-control">{% for k, l in categories %}<option value="{{ k }}">{{ l }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Sarlavha *</label><input type="text" name="title" class="form-control" required value="{{ post.title|default:'' }}"></div>
+    <div class="form-group"><label class="form-label">Tavsif *</label><textarea name="description" class="form-control" required>{{ post.description|default:'' }}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Manzil</label><input type="text" name="location" class="form-control" value="{{ post.location|default:'' }}"></div>
+      <div class="form-group"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="{{ post.phone|default:'' }}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Mahalla</label>
+      <select name="neighborhood" class="form-control"><option value="">— umumiy —</option>{% for n in neighborhoods %}<option value="{{ n.id }}">{{ n.name }}</option>{% endfor %}</select>
+    </div>
+    <div class="form-group"><label class="form-label">Rasm</label><input type="file" name="image" class="form-control" accept="image/*"></div>
+    <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="is_urgent"> Shoshilinch (favqulodda)</label></div>
+    <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-check"/></svg> E'lon qilish</button>
+  </form>
+</div>
+{% endblock %}

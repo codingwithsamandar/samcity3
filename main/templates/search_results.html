@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{% if q %}"{{ q }}" — qidiruv{% else %}Qidiruv{% endif %} — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1080px;">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-search"/></svg> Global qidiruv</span>
+    <h1 style="margin-top:.6rem;">Qidiruv</h1>
+  </div>
+
+  <form method="get" action="{% url 'global_search' %}" class="hero-search" style="max-width:none;margin-bottom:1.25rem;position:relative;">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input type="text" name="q" id="gsInput" value="{{ q }}" placeholder="Joylar, e'lonlar, ishlar bo'yicha qidiring..." autocomplete="off">
+    <button class="btn btn-accent" type="submit">Qidirish</button>
+    <div id="acBox" style="position:absolute;top:110%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;display:none;z-index:50;"></div>
+  </form>
+
+  {% if not q %}
+    {% if recent %}
+    <div style="margin-bottom:1.25rem;"><div style="font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">So'nggi qidiruvlar</div>
+      <div class="chip-row">{% for r in recent %}<a href="?q={{ r|urlencode }}" class="chip">{{ r }}</a>{% endfor %}</div>
+    </div>
+    {% endif %}
+    {% if trending %}
+    <div><div style="font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Trend qidiruvlar</div>
+      <div class="chip-row">{% for t in trending %}<a href="?q={{ t.term|urlencode }}" class="chip"><svg class="ic"><use href="#i-chart"/></svg> {{ t.term }}</a>{% endfor %}</div>
+    </div>
+    {% endif %}
+  {% else %}
+    <p style="color:var(--text2);margin-bottom:1.25rem;">«{{ q }}» bo'yicha {{ total }} ta natija</p>
+
+    {% if ad_results %}
+    <h2 style="font-size:1.15rem;margin:1.5rem 0 .8rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-tag"/></svg> E'lonlar</h2>
+    <div class="grid-4">
+      {% for ad in ad_results %}
+      <a href="{% url 'ad_detail' ad.pk %}" class="lcard reveal">
+        <div class="lc-media">{% if ad.images.all %}<img src="{{ ad.images.first.image.url }}" alt="">{% else %}<div class="media-ph"><svg class="ic" style="width:34px;height:34px;"><use href="#i-tag"/></svg></div>{% endif %}</div>
+        <div class="lc-body"><div class="lc-price">{% if ad.price %}{{ ad.price|floatformat:0 }} <small>so'm</small>{% else %}Kelishiladi{% endif %}</div><div class="lc-title" style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;">{{ ad.title }}</div></div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if place_results %}
+    <h2 style="font-size:1.15rem;margin:1.75rem 0 .8rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Joylar</h2>
+    <div class="grid-3">
+      {% for p in place_results %}
+      <a href="{% url 'places:place_detail' p.pk %}" class="card card-pad" style="display:block;color:inherit;">
+        <div style="font-weight:700;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">{{ p.icon }}</span> {{ p.name }}</div>
+        {% if p.address %}<div class="lc-sub" style="margin-top:.35rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3);"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if job_results %}
+    <h2 style="font-size:1.15rem;margin:1.75rem 0 .8rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-briefcase"/></svg> Ish o'rinlari</h2>
+    {% for j in job_results %}
+    <a href="{% url 'job_detail' j.pk %}" class="card card-pad" style="display:flex;justify-content:space-between;gap:1rem;margin-bottom:.5rem;color:inherit;flex-wrap:wrap;">
+      <div><div style="font-weight:700;">{{ j.title }}</div><div style="color:var(--text2);font-size:.84rem;">{{ j.company }}{% if j.location %} · {{ j.location }}{% endif %}</div></div>
+      {% if j.salary_min %}<div style="font-weight:800;color:var(--accent);font-family:'Plus Jakarta Sans';">{{ j.salary_min|floatformat:0 }}+</div>{% endif %}
+    </a>
+    {% endfor %}
+    {% endif %}
+
+    {% if not total %}
+    <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-search"/></svg></div><h3>Hech narsa topilmadi</h3><p>Boshqa kalit so'z bilan urinib ko'ring.</p></div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  var inp=document.getElementById('gsInput'), box=document.getElementById('acBox'), t;
+  if(!inp) return;
+  inp.addEventListener('input', function(){
+    clearTimeout(t); var q=this.value.trim();
+    t=setTimeout(function(){
+      fetch("{% url 'search_autocomplete' %}?q="+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){
+        if(!d.suggestions || !d.suggestions.length){ box.style.display='none'; return; }
+        box.innerHTML = d.suggestions.map(function(s){
+          var ic = s.type==='place'?'📍':(s.type==='ad'?'🏷️':'🔍');
+          return '<a href="?q='+encodeURIComponent(s.text)+'" style="display:flex;gap:.5rem;padding:.6rem .9rem;color:var(--text);border-bottom:1px solid var(--border);">'+ic+' '+s.text.replace(/</g,'&lt;')+'</a>';
+        }).join('');
+        box.style.display='block';
+      }).catch(function(){ box.style.display='none'; });
+    }, 200);
+  });
+  document.addEventListener('click', function(e){ if(!box.contains(e.target) && e.target!==inp) box.style.display='none'; });
+})();
+</script>
+{% endblock %}

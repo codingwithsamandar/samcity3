@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{% if current_label %}{{ current_label }}{% else %}Joylar{% endif %} — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-pin"/></svg> Joylar katalogi</span>
+      <h1 style="margin-top:.6rem;">{% if current_label %}{{ current_label }}{% else %}Joylar va muassasalar{% endif %}</h1>
+      <p>Shahar bo'ylab do'konlar, muassasalar va diqqatga sazovor joylar</p>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="{% url 'places:map' %}{% if current %}?category={{ current }}{% endif %}" class="btn btn-outline"><svg class="ic"><use href="#i-map"/></svg> Xaritada</a>
+      <a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Joy qo'shish</a>
+    </div>
+  </div>
+
+  <form method="get" class="hero-search" style="max-width:none;margin:0 0 1.25rem;">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Joy nomi yoki manzil bo'yicha qidiring...">
+    {% if current %}<input type="hidden" name="category" value="{{ current }}">{% endif %}
+    <button class="btn btn-accent" type="submit">Qidirish</button>
+  </form>
+
+  <div class="chip-row" style="margin-bottom:1.75rem;">
+    <a href="{% url 'places:place_list' %}" class="chip {% if not current %}active{% endif %}">Barchasi</a>
+    {% for key, label in categories %}
+    <a href="?category={{ key }}" class="chip {% if current == key %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if trending %}
+  <div class="sec-head-row" style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
+    <h2 style="font-size:1.25rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-chart"/></svg> Trend joylar</h2>
+  </div>
+  <div class="grid-3" style="margin-bottom:2rem;">
+    {% for p in trending %}
+    <a href="{% url 'places:place_detail' p.pk %}" class="card card-pad reveal" style="display:block;color:inherit;">
+      <div style="display:flex;align-items:center;gap:.6rem;"><span style="font-size:1.4rem;">{{ p.icon }}</span><div style="font-weight:700;">{{ p.name }}</div></div>
+      <div style="color:var(--text3);font-size:.82rem;margin-top:.5rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+        {% if p.review_count %}<span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> {{ p.avg_rating }}</span>{% endif %}
+        <span><svg class="ic" style="width:.85em;height:.85em;"><use href="#i-star"/></svg> {{ p.views }} ko'rish</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if popular %}
+  <div class="sec-head-row" style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
+    <h2 style="font-size:1.25rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--gold)"><use href="#i-star"/></svg> Mashhur joylar</h2>
+  </div>
+  <div class="grid-3" style="margin-bottom:2rem;">
+    {% for p in popular %}
+    <a href="{% url 'places:place_detail' p.pk %}" class="card card-pad reveal" style="display:block;color:inherit;border-color:#d8ddf0;">
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <span style="font-size:1.4rem;">{{ p.icon }}</span>
+        <div style="font-weight:700;font-size:1.02rem;">{{ p.name }}</div>
+      </div>
+      <div style="color:var(--text2);font-size:.84rem;margin-top:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+        <span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> {{ p.views }}</span>
+        {% if p.address %}<span style="display:inline-flex;align-items:center;gap:.25rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-pin"/></svg>{{ p.address }}</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <h2 style="font-size:1.25rem;margin:0 0 1rem;">Barcha joylar</h2>
+  {% endif %}
+
+  {% if places %}
+  <div class="grid-3">
+    {% for p in places %}
+    <a href="{% url 'places:place_detail' p.pk %}" class="lcard reveal">
+      <div class="lc-media">
+        {% if p.image %}<img src="{{ p.image.url }}" alt="{{ p.name }}">{% else %}<div class="media-ph" style="font-size:2.8rem;">{{ p.icon }}</div>{% endif %}
+        <div class="lc-badges"><span class="badge badge-gray">{{ p.icon }} {{ p.get_category_display }}</span></div>
+      </div>
+      <div class="lc-body">
+        <div class="lc-title">{{ p.name }}</div>
+        {% if p.address %}<div class="lc-sub"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon"><svg class="ic"><use href="#i-pin"/></svg></div>
+    <h3>Joy topilmadi</h3>
+    <p style="margin-top:.6rem;"><a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Birinchi joyni qo'shing</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

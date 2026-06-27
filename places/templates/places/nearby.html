@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Yaqin atrofda — Shofirkon{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  #nmap{height:340px;border-radius:var(--radius);border:1px solid var(--border);z-index:1;margin-bottom:1.4rem}
+  .near-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.85rem 1.1rem;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.6rem;transition:all .15s;box-shadow:var(--shadow-xs);}
+  .near-row:hover{border-color:#cfd8ee;box-shadow:var(--shadow);transform:translateX(3px);}
+  .near-row .km{font-weight:800;color:var(--accent);white-space:nowrap;font-family:'Plus Jakarta Sans';background:var(--accent-l);padding:.25rem .65rem;border-radius:100px;font-size:.82rem;}
+  .near-row .nm{display:flex;align-items:center;gap:.5rem;font-weight:600;}
+  .sec-t{font-size:1.1rem;font-weight:750;margin:1.75rem 0 .9rem;display:flex;align-items:center;gap:.5rem;}
+  .sec-t .ic{color:var(--accent);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:820px;">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-pin"/></svg> Geolokatsiya</span>
+    <h1 style="margin-top:.6rem;">Yaqin atrofda</h1>
+    <p>Joylashuvingizga eng yaqin joylar va xizmatlar</p>
+  </div>
+
+  {% if not groups %}
+  <div class="card" style="padding:2.5rem 1.5rem;text-align:center;">
+    <div class="empty-state" style="padding:0 0 1rem;">
+      <div class="icon"><svg class="ic"><use href="#i-pin"/></svg></div>
+    </div>
+    <p style="color:var(--text2);margin-bottom:1.25rem;max-width:380px;margin-inline:auto;">Eng yaqin joylarni ko'rsatish uchun joylashuvingizga ruxsat bering.</p>
+    <button class="btn btn-accent btn-lg" id="locBtn" onclick="detectLocation()"><svg class="ic"><use href="#i-pin"/></svg> Joylashuvni aniqlash</button>
+    <div id="locMsg" style="color:var(--text2);font-size:.85rem;margin-top:.9rem;"></div>
+    <div style="margin-top:1.25rem;"><a href="{% url 'places:map' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-map"/></svg> Xaritaga o'tish</a></div>
+  </div>
+  {% else %}
+  <div id="nmap"></div>
+
+  <div class="sec-t"><svg class="ic"><use href="#i-pin"/></svg> Eng yaqin 10 ta</div>
+  {% for p, d in groups.all %}
+  <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span>
+    <span class="km">{{ d }} km</span>
+  </a>
+  {% endfor %}
+
+  <div class="sec-t"><svg class="ic"><use href="#i-cart"/></svg> Yaqin do'konlar</div>
+  {% for p, d in groups.stores %}
+  <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }}</span><span class="km">{{ d }} km</span></a>
+  {% empty %}<p style="color:var(--text2);">Yaqinda do'kon topilmadi.</p>{% endfor %}
+
+  <div class="sec-t"><svg class="ic"><use href="#i-star"/></svg> Yaqin diqqatga sazovor joylar</div>
+  {% for p, d in groups.tourist %}
+  <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }}</span><span class="km">{{ d }} km</span></a>
+  {% empty %}<p style="color:var(--text2);">Yaqinda topilmadi.</p>{% endfor %}
+
+  <div class="sec-t"><svg class="ic"><use href="#i-shield"/></svg> Yaqin xizmatlar</div>
+  {% for p, d in groups.services %}
+  <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span><span class="km">{{ d }} km</span></a>
+  {% empty %}<p style="color:var(--text2);">Yaqinda xizmat topilmadi.</p>{% endfor %}
+
+  <div style="margin-top:1.4rem;"><a href="{% url 'places:nearby' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-clock"/></svg> Qayta aniqlash</a></div>
+  {% endif %}
+</div>
+
+<script>
+function detectLocation(){
+  var msg=document.getElementById('locMsg'), btn=document.getElementById('locBtn');
+  if(!navigator.geolocation){msg.textContent="Brauzer geolokatsiyani qo'llab-quvvatlamaydi.";return;}
+  btn.disabled=true; msg.textContent="Aniqlanmoqda...";
+  navigator.geolocation.getCurrentPosition(function(pos){
+    location.href="{% url 'places:nearby' %}?lat="+pos.coords.latitude+"&lng="+pos.coords.longitude;
+  },function(){btn.disabled=false;msg.textContent="Joylashuvni aniqlab bo'lmadi. Ruxsat bering yoki xaritadan foydalaning.";});
+}
+</script>
+
+{% if groups %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const nm=L.map('nmap').setView([{{ lat|unlocalize }}, {{ lng|unlocalize }}], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(nm);
+L.marker([{{ lat|unlocalize }}, {{ lng|unlocalize }}]).addTo(nm).bindPopup("📍 Siz shu yerdasiz").openPopup();
+const COLORS={furniture:'#b45309',electronics:'#2563eb',tourist:'#9333ea',government:'#475569',organization:'#0891b2',post:'#ea580c',bank:'#15803d',pharmacy:'#dc2626',hospital:'#e11d48',hotel:'#7c3aed',wedding:'#db2777',restaurant:'#d97706',delivery_store:'#059669'};
+const NP=[{% for p, d in groups.all %}{lat:{{ p.latitude|unlocalize }},lng:{{ p.longitude|unlocalize }},c:'{{ p.category }}',n:"{{ p.name|escapejs }}"},{% endfor %}];
+NP.forEach(function(p){L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:2,fillColor:COLORS[p.c]||'#f5b942',fillOpacity:.95}).addTo(nm).bindPopup(p.n);});
+</script>
+{% endif %}
+{% endblock %}

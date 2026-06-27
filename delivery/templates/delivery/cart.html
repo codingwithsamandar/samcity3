@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Savat — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cart-item { display:grid; grid-template-columns:auto 1fr auto; gap:1rem; align-items:center; padding:1rem; border-bottom:1px solid var(--border); }
+  .cart-item:last-child { border-bottom:none; }
+  .cart-thumb { width:64px; height:64px; border-radius:14px; background:var(--surface2); display:grid; place-items:center; overflow:hidden; flex:none; }
+  .cart-thumb img { width:100%; height:100%; object-fit:cover; }
+  .cart-thumb .ic { width:28px; height:28px; color:var(--text3); }
+  .qty-controls { display:inline-flex; align-items:center; gap:.4rem; background:var(--surface2); border:1px solid var(--border); border-radius:100px; padding:3px; }
+  .qty-btn { width:44px; height:44px; border-radius:50%; border:none; background:var(--surface2); color:var(--text); cursor:pointer; display:grid; place-items:center; font-size:1.05rem; font-weight:700; transition:all .14s; box-shadow:var(--shadow-xs); }
+  .qty-btn:hover { background:var(--accent); color:#fff; }
+  .qty-value { min-width:26px; text-align:center; font-weight:700; font-size:.92rem; }
+  .qty-btn.danger:hover { background:var(--red); }
+  .cart-right { display:flex; flex-direction:column; align-items:flex-end; gap:.5rem; }
+  @media (max-width:560px){ .cart-item{ grid-template-columns:auto 1fr; } .cart-right{ grid-column:1/-1; flex-direction:row; justify-content:space-between; align-items:center; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="breadcrumb" style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text2);margin-bottom:1.25rem;flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a><span>›</span>
+    <a href="{% url 'delivery:store_list' %}">Do'konlar</a><span>›</span>
+    <span style="color:var(--text);font-weight:600;">Savat</span>
+  </div>
+
+  <div class="page-header"><h1><svg class="ic ic-lg" style="color:var(--accent);vertical-align:-4px;"><use href="#i-cart"/></svg> Mening savatim</h1></div>
+
+  {% if cart and cart.items.all %}
+  <div class="detail-grid">
+    <div>
+      <div class="card">
+        {% for item in cart.items.all %}
+        <div class="cart-item">
+          <div class="cart-thumb">
+            {% with img=item.product.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="{{ item.product.name }}">{% else %}<svg class="ic"><use href="#i-cart"/></svg>{% endif %}{% endwith %}
+          </div>
+          <div>
+            <a href="{% url 'delivery:product_detail' item.product.store.pk item.product.pk %}" style="font-weight:700;color:var(--text);font-size:.96rem;">{{ item.product.name }}</a>
+            <div style="font-size:.8rem;margin-top:.2rem;"><a href="{% url 'delivery:store_detail' item.product.store.pk %}" style="color:var(--accent);">{{ item.product.store.name }}</a></div>
+            <div style="color:var(--text3);font-size:.82rem;margin-top:.3rem;">{{ item.product.price|floatformat:0 }} so'm</div>
+          </div>
+          <div class="cart-right">
+            <div class="qty-controls">
+              <form method="post" action="{% url 'delivery:cart_decrease' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn" title="Kamaytirish">−</button></form>
+              <span class="qty-value">{{ item.quantity }}</span>
+              <form method="post" action="{% url 'delivery:cart_increase' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn" title="Ko'paytirish">+</button></form>
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+              <span style="font-family:'Plus Jakarta Sans';font-weight:800;color:var(--text);white-space:nowrap;">{{ item.get_line_total|floatformat:0 }} so'm</span>
+              <form method="post" action="{% url 'delivery:cart_remove' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn danger" style="color:var(--red);" title="O'chirish"><svg class="ic" style="width:15px;height:15px;"><use href="#i-x"/></svg></button></form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <a href="{% url 'delivery:store_list' %}" class="btn btn-ghost" style="margin-top:1rem;">← Xarid davom ettirish</a>
+    </div>
+
+    <aside>
+      <div class="card card-pad sticky-card">
+        <h3 style="font-size:1.05rem;margin-bottom:.5rem;">Buyurtma xulosasi</h3>
+        <div class="summary-line"><span>Mahsulotlar soni</span><span>{{ cart.get_total_quantity }} dona</span></div>
+        <div class="summary-line"><span>Turlar soni</span><span>{{ cart.get_total_items }} xil</span></div>
+        <div class="summary-line total"><span>Umumiy summa</span><span>{{ cart.get_subtotal|floatformat:0 }} so'm</span></div>
+        <a href="{% url 'delivery:checkout' %}" class="btn btn-accent btn-block btn-lg" style="margin-top:1.1rem;"><svg class="ic"><use href="#i-check"/></svg> Buyurtma berish</a>
+        <a href="{% url 'delivery:my_orders' %}" class="btn btn-ghost btn-block" style="margin-top:.5rem;"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalarim</a>
+      </div>
+    </aside>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon"><svg class="ic"><use href="#i-cart"/></svg></div>
+    <h3>Savatingiz bo'sh</h3>
+    <p>Mahsulotlarni ko'rish va savatga qo'shish uchun do'konlarga o'ting</p>
+    <a href="{% url 'delivery:store_list' %}" class="btn btn-accent" style="margin-top:1rem;"><svg class="ic"><use href="#i-building"/></svg> Do'konlarga o'tish</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

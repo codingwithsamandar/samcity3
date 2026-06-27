@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}{{ ad.title }} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+  @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
+
+  .gallery-main { border-radius: var(--radius); overflow: hidden; background: var(--surface); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 0.75rem; cursor: pointer; }
+  .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+  .gallery-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin; }
+  .gallery-thumb { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; flex-shrink: 0; border: 2px solid transparent; cursor: pointer; background: var(--surface); display: flex; align-items: center; justify-content: center; }
+  .gallery-thumb.active { border-color: var(--accent); }
+  .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .info-card h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 0.9rem; }
+  .contact-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-row a { color: var(--accent); }
+  .contact-row a:hover { text-decoration: underline; }
+
+  .ad-price { font-size: 1.8rem; font-weight: 900; color: var(--accent); margin-bottom: 0.25rem; }
+  .ad-price.negotiable { font-size: 1.3rem; color: var(--text2); font-weight: 500; }
+  .ad-price.free { color: var(--accent2); }
+
+  .owner-card { display: flex; gap: 0.85rem; align-items: center; }
+  .owner-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; flex-shrink: 0; }
+  .owner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .breadcrumb { display: flex; gap: 0.5rem; align-items: center; font-size: 0.85rem; color: var(--text2); margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .breadcrumb a:hover { color: var(--accent); }
+
+  .action-btns { display: flex; flex-direction: column; gap: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Bosh sahifa</a>
+    <span>›</span>
+    <a href="{% url 'my_ads' %}">E'lonlar</a>
+    <span>›</span>
+    <a href="/ads/?cat={{ ad.category }}">{{ ad.get_category_display }}</a>
+    <span>›</span>
+    <span style="color:var(--text);">{{ ad.title }}</span>
+  </div>
+
+  <div class="detail-layout">
+    <!-- Left column -->
+    <div>
+      <!-- Gallery -->
+      {% if ad.images.all %}
+      <div class="gallery-main" id="mainImg">
+        <img src="{{ ad.images.first.image.url }}" alt="{{ ad.title }}" id="mainImgSrc">
+      </div>
+      {% if ad.images.count > 1 %}
+      <div class="gallery-thumbs">
+        {% for img in ad.images.all %}
+        <div class="gallery-thumb {% if forloop.first %}active{% endif %}" onclick="switchImg('{{ img.image.url }}', this)">
+          <img src="{{ img.image.url }}" alt="">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="gallery-main">
+        {% if ad.category == 'uy_joy' %}🏠{% elif ad.category == 'avtomobil' %}🚗{% elif ad.category == 'ish' %}💼{% elif ad.category == 'kurs' %}📚{% elif ad.category == 'xizmat' %}🔧{% elif ad.category == 'hayvonlar' %}🐾{% else %}📦{% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Title & badges -->
+      <div style="margin: 1.25rem 0 1rem;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+          <h1 style="font-size:1.5rem; font-weight:800; flex:1;">{{ ad.title }}</h1>
+          {% if ad.is_boosted %}<span class="badge badge-amber">⚡ Tanlangan</span>{% endif %}
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+          <span class="badge badge-blue">{{ ad.get_category_display }}</span>
+          <span class="badge badge-gray">👁 {{ ad.views }} ko'rildi</span>
+          {% if ad.location %}<span class="badge badge-gray">📍 {{ ad.location }}</span>{% endif %}
+          <span class="badge badge-gray">📅 {{ ad.created_at|date:"d.m.Y" }}</span>
+        </div>
+        {% if ad.status == 'sold' %}
+        <div class="flash flash-error">🔴 Bu e'lon sotilgan yoki yopilgan</div>
+        {% endif %}
+
+        <!-- Marketplace actions -->
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+          {% if user.is_authenticated and user.pk != ad.user_id %}
+          <button id="favBtn" class="btn {% if is_favorite %}btn-accent{% else %}btn-outline{% endif %} btn-sm" onclick="toggleFav()"><svg class="ic"><use href="#i-heart"/></svg> <span id="favLbl">{% if is_favorite %}Saqlangan{% else %}Saqlash{% endif %}</span></button>
+          {% endif %}
+          <button class="btn btn-outline btn-sm" onclick="shareAd()"><svg class="ic"><use href="#i-arrow-right"/></svg> Ulashish</button>
+          {% if user.is_authenticated and user.pk != ad.user_id %}
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('reportBox').style.display='block'"><svg class="ic"><use href="#i-shield"/></svg> Shikoyat</button>
+          {% endif %}
+        </div>
+        <div id="reportBox" style="display:none;margin-top:.6rem;">
+          <form method="post" action="{% url 'ad_report' ad.pk %}" class="card card-pad" style="padding:.85rem;">
+            {% csrf_token %}
+            <select name="reason" class="form-control" style="margin-bottom:.5rem;">{% for k,l in report_reasons %}<option value="{{ k }}">{{ l }}</option>{% endfor %}</select>
+            <input type="text" name="detail" class="form-control" placeholder="Izoh (ixtiyoriy)" style="margin-bottom:.5rem;">
+            <button class="btn btn-red btn-sm">Shikoyat yuborish</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Description -->
+      {% if ad.description %}
+      <div class="info-card">
+        <h3>📋 Tavsif</h3>
+        <p style="font-size:0.9rem; line-height:1.75; color:var(--text2); white-space:pre-line;">{{ ad.description }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Owner actions (if owner) -->
+      {% if user.is_authenticated and user.pk == ad.user_id %}
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;">
+        <a href="{% url 'ad_edit' ad.pk  %}" class="btn btn-outline">✏️ Tahrirlash</a>
+        <a href="{% url 'boost_ad' ad.pk  %}" class="btn btn-accent">⚡ TOP ga chiqarish</a>
+        <a href="{% url 'ad_delete' ad.pk  %}" class="btn btn-red">🗑 O'chirish</a>
+        {% if ad.status == 'active' %}
+        <form method="post" action="{% url 'ad_toggle_sold' ad.pk  %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost">✅ Sotildi deb belgilash</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right sidebar -->
+    <div>
+      <!-- Price -->
+      <div class="info-card">
+        {% if ad.price_type == 'free' %}
+          <div class="ad-price free">Bepul</div>
+        {% elif ad.price_type == 'negotiable' %}
+          <div class="ad-price negotiable">Narx: Muzokarali</div>
+        {% elif ad.price %}
+          <div class="ad-price">{{ ad.price|uz_price }} <span style="font-size:1rem; font-weight:400;">so'm</span></div>
+        {% else %}
+          <div class="ad-price negotiable">Narx ko'rsatilmagan</div>
+        {% endif %}
+        <div style="margin-top:0.25rem; color:var(--text2); font-size:0.8rem;">{{ ad.get_price_type_display }}</div>
+      </div>
+
+      <!-- Contacts -->
+      <div class="info-card">
+        <h3>📞 Bog'lanish</h3>
+        <div class="action-btns">
+          {% if ad.contact_phone %}
+          <a href="tel:{{ ad.contact_phone }}" class="btn btn-accent">📞 {{ ad.contact_phone }}</a>
+          {% endif %}
+          {% if ad.contact_telegram %}
+          <a href="https://t.me/{{ ad.contact_telegram }}" target="_blank" class="btn btn-outline">✈️ Telegram: @{{ ad.contact_telegram }}</a>
+          {% endif %}
+          {% if ad.contact_instagram %}
+          <a href="https://instagram.com/{{ ad.contact_instagram }}" target="_blank" class="btn btn-ghost">📸 Instagram</a>
+          {% endif %}
+          {% if not ad.contact_phone and not ad.contact_telegram and not ad.contact_instagram %}
+          <p style="color:var(--text2); font-size:0.88rem;">Kontakt ma'lumoti ko'rsatilmagan</p>
+          {% endif %}
+        </div>
+        <div style="color:var(--text3);font-size:.76rem;margin-top:.6rem;">{{ ad.contact_count }} marta kontakt ko'rildi</div>
+      </div>
+
+      <!-- Buyer → seller inquiry -->
+      {% if user.is_authenticated and user.pk != ad.user_id %}
+      <div class="info-card">
+        <h3>💬 Sotuvchiga savol</h3>
+        <form method="post" action="{% url 'ad_inquiry' ad.pk %}">
+          {% csrf_token %}
+          <textarea name="message" class="form-control" placeholder="Salom! Bu hali sotuvdami? Narxi kelishiladimi?" required style="margin-bottom:.5rem;"></textarea>
+          <button class="btn btn-accent btn-block"><svg class="ic"><use href="#i-chat"/></svg> Xabar yuborish</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Inquiries (owner only) -->
+      {% if inquiries %}
+      <div class="info-card">
+        <h3>💬 Kelgan savollar</h3>
+        {% for inq in inquiries %}
+        <div style="padding:.6rem 0;border-bottom:1px solid var(--border);">
+          <div style="font-weight:650;font-size:.85rem;">{{ inq.sender.name|default:inq.sender.phone }} <span style="color:var(--text3);font-weight:400;font-size:.75rem;">· {{ inq.created_at|timesince }} oldin</span></div>
+          <div style="color:var(--text2);font-size:.88rem;margin-top:.2rem;">{{ inq.message }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Location -->
+      {% if ad.location %}
+      <div class="info-card">
+        <h3>📍 Manzil</h3>
+        <p style="font-size:0.9rem; color:var(--text2);">{{ ad.location }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Owner info -->
+      <div class="info-card">
+        <h3>👤 E'lon egasi</h3>
+        <a href="{% url 'public_profile' ad.user.pk  %}" class="owner-card" style="text-decoration:none; color:inherit;">
+          <div class="owner-avatar">
+            {% if ad.user.avatar %}<img src="{{ ad.user.avatar.url }}" alt="">{% else %}👤{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;">{{ ad.user.name|default:ad.user.phone }}</div>
+            <div style="color:var(--text2); font-size:0.78rem;">📅 {{ ad.user.created_at|date:"d.m.Y" }}dan beri</div>
+            {% if ad.user.rating %}
+            <div class="stars" style="font-size:0.78rem;">
+              {% for i in "12345" %}{% if forloop.counter <= ad.user.rating|floatformat:0|add:"0" %}★{% else %}☆{% endif %}{% endfor %}
+              {{ ad.user.rating }}
+            </div>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchImg(src, el) {
+  document.getElementById('mainImgSrc').src = src;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
+function toggleFav(){
+  fetch("{% url 'ad_favorite' ad.pk %}", {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')}})
+    .then(function(r){return r.json();}).then(function(d){
+      var b=document.getElementById('favBtn'), l=document.getElementById('favLbl');
+      if(!b) return;
+      if(d.favorite){ b.classList.add('btn-accent'); b.classList.remove('btn-outline'); l.textContent='Saqlangan'; }
+      else { b.classList.remove('btn-accent'); b.classList.add('btn-outline'); l.textContent='Saqlash'; }
+    }).catch(function(){});
+}
+function shareAd(){
+  var url=location.href;
+  if(navigator.share) navigator.share({title:"{{ ad.title|escapejs }}", url:url});
+  else { navigator.clipboard.writeText(url); alert("Havola nusxalandi!"); }
+}
+</script>
+{% endblock %}

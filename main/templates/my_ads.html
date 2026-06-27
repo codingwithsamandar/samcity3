@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Mening e'lonlarim — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .status-tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .status-tab { padding: 0.45rem 1.1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; background: var(--surface); border: 1px solid var(--border); color: var(--text2); text-decoration: none; transition: all 0.15s; }
+  .status-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .status-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .my-ad-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; gap: 0; transition: border-color 0.2s; }
+  .my-ad-card:hover { border-color: #3a3a50; }
+  .my-ad-thumb { width: 120px; min-width: 120px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; }
+  .my-ad-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .my-ad-body { flex: 1; padding: 1rem 1.2rem; min-width: 0; }
+  .my-ad-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .my-ad-price { color: var(--accent); font-weight: 700; font-size: 0.92rem; margin-bottom: 0.4rem; }
+  .my-ad-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .my-ad-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  @media (max-width: 560px) {
+    .my-ad-thumb { width: 80px; min-width: 80px; }
+    .my-ad-body { padding: 0.75rem; }
+  }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
+  .stat-num { font-size: 1.6rem; font-weight: 800; }
+  .stat-label { color: var(--text2); font-size: 0.78rem; margin-top: 0.1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1>📋 Mening e'lonlarim</h1>
+      <p>O'zingiz joylagan e'lonlarni boshqaring</p>
+    </div>
+    <a href="{% url 'ad_create' %}" class="btn btn-accent">+ Yangi e'lon</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--accent2);">{{ active_count|default:0 }}</div>
+      <div class="stat-label">Faol e'lonlar</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--text2);">{{ sold_count|default:0 }}</div>
+      <div class="stat-label">Sotilgan</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--blue);">{{ total_views|default:0 }}</div>
+      <div class="stat-label">Jami ko'rilishlar</div>
+    </div>
+  </div>
+
+  <!-- Status tabs -->
+  <div class="status-tabs">
+    <a href="{% url 'my_ads' %}" class="status-tab {% if not request.GET.status %}active{% endif %}">Barchasi</a>
+    <a href="?status=active" class="status-tab {% if request.GET.status == 'active' %}active{% endif %}">✅ Faol</a>
+    <a href="?status=sold" class="status-tab {% if request.GET.status == 'sold' %}active{% endif %}">🔴 Sotilgan</a>
+    <a href="?status=expired" class="status-tab {% if request.GET.status == 'expired' %}active{% endif %}">⏰ Muddati o'tgan</a>
+  </div>
+
+  {% if ads %}
+  <div style="display:flex; flex-direction:column; gap:0.75rem;">
+    {% for ad in ads %}
+    <div class="my-ad-card">
+      <div class="my-ad-thumb">
+        {% if ad.images.first %}<img src="{{ ad.images.first.image.url }}" alt="{{ ad.title }}">
+        {% else %}
+          {% if ad.category == 'uy_joy' %}🏠{% elif ad.category == 'avtomobil' %}🚗{% elif ad.category == 'ish' %}💼{% elif ad.category == 'kurs' %}📚{% elif ad.category == 'xizmat' %}🔧{% elif ad.category == 'hayvonlar' %}🐾{% else %}📦{% endif %}
+        {% endif %}
+      </div>
+      <div class="my-ad-body">
+        <a href="{% url 'ad_detail' ad.pk  %}" style="text-decoration:none; color:inherit;">
+          <div class="my-ad-title">{{ ad.title }}</div>
+        </a>
+        <div class="my-ad-price">
+          {% if ad.price_type == 'free' %}<span style="color:var(--accent2);">Bepul</span>
+          {% elif ad.price_type == 'negotiable' %}<span style="color:var(--text2); font-weight:400; font-size:0.85rem;">Muzokarali</span>
+          {% elif ad.price %}{{ ad.price|floatformat:0 }} so'm
+          {% else %}—{% endif %}
+        </div>
+        <div class="my-ad-meta">
+          {% if ad.status == 'active' %}<span class="badge badge-green">✅ Faol</span>
+          {% elif ad.status == 'sold' %}<span class="badge badge-red">🔴 Sotilgan</span>
+          {% elif ad.status == 'expired' %}<span class="badge badge-gray">⏰ Muddati o'tgan</span>
+          {% else %}<span class="badge badge-gray">{{ ad.get_status_display }}</span>
+          {% endif %}
+          {% if ad.is_boosted %}<span class="badge badge-amber">⚡ Tanlangan</span>{% endif %}
+          <span class="badge badge-gray">👁 {{ ad.views }}</span>
+          <span class="badge badge-gray">📅 {{ ad.created_at|date:"d.m.Y" }}</span>
+        </div>
+        <div class="my-ad-actions">
+          <a href="{% url 'ad_detail' ad.pk  %}" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.8rem;">Ko'rish</a>
+          <a href="{% url 'ad_edit' ad.pk  %}" class="btn btn-outline" style="font-size:0.8rem; padding:0.3rem 0.8rem;">✏️ Tahrirlash</a>
+          {% if ad.status == 'active' %}
+          <form method="post" action="{% url 'ad_toggle_sold' ad.pk  %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.8rem;" onclick="return confirm('Sotildi deb belgilansinmi?')">✅ Sotildi</button>
+          </form>
+          {% endif %}
+          <a href="{% url 'ad_delete' ad.pk  %}" class="btn btn-red" style="font-size:0.8rem; padding:0.3rem 0.8rem; margin-left:auto;">🗑 O'chirish</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">← Oldingi</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if i == page_obj.number %}<span class="current">{{ i }}</span>
+      {% elif i == 1 or i == paginator.num_pages or i|add:"-1" == page_obj.number or i|add:"1" == page_obj.number %}<a href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Keyingi →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <h3>
+      {% if request.GET.status == 'active' %}Faol e'lon yo'q
+      {% elif request.GET.status == 'sold' %}Sotilgan e'lon yo'q
+      {% else %}Hali e'lon joylagan emassiz{% endif %}
+    </h3>
+    <p>Birinchi e'loningizni joylashtiring</p>
+    <a href="{% url 'ad_create' %}" class="btn btn-accent" style="margin-top:1rem;">+ E'lon berish</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

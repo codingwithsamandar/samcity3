@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Barcha e'lonlar — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .top-bar { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .top-bar .form-control { flex: 1; min-width: 180px; }
+
+  .filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+  .filter-pill { padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.82rem; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text2); text-decoration: none; display: inline-block; transition: all 0.15s; white-space: nowrap; }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .sort-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.82rem; color: var(--text2); cursor: pointer; }
+
+  /* Ad card grid */
+  .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+  .ad-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s, transform 0.15s; text-decoration: none; color: inherit; display: block; }
+  .ad-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ad-item.boosted { border-color: rgba(245,158,11,0.4); }
+  .ad-img { aspect-ratio: 4/3; background: var(--surface2); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; position: relative; }
+  .ad-img img { width: 100%; height: 100%; object-fit: cover; }
+  .ad-boosted-badge { position: absolute; top: 0.5rem; left: 0.5rem; background: var(--accent); color: #000; font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 100px; }
+  .ad-body { padding: 0.85rem; }
+  .ad-title { font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.3rem; }
+  .ad-price { color: var(--accent); font-weight: 800; font-size: 1rem; }
+  .ad-price.free { color: var(--accent2); }
+  .ad-price.negotiable { color: var(--text2); font-weight: 500; font-size: 0.85rem; }
+  .ad-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+  .ad-location { color: var(--text2); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ad-date { color: var(--text2); font-size: 0.72rem; white-space: nowrap; }
+
+  .results-info { color: var(--text2); font-size: 0.85rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .filter-input { width: 100%; max-width: 130px; }
+  .filter-input-wide { width: 100%; max-width: 180px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1>🛒 Barcha e'lonlar</h1>
+      <p>Samarqanddagi mahalliy e'lonlar bazasi</p>
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'ad_create' %}" class="btn btn-accent">+ E'lon berish</a>
+    {% endif %}
+  </div>
+
+  <!-- Search + sort -->
+  <form method="get" class="top-bar">
+    <input class="form-control" type="search" name="q" placeholder="🔍 E'lonlarda qidirish..." value="{{ request.GET.q }}">
+    <select class="sort-select" name="sort" onchange="this.form.submit()">
+      <option value="" {% if not request.GET.sort %}selected{% endif %}>Eng yangi</option>
+      <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Narx: arzon → qimmat</option>
+      <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Narx: qimmat → arzon</option>
+      <option value="views" {% if request.GET.sort == 'views' %}selected{% endif %}>Ko'p ko'rilgan</option>
+    </select>
+    <button type="submit" class="btn btn-accent">Qidirish</button>
+    {% if request.GET.q or request.GET.cat or request.GET.sort or request.GET.price_min or request.GET.price_max or request.GET.location or request.GET.has_photo %}<a href="{% url 'all_ads' %}" class="btn btn-ghost">✕ Tozalash</a>{% endif %}
+  </form>
+
+  <!-- Category filters -->
+  <div class="filter-row">
+    <a href="{% url 'all_ads' %}{% if request.GET.q %}?q={{ request.GET.q|urlencode }}{% endif %}" class="filter-pill {% if not request.GET.cat %}active{% endif %}">Barchasi</a>
+    {% for cat_val, cat_label in categories %}
+    <a href="?cat={{ cat_val }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}"
+       class="filter-pill {% if request.GET.cat == cat_val %}active{% endif %}">
+      {{ cat_label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Advanced filters -->
+  <details style="margin-bottom:1.25rem;">
+    <summary style="cursor:pointer;color:var(--accent);font-weight:600;font-size:.88rem;list-style:none;display:inline-flex;align-items:center;gap:.4rem;"><svg class="ic"><use href="#i-settings"/></svg> Kengaytirilgan filtrlar</summary>
+    <form method="get" class="card card-pad" style="margin-top:.6rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;">
+      {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+      {% if request.GET.cat %}<input type="hidden" name="cat" value="{{ request.GET.cat }}">{% endif %}
+      {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+      <div><label class="form-label">Narx (dan)</label><input type="number" name="price_min" class="form-control filter-input" value="{{ price_min }}" placeholder="0"></div>
+      <div><label class="form-label">Narx (gacha)</label><input type="number" name="price_max" class="form-control filter-input" value="{{ price_max }}" placeholder="∞"></div>
+      <div><label class="form-label">Manzil</label><input type="text" name="location" class="form-control filter-input-wide" value="{{ location }}" placeholder="Tuman, ko'cha"></div>
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding-bottom:.7rem;"><input type="checkbox" name="has_photo" value="1" {% if has_photo == '1' %}checked{% endif %}> Faqat rasmli</label>
+      <button class="btn btn-accent" style="margin-bottom:.1rem;">Qo'llash</button>
+    </form>
+  </details>
+
+  {% if ads %}
+  <div class="results-info">
+    <span>{{ page_obj.paginator.count|default:ads|length }} ta e'lon topildi</span>
+    {% if request.GET.cat %}<span>Kategoriya: <strong>{{ request.GET.cat }}</strong></span>{% endif %}
+  </div>
+
+  <div class="ads-grid">
+    {% for ad in ads %}
+    <a href="{% url 'ad_detail' ad.pk  %}" class="ad-item {% if ad.is_boosted %}boosted{% endif %}">
+      <div class="ad-img">
+        {% if ad.is_boosted %}<span class="ad-boosted-badge">⚡ TOP</span>{% endif %}
+        {% if user.is_authenticated and user.pk != ad.user_id %}
+        <button class="ad-fav-btn{% if ad.pk in fav_ids %} on{% endif %}" data-pk="{{ ad.pk }}" title="Saqlash"
+          style="position:absolute;top:.5rem;right:.5rem;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:var(--shadow-sm);cursor:pointer;display:grid;place-items:center;z-index:2;">
+          <svg class="ic" style="width:16px;height:16px;color:{% if ad.pk in fav_ids %}var(--red){% else %}var(--text3){% endif %};"><use href="#i-heart"/></svg>
+        </button>
+        {% endif %}
+        {% if ad.images.first %}
+          <img src="{{ ad.images.first.image.url }}" alt="{{ ad.title }}">
+        {% else %}
+          {% if ad.category == 'uy_joy' %}🏠{% elif ad.category == 'avtomobil' %}🚗{% elif ad.category == 'ish' %}💼{% elif ad.category == 'kurs' %}📚{% elif ad.category == 'xizmat' %}🔧{% elif ad.category == 'hayvonlar' %}🐾{% else %}📦{% endif %}
+        {% endif %}
+      </div>
+      <div class="ad-body">
+        <div class="ad-title">{{ ad.title }}</div>
+        <div class="ad-price {% if ad.price_type == 'free' %}free{% elif ad.price_type == 'negotiable' %}negotiable{% endif %}">
+          {% if ad.price_type == 'free' %}Bepul
+          {% elif ad.price_type == 'negotiable' %}Muzokarali
+          {% elif ad.price %}{{ ad.price|uz_price }} so'm
+          {% else %}—{% endif %}
+        </div>
+        <div class="ad-meta">
+          <span class="ad-location">{% if ad.location %}📍 {{ ad.location }}{% endif %}</span>
+          <span class="ad-date">{{ ad.created_at|date:"d.m" }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">← Oldingi</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if i == page_obj.number %}<span class="current">{{ i }}</span>
+      {% elif i == 1 or i == paginator.num_pages or i|add:"-1" == page_obj.number or i|add:"1" == page_obj.number %}
+      <a href="?page={{ i }}{% if query_params %}&{{ query_params }}{% endif %}">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">Keyingi →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">🛒</div>
+    <h3>E'lon topilmadi</h3>
+    <p>Boshqa kalit so'z yoki kategoriya sinab ko'ring</p>
+    {% if user.is_authenticated %}
+    <a href="{% url 'ad_create' %}" class="btn btn-accent" style="margin-top:1rem;">+ Birinchi e'lon berish</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
+  document.querySelectorAll('.ad-fav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      fetch('/ads/'+btn.dataset.pk+'/favorite/', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')}})
+        .then(function(r){return r.json();}).then(function(d){
+          var ic=btn.querySelector('.ic'); ic.style.color = d.favorite ? 'var(--red)' : 'var(--text3)';
+        }).catch(function(){});
+    });
+  });
+})();
+</script>
+{% endblock %}

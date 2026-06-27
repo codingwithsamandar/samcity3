@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}To'lov — {{ provider.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pay-wrap { max-width:480px; margin:0 auto; }
+  .summary { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:1.2rem; margin-bottom:1.2rem; }
+  .summary .nm { font-size:1.15rem; font-weight:700; }
+  .summary .meta { color:var(--text2); font-size:.85rem; margin-top:.2rem; }
+  .demo-badge { background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.3); color:#93c5fd;
+    border-radius:10px; padding:.6rem .9rem; font-size:.82rem; margin-bottom:1.2rem; }
+  .vcard { position:relative; border-radius:18px; padding:1.3rem; margin:1rem 0 1.3rem; color:#fff;
+    background:linear-gradient(135deg,#2b2b38,#16161d); border:1px solid var(--border); min-height:160px;
+    display:flex; flex-direction:column; justify-content:space-between; }
+  .vcard .chip { width:40px;height:30px;border-radius:6px;background:linear-gradient(135deg,#ffe375,#fac515); }
+  .vcard .vnum { font-size:1.25rem; letter-spacing:2px; font-weight:600; font-family:monospace; }
+  .vcard .vbot { display:flex; justify-content:space-between; font-size:.8rem; color:#cfcfd8; }
+  .vcard .brand { position:absolute; top:1.1rem; right:1.3rem; font-weight:800; color:var(--accent); }
+  .pay-btn { width:100%; background:var(--accent); color:#1a1205; border:none; border-radius:14px;
+    padding:1rem; font-weight:800; font-size:1.05rem; cursor:pointer; margin-top:.5rem; }
+  .sec-note { color:var(--text2); font-size:.78rem; text-align:center; margin-top:.9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="pay-wrap">
+  {% for m in messages %}
+  <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
+  {% endfor %}
+
+  <a href="{% url 'payments:home' %}" style="color:var(--text2);font-size:.88rem;">← To'lovlar</a>
+  <h1 style="font-size:1.5rem;margin:.6rem 0 1.2rem;">To'lov</h1>
+
+  <div class="demo-badge">ℹ️ Demo to'lov. Payme/Click hali ulanmagan — "To'lash" bosilsa, to'lov amalga oshirilgan deb hisoblanadi. Karta ma'lumotlari saqlanmaydi (faqat oxirgi 4 raqam).</div>
+
+  <div class="summary">
+    <div class="nm">{{ provider.name }}</div>
+    <div class="meta">{{ provider.get_category_display }}{% if provider.address %} · 📍 {{ provider.address }}{% endif %}</div>
+    {% if provider.has_fixed_amount %}
+    <div style="margin-top:.8rem;font-size:1.4rem;font-weight:800;color:var(--accent);">{{ provider.amount|som }} so'm</div>
+    {% endif %}
+  </div>
+
+  <form method="post" id="payForm">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label class="form-label">To'lovchi / abonent (kim uchun)</label>
+      <input type="text" name="payer_name" class="form-control" placeholder="Bola ismi, abonent kodi yoki shartnoma raqami">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Davr (ixtiyoriy)</label>
+      <input type="text" name="period" class="form-control" placeholder="2026-06">
+    </div>
+    {% if not provider.has_fixed_amount %}
+    <div class="form-group">
+      <label class="form-label">Summa (so'm)</label>
+      <input type="text" name="amount" id="amountInp" class="form-control" inputmode="numeric" placeholder="Masalan: 450000">
+    </div>
+    {% endif %}
+
+    <div class="vcard">
+      <div class="brand" id="brandLbl"></div>
+      <div class="chip"></div>
+      <div class="vnum" id="vnum">•••• •••• •••• ••••</div>
+      <div class="vbot"><span id="vholder">KARTA EGASI</span><span id="vexp">MM/YY</span></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Karta raqami</label>
+      <input type="text" name="card_number" id="cardNumber" class="form-control" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="23" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Karta egasi</label>
+      <input type="text" name="card_holder" id="cardHolder" class="form-control" placeholder="ISM FAMILIYA" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Amal qilish (MM/YY)</label>
+        <input type="text" name="expiry" id="expiry" class="form-control" placeholder="12/27" maxlength="5" autocomplete="off">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">CVV</label>
+        <input type="password" name="cvv" class="form-control" inputmode="numeric" placeholder="•••" maxlength="4" autocomplete="off">
+      </div>
+    </div>
+
+    <button type="submit" class="pay-btn">{% if provider.has_fixed_amount %}{{ provider.amount|som }} so'm to'lash{% else %}To'lash{% endif %}</button>
+    <div class="sec-note">🔒 To'liq karta raqami va CVV saqlanmaydi.</div>
+  </form>
+</div>
+</div>
+
+<script>
+(function () {
+  var num = document.getElementById('cardNumber'), vnum = document.getElementById('vnum');
+  var holder = document.getElementById('cardHolder'), vholder = document.getElementById('vholder');
+  var exp = document.getElementById('expiry'), vexp = document.getElementById('vexp');
+  var brand = document.getElementById('brandLbl');
+  function fmt(v){ return v.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim(); }
+  function db(d){ if(d.indexOf('8600')===0)return'UZCARD'; if(d.indexOf('9860')===0)return'HUMO'; if(d.charAt(0)==='4')return'VISA'; if(d.charAt(0)==='5')return'MASTERCARD'; return''; }
+  if(num) num.addEventListener('input',function(){ num.value=fmt(num.value); var d=num.value.replace(/\D/g,''); vnum.textContent=(num.value||'•••• •••• •••• ••••').padEnd(19,'•'); brand.textContent=db(d); });
+  if(holder) holder.addEventListener('input',function(){ vholder.textContent=(holder.value||'KARTA EGASI').toUpperCase(); });
+  if(exp) exp.addEventListener('input',function(){ var d=exp.value.replace(/\D/g,'').slice(0,4); if(d.length>=3)d=d.slice(0,2)+'/'+d.slice(2); exp.value=d; vexp.textContent=d||'MM/YY'; });
+})();
+</script>
+{% endblock %}

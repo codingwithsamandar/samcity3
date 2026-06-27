@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Buyurtma rasmiylashtirish — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .method-tabs { display:flex; gap:.6rem; margin:.5rem 0 1rem; }
+  .method-tab { flex:1; text-align:center; padding:.85rem; border-radius:14px; border:1.5px solid var(--border2); background:var(--surface); color:var(--text2); font-weight:700; font-family:inherit; font-size:.92rem; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:.45rem; }
+  .method-tab:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .method-tab .ic { width:1.1em; height:1.1em; }
+  .method-tab.active { border-color:var(--accent); color:var(--accent); background:var(--accent-l); box-shadow:var(--shadow-xs); }
+  .oi-row { display:flex; justify-content:space-between; font-size:.86rem; padding:.35rem 0; color:var(--text2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-card"/></svg> Rasmiylashtirish</span>
+    <h1 style="margin-top:.6rem;">Buyurtmani rasmiylashtirish</h1>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="detail-grid">
+      <div>
+        <div class="flash flash-info" style="margin-bottom:1.25rem;"><svg class="ic"><use href="#i-shield"/></svg> Demo to'lov. Karta ma'lumotlari saqlanmaydi (faqat oxirgi 4 raqam).</div>
+
+        <div class="card card-pad" style="margin-bottom:1.25rem;">
+          <h3 style="font-size:1.05rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Yetkazish ma'lumotlari</h3>
+          <div class="form-group">
+            <label class="form-label" for="coFullName">Qabul qiluvchi (ism)</label>
+            <input type="text" id="coFullName" name="full_name" class="form-control" value="{{ user.name }}" placeholder="Ism familiya">
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label" for="coPhone">Telefon *</label><input type="tel" id="coPhone" name="phone" class="form-control" value="{{ user.phone }}" placeholder="+998 ..." required></div>
+            <div class="form-group"><label class="form-label" for="coAddress">Manzil *</label><input type="text" id="coAddress" name="address" class="form-control" placeholder="Ko'cha, uy, mo'ljal" required></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="coNote">Izoh (ixtiyoriy)</label>
+            <textarea id="coNote" name="note" class="form-control" placeholder="Kuryer uchun izoh..."></textarea>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <h3 style="font-size:1.05rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-card"/></svg> To'lov usuli</h3>
+          <div class="method-tabs">
+            <button type="button" class="method-tab active" data-m="card" aria-pressed="true"><svg class="ic"><use href="#i-card"/></svg> Karta (demo)</button>
+            <button type="button" class="method-tab" data-m="cash" aria-pressed="false"><svg class="ic"><use href="#i-truck"/></svg> Yetkazishda naqd</button>
+          </div>
+          <input type="hidden" name="payment_method" id="methodInput" value="card">
+          <div id="cardBlock">
+            <div class="form-group">
+              <label class="form-label" for="cardNumber">Karta raqami</label>
+              <input type="text" name="card_number" id="cardNumber" class="form-control" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="23" autocomplete="off">
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label" for="expiry">Amal qilish (MM/YY)</label><input type="text" name="expiry" id="expiry" class="form-control" placeholder="12/27" maxlength="5" autocomplete="off"></div>
+              <div class="form-group"><label class="form-label" for="coCvv">CVV</label><input type="password" id="coCvv" name="cvv" class="form-control" inputmode="numeric" placeholder="•••" maxlength="4" autocomplete="off"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card card-pad sticky-card">
+          <h3 style="font-size:1.05rem;margin-bottom:.75rem;">Buyurtma</h3>
+          {% for it in items %}
+          <div class="oi-row"><span>{{ it.product.name }} × {{ it.quantity }}</span><span>{{ it.get_line_total|floatformat:0 }}</span></div>
+          {% endfor %}
+          <div class="summary-line" style="margin-top:.6rem;border-top:1px solid var(--border);padding-top:.6rem;"><span>Mahsulotlar</span><span>{{ subtotal }} so'm</span></div>
+          <div class="summary-line"><span>Yetkazish</span><span>{{ delivery_fee }} so'm</span></div>
+          <div class="summary-line total"><span>Jami</span><span>{{ total }} so'm</span></div>
+          <button type="submit" class="btn btn-accent btn-block btn-lg" style="margin-top:1.1rem;"><svg class="ic"><use href="#i-check"/></svg> Buyurtmani tasdiqlash</button>
+          <a href="{% url 'delivery:cart' %}" class="btn btn-ghost btn-block" style="margin-top:.5rem;">← Savatga qaytish</a>
+        </div>
+      </aside>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.method-tab'), mi=document.getElementById('methodInput'), cb=document.getElementById('cardBlock');
+  tabs.forEach(function(t){ t.addEventListener('click',function(){
+    tabs.forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
+    t.classList.add('active'); t.setAttribute('aria-pressed','true');
+    mi.value=t.dataset.m; cb.style.display=(t.dataset.m==='card')?'':'none';
+  });});
+  var num=document.getElementById('cardNumber');
+  if(num) num.addEventListener('input',function(){ num.value=num.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim(); });
+  var exp=document.getElementById('expiry');
+  if(exp) exp.addEventListener('input',function(){ var d=exp.value.replace(/\D/g,'').slice(0,4); if(d.length>=3)d=d.slice(0,2)+'/'+d.slice(2); exp.value=d; });
+})();
+</script>
+{% endblock %}

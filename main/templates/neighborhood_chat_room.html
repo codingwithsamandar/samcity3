@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ room.neighborhood.name }} — Mahalla chat{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { padding-bottom: 0 !important; }
+  .chat-shell { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 66px); }
+
+  .chat-head { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 5; }
+  .chat-head .back { color: var(--text2); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; }
+  .chat-head .back .ic { transform: rotate(180deg); }
+  .chat-head .back:hover { background: var(--surface2); }
+  .chat-head .ava { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+  .chat-head .ti { flex: 1; min-width: 0; }
+  .chat-head .ti h1 { font-size: 1.05rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-head .ti .sub { font-size: .78rem; color: var(--text2); }
+  .chat-head .hbtn { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--text2); border: 1px solid var(--border); background: var(--surface); cursor: pointer; position: relative; }
+
+  .chat-body { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .35rem;
+    background: linear-gradient(rgba(53,81,209,.018), rgba(53,81,209,.018)), var(--bg-soft); }
+  .load-older { text-align: center; padding: .5rem; }
+  .load-older button { font-size: .8rem; color: var(--accent); background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: .35rem 1rem; cursor: pointer; }
+
+  .msg { max-width: 78%; display: flex; flex-direction: column; gap: 2px; align-self: flex-start; position: relative; }
+  .msg.own { align-self: flex-end; }
+  .bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 16px 16px 16px 4px; padding: .55rem .8rem; box-shadow: var(--shadow-xs); position: relative; word-break: break-word; }
+  .msg.own .bubble { background: var(--accent-l); border-color: #d3dbfb; border-radius: 16px 16px 4px 16px; }
+  .bubble .who { font-size: .76rem; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .msg.own .bubble .who { display: none; }
+  .bubble .who.admin { color: var(--gold-d); }
+  .bubble .txt { font-size: .94rem; line-height: 1.4; color: var(--text); white-space: pre-wrap; }
+  .bubble .txt .mention { color: var(--accent); font-weight: 600; }
+  .bubble .meta { font-size: .68rem; color: var(--text3); text-align: right; margin-top: 2px; display: flex; gap: .3rem; justify-content: flex-end; align-items: center; }
+  .bubble .meta .tick { color: var(--accent); font-weight: 700; }
+  .bubble img.media { max-width: 100%; border-radius: 10px; margin: 2px 0; display: block; cursor: pointer; }
+  .bubble .filelink { display: inline-flex; align-items: center; gap: .5rem; background: var(--surface2); border-radius: 10px; padding: .5rem .7rem; color: var(--text); font-size: .85rem; font-weight: 600; }
+  .bubble audio { width: 230px; max-width: 100%; margin: 2px 0; }
+  .reply-q { border-left: 3px solid var(--accent); background: rgba(53,81,209,.06); border-radius: 6px; padding: .25rem .5rem; margin-bottom: .35rem; font-size: .78rem; }
+  .reply-q .ra { color: var(--accent); font-weight: 700; display: block; }
+  .reply-q .rt { color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .fwd { font-size: .72rem; color: var(--text3); font-style: italic; margin-bottom: 2px; }
+  .reacts { display: flex; gap: .25rem; flex-wrap: wrap; margin-top: 3px; }
+  .reacts .rb { font-size: .76rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 100px; padding: .05rem .45rem; cursor: pointer; }
+  .reacts .rb.mine { background: var(--accent-l); border-color: var(--accent); }
+  .msg-actions { position: absolute; top: -12px; right: 6px; display: none; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 2px; box-shadow: var(--shadow); z-index: 2; }
+  .msg:hover .msg-actions { display: flex; }
+  .msg-actions button { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; cursor: pointer; font-size: .85rem; }
+  .msg-actions button:hover { background: var(--surface2); }
+  .react-pop { position: absolute; bottom: 100%; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 3px 6px; display: none; gap: 2px; box-shadow: var(--shadow-lg); z-index: 3; }
+  .react-pop.show { display: flex; }
+  .react-pop span { font-size: 1.1rem; cursor: pointer; padding: 2px; }
+
+  .deleted .bubble { font-style: italic; color: var(--text3); }
+  .typing-row { font-size: .8rem; color: var(--text2); padding: 0 1rem .3rem; min-height: 1.2rem; }
+
+  .composer { border-top: 1px solid var(--border); background: var(--surface); padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom)); }
+  .reply-bar { display: none; align-items: center; gap: .5rem; background: var(--surface2); border-radius: 10px; padding: .4rem .6rem; margin-bottom: .5rem; font-size: .8rem; }
+  .reply-bar.show { display: flex; }
+  .reply-bar .x { margin-left: auto; cursor: pointer; color: var(--text3); }
+  .composer-row { display: flex; align-items: flex-end; gap: .5rem; }
+  .composer textarea { flex: 1; resize: none; border: 1px solid var(--border2); border-radius: 18px; padding: .65rem 1rem; font-family: inherit; font-size: 1rem; max-height: 120px; outline: none; }
+  .composer textarea:focus { border-color: var(--accent); }
+  .cbtn { width: 44px; height: 44px; border-radius: 50%; border: none; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .cbtn.attach { background: var(--surface2); color: var(--text2); font-size: 1.4rem; }
+  .cbtn.send { background: linear-gradient(135deg, var(--accent), var(--accent-d)); color: #fff; box-shadow: var(--shadow-brand); }
+  .cbtn.rec.recording { background: var(--red); color: #fff; animation: recpulse 1.2s infinite; }
+  @keyframes recpulse { 0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.5)} 50%{box-shadow:0 0 0 8px rgba(229,72,77,0)} }
+  .pending-banner { background: var(--gold-l); color: var(--gold-d); padding: .7rem 1rem; font-size: .85rem; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-shell">
+  <div class="chat-head">
+    <a href="{% url 'neighborhood_chat' %}" class="back"><svg class="ic"><use href="#i-arrow-right"/></svg></a>
+    <div class="ava">{{ room.neighborhood.name|slice:":1"|upper }}</div>
+    <div class="ti">
+      <h1>{{ room.neighborhood.name }}</h1>
+      <div class="sub"><span id="onlineCount">0</span> ta onlayn</div>
+    </div>
+    {% if is_chat_admin %}
+    <a href="#" class="hbtn" title="Admin"><svg class="ic"><use href="#i-shield"/></svg></a>
+    {% endif %}
+  </div>
+
+  <div class="chat-body" id="chatBody">
+    {% if oldest_id %}<div class="load-older" id="loadOlder"><button onclick="loadOlder()">Eski xabarlar</button></div>{% endif %}
+    <div id="messages"></div>
+  </div>
+
+  <div class="typing-row" id="typingRow"></div>
+
+  {% if user.is_authenticated %}
+    {% if is_banned %}
+    <div class="pending-banner">Siz bu chatdan bloklangansiz.</div>
+    {% elif is_approved or is_chat_admin %}
+    <div class="composer">
+      <div class="reply-bar" id="replyBar">
+        <svg class="ic" style="color:var(--accent)"><use href="#i-arrow-right"/></svg>
+        <div style="min-width:0;"><b id="replyAuthor" style="color:var(--accent)"></b><div id="replyText" style="color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>
+        <span class="x" onclick="cancelReply()">✕</span>
+      </div>
+      <div class="composer-row">
+        <button class="cbtn attach" id="attachBtn" title="Biriktirish">＋</button>
+        <textarea id="msgInput" rows="1" placeholder="Xabar yozing... (@ bilan eslating)"></textarea>
+        <button class="cbtn rec" id="recBtn" title="Ovozli xabar">🎤</button>
+        <button class="cbtn send" id="sendBtn" title="Yuborish"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
+      </div>
+      <input type="file" id="imgInput" accept="image/*" hidden>
+      <input type="file" id="fileInput" hidden>
+    </div>
+    {% else %}
+    <div class="pending-banner">Yozish uchun admin tasdig'ini kuting. Hozircha faqat o'qiy olasiz.</div>
+    {% endif %}
+  {% else %}
+    <div class="pending-banner"><a href="{% url 'login' %}?next={{ request.path }}" style="color:var(--accent);font-weight:700;">Kirish</a> — yozish uchun</div>
+  {% endif %}
+</div>
+
+{{ chat_messages|json_script:"initialMessages" }}
+<script>
+(function () {
+  var ROOM_ID = "{{ room.id }}";
+  var IS_ADMIN = {{ is_chat_admin|yesno:"true,false" }};
+  var CAN_WRITE = {{ is_approved|yesno:"true,false" }} || IS_ADMIN;
+  var oldestId = "{{ oldest_id }}";
+  var messagesEl = document.getElementById('messages');
+  var bodyEl = document.getElementById('chatBody');
+  var replyTo = null, editing = null;
+
+  function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function linkMentions(s){ return esc(s).replace(/@([A-Za-z0-9_]{2,50})/g,'<span class="mention">@$1</span>'); }
+  function findMsg(id){ return messagesEl.querySelector('.msg[data-id="'+id+'"]'); }
+  function atBottom(){ return bodyEl.scrollHeight - bodyEl.scrollTop - bodyEl.clientHeight < 120; }
+  function scrollBottom(){ bodyEl.scrollTop = bodyEl.scrollHeight; }
+
+  function renderReacts(reactions, mine){
+    reactions = reactions || {}; mine = mine || [];
+    return Object.keys(reactions).map(function(e){
+      return '<span class="rb'+(mine.indexOf(e)>=0?' mine':'')+'" data-e="'+e+'">'+e+' '+reactions[e]+'</span>';
+    }).join('');
+  }
+
+  function renderMessage(m, prepend){
+    var el = document.createElement('div');
+    el.className = 'msg' + (m.is_own ? ' own' : '');
+    el.dataset.id = m.id;
+    var canDelete = (m.can_delete != null) ? m.can_delete : (m.is_own || IS_ADMIN);
+    var canEdit = (m.can_edit != null) ? m.can_edit : (m.is_own && m.kind === 'text');
+    var name = m.user_name || m.display_name || '';
+
+    var h = '';
+    if (m.forwarded) h += '<div class="fwd">↪ Yo\'naltirilgan</div>';
+    if (m.reply) h += '<div class="reply-q"><span class="ra">'+esc(m.reply.author)+'</span><span class="rt">'+esc(m.reply.text)+'</span></div>';
+    h += '<div class="bubble">';
+    if (!m.is_own) h += '<div class="who'+(m.is_admin_msg||m.is_admin?' admin':'')+'">'+esc(name)+'</div>';
+    if (m.kind === 'image' && m.image_url) h += '<img class="media" src="'+m.image_url+'" onclick="window.open(this.src)">';
+    if (m.kind === 'audio' && m.audio_url) h += '<audio controls src="'+m.audio_url+'"></audio>';
+    if (m.kind === 'file' && m.file_url) h += '<a class="filelink" href="'+m.file_url+'" target="_blank">📎 '+esc(m.file_name||'Fayl')+'</a>';
+    if (m.text) h += '<div class="txt">'+linkMentions(m.text)+'</div>';
+    h += '<div class="meta"><span class="edited" '+(m.edited?'':'style="display:none"')+'>tahrirlangan</span><span>'+esc(m.time||'')+'</span><span class="tick" '+(m.is_own?'':'style="display:none"')+'>✓</span></div>';
+    h += '</div>';
+    h += '<div class="reacts">'+renderReacts(m.reactions, m.my_reactions)+'</div>';
+    h += '<div class="msg-actions">';
+    if (CAN_WRITE) h += '<button title="Reaksiya" data-act="reactpop">😊</button><button title="Javob" data-act="reply">↩</button><button title="Yo\'naltirish" data-act="forward">↪</button>';
+    if (canEdit) h += '<button title="Tahrir" data-act="edit">✎</button>';
+    if (canDelete) h += '<button title="O\'chirish" data-act="del">🗑</button>';
+    h += '<div class="react-pop">'+['👍','❤️','😂','😮','😢','🙏'].map(function(e){return '<span data-react="'+e+'">'+e+'</span>';}).join('')+'</div>';
+    h += '</div>';
+    el.innerHTML = h;
+    if (prepend) messagesEl.insertBefore(el, messagesEl.firstChild); else messagesEl.appendChild(el);
+    return el;
+  }
+
+  // ── event delegation for message actions ──
+  messagesEl.addEventListener('click', function(e){
+    var msgEl = e.target.closest('.msg'); if(!msgEl) return; var id = msgEl.dataset.id;
+    var pill = e.target.closest('.rb'); if (pill){ send({type:'reaction', message_id:id, emoji:pill.dataset.e}); return; }
+    var rp = e.target.closest('.react-pop span'); if (rp){ send({type:'reaction', message_id:id, emoji:rp.dataset.react}); msgEl.querySelector('.react-pop').classList.remove('show'); return; }
+    var btn = e.target.closest('.msg-actions button[data-act]'); if(!btn) return;
+    var act = btn.dataset.act;
+    if (act==='reactpop'){ msgEl.querySelector('.react-pop').classList.toggle('show'); }
+    else if (act==='reply'){ startReply(id, msgEl); }
+    else if (act==='forward'){ send({type:'forward', message_id:id}); }
+    else if (act==='edit'){ startEdit(id, msgEl); }
+    else if (act==='del'){ if(confirm("Xabarni o'chirasizmi?")) send({type:'delete_message', message_id:id}); }
+  });
+
+  function startReply(id, msgEl){ replyTo = id; document.getElementById('replyBar').classList.add('show');
+    document.getElementById('replyAuthor').textContent = (msgEl.querySelector('.who')||{}).textContent || 'Xabar';
+    document.getElementById('replyText').textContent = (msgEl.querySelector('.txt')||{}).textContent || 'Media';
+    var i=document.getElementById('msgInput'); if(i) i.focus(); }
+  window.cancelReply = function(){ replyTo=null; document.getElementById('replyBar').classList.remove('show'); };
+  function startEdit(id, msgEl){ editing=id; var i=document.getElementById('msgInput'); if(i){ i.value=(msgEl.querySelector('.txt')||{}).textContent||''; i.focus(); } }
+
+  // ── initial render ──
+  try { JSON.parse(document.getElementById('initialMessages').textContent).forEach(function(m){ renderMessage(m, false); }); } catch(e){}
+  scrollBottom();
+
+  // ── WebSocket ──
+  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  var ws, typingTimer, lastTyping = 0, online = {}, typingUsers = {};
+  function connect(){
+    ws = new WebSocket(proto + '://' + location.host + '/ws/chat/' + ROOM_ID + '/');
+    ws.onmessage = function(e){ handle(JSON.parse(e.data)); };
+    ws.onclose = function(){ setTimeout(connect, 3000); };
+    ws.onopen = function(){ send({type:'mark_read'}); };
+  }
+  function send(o){ if (ws && ws.readyState===1) ws.send(JSON.stringify(o)); }
+
+  function handle(d){
+    if (d.type==='message'){ var stick=atBottom(); renderMessage(d,false); if(stick||d.is_own) scrollBottom(); if(!d.is_own) send({type:'mark_read'}); }
+    else if (d.type==='message_edited'){ var m=findMsg(d.message_id); if(m){ var t=m.querySelector('.txt'); if(t)t.innerHTML=linkMentions(d.text); var ed=m.querySelector('.edited'); if(ed)ed.style.display=''; } }
+    else if (d.type==='message_deleted'){ var m2=findMsg(d.message_id); if(m2){ m2.classList.add('deleted'); m2.querySelector('.bubble').innerHTML='<div class="txt">🚫 Xabar o\'chirildi</div>'; var a=m2.querySelector('.msg-actions'); if(a)a.remove(); var r=m2.querySelector('.reacts'); if(r)r.remove(); } }
+    else if (d.type==='reaction_update'){ var m3=findMsg(d.message_id); if(m3){ var rc=m3.querySelector('.reacts'); if(rc) rc.innerHTML=renderReacts(d.reactions, []); } }
+    else if (d.type==='read_receipt'){ messagesEl.querySelectorAll('.msg.own .tick').forEach(function(t){ t.textContent='✓✓'; }); }
+    else if (d.type==='online_list'){ online={}; (d.users||[]).forEach(function(u){online[u]=1;}); document.getElementById('onlineCount').textContent=Object.keys(online).length; }
+    else if (d.type==='presence'){ if(d.online) online[d.user_id]=1; else delete online[d.user_id]; document.getElementById('onlineCount').textContent=Object.keys(online).length; }
+    else if (d.type==='typing'){ if(d.is_typing) typingUsers[d.user_name]=Date.now(); else delete typingUsers[d.user_name];
+      var names=Object.keys(typingUsers); document.getElementById('typingRow').textContent = names.length ? names.slice(0,2).join(', ')+' yozmoqda...' : '';
+      setTimeout(function(){ for(var k in typingUsers){ if(Date.now()-typingUsers[k]>4000) delete typingUsers[k]; } }, 4500); }
+    else if (d.type==='approved'){ location.reload(); }
+    else if (d.type==='error'){ alert(d.text); }
+    else if (d.type==='banned'){ var c=document.querySelector('.composer'); if(c)c.style.display='none'; }
+  }
+
+  // ── composer ──
+  var input = document.getElementById('msgInput');
+  if (input){
+    input.addEventListener('input', function(){
+      this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px';
+      var now=Date.now(); if(now-lastTyping>1500){ send({type:'typing', is_typing:true}); lastTyping=now; }
+      clearTimeout(typingTimer); typingTimer=setTimeout(function(){ send({type:'typing', is_typing:false}); }, 1800);
+    });
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); doSend(); } });
+    document.getElementById('sendBtn').addEventListener('click', doSend);
+  }
+  function doSend(){
+    var text = input.value.trim(); if(!text) return;
+    if (editing){ send({type:'edit_message', message_id:editing, text:text}); editing=null; }
+    else { send({type:'message', text:text, reply_to:replyTo}); }
+    input.value=''; input.style.height='auto'; cancelReply(); send({type:'typing', is_typing:false});
+  }
+
+  // ── attachments ──
+  var attachBtn = document.getElementById('attachBtn');
+  if (attachBtn){
+    attachBtn.addEventListener('click', function(){
+      var c = prompt("1 = Rasm,  2 = Fayl"); if(c==='1') document.getElementById('imgInput').click(); else if(c==='2') document.getElementById('fileInput').click();
+    });
+    document.getElementById('imgInput').addEventListener('change', function(){ sendFile(this.files[0],'image_message'); this.value=''; });
+    document.getElementById('fileInput').addEventListener('change', function(){ sendFile(this.files[0],'file_message'); this.value=''; });
+  }
+  function sendFile(file, type){
+    if(!file) return; if(file.size>8*1024*1024){ alert("Fayl 8MB dan katta."); return; }
+    var r=new FileReader(); r.onload=function(){ send({type:type, data:r.result, filename:file.name, reply_to:replyTo}); cancelReply(); }; r.readAsDataURL(file);
+  }
+
+  // ── voice ──
+  var recBtn = document.getElementById('recBtn'), mediaRec=null, chunks=[];
+  if (recBtn){
+    recBtn.addEventListener('click', function(){
+      if (mediaRec && mediaRec.state==='recording'){ mediaRec.stop(); return; }
+      if (!navigator.mediaDevices){ alert("Mikrofon mavjud emas"); return; }
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        mediaRec=new MediaRecorder(stream); chunks=[];
+        mediaRec.ondataavailable=function(e){ chunks.push(e.data); };
+        mediaRec.onstop=function(){ var blob=new Blob(chunks,{type:'audio/webm'}); recBtn.classList.remove('recording'); stream.getTracks().forEach(function(t){t.stop();});
+          if(blob.size>8*1024*1024){ alert("Yozuv juda uzun"); return; }
+          var r=new FileReader(); r.onload=function(){ send({type:'voice_message', data:r.result, filename:'voice.webm', reply_to:replyTo}); cancelReply(); }; r.readAsDataURL(blob); };
+        mediaRec.start(); recBtn.classList.add('recording');
+      }).catch(function(){ alert("Mikrofonga ruxsat berilmadi"); });
+    });
+  }
+
+  // ── infinite scroll ──
+  var loadingOlder=false;
+  window.loadOlder = function(){
+    if (loadingOlder || !oldestId) return; loadingOlder=true;
+    fetch('/api/chat/'+ROOM_ID+'/history/?before='+oldestId).then(function(r){return r.json();}).then(function(d){
+      var prevH=bodyEl.scrollHeight;
+      (d.messages||[]).slice().reverse().forEach(function(m){ renderMessage(m, true); });
+      oldestId = d.oldest_id || '';
+      if (!oldestId){ var lo=document.getElementById('loadOlder'); if(lo) lo.remove(); }
+      bodyEl.scrollTop = bodyEl.scrollHeight - prevH; loadingOlder=false;
+    }).catch(function(){ loadingOlder=false; });
+  };
+  bodyEl.addEventListener('scroll', function(){ if (bodyEl.scrollTop<40) loadOlder(); });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) send({type:'mark_read'}); });
+
+  connect();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}So'rovnomalar — Mahalla{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:880px;">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-chart"/></svg> Jamiyat fikri</span>
+      <h1 style="margin-top:.6rem;">So'rovnomalar</h1>
+      <p>Mahalla qarorlarini birga qabul qiling — yo'l, suv, loyihalar</p>
+    </div>
+    <a href="{% url 'poll_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> So'rovnoma yaratish</a>
+  </div>
+
+  <form method="get" style="margin-bottom:1.25rem;">
+    <select name="mahalla" class="form-control" style="width:auto;" onchange="this.form.submit()">
+      <option value="">Barcha mahallalar</option>
+      {% for n in neighborhoods %}<option value="{{ n.id }}" {% if current_mahalla == n.id|stringformat:'s' %}selected{% endif %}>{{ n.name }}</option>{% endfor %}
+    </select>
+  </form>
+
+  {% for item in polls %}
+  <a href="{% url 'poll_detail' item.poll.id %}" class="card card-pad" style="display:block;margin-bottom:.85rem;color:inherit;">
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+      <div style="font-weight:700;font-size:1.05rem;">{{ item.poll.question }}</div>
+      {% if item.open %}<span class="badge badge-green">Ochiq</span>{% else %}<span class="badge badge-gray">Yopilgan</span>{% endif %}
+    </div>
+    <div style="color:var(--text3);font-size:.82rem;margin-top:.5rem;display:flex;gap:.8rem;flex-wrap:wrap;">
+      <span><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-user"/></svg> {{ item.votes }} ovoz</span>
+      {% if item.poll.neighborhood %}<span><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-pin"/></svg> {{ item.poll.neighborhood.name }}</span>{% endif %}
+      {% if item.poll.is_anonymous %}<span>🕶️ Anonim</span>{% endif %}
+      <span>{{ item.poll.created_at|timesince }} oldin</span>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-chart"/></svg></div><h3>So'rovnoma yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'poll_create' %}" class="btn btn-accent">Birinchisini yarating</a></p></div>
+  {% endfor %}
+</div>
+{% endblock %}

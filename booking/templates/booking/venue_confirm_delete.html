@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Joyni o'chirish{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+  <div class="card" style="padding:1.5rem;">
+    <h1 style="font-size:1.2rem;">🗑 Joyni o'chirish</h1>
+    <p style="color:var(--text2);margin:1rem 0;">«{{ venue.name }}» joyini o'chirmoqchimisiz? Unga tegishli bronlar ham o'chiriladi. Bu amalni qaytarib bo'lmaydi.</p>
+    <form method="post" style="display:flex;gap:.6rem;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-red">Ha, o'chirish</button>
+      <a href="{% url 'venue_detail' venue.pk %}" class="btn btn-ghost">Bekor qilish</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SamCity — Dark Glass Premium (Preview)</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070a10;--bg-soft:#0b0f17;--surface:#0f1521;--surface2:#141b29;--surface3:#1d2636;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+  --accent:#34d399;--accent-d:#10b981;--accent-l:rgba(52,211,153,.13);--teal:#22d3ee;
+  --text:#eaf0f8;--text2:#9aa6bd;--text3:#69748a;--red:#fb7185;--gold:#e6b450;
+  --glass-bg:rgba(18,24,38,.55);--glass-brd:rgba(255,255,255,.10);--glass-hi:rgba(255,255,255,.14);
+  --radius:16px;--radius-lg:24px;--radius-xl:32px;
+  --shadow:0 8px 30px rgba(0,0,0,.5);--shadow-lg:0 20px 60px rgba(0,0,0,.62);--shadow-xl:0 30px 80px rgba(0,0,0,.72);
+  --glow-brand:0 0 0 1px rgba(52,211,153,.22),0 14px 50px rgba(52,211,153,.16);
+  --shadow-brand:0 10px 34px rgba(16,185,129,.28);
+}
+[data-theme="light"]{
+  --bg:#eef1f6;--bg-soft:#e7ebf2;--surface:#fff;--surface2:#f1f4f9;--surface3:#e5eaf2;
+  --border:#e2e7f0;--border2:#d2dae7;--accent:#0ea371;--accent-d:#0b7d57;--teal:#0891b2;
+  --text:#0c1018;--text2:#56607a;--text3:#8993a8;
+  --glass-bg:rgba(255,255,255,.66);--glass-brd:rgba(255,255,255,.7);--glass-hi:rgba(255,255,255,.9);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--text);background:transparent;line-height:1.55;overflow-x:hidden;opacity:0;animation:pageIn .6s ease forwards}
+@keyframes pageIn{to{opacity:1}}
+h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em;font-weight:800;line-height:1.1}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 1.25rem}
+
+/* ambient */
+.aurora-bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.aurora-bg span{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform;mix-blend-mode:screen;opacity:.4}
+.aurora-bg .a1{width:46vw;height:46vw;top:-12vw;left:-8vw;background:radial-gradient(circle,rgba(16,185,129,.30),transparent 70%);animation:d1 36s ease-in-out infinite}
+.aurora-bg .a2{width:40vw;height:40vw;top:6vw;right:-10vw;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 70%);animation:d2 44s ease-in-out infinite}
+@keyframes d1{50%{transform:translate(6vw,8vw) scale(1.15)}}@keyframes d2{50%{transform:translate(-7vw,6vw) scale(1.1)}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#sp{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--teal));z-index:200;box-shadow:0 0 14px rgba(52,211,153,.6)}
+
+/* glass primitives */
+.glass{background:var(--glass-bg);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid var(--glass-brd);box-shadow:var(--shadow),inset 0 1px 0 var(--glass-hi)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:100;background:var(--glass-bg);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-bottom:1px solid var(--glass-brd);transition:.25s}
+.nav-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:1rem;height:64px;padding:0 1.25rem;transition:.25s}
+.nav.scrolled .nav-inner{height:54px}
+.logo{font-family:'Plus Jakarta Sans';font-weight:800;font-size:1.3rem;display:flex;align-items:center;gap:.5rem}
+.logo .mk{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#04130d;background:linear-gradient(140deg,var(--accent),var(--teal));box-shadow:var(--shadow-brand);font-size:1.1rem}
+.logo b{color:var(--accent)}
+.nav-sp{flex:1}
+.btn{padding:.6rem 1.15rem;border-radius:12px;font-weight:650;font-family:inherit;font-size:.9rem;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:.5rem;transition:.16s;position:relative;overflow:hidden}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#04130d;box-shadow:var(--shadow-brand)}
+.btn-accent:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.btn-outline{background:var(--glass-bg);border:1px solid var(--glass-brd);color:var(--text);backdrop-filter:blur(12px)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-accent::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transition:left .6s}
+.btn-accent:hover::after{left:140%}
+.btn-lg{padding:.85rem 1.6rem;font-size:1rem;border-radius:14px}
+.toggle{width:38px;height:38px;border-radius:50%;background:var(--glass-bg);border:1px solid var(--glass-brd);cursor:pointer;font-size:1.1rem;color:var(--text)}
+
+/* hero */
+.hero{position:relative;padding:4.5rem 0 4rem;background:radial-gradient(60% 50% at 12% 0%,rgba(16,185,129,.14),transparent 60%),radial-gradient(50% 45% at 100% 8%,rgba(34,211,238,.10),transparent 55%)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;align-items:center}
+.eyebrow{display:inline-flex;gap:.45rem;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-l);padding:.35rem .8rem;border-radius:100px;border:1px solid var(--glass-brd)}
+.hero h1{font-size:clamp(2.3rem,5vw,3.8rem);line-height:1.05;margin-top:1rem;font-weight:800}
+.grad{background:linear-gradient(110deg,var(--accent),var(--teal) 65%,#fff);background-size:240% 240%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gs 8s ease infinite}
+@keyframes gs{50%{background-position:100% 50%}}
+.hero p{font-size:1.12rem;color:var(--text2);margin-top:1.2rem;max-width:500px}
+.hero-cta{display:flex;gap:.85rem;margin-top:1.9rem;flex-wrap:wrap}
+.hero-visual{position:relative;min-height:420px}
+.stage{position:absolute;inset:0;border-radius:28px;overflow:hidden;background:linear-gradient(150deg,#064e3b 0%,#0a1020 55%,#083344 100%);box-shadow:var(--shadow-xl);transform-style:preserve-3d;border:1px solid var(--glass-brd)}
+.stage::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 80% 10%,rgba(52,211,153,.22),transparent 50%)}
+.gl{position:absolute;inset:0;opacity:.22;background-image:linear-gradient(rgba(52,211,153,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.5) 1px,transparent 1px);background-size:38px 38px;transform:perspective(600px) rotateX(55deg) translateY(40%) scale(1.6);transform-origin:center bottom}
+.fcard{position:absolute;background:var(--glass-bg);backdrop-filter:blur(16px);border:1px solid var(--glass-brd);border-radius:20px;box-shadow:var(--shadow-xl),inset 0 1px 0 var(--glass-hi);padding:1rem 1.15rem;display:flex;align-items:center;gap:.8rem;z-index:2;animation:fl 6s ease-in-out infinite}
+.fcard.d1{animation-delay:-2s}.fcard.d2{animation-delay:-4s}
+@keyframes fl{50%{transform:translateY(-14px)}}
+.fc-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#04130d;font-size:1.3rem;flex:none}
+.fc-t{font-weight:700;font-size:.9rem}.fc-s{font-size:.76rem;color:var(--text2)}
+.g-em{background:linear-gradient(140deg,#10b981,#0b7d57)}.g-teal{background:linear-gradient(140deg,#22d3ee,#0891b2)}.g-mint{background:linear-gradient(140deg,#34d399,#0891b2)}
+
+/* sections */
+.section{padding:4.5rem 0}
+.section-soft{background:var(--bg-soft)}
+.shead{text-align:center;max-width:640px;margin:0 auto 2.5rem}
+.shead h2{font-size:clamp(1.7rem,3.4vw,2.4rem)}
+.shead p{color:var(--text2);margin-top:.7rem}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.1rem}
+.svc{position:relative;background:var(--glass-bg);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid var(--glass-brd);border-radius:var(--radius-lg);padding:1.6rem 1.35rem;box-shadow:var(--shadow),inset 0 1px 0 var(--glass-hi);transition:transform .22s cubic-bezier(.2,.8,.3,1),box-shadow .22s,border-color .22s;transform-style:preserve-3d}
+.svc:hover{box-shadow:var(--glow-brand),inset 0 1px 0 var(--glass-hi);border-color:rgba(52,211,153,.38)}
+.svc-ic{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;color:#04130d;font-size:1.6rem;margin-bottom:1.1rem;box-shadow:0 12px 26px rgba(16,185,129,.30)}
+.svc h3{font-size:1.06rem;margin-bottom:.35rem}
+.svc p{color:var(--text2);font-size:.86rem}
+.svc .go{margin-top:1rem;color:var(--accent);font-weight:650;font-size:.85rem}
+.tilt-glare{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:4;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.18),transparent 45%);opacity:0;transition:opacity .25s;mix-blend-mode:overlay}
+.svc:hover .tilt-glare{opacity:1}
+
+/* listing cards */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.15rem}
+.lcard{background:var(--glass-bg);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border:1px solid var(--glass-brd);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow),inset 0 1px 0 var(--glass-hi);transition:.2s;transform-style:preserve-3d}
+.lcard:hover{box-shadow:var(--glow-brand),inset 0 1px 0 var(--glass-hi);border-color:rgba(52,211,153,.38)}
+.lc-media{aspect-ratio:16/10;display:grid;place-items:center;color:#04130d;font-size:2.6rem}
+.lc-body{padding:1rem 1.1rem 1.15rem}
+.lc-price{font-family:'Plus Jakarta Sans';font-weight:800;font-size:1.15rem}
+.lc-title{font-weight:700;margin:.3rem 0}
+.lc-sub{color:var(--text2);font-size:.84rem}
+.badge{display:inline-flex;gap:.3rem;padding:.28rem .65rem;border-radius:100px;font-size:.74rem;font-weight:700}
+.badge-gold{background:rgba(230,180,80,.14);color:var(--gold)}
+
+/* palette swatches */
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem}
+.sw{border-radius:14px;overflow:hidden;border:1px solid var(--glass-brd);box-shadow:var(--shadow)}
+.sw .c{height:80px}.sw .l{padding:.6rem .8rem;font-size:.8rem;background:var(--glass-bg)}.sw .l b{display:block}.sw .l span{color:var(--text2);font-size:.72rem}
+
+/* spotlight */
+.spot{position:relative}
+.spot::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;opacity:0;transition:.3s;background:radial-gradient(440px circle at var(--mx,50%) var(--my,50%),rgba(52,211,153,.14),transparent 42%)}
+.spot:hover::before{opacity:1}
+.spot>*{position:relative;z-index:2}
+
+#toTop{position:fixed;right:20px;bottom:22px;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent),var(--teal));color:#04130d;cursor:pointer;z-index:95;font-size:1.3rem;box-shadow:var(--glow-brand);opacity:0;transform:translateY(20px);pointer-events:none;transition:.3s}
+#toTop.show{opacity:1;transform:none;pointer-events:auto}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-visual{min-height:340px;order:-1}}
+</style>
+</head>
+<body>
+<div class="aurora-bg"><span class="a1"></span><span class="a2"></span></div>
+<div class="grain"></div>
+<div id="sp"></div>
+
+<nav class="nav"><div class="nav-inner">
+  <div class="logo"><span class="mk">◎</span>Sam<b>City</b></div>
+  <div class="nav-sp"></div>
+  <button class="toggle" id="tg">☀️</button>
+  <a class="btn btn-outline">Kirish</a>
+  <a class="btn btn-accent">Ro'yxat</a>
+</div></nav>
+
+<section class="hero"><div class="wrap"><div class="hero-grid">
+  <div>
+    <span class="eyebrow reveal">✦ Yangi dark glass dizayn</span>
+    <h1 class="reveal">Hamma narsa<br><span class="grad">bir joyda.</span></h1>
+    <p class="reveal">Qora premium glassmorphism uslub, bitta zumrad urg'u rang, frostlangan shisha panellar. Tinch, hashamatli va zamonaviy.</p>
+    <div class="hero-cta reveal">
+      <a class="btn btn-accent btn-lg">Boshlash — bepul</a>
+      <a class="btn btn-outline btn-lg">Batafsil</a>
+    </div>
+  </div>
+  <div class="hero-visual reveal">
+    <div class="stage" data-tilt><div class="gl"></div></div>
+    <div class="fcard" style="top:12%;left:-4%"><div class="fc-ic g-teal">🚕</div><div><div class="fc-t">Taksi yo'lda</div><div class="fc-s">3 daqiqada yetib keladi</div></div></div>
+    <div class="fcard d1" style="bottom:14%;left:4%"><div class="fc-ic g-mint">🛵</div><div><div class="fc-t">Buyurtma tayyor</div><div class="fc-s">Yetkazilmoqda · 12 daq</div></div></div>
+    <div class="fcard d2" style="top:44%;right:-6%"><div class="fc-ic g-em">✓</div><div><div class="fc-t">To'lov amalga oshdi</div><div class="fc-s">Kommunal · muvaffaqiyatli</div></div></div>
+  </div>
+</div></div></section>
+
+<section class="section section-soft"><div class="wrap">
+  <div class="shead reveal"><h2>Yangi palitra — zumrad & teal</h2><p>Bitta urg'u rang, neytral qora yuzalar. Kamroq rang = ko'proq premium.</p></div>
+  <div class="pal">
+    <div class="sw reveal"><div class="c" style="background:#34d399"></div><div class="l"><b>Emerald</b><span>#34d399 · asosiy</span></div></div>
+    <div class="sw reveal"><div class="c" style="background:#10b981"></div><div class="l"><b>Emerald deep</b><span>#10b981</span></div></div>
+    <div class="sw reveal"><div class="c" style="background:#22d3ee"></div><div class="l"><b>Teal</b><span>#22d3ee · ikkilamchi</span></div></div>
+    <div class="sw reveal"><div class="c" style="background:#0891b2"></div><div class="l"><b>Teal deep</b><span>#0891b2</span></div></div>
+    <div class="sw reveal"><div class="c" style="background:#070a10"></div><div class="l"><b>Midnight</b><span>#070a10 · fon</span></div></div>
+    <div class="sw reveal"><div class="c" style="background:#0f1521"></div><div class="l"><b>Glass surface</b><span>#0f1521</span></div></div>
+  </div>
+</div></section>
+
+<section class="section"><div class="wrap">
+  <div class="shead reveal"><h2>Glass kartalar — 3D tilt + spotlight</h2><p>Sichqonchani kartalar ustiga olib boring.</p></div>
+  <div class="svc-grid">
+    <div class="svc spot reveal" data-tilt><div class="svc-ic g-teal">🚕</div><h3>Taksi</h3><p>Tez buyurtma va shaffof narx.</p><div class="go">Buyurtma →</div><span class="tilt-glare"></span></div>
+    <div class="svc spot reveal" data-tilt><div class="svc-ic g-mint">🛵</div><h3>Yetkazish</h3><p>Do'konlar, ovqat va savat.</p><div class="go">Ko'rish →</div><span class="tilt-glare"></span></div>
+    <div class="svc spot reveal" data-tilt><div class="svc-ic g-em">🏛️</div><h3>Joylar</h3><p>To'yxona va zallarni bron qiling.</p><div class="go">Bron →</div><span class="tilt-glare"></span></div>
+    <div class="svc spot reveal" data-tilt><div class="svc-ic g-teal">💳</div><h3>To'lovlar</h3><p>Kommunal va boshqa to'lovlar.</p><div class="go">To'lash →</div><span class="tilt-glare"></span></div>
+  </div>
+</div></section>
+
+<section class="section section-soft"><div class="wrap">
+  <div class="shead reveal"><h2>E'lon kartalari</h2><p>Frostlangan shisha, zumrad glow hover.</p></div>
+  <div class="lgrid">
+    <div class="lcard spot reveal" data-tilt><div class="lc-media g-em">🏠</div><div class="lc-body"><div class="lc-price">450 000 <small>so'm</small></div><div class="lc-title">Markazda 2 xonali kvartira</div><div class="lc-sub">📍 Registon · 2 soat oldin</div></div></div>
+    <div class="lcard spot reveal" data-tilt><div class="lc-media g-teal">🚗</div><div class="lc-body"><span class="badge badge-gold">★ TOP</span><div class="lc-price" style="margin-top:.4rem">12 500 $</div><div class="lc-title">Chevrolet Cobalt 2022</div><div class="lc-sub">📍 Siab · 5 soat oldin</div></div></div>
+    <div class="lcard spot reveal" data-tilt><div class="lc-media g-mint">💼</div><div class="lc-body"><div class="lc-price" style="color:var(--accent)">Ish</div><div class="lc-title">Frontend dasturchi</div><div class="lc-sub">📍 IT Park · bugun</div></div></div>
+    <div class="lcard spot reveal" data-tilt><div class="lc-media g-teal">🍽️</div><div class="lc-body"><div class="lc-price">Bepul</div><div class="lc-title">Milliy taomlar restorani</div><div class="lc-sub">📍 Bog'ishamol · ★ 4.8</div></div></div>
+  </div>
+</div></section>
+
+<button id="toTop">↑</button>
+
+<script>
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(el,i){el.style.transitionDelay=(i%4*60)+'ms';io.observe(el)});
+var fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
+if(fine)document.querySelectorAll('[data-tilt]').forEach(function(el){
+  var g=el.querySelector('.tilt-glare');var s=el.classList.contains('stage')?10:8;
+  el.addEventListener('mousemove',function(ev){var r=el.getBoundingClientRect();var px=(ev.clientX-r.left)/r.width-.5,py=(ev.clientY-r.top)/r.height-.5;
+    el.style.transform='perspective(900px) rotateY('+px*s+'deg) rotateX('+(-py*s)+'deg) translateY(-6px)';
+    if(g){g.style.setProperty('--gx',(px+.5)*100+'%');g.style.setProperty('--gy',(py+.5)*100+'%')}});
+  el.addEventListener('mouseleave',function(){el.style.transform=''});
+});
+document.querySelectorAll('.spot').forEach(function(el){el.addEventListener('mousemove',function(ev){var r=el.getBoundingClientRect();el.style.setProperty('--mx',(ev.clientX-r.left)+'px');el.style.setProperty('--my',(ev.clientY-r.top)+'px')})});
+if(fine)document.querySelectorAll('.btn-accent').forEach(function(el){el.addEventListener('mousemove',function(ev){var r=el.getBoundingClientRect();el.style.transform='translate('+(ev.clientX-r.left-r.width/2)*.18+'px,'+(ev.clientY-r.top-r.height/2)*.28+'px)'});el.addEventListener('mouseleave',function(){el.style.transform=''})});
+var sp=document.getElementById('sp'),nav=document.querySelector('.nav'),tt=document.getElementById('toTop');
+addEventListener('scroll',function(){var st=scrollY,h=document.documentElement.scrollHeight-innerHeight;sp.style.width=(h>0?st/h*100:0)+'%';nav.classList.toggle('scrolled',st>12);tt.classList.toggle('show',st>500)},{passive:true});
+tt.onclick=function(){scrollTo({top:0,behavior:'smooth'})};
+document.getElementById('tg').onclick=function(){var l=document.documentElement.getAttribute('data-theme')==='light';document.documentElement.setAttribute('data-theme',l?'dark':'light');this.textContent=l?'☀️':'🌙'};
+</script>
+</body>
+</html>

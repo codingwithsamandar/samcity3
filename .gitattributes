@@ -1,0 +1,5 @@
+# Shell skriptlar HAR DOIM LF (Unix) qator oxiri bilan saqlanadi.
+# Aks holda Windows git ularni CRLF qiladi va Linux konteynerda
+# entrypoint.sh "bad interpreter" xatosi bilan ishlamaydi.
+*.sh text eol=lf
+entrypoint.sh text eol=lf

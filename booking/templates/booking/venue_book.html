@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Bron qilish — {{ venue.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .slot-btn{padding:.55rem .2rem;border:1px solid var(--border2);border-radius:10px;background:var(--surface);
+    color:var(--text);font-weight:650;font-size:.9rem;cursor:pointer;text-align:center;transition:all .12s;}
+  .slot-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .slot-btn.sel{background:var(--accent);border-color:var(--accent);color:#04130d;}
+  .opt-card{border:1px solid var(--border2);border-radius:12px;padding:.8rem .9rem;cursor:pointer;transition:all .12s;display:flex;justify-content:space-between;align-items:center;gap:.7rem;}
+  .opt-card:hover{border-color:var(--accent);}
+  .opt-card.sel{border-color:var(--accent);background:var(--accent-l);}
+  /* Usta kartasi */
+  .master-card{display:flex;gap:.8rem;align-items:center;border:1px solid var(--border2);border-radius:14px;
+    padding:.8rem;cursor:pointer;transition:all .12s;position:relative;}
+  .master-card:hover{border-color:var(--accent);}
+  .master-card.sel{border-color:var(--accent);background:var(--accent-l);box-shadow:var(--ring);}
+  .master-card.busy{opacity:.55;cursor:not-allowed;}
+  .master-card .m-ava{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;}
+  .master-card .m-meta{font-size:.78rem;color:var(--text2);display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.2rem;}
+  .m-badge{position:absolute;top:.6rem;right:.7rem;font-size:.7rem;font-weight:700;padding:.18rem .5rem;border-radius:8px;}
+  .m-badge.free{background:var(--green-l);color:var(--green);}
+  .m-badge.taken{background:var(--red-l);color:var(--red);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'venue_detail' venue.pk %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> {{ venue.name }}</a>
+
+  <div class="page-header"><h1>Bron qilish</h1><p>{{ venue.name }} — {{ venue.get_venue_type_display }}</p></div>
+
+  <form method="post" class="card card-pad" id="bookForm">
+    {% csrf_token %}
+
+    {% if venue.uses_slots %}
+    <!-- 1. Xizmat -->
+    <div class="form-group">
+      <label class="form-label">1. Xizmatni tanlang</label>
+      {% if services %}
+      <div id="serviceList" style="display:flex;flex-direction:column;gap:.5rem;">
+        {% for s in services %}
+        <label class="opt-card" data-dur="{{ s.duration_minutes }}">
+          <input type="radio" name="service" value="{{ s.pk }}" style="display:none;" {% if forloop.first %}checked{% endif %}>
+          <span><b>{{ s.name }}</b><br><small style="color:var(--text3);">{{ s.duration_minutes }} daqiqa</small></span>
+          <b style="color:var(--accent);white-space:nowrap;">{{ s.price|floatformat:0 }} so'm</b>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}<p style="color:var(--text2);">Bu joyda hozircha xizmatlar qo'shilmagan.</p>{% endif %}
+    </div>
+
+    <!-- 2. Sana -->
+    <div class="form-group">
+      <label class="form-label">2. Sana</label>
+      <input type="date" name="booking_date" id="dateInput" class="form-control" required>
+    </div>
+
+    <!-- 3. Vaqt (slot) -->
+    <div class="form-group">
+      <label class="form-label">3. Vaqtni tanlang</label>
+      <div id="slotBox" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:.5rem;">
+        <p style="color:var(--text3);grid-column:1/-1;">Avval sanani tanlang…</p>
+      </div>
+      <input type="hidden" name="start_time" id="startTime">
+    </div>
+
+    <!-- 4. Usta -->
+    {% if staff %}
+    <div class="form-group" id="masterWrap" style="display:none;">
+      <label class="form-label">4. Ustani tanlang <span style="color:var(--text3);font-weight:400;">(shu vaqtda bo'shlari)</span></label>
+      <div id="masterBox" style="display:flex;flex-direction:column;gap:.6rem;"></div>
+      <input type="hidden" name="staff" id="staffInput">
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Butun-kunlik joylar (to'yxona / sport / boshqa) -->
+    <div class="form-group">
+      <label class="form-label">Sana</label>
+      <input type="date" name="booking_date" class="form-control" required>
+    </div>
+    {% if venue.venue_type == 'wedding' %}
+    <div class="form-group"><label class="form-label">Tadbir turi</label>
+      <select name="event_type" class="form-control"><option value="wedding">To'y</option><option value="birthday">Tug'ilgan kun</option><option value="engagement">Fotiha</option><option value="other">Boshqa</option></select></div>
+    <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;"><input type="checkbox" name="decoration_needed"> Bezatish kerak</label>
+    {% elif venue.venue_type == 'gym' %}
+    <div class="form-group"><label class="form-label">Obuna turi</label>
+      <select name="subscription_type" class="form-control"><option value="daily">Kunlik</option><option value="monthly">Oylik</option><option value="yearly">Yillik</option></select></div>
+    {% endif %}
+    <div class="form-group"><label class="form-label">Mehmonlar soni</label><input type="number" name="guests" class="form-control" value="1" min="1"></div>
+    {% endif %}
+
+    <div class="form-group">
+      <label class="form-label">Izoh (ixtiyoriy)</label>
+      <textarea name="message" class="form-control" rows="2" placeholder="Qo'shimcha so'rov..."></textarea>
+    </div>
+
+    {% if venue.prepay_required %}
+    <div class="flash flash-info" style="margin-bottom:1rem;"><svg class="ic"><use href="#i-card"/></svg> Bron tasdiqlanishi uchun oldindan to'lov qilinadi. Bekor qilinsa yoki kelinmasa <b>&nbsp;{{ venue.penalty_percent }}%&nbsp;</b> ushlab qolinadi.</div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-check"/></svg> {% if venue.prepay_required %}To'lovga o'tish{% else %}Bron qilish{% endif %}</button>
+  </form>
+</div>
+
+{% if venue.uses_slots %}
+<script>
+(function(){
+  var dateInput=document.getElementById('dateInput');
+  var slotBox=document.getElementById('slotBox');
+  var startTime=document.getElementById('startTime');
+  var serviceList=document.getElementById('serviceList');
+  var masterWrap=document.getElementById('masterWrap');
+  var masterBox=document.getElementById('masterBox');
+  var staffInput=document.getElementById('staffInput');
+  var venuePk="{{ venue.pk }}";
+  dateInput.min=new Date().toISOString().split('T')[0];
+
+  function selService(el){serviceList.querySelectorAll('.opt-card').forEach(function(c){c.classList.remove('sel');});el.classList.add('sel');}
+  if(serviceList){
+    serviceList.querySelectorAll('.opt-card').forEach(function(c){
+      c.addEventListener('click',function(){c.querySelector('input').checked=true;selService(c);loadSlots();});
+      if(c.querySelector('input').checked)selService(c);
+    });
+  }
+  function curService(){var r=document.querySelector('input[name=service]:checked');return r?r.value:'';}
+
+  function resetMasters(){ if(masterWrap){masterWrap.style.display='none';masterBox.innerHTML='';if(staffInput)staffInput.value='';} }
+
+  function loadSlots(){
+    var d=dateInput.value;startTime.value='';resetMasters();
+    if(!d){slotBox.innerHTML='<p style="color:var(--text3);grid-column:1/-1;">Avval sanani tanlang…</p>';return;}
+    slotBox.innerHTML='<p style="color:var(--text3);grid-column:1/-1;">Yuklanmoqda…</p>';
+    fetch("{% url 'venue_slots' venue.pk %}?date="+d+"&service="+curService())
+      .then(function(r){return r.json();}).then(function(j){
+        var slots=j.slots||[];
+        if(!slots.length){slotBox.innerHTML='<p style="color:var(--text3);grid-column:1/-1;">Bu kunda bo\'sh vaqt yo\'q.</p>';return;}
+        slotBox.innerHTML='';
+        slots.forEach(function(s){
+          var b=document.createElement('button');b.type='button';b.className='slot-btn';b.textContent=s;
+          b.addEventListener('click',function(){
+            slotBox.querySelectorAll('.slot-btn').forEach(function(x){x.classList.remove('sel');});
+            b.classList.add('sel');startTime.value=s;loadMasters(s);
+          });
+          slotBox.appendChild(b);
+        });
+      }).catch(function(){slotBox.innerHTML='<p style="color:var(--red);grid-column:1/-1;">Xatolik.</p>';});
+  }
+
+  function star(r){var f=Math.round(r);return '★★★★★'.slice(0,f)+'☆☆☆☆☆'.slice(0,5-f);}
+
+  function loadMasters(time){
+    if(!masterWrap)return;
+    masterWrap.style.display='block';masterBox.innerHTML='<p style="color:var(--text3);">Yuklanmoqda…</p>';staffInput.value='';
+    var url="{% url 'venue_staff_at' venue.pk %}?date="+dateInput.value+"&time="+time+"&service="+curService();
+    fetch(url).then(function(r){return r.json();}).then(function(j){
+      var list=j.staff||[];
+      if(!list.length){masterBox.innerHTML='<p style="color:var(--text3);">Usta belgilanmagan — bron baribir qilinadi.</p>';return;}
+      masterBox.innerHTML='';
+      list.forEach(function(m){
+        var card=document.createElement('div');
+        card.className='master-card'+(m.available?'':' busy');
+        var ava=m.photo?('<img class="m-ava" src="'+m.photo+'">'):('<div class="m-ava" style="background:linear-gradient(135deg,var(--accent),var(--teal));color:#fff;display:grid;place-items:center;font-weight:700;font-size:1.2rem;">'+(m.name||'?').slice(0,1)+'</div>');
+        var meta=[];
+        meta.push('⭐ '+(m.rating||0).toFixed(1)+' ('+m.reviews_count+')');
+        meta.push('✓ '+m.completed_count+' ish');
+        if(m.experience_years)meta.push(m.experience_years+' yil tajriba');
+        card.innerHTML=ava+'<div style="flex:1;min-width:0;"><b>'+m.name+'</b>'+(m.specialty?(' <span style="color:var(--text3);font-size:.8rem;">· '+m.specialty+'</span>'):'')+
+          '<div class="m-meta">'+meta.join(' &nbsp;·&nbsp; ')+'</div>'+
+          (m.bio?('<div style="font-size:.78rem;color:var(--text3);margin-top:.25rem;">'+m.bio+'</div>'):'')+
+          '</div><span class="m-badge '+(m.available?'free':'taken')+'">'+(m.available?'Bo\'sh':'Band')+'</span>';
+        if(m.available){
+          card.addEventListener('click',function(){
+            masterBox.querySelectorAll('.master-card').forEach(function(x){x.classList.remove('sel');});
+            card.classList.add('sel');staffInput.value=m.id;
+          });
+        }
+        masterBox.appendChild(card);
+      });
+    }).catch(function(){masterBox.innerHTML='<p style="color:var(--red);">Xatolik.</p>';});
+  }
+
+  dateInput.addEventListener('change',loadSlots);
+
+  document.getElementById('bookForm').addEventListener('submit',function(e){
+    if(!startTime.value){e.preventDefault();alert('Iltimos, vaqtni tanlang.');return;}
+    if(masterWrap && masterBox.querySelector('.master-card') && !staffInput.value){
+      e.preventDefault();alert('Iltimos, bo\'sh ustani tanlang.');
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

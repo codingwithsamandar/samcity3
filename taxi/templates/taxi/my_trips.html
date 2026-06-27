@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}Sayohatlarim — Taksi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .yx { --yel:#ffdb4d; --card:#17171c; --card2:#1f1f27; --line:#2a2a33; --muted:#8b8b99; }
+  .tr { display:flex; align-items:center; gap:1rem; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:1rem 1.2rem; margin-bottom:.7rem; transition:border-color .15s; }
+  .tr:hover { border-color:var(--yel); }
+  .tr .rt { font-weight:700; }
+  .tr .rt .ar { color:var(--yel); margin:0 .3rem; }
+  .tr .sub { color:var(--muted); font-size:.82rem; margin-top:.15rem; }
+  .tr .amt { margin-left:auto; text-align:right; }
+  .tr .amt .p { font-weight:800; color:var(--yel); }
+  .badge-st { display:inline-block; padding:.2rem .6rem; border-radius:100px; font-size:.74rem; font-weight:700; margin-top:.2rem; }
+  .st-completed { background:rgba(16,185,129,.15); color:#34d399; }
+  .st-accepted, .st-on_way, .st-searching { background:rgba(255,219,77,.15); color:var(--yel); }
+  .st-cancelled { background:rgba(239,68,68,.12); color:#fca5a5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container yx" style="max-width:720px;">
+  <div class="page-header"><h1>🧭 Sayohatlarim</h1></div>
+
+  {% for trip in trips %}
+  <a href="{% url 'taxi:trip_detail' trip.id %}" class="tr">
+    <div style="min-width:0;">
+      <div class="rt">{{ trip.point_a }}<span class="ar">→</span>{{ trip.point_b }}</div>
+      <div class="sub">{{ trip.taxist.full_name }} · {{ trip.created_at|date:"d.m.Y H:i" }}</div>
+      <span class="badge-st st-{{ trip.status }}">{{ trip.get_status_display }}</span>
+    </div>
+    <div class="amt">
+      <div class="p">{{ trip.price|som }} so'm</div>
+      <div class="sub">{% if trip.is_paid %}✓ To'langan{% else %}To'lanmagan{% endif %}</div>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon">🧭</div><h3>Hali sayohat yo'q</h3><p>Taksi buyurtma qiling.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

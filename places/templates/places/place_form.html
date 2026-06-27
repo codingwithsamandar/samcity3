@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{% if mode == 'edit' %}Joyni tahrirlash{% else %}Joy qo'shish{% endif %} — Shofirkon{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>#pickmap{height:300px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:600px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div class="page-header"><h1>📍 {% if mode == 'edit' %}Joyni tahrirlash{% else %}Yangi joy qo'shish{% endif %}</h1></div>
+
+  <form method="post" enctype="multipart/form-data" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Nomi *</label>
+      <input type="text" name="name" class="form-control" required value="{{ place.name|default:post.name|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Toifa *</label>
+      <select name="category" class="form-control">
+        {% for key, label in categories %}<option value="{{ key }}" {% if place.category == key or post.category == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tavsif</label>
+      <textarea name="description" class="form-control">{{ place.description|default:post.description|default:'' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Xaritada belgilang (bosing) yoki koordinatani kiriting *</label>
+      <div id="pickmap"></div>
+      <div style="display:flex;gap:.8rem;">
+        <input type="number" step="any" name="latitude" id="latIn" class="form-control" placeholder="Latitude" required value="{{ place.latitude|default:post.latitude|default:''|unlocalize }}">
+        <input type="number" step="any" name="longitude" id="lngIn" class="form-control" placeholder="Longitude" required value="{{ place.longitude|default:post.longitude|default:''|unlocalize }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Manzil</label>
+      <input type="text" name="address" class="form-control" value="{{ place.address|default:post.address|default:'' }}">
+    </div>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="{{ place.phone|default:post.phone|default:'' }}"></div>
+      <div class="form-group" style="flex:1;"><label class="form-label">Ish vaqti</label><input type="text" name="working_hours" class="form-control" placeholder="09:00–18:00" value="{{ place.working_hours|default:post.working_hours|default:'' }}"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Veb-sayt</label>
+      <input type="url" name="website" class="form-control" placeholder="https://..." value="{{ place.website|default:post.website|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Asosiy rasm</label>
+      <input type="file" name="image" class="form-control" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Galereya (bir nechta rasm)</label>
+      <input type="file" name="gallery" class="form-control" accept="image/*" multiple>
+    </div>
+    <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Qo'shish{% endif %}</button>
+  </form>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const latIn=document.getElementById('latIn'), lngIn=document.getElementById('lngIn');
+const startLat=parseFloat(latIn.value)||{{ center_lat|unlocalize }};
+const startLng=parseFloat(lngIn.value)||{{ center_lng|unlocalize }};
+const pk=L.map('pickmap').setView([startLat,startLng],14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pk);
+let mk=(latIn.value&&lngIn.value)?L.marker([startLat,startLng]).addTo(pk):null;
+pk.on('click',function(e){
+  latIn.value=e.latlng.lat.toFixed(6); lngIn.value=e.latlng.lng.toFixed(6);
+  if(mk){mk.setLatLng(e.latlng);}else{mk=L.marker(e.latlng).addTo(pk);}
+});
+</script>
+{% endblock %}

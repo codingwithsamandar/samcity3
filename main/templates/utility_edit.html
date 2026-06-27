@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}To'lovni tahrirlash — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 0.5rem; }
+  .svc-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.75rem 0.4rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .svc-btn:hover { border-color: var(--accent); }
+  .svc-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .svc-btn .svc-ico { font-size: 1.4rem; }
+  .svc-btn .svc-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text2); }
+  .svc-btn.active .svc-lbl { color: var(--accent); }
+
+  .status-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .status-btn { padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border); background: var(--surface2); color: var(--text2); transition: all 0.15s; }
+  .status-btn.active-tolangan { border-color: var(--accent2); background: rgba(16,185,129,0.08); color: var(--accent2); }
+  .status-btn.active-kutilmoqda { border-color: #f59e0b; background: rgba(245,158,11,0.08); color: #f59e0b; }
+  .status-btn.active-muddati_otgan { border-color: var(--red); background: rgba(239,68,68,0.08); color: var(--red); }
+
+  .required-star { color: var(--red); margin-left: 2px; }
+  .form-hint { font-size: 0.78rem; color: var(--text2); margin-top: 0.3rem; }
+
+  /* Change indicator */
+  .changed-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-left: 0.4rem; vertical-align: middle; opacity: 0; transition: opacity 0.2s; }
+  input:not([data-orig=""]):focus ~ .changed-dot, textarea:not([data-orig=""]):focus ~ .changed-dot { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a> <span>›</span>
+    <a href="{% url 'utility_list' %}">Kommunal to'lovlar</a> <span>›</span>
+    <span style="color:var(--text);">Tahrirlash</span>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1>✏️ To'lovni tahrirlash</h1>
+      <p>Mavjud yozuvni yangilang</p>
+    </div>
+  </div>
+
+  <!-- Current record banner -->
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div style="font-size:2rem;">
+      {% if payment.service == 'elektr' %}⚡{% elif payment.service == 'suv' %}💧{% elif payment.service == 'gaz' %}🔥{% elif payment.service == 'internet' %}🌐{% elif payment.service == 'telefon' %}📞{% elif payment.service == 'uy_fondi' %}🏘️{% else %}📋{% endif %}
+    </div>
+    <div style="flex:1;">
+      <div style="font-weight:700;">{{ payment.get_service_display }}</div>
+      <div style="color:var(--text2); font-size:0.82rem;">{{ payment.period }} · {{ payment.paid_at|date:"d.m.Y" }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:1.1rem; font-weight:800; color:var(--accent2);">{{ payment.amount|floatformat:0 }} so'm</div>
+      {% if payment.status == 'tolangan' %}<span class="badge badge-green">✅ To'langan</span>
+      {% elif payment.status == 'kutilmoqda' %}<span class="badge badge-amber">⏳ Kutilmoqda</span>
+      {% elif payment.status == 'muddati_otgan' %}<span class="badge badge-red">🔴 Muddati o'tgan</span>{% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="flash flash-{% if 'error' in msg.tags %}error{% elif 'warning' in msg.tags %}warning{% elif 'info' in msg.tags %}info{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="service" id="serviceInput" value="{{ form.service.value|default:payment.service }}">
+    <input type="hidden" name="status" id="statusInput" value="{{ form.status.value|default:payment.status }}">
+
+    <!-- Service type -->
+    <div class="form-card">
+      <div class="form-card-title">🔌 Xizmat turi</div>
+      <div class="service-grid">
+        {% with cur=form.service.value|default:payment.service %}
+        <div class="svc-btn {% if cur == 'elektr' %}active{% endif %}" onclick="selectSvc('elektr', this)"><span class="svc-ico">⚡</span><span class="svc-lbl">Elektr</span></div>
+        <div class="svc-btn {% if cur == 'suv' %}active{% endif %}" onclick="selectSvc('suv', this)"><span class="svc-ico">💧</span><span class="svc-lbl">Suv</span></div>
+        <div class="svc-btn {% if cur == 'gaz' %}active{% endif %}" onclick="selectSvc('gaz', this)"><span class="svc-ico">🔥</span><span class="svc-lbl">Gaz</span></div>
+        <div class="svc-btn {% if cur == 'internet' %}active{% endif %}" onclick="selectSvc('internet', this)"><span class="svc-ico">🌐</span><span class="svc-lbl">Internet</span></div>
+        <div class="svc-btn {% if cur == 'telefon' %}active{% endif %}" onclick="selectSvc('telefon', this)"><span class="svc-ico">📞</span><span class="svc-lbl">Telefon</span></div>
+        <div class="svc-btn {% if cur == 'uy_fondi' %}active{% endif %}" onclick="selectSvc('uy_fondi', this)"><span class="svc-ico">🏘️</span><span class="svc-lbl">Uy-joy fondi</span></div>
+        <div class="svc-btn {% if cur == 'boshqa' %}active{% endif %}" onclick="selectSvc('boshqa', this)"><span class="svc-ico">📋</span><span class="svc-lbl">Boshqa</span></div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- Amount, period -->
+    <div class="form-card">
+      <div class="form-card-title">💰 Summa va davr</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Summa (so'm)<span class="required-star">*</span></label>
+          <input class="form-control" type="number" name="amount" value="{{ form.amount.value|default:payment.amount }}" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Davr (YYYY-MM)<span class="required-star">*</span></label>
+          <input class="form-control" type="month" name="period" value="{{ form.period.value|default:payment.period }}" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date, note, status -->
+    <div class="form-card">
+      <div class="form-card-title">📅 Sana, izoh va holat</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">To'lov sanasi<span class="required-star">*</span></label>
+          <input class="form-control" type="date" name="paid_at" value="{{ form.paid_at.value|default:payment.paid_at|date:'Y-m-d' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Izoh</label>
+          <input class="form-control" type="text" name="note" value="{{ form.note.value|default:payment.note }}" maxlength="255" placeholder="Ixtiyoriy...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">To'lov holati</label>
+        {% with cur=form.status.value|default:payment.status %}
+        <div class="status-btns">
+          <button type="button" class="status-btn {% if cur == 'tolangan' %}active-tolangan{% endif %}" onclick="selectStatus('tolangan', this)">✅ To'langan</button>
+          <button type="button" class="status-btn {% if cur == 'kutilmoqda' %}active-kutilmoqda{% endif %}" onclick="selectStatus('kutilmoqda', this)">⏳ Kutilmoqda</button>
+          <button type="button" class="status-btn {% if cur == 'muddati_otgan' %}active-muddati_otgan{% endif %}" onclick="selectStatus('muddati_otgan', this)">🔴 Muddati o'tgan</button>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button type="submit" class="btn btn-accent" style="padding:0.7rem 2rem; font-size:1rem;">💾 Saqlash</button>
+      <a href="{% url 'utility_list' %}" class="btn btn-ghost">Bekor qilish</a>
+      <a href="{% url 'utility_delete' payment.pk  %}" class="btn btn-red" style="margin-left:auto;">🗑 O'chirish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectSvc(val, el) {
+  document.getElementById('serviceInput').value = val;
+  document.querySelectorAll('.svc-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function selectStatus(val, btn) {
+  document.getElementById('statusInput').value = val;
+  document.querySelectorAll('.status-btn').forEach(b => {
+    b.classList.remove('active-tolangan','active-kutilmoqda','active-muddati_otgan');
+  });
+  btn.classList.add('active-' + val);
+}
+</script>
+{% endblock %}

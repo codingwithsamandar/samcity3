@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Profilni tahrirlash — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; }
+  @media (max-width: 768px) { .edit-layout { grid-template-columns: 1fr; } }
+
+  /* Avatar upload */
+  .avatar-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; text-align: center; position: sticky; top: 72px; }
+  .avatar-ring { width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 1rem; position: relative; cursor: pointer; }
+  .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 3px solid var(--border); overflow: hidden; transition: border-color 0.2s; }
+  .avatar-ring:hover .avatar-img { border-color: var(--accent); }
+  .avatar-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; font-size: 1.5rem; }
+  .avatar-ring:hover .avatar-overlay { opacity: 1; }
+  .avatar-ring input { position: absolute; inset: 0; opacity: 0; cursor: pointer; border-radius: 50%; }
+  .avatar-hint { color: var(--text2); font-size: 0.78rem; margin-top: 0.5rem; }
+
+  /* Form cards */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* Password toggle */
+  .pw-wrap { position: relative; }
+  .pw-wrap .form-control { padding-right: 2.5rem; }
+  .pw-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text2); font-size: 0.9rem; user-select: none; }
+  .pw-toggle:hover { color: var(--text); }
+
+  /* Strength meter */
+  .strength-bar { display: flex; gap: 3px; margin-top: 0.4rem; }
+  .strength-seg { height: 4px; flex: 1; border-radius: 100px; background: var(--border); transition: background 0.2s; }
+
+  .char-counter { text-align: right; font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .form-hint { font-size: 0.78rem; color: var(--text2); margin-top: 0.3rem; }
+
+  /* Success flash */
+  .save-indicator { display: none; align-items: center; gap: 0.5rem; color: var(--accent2); font-size: 0.88rem; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a> <span>›</span>
+    <a href="{% url 'profile' %}">Profil</a> <span>›</span>
+    <span style="color:var(--text);">Tahrirlash</span>
+  </div>
+
+  <div class="page-header">
+    <h1>✏️ Profilni tahrirlash</h1>
+    <p>Shaxsiy ma'lumotlaringizni yangilang</p>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="flash flash-{% if 'error' in msg.tags %}error{% elif 'warning' in msg.tags %}warning{% elif 'info' in msg.tags %}info{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="edit-layout">
+    <!-- Left: Avatar -->
+    <div>
+      <div class="avatar-section">
+        <form method="post" enctype="multipart/form-data" id="avatarForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="avatar">
+          <div class="avatar-ring" title="Rasm yuklash uchun bosing">
+            <div class="avatar-img" id="avatarPreview">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="" id="currentAvatar" style="width:100%;height:100%;object-fit:cover;">
+              {% elif user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="" id="currentAvatar" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+                <span id="avatarEmoji">👤</span>
+              {% endif %}
+            </div>
+            <div class="avatar-overlay">📷</div>
+            <input type="file" name="avatar" accept="image/*" onchange="previewAvatar(this)">
+          </div>
+          <div style="font-weight:700; margin-bottom:0.25rem;">{{ user.name|default:"Ism kiritilmagan" }}</div>
+          <div style="color:var(--text2); font-size:0.85rem;">{{ user.phone }}</div>
+          <div class="avatar-hint">Rasmni yuklash uchun bosing<br>JPG/PNG/WebP · 2MB gacha</div>
+          <button type="submit" class="btn btn-outline" style="margin-top:1rem; width:100%; font-size:0.85rem;" id="avatarSaveBtn" style="display:none;">
+            💾 Rasmni saqlash
+          </button>
+        </form>
+
+        <!-- Quick stats -->
+        <div style="border-top:1px solid var(--border); margin-top:1.25rem; padding-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; text-align:center;">
+          <div>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--accent);">{{ user.ads.count }}</div>
+            <div style="font-size:0.72rem; color:var(--text2);">E'lonlar</div>
+          </div>
+          <div>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--accent2);">{{ user.rating }}</div>
+            <div style="font-size:0.72rem; color:var(--text2);">Reyting</div>
+          </div>
+        </div>
+
+        <a href="{% url 'profile' %}" class="btn btn-ghost" style="width:100%; justify-content:center; margin-top:1rem; font-size:0.85rem;">← Profilga qaytish</a>
+      </div>
+    </div>
+
+    <!-- Right: Main form -->
+    <div>
+      <form method="post" action="{% url 'profile_update' %}" id="mainForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="profile">
+
+        <!-- Personal info -->
+        <div class="form-card">
+          <div class="form-card-title">👤 Shaxsiy ma'lumotlar</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ism familiya</label>
+              <input class="form-control" type="text" name="name" placeholder="Ismoil Karimov" value="{{ user.name|default:'' }}" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <div style="position:relative;">
+                <span style="position:absolute; left:0.9rem; top:50%; transform:translateY(-50%); color:var(--text2); font-size:0.9rem;">@</span>
+                <input class="form-control" type="text" name="username" placeholder="ismoil_k" value="{{ user.username|default:'' }}" maxlength="50" style="padding-left:1.9rem;">
+              </div>
+              <div class="form-hint">Ixtiyoriy · faqat harf, raqam, _ belgisi</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">📞 Telefon</label>
+              <input class="form-control" type="tel" value="{{ user.phone }}" disabled style="opacity:0.6; cursor:not-allowed;">
+              <div class="form-hint">Telefon raqamni o'zgartirib bo'lmaydi</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">📧 Email</label>
+              <input class="form-control" type="email" name="email" placeholder="email@example.com" value="{{ user.email|default:'' }}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📝 Bio (o'zi haqida)</label>
+            <textarea class="form-control" name="bio" rows="4" placeholder="O'zingiz haqida qisqacha yozing..." maxlength="500" id="bioField" oninput="countChars('bioField','bioCount')">{{ user.bio|default:'' }}</textarea>
+            <div class="char-counter"><span id="bioCount">0</span> / 500</div>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem;">
+          <button type="submit" class="btn btn-accent" style="padding:0.7rem 2rem; font-size:1rem;">
+            💾 Ma'lumotlarni saqlash
+          </button>
+          <div class="save-indicator" id="saveIndicator">✅ Saqlandi!</div>
+        </div>
+      </form>
+
+      <!-- Password change (separate form) -->
+      <div class="form-card">
+        <div class="form-card-title">🔐 Parol o'zgartirish <span style="font-size:0.75rem; text-transform:none; letter-spacing:0; font-weight:400;">(ixtiyoriy)</span></div>
+        <form method="post" action="{% url 'profile_update' %}" id="pwForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="password">
+          <div class="form-group">
+            <label class="form-label">Joriy parol</label>
+            <div class="pw-wrap">
+              <input class="form-control" type="password" name="current_password" placeholder="••••••••" id="curPw" autocomplete="current-password">
+              <span class="pw-toggle" onclick="togglePw('curPw', this)">👁</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Yangi parol</label>
+              <div class="pw-wrap">
+                <input class="form-control" type="password" name="new_password" placeholder="Kamida 8 belgi" id="newPw" autocomplete="new-password" oninput="checkStrength(this.value)">
+                <span class="pw-toggle" onclick="togglePw('newPw', this)">👁</span>
+              </div>
+              <div class="strength-bar" id="strengthBar">
+                <div class="strength-seg" id="s1"></div>
+                <div class="strength-seg" id="s2"></div>
+                <div class="strength-seg" id="s3"></div>
+                <div class="strength-seg" id="s4"></div>
+              </div>
+              <div class="form-hint" id="strengthText"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Yangi parolni tasdiqlang</label>
+              <div class="pw-wrap">
+                <input class="form-control" type="password" name="confirm_password" placeholder="Qaytadan kiriting" id="confirmPw" autocomplete="new-password" oninput="checkMatch()">
+                <span class="pw-toggle" onclick="togglePw('confirmPw', this)">👁</span>
+              </div>
+              <div class="form-hint" id="matchText"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-outline">🔐 Parolni yangilash</button>
+        </form>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="form-card" style="border-color: rgba(239,68,68,0.3);">
+        <div class="form-card-title" style="color:var(--red);">⚠️ Xavfli zona</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;">Hisobni o'chirish</div>
+            <div style="color:var(--text2); font-size:0.82rem; margin-top:0.2rem;">Barcha ma'lumotlar va e'lonlar butunlay o'chiriladi</div>
+          </div>
+          <a href="#" class="btn btn-red" style="font-size:0.82rem;" onclick="return confirm('Hisob o'chirilsinmi? Bu amalni qaytarib bo'lmaydi!')">🗑 Hisobni o'chirish</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Avatar preview
+function previewAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wrap = document.getElementById('avatarPreview');
+    wrap.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    document.getElementById('avatarSaveBtn').style.display = '';
+  };
+  reader.readAsDataURL(input.files[0]);
+  // Auto-submit
+  setTimeout(() => document.getElementById('avatarForm').submit(), 400);
+}
+
+// Password visibility toggle
+function togglePw(id, btn) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+// Password strength
+function checkStrength(val) {
+  const segs = ['s1','s2','s3','s4'];
+  const colors = ['var(--red)','#f59e0b','#3b82f6','var(--accent2)'];
+  const texts = ['', 'Zaif', "O'rtacha", 'Yaxshi', 'Kuchli'];
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  segs.forEach((id, i) => {
+    document.getElementById(id).style.background = i < score ? colors[score-1] : 'var(--border)';
+  });
+  document.getElementById('strengthText').textContent = val.length ? texts[score] : '';
+  document.getElementById('strengthText').style.color = score > 0 ? colors[score-1] : 'var(--text2)';
+}
+
+// Password match
+function checkMatch() {
+  const nw = document.getElementById('newPw').value;
+  const cf = document.getElementById('confirmPw').value;
+  const el = document.getElementById('matchText');
+  if (!cf) { el.textContent = ''; return; }
+  if (nw === cf) { el.textContent = '✅ Parollar mos'; el.style.color = 'var(--accent2)'; }
+  else { el.textContent = '❌ Parollar mos emas'; el.style.color = 'var(--red)'; }
+}
+
+// Char counter
+function countChars(fieldId, counterId) {
+  document.getElementById(counterId).textContent =
+    document.getElementById(fieldId).value.length;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  countChars('bioField', 'bioCount');
+});
+</script>
+{% endblock %}

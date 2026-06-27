@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — {{ store.name }} — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="breadcrumb" style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text2);margin-bottom:1.25rem;flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a><span>›</span>
+    <a href="{% url 'delivery:store_list' %}">Do'konlar</a><span>›</span>
+    <a href="{% url 'delivery:store_detail' store.pk %}">{{ store.name }}</a><span>›</span>
+    <span style="color:var(--text);font-weight:600;">{{ product.name }}</span>
+  </div>
+
+  <div class="detail-grid">
+    <div>
+      {% with images=product.images.all %}
+      <div class="gallery-main">
+        {% if images %}<img src="{{ images.0.image.url }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:56px;height:56px;"><use href="#i-cart"/></svg></div>{% endif %}
+      </div>
+      {% if images|length > 1 %}
+      <div class="gallery-thumbs">
+        {% for img in images %}<img src="{{ img.image.url }}" alt="{{ product.name }} — {{ forloop.counter }}">{% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <div style="margin-top:1.5rem;">
+        <h1 style="font-size:1.7rem;">{{ product.name }}</h1>
+        <div style="font-family:'Plus Jakarta Sans';font-size:1.7rem;font-weight:800;color:var(--accent);margin-top:.4rem;">{{ product.price|floatformat:0 }} <span style="font-size:1rem;color:var(--text3);font-weight:600;">so'm</span></div>
+      </div>
+
+      {% if product.description %}
+      <div class="card card-pad" style="margin-top:1.25rem;">
+        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Tavsif</h3>
+        <p style="font-size:.92rem;line-height:1.7;color:var(--text2);">{{ product.description }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside>
+      <div class="card card-pad sticky-card">
+        <div class="lc-price" style="font-size:1.5rem;color:var(--accent);">{{ product.price|floatformat:0 }} <small>so'm</small></div>
+        <div class="info-row" style="margin-top:.5rem;"><svg class="ic"><use href="#i-cart"/></svg><span>Omborda</span><b>{% if product.stock > 0 %}<span style="color:var(--green);">{{ product.stock }} dona</span>{% else %}<span style="color:var(--red);">Tugagan</span>{% endif %}</b></div>
+        <div class="info-row"><svg class="ic"><use href="#i-building"/></svg><span>Do'kon</span><b><a href="{% url 'delivery:store_detail' store.pk %}" style="color:var(--accent);">{{ store.name }}</a></b></div>
+        {% if store.category %}<div class="info-row"><svg class="ic"><use href="#i-tag"/></svg><span>Kategoriya</span><b>{{ store.category.name }}</b></div>{% endif %}
+        <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qo'shilgan</span><b>{{ product.created_at|date:"d.m.Y" }}</b></div>
+
+        {% if user.is_authenticated %}
+          {% if product.stock > 0 %}
+            <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:1rem;">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-cart"/></svg> Savatga qo'shish</button>
+            </form>
+          {% else %}
+            <button class="btn btn-ghost btn-block btn-lg" style="margin-top:1rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+          {% endif %}
+        {% else %}
+          <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-block btn-lg" style="margin-top:1rem;"><svg class="ic"><use href="#i-user"/></svg> Kirish — savatga qo'shish</a>
+        {% endif %}
+      </div>
+      <a href="{% url 'delivery:store_detail' store.pk %}" class="btn btn-ghost btn-block" style="margin-top:1rem;">← Do'konga qaytish</a>
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

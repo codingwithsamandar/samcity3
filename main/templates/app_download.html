@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}SamCity — Mobil Ilovani Yuklab Oling{% endblock %}
+
+{% block extra_css %}
+<style>
+  .app-page { min-height: 80vh; padding: 4rem 0; }
+  .app-hero { text-align: center; margin-bottom: 3rem; }
+  .app-hero .app-icon { width: 120px; height: 120px; border-radius: 30px; margin: 0 auto 1.5rem;
+    background: linear-gradient(140deg, var(--accent), var(--teal)); display: grid; place-items: center;
+    box-shadow: var(--shadow-xl), 0 0 0 1px rgba(52,211,153,.25); }
+  .app-hero .app-icon .ic { width: 62px; height: 62px; stroke-width: 1.6; color: #fff; }
+  .app-hero h1 { font-size: clamp(2rem, 5vw, 3rem); }
+  .app-hero p.lead { max-width: 560px; margin: 1rem auto 0; color: var(--text2); font-size: 1.05rem; line-height: 1.65; }
+  .dl-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 2.5rem; }
+  .dl-card { background: var(--glass-bg); border: 1px solid var(--glass-brd); border-radius: var(--radius-lg); padding: 2rem 1.75rem; text-align: center;
+    backdrop-filter: blur(16px); box-shadow: var(--shadow-lg), inset 0 1px 0 var(--glass-hi); position: relative; overflow: hidden; }
+  .dl-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: radial-gradient(70% 60% at 50% 0%, rgba(52,211,153,.08), transparent); pointer-events: none; }
+  .dl-card .dl-os { display: inline-flex; align-items: center; gap: .55rem; font-size: 1.15rem; font-weight: 800;
+    margin-bottom: .85rem; color: var(--text); }
+  .dl-card .dl-os .dl-logo { font-size: 2.2rem; }
+  .dl-card .dl-desc { color: var(--text2); font-size: .9rem; line-height: 1.55; margin-bottom: 1.5rem; }
+  .dl-card .dl-version { font-size: .78rem; color: var(--text3); margin-top: .75rem; }
+  .dl-card .badge-new { position: absolute; top: 1rem; right: 1rem; }
+  .pwa-section { background: linear-gradient(135deg, rgba(52,211,153,.08), rgba(34,211,238,.06)); border: 1px solid rgba(52,211,153,.2);
+    border-radius: var(--radius-lg); padding: 2rem 1.75rem; margin-top: 1.5rem; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+  .pwa-section .pwa-icon { width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(140deg, var(--accent), var(--teal));
+    display: grid; place-items: center; color: #fff; flex: none; }
+  .pwa-section .pwa-icon .ic { width: 32px; height: 32px; stroke-width: 1.8; }
+  .pwa-section h3 { font-size: 1.15rem; margin-bottom: .35rem; }
+  .pwa-section p { color: var(--text2); font-size: .9rem; line-height: 1.5; }
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 2rem; }
+  .step-item { text-align: center; padding: 1.5rem 1.25rem; }
+  .step-num { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-l); color: var(--accent);
+    font-weight: 800; font-size: 1.2rem; display: grid; place-items: center; margin: 0 auto .9rem; font-family: 'Plus Jakarta Sans'; }
+  .step-item h4 { font-size: .98rem; margin-bottom: .35rem; }
+  .step-item p { color: var(--text2); font-size: .85rem; }
+  .feature-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; margin-top: 1.5rem; }
+  .feature-item { display: flex; align-items: center; gap: .65rem; padding: .75rem 1rem; background: var(--surface2);
+    border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: .88rem; font-weight: 550; }
+  .feature-item .ic { width: 18px; height: 18px; color: var(--accent); flex: none; }
+  @media (max-width: 520px) { .pwa-section { flex-direction: column; text-align: center; } .pwa-section .pwa-icon { margin: 0 auto; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-page">
+  <div class="wrap">
+
+    <!-- Hero -->
+    <div class="app-hero reveal">
+      <div class="app-icon">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 21s7-5.4 7-11.3A7 7 0 1 0 5 9.7C5 15.6 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.5"/></svg>
+      </div>
+      <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24"><path d="m12 3.2 2.7 5.5 6 .9-4.35 4.2 1.03 6L12 17l-5.38 2.8 1.03-6L3.3 9.6l6-.9z"/></svg> Mobil Ilova</span>
+      <h1 style="margin-top:.75rem;">SamCity <span class="grad">ilovasini</span><br>yuklab oling</h1>
+      <p class="lead">Shahar xizmatlarini — e'lonlar, taksi, yetkazish va to'lovlar — doim qo'lingizda. Tezkor, qulay va offline ishlaydi.</p>
+    </div>
+
+    <!-- Download cards -->
+    <div class="dl-cards">
+
+      <!-- Android APK -->
+      <div class="dl-card reveal">
+        <span class="badge badge-green badge-new">Yangi!</span>
+        <div class="dl-os">
+          <span class="dl-logo">🤖</span> Android
+        </div>
+        <div class="dl-desc">
+          APK faylni yuklab, o'rnating. Qurilma sozlamalarida "Noma'lum manbalar" bandini yoqing.
+        </div>
+        <a href="/static/samcity.apk" class="btn btn-accent btn-lg btn-block" id="apkDownloadBtn" onclick="trackDownload('android')">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
+          APK Yuklab olish
+        </a>
+        <div class="dl-version">v1.0.0 — Android 6.0+</div>
+      </div>
+
+      <!-- iOS (PWA) -->
+      <div class="dl-card reveal" data-reveal-delay="80">
+        <div class="dl-os">
+          <span class="dl-logo">🍎</span> iPhone / iPad
+        </div>
+        <div class="dl-desc">
+          iPhone uchun App Store'da hali mavjud emas. Safari orqali "Bosh ekranga qo'shish" tugmasi bilan o'rnating.
+        </div>
+        <button class="btn btn-outline btn-lg btn-block" onclick="showPWAInstructions('ios')">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
+          Bosh ekranga qo'shish
+        </button>
+        <div class="dl-version">iOS 15.4+ · Safari orqali</div>
+      </div>
+
+      <!-- Desktop / PWA -->
+      <div class="dl-card reveal" data-reveal-delay="160">
+        <div class="dl-os">
+          <span class="dl-logo">💻</span> Kompyuter
+        </div>
+        <div class="dl-desc">
+          Chrome yoki Edge brauzerida saytga kirib, manzillar satrida "O'rnatish" tugmasini bosing.
+        </div>
+        <button class="btn btn-outline btn-lg btn-block" id="pwaInstallBtn" style="display:none;" onclick="installPWA()">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
+          Ilovani o'rnatish
+        </button>
+        <button class="btn btn-ghost btn-lg btn-block" id="pwaNotAvailable">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+          Brauzer orqali ishlaydi
+        </button>
+        <div class="dl-version">Windows / Mac / Linux</div>
+      </div>
+
+    </div><!-- /.dl-cards -->
+
+    <!-- PWA install guide -->
+    <div class="pwa-section reveal" style="margin-top:2.5rem;">
+      <div class="pwa-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6v6l4 2"/></svg></div>
+      <div>
+        <h3>Ilovani o'rnatmasdan ham ishlaydi</h3>
+        <p>SamCity — to'liq Progressive Web App (PWA). Brauzerda ishlaydi, offline rejimda ham ba'zi funksiyalar mavjud. Yuklab olmasdan ham to'liq foydalanish mumkin.</p>
+      </div>
+    </div>
+
+    <!-- Xususiyatlar -->
+    <div class="section-head reveal" style="margin-top:3.5rem;text-align:left;margin-left:0;max-width:100%;">
+      <h2>Ilova xususiyatlari</h2>
+      <p>Nima uchun SamCity ilovasini tanlash kerak?</p>
+    </div>
+    <div class="feature-list reveal">
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Tez va engil ilova</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Offline rejim</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Push-bildirishnomalar</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> GPS va xarita</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Xavfsiz to'lov</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Real vaqt yangilanish</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> Dark/Light rejim</div>
+      <div class="feature-item"><svg class="ic" viewBox="0 0 24 24"><path d="M4.5 12.5 10 18l9.5-11"/></svg> O'zbek tili</div>
+    </div>
+
+    <!-- O'rnatish bosqichlari -->
+    <div class="section-head reveal" style="margin-top:3.5rem;text-align:left;margin-left:0;max-width:100%;">
+      <h2>Android APK o'rnatish</h2>
+    </div>
+    <div class="steps-grid reveal">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <h4>Yuklab oling</h4>
+        <p>Yuqoridagi "APK Yuklab olish" tugmasini bosing</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <h4>Ruxsat bering</h4>
+        <p>Sozlamalar → Xavfsizlik → "Noma'lum manbalar"ni yoqing</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <h4>O'rnating</h4>
+        <p>Yuklab olingan APK faylni ochib, "O'rnatish"ni bosing</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <h4>Foydalaning!</h4>
+        <p>SamCity ikonkasiga bosib, ilovani ishga tushiring</p>
+      </div>
+    </div>
+
+    <!-- iOS instructions modal -->
+    <div id="iosModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)this.style.display='none'">
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:2rem;max-width:440px;width:100%;box-shadow:var(--shadow-xl);">
+        <h3 style="margin-bottom:1rem;">iPhone'ga o'rnatish</h3>
+        <div style="display:flex;flex-direction:column;gap:.85rem;">
+          <div style="display:flex;gap:.75rem;align-items:flex-start;"><div style="background:var(--accent-l);color:var(--accent);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;flex:none;font-weight:800;">1</div><p style="color:var(--text2);font-size:.95rem;margin:0;padding-top:.35rem;">Safari brauzeri orqali <b style="color:var(--text)">samcity.uz</b> saytiga o'ting</p></div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start;"><div style="background:var(--accent-l);color:var(--accent);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;flex:none;font-weight:800;">2</div><p style="color:var(--text2);font-size:.95rem;margin:0;padding-top:.35rem;">Pastdagi <b style="color:var(--text)">⬆️ Ulashish (Share)</b> tugmasini bosing</p></div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start;"><div style="background:var(--accent-l);color:var(--accent);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;flex:none;font-weight:800;">3</div><p style="color:var(--text2);font-size:.95rem;margin:0;padding-top:.35rem;"><b style="color:var(--text)">"Bosh ekranga qo'shish"</b> (Add to Home Screen) ni tanlang</p></div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start;"><div style="background:var(--accent-l);color:var(--accent);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;flex:none;font-weight:800;">4</div><p style="color:var(--text2);font-size:.95rem;margin:0;padding-top:.35rem;"><b style="color:var(--text)">"Qo'shish"</b> ni bosing — tayor!</p></div>
+        </div>
+        <button class="btn btn-accent btn-block" style="margin-top:1.5rem;" onclick="document.getElementById('iosModal').style.display='none'">Tushundim</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// PWA install prompt
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('pwaInstallBtn');
+  const notAvail = document.getElementById('pwaNotAvailable');
+  if (btn) { btn.style.display = 'flex'; }
+  if (notAvail) notAvail.style.display = 'none';
+});
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+}
+
+function showPWAInstructions(os) {
+  if (os === 'ios') {
+    document.getElementById('iosModal').style.display = 'flex';
+  }
+}
+
+function trackDownload(platform) {
+  console.log('Download:', platform);
+}
+
+// Check if already installed as PWA
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  document.querySelector('.pwa-section').innerHTML = `
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-size:2.5rem;">✅</div>
+      <div><h3 style="color:var(--accent)">Ilova o'rnatilgan!</h3><p style="color:var(--text2)">SamCity qurilmangizga muvaffaqiyatli o'rnatilgan.</p></div>
+    </div>`;
+}
+</script>
+{% endblock %}

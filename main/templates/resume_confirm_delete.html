@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Resumeni o'chirish — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 480px;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; margin-top: 2rem;">
+    <div style="font-size: 3.5rem; margin-bottom: 1rem;">🗑️</div>
+    <h1 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">Resumeni o'chirish</h1>
+    <p style="color: var(--text2); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6;">
+      Rostdan <strong style="color: var(--text);">«{{ resume.title }}»</strong> resumengizni o'chirmoqchimisiz?<br>
+      Bu amalni qaytarib bo'lmaydi.
+    </p>
+
+    <!-- Resume preview -->
+    <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; text-align: left; display: flex; gap: 0.85rem; align-items: center;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
+        {% if resume.user.avatar %}<img src="{{ resume.user.avatar.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% else %}👤{% endif %}
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          {{ resume.user.name|default:resume.user.phone }}
+        </div>
+        <div style="color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-top: 0.15rem;">
+          {{ resume.title }}
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.4rem;">
+          <span class="badge badge-blue">{{ resume.get_experience_display }}</span>
+          {% if resume.salary_min %}<span class="badge badge-green">{{ resume.salary_min|floatformat:0 }} so'm</span>{% endif %}
+          <span class="badge badge-gray">📅 {{ resume.created_at|date:"d.m.Y" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1.5rem; text-align:left; font-size:0.83rem; color:#fca5a5;">
+      ⚠️ Resume o'chirilgandan so'ng barcha ma'lumotlar va ko'nikmalar yo'qoladi.
+    </div>
+
+    <!-- Buttons -->
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="padding: 0.65rem 1.75rem; font-size: 0.95rem;">
+          🗑 Ha, o'chirish
+        </button>
+      </form>
+      <a href="{% url 'resume_detail' resume.pk  %}" class="btn btn-ghost" style="padding: 0.65rem 1.75rem; font-size: 0.95rem;">
+        Yo'q, qaytish
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

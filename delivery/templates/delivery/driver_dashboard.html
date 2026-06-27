@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Haydovchi paneli — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .o-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:.75rem;box-shadow:var(--shadow-xs);}
+  .o-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap}
+  .o-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+  .avail{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;font-size:.9rem}
+  .avail .dot{width:10px;height:10px;border-radius:50%}
+  .sec-t{font-size:1.15rem;font-weight:750;margin:1.75rem 0 .9rem;display:flex;align-items:center;gap:.5rem}
+  .sec-t .ic{color:var(--accent)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:920px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-bike"/></svg> Haydovchi paneli</span>
+      <h1 style="margin-top:.6rem;">{{ driver.full_name }}</h1>
+      <p>{{ driver.get_vehicle_type_display }}{% if driver.vehicle_number %} · {{ driver.vehicle_number }}{% endif %}</p>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+      <span class="avail"><span class="dot" style="background:{% if driver.is_available %}var(--green){% else %}var(--red){% endif %}"></span>{% if driver.is_available %}Bo'sh{% else %}Band{% endif %}</span>
+      <form method="post" action="{% url 'delivery:driver_toggle_available' %}">{% csrf_token %}<button class="btn btn-ghost">{% if driver.is_available %}Band qilish{% else %}Bo'sh qilish{% endif %}</button></form>
+      <a href="{% url 'delivery:driver_profile' %}" class="btn btn-outline"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-check"/></svg></div></div><div class="kpi-num">{{ delivered_count }}</div><div class="kpi-lbl">Yetkazilgan</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-bike"/></svg></div></div><div class="kpi-num">{{ my_active|length }}</div><div class="kpi-lbl">Faol buyurtma</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings }}</div><div class="kpi-lbl">Daromad (so'm)</div></div>
+  </div>
+
+  <div class="sec-t"><svg class="ic"><use href="#i-car"/></svg> Mening faol buyurtmalarim</div>
+  {% for o in my_active %}
+  <div class="o-card">
+    <div class="o-head">
+      <div>
+        <div style="font-weight:700;">{{ o.point_a|default:o.address }} · #{{ o.id|stringformat:'s'|slice:':8' }}</div>
+        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }}</span><a href="tel:{{ o.phone }}" style="color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:.25rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-phone"/></svg> {{ o.phone }}</a><span style="font-weight:700;color:var(--text);">{{ o.total }} so'm</span></div>
+        <div style="color:var(--text3);font-size:.8rem;margin-top:.3rem;">{% for it in o.items.all %}{{ it.product_name }}×{{ it.quantity }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      </div>
+      <span class="badge badge-gold">{{ o.get_status_display }}</span>
+    </div>
+    <div class="o-actions">
+      {% if o.status == 'assigned' %}
+      <form method="post" action="{% url 'delivery:driver_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="on_the_way"><button class="btn btn-accent"><svg class="ic"><use href="#i-bike"/></svg> Yo'lga chiqdim</button></form>
+      <form method="post" action="{% url 'delivery:order_release' o.id %}">{% csrf_token %}<button class="btn btn-outline">Voz kechish</button></form>
+      {% elif o.status == 'on_the_way' %}
+      <form method="post" action="{% url 'delivery:driver_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="delivered"><button class="btn btn-green"><svg class="ic"><use href="#i-check"/></svg> Yetkazdim</button></form>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}<p style="color:var(--text2);">Faol buyurtma yo'q.</p>{% endfor %}
+
+  <div class="sec-t"><svg class="ic"><use href="#i-cart"/></svg> Qabul qilish mumkin</div>
+  {% if driver.is_available %}
+    {% for o in available %}
+    <div class="o-card">
+      <div class="o-head">
+        <div>
+          <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.total }} so'm</div>
+          <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }} · {{ o.delivery_fee }} so'm yetkazish</div>
+        </div>
+        <form method="post" action="{% url 'delivery:order_accept' o.id %}">{% csrf_token %}<button class="btn btn-accent">Qabul qilish</button></form>
+      </div>
+    </div>
+    {% empty %}<p style="color:var(--text2);">Hozircha tayyor buyurtma yo'q.</p>{% endfor %}
+  {% else %}
+    <p style="color:var(--text2);">«Bo'sh» holatiga o'ting — buyurtmalar shu yerda ko'rinadi.</p>
+  {% endif %}
+
+  <div class="sec-t"><svg class="ic"><use href="#i-clock"/></svg> Yetkazilgan tarix</div>
+  {% for o in history %}
+  <div class="o-card" style="padding:.8rem 1.25rem;">
+    <div class="o-head" style="align-items:center;">
+      <span style="color:var(--text2);font-size:.85rem;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.address }} · {{ o.created_at|date:"d.m.Y" }}</span>
+      <span style="font-weight:700;color:var(--green);">+{{ o.delivery_fee }} so'm</span>
+    </div>
+  </div>
+  {% empty %}<p style="color:var(--text2);">Hali yetkazilgan buyurtma yo'q.</p>{% endfor %}
+</div>
+
+{% csrf_token %}
+{% if my_active %}
+<div id="gpsBanner" class="flash flash-info" style="position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:80;max-width:92vw;box-shadow:var(--shadow-lg);">
+  <svg class="ic"><use href="#i-pin"/></svg> <span id="gpsText">GPS yoqilmoqda — mijozlar sizni real vaqtda ko'radi</span>
+</div>
+<script>
+(function () {
+  if (!navigator.geolocation) { var b=document.getElementById('gpsBanner'); if(b) b.style.display='none'; return; }
+  var url = "{% url 'delivery:driver_update_location' %}";
+  var csrf = (document.querySelector('input[name=csrfmiddlewaretoken]')||{}).value || '';
+  var last = 0;
+  function send(pos) {
+    var now = Date.now();
+    if (now - last < 4000) return;  // throttle: at most once per 4s
+    last = now;
+    var c = pos.coords;
+    var body = new URLSearchParams({ lat: c.latitude, lng: c.longitude });
+    if (c.heading != null && !isNaN(c.heading)) body.append('heading', c.heading);
+    if (c.speed != null && !isNaN(c.speed)) body.append('speed', c.speed);
+    fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { var t=document.getElementById('gpsText'); if(t) t.textContent = 'Joylashuv uzatilmoqda · ' + (d.broadcast_to||0) + ' ta faol buyurtma'; })
+      .catch(function () {});
+  }
+  navigator.geolocation.watchPosition(send, function () {
+    var t=document.getElementById('gpsText'); if(t) t.textContent = "Joylashuvga ruxsat berilmadi — kuzatuv ishlamaydi";
+  }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
+})();
+</script>
+{% endif %}
+{% endblock %}

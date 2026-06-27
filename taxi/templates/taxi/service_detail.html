@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}{{ service.name }} — Taksi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .yx { --yel:#e0a52e; --yel-d:#c98f1d; --card:#fff; --card2:#f4f6fb; --line:#e7ebf3; --muted:#5b6678; }
+  .yx-back { display:inline-flex; align-items:center; gap:.4rem; color:var(--muted); font-size:.88rem; margin-bottom:.4rem; }
+  .yx-hero { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-xl);
+    padding: 1.7rem; margin: 0.6rem 0 1.3rem;
+    background: radial-gradient(120% 130% at 0% 0%, rgba(53,81,209,.08), transparent 55%), radial-gradient(100% 120% at 100% 0%, rgba(224,165,46,.12), transparent 55%), #fff; box-shadow: var(--shadow); }
+  .hero-top { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .hero-num { width: 66px; height: 66px; border-radius: 18px; flex-shrink: 0;
+    background: linear-gradient(135deg, #ffe375, var(--yel-d)); color: #1a1505;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem;
+    box-shadow: 0 6px 18px rgba(250,197,21,0.35); }
+  .hero-rate { margin-left: auto; text-align: right; }
+  .hero-rate .num { font-size: 2rem; font-weight: 800; color: var(--yel); line-height: 1; }
+  .hero-rate .st { font-size: 1rem; color: var(--yel); }
+  .hero-rate .cnt { color: var(--muted); font-size: 0.8rem; }
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; margin-top: 1.3rem; }
+  .info-box { background: var(--card2); border-radius: 14px; padding: 0.95rem; }
+  .info-box .lbl { color: var(--muted); font-size: 0.74rem; }
+  .info-box .val { font-weight: 800; font-size: 1.2rem; margin-top: 0.15rem; }
+  .info-box .val.y { color: var(--yel); }
+  .calc-note { margin-top: 1rem; padding: 0.85rem 1rem; background: var(--card2);
+    border-radius: 12px; font-size: 0.86rem; color: var(--muted); }
+  .yx-call { width:100%; margin-top:1.1rem; background:var(--yel); color:#1a1505; border:none;
+    border-radius:14px; padding:.95rem; font-weight:800; font-size:1rem; display:block; text-align:center; }
+  .rev { padding: 1.1rem; background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 0.7rem; }
+  .rev .h { display: flex; align-items: center; justify-content: space-between; }
+  .rev .av { width: 36px; height: 36px; border-radius: 50%; background: var(--card2); display: inline-flex;
+    align-items: center; justify-content: center; font-weight: 700; color: var(--muted); margin-right: 0.55rem; }
+  .rev .st { color: var(--yel); }
+  .sec-title { font-size: 1.15rem; font-weight: 700; margin: 1.6rem 0 1rem; }
+  .sec-title small { color: var(--muted); font-weight: 400; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container yx" style="max-width:780px;">
+  {% for m in messages %}
+  <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
+  {% endfor %}
+
+  <a href="{% url 'taxi:home' %}" class="yx-back">← Taksi bo'limi</a>
+
+  <div class="yx-hero">
+    <div class="hero-top">
+      <div class="hero-num">{{ service.short_number|default:"🚕" }}</div>
+      <div>
+        <h1 style="font-size:1.5rem;">{{ service.name }}</h1>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:0.2rem;">📍 {{ service.region }} · ⏰ {{ service.working_hours }}</div>
+      </div>
+      <div class="hero-rate">
+        <div class="num">{{ service.avg_rating }}</div>
+        <div class="st">{{ service.avg_rating|stars }}</div>
+        <div class="cnt">{{ service.review_count }} ta sharh</div>
+      </div>
+    </div>
+
+    {% if service.description %}<p style="color:var(--muted);margin-top:1rem;">{{ service.description }}</p>{% endif %}
+
+    <div class="info-grid">
+      <div class="info-box"><div class="lbl">Boshlang'ich narx</div><div class="val y">{{ service.base_price|som }} so'm</div></div>
+      <div class="info-box"><div class="lbl">Har km uchun</div><div class="val y">{{ service.price_per_km|som }} so'm</div></div>
+      <div class="info-box"><div class="lbl">Ish vaqti</div><div class="val">{{ service.working_hours }}</div></div>
+    </div>
+
+    <div class="calc-note">💡 Namuna: 5 km masofa ≈ <b style="color:var(--text);">{{ service.example_5km|som }} so'm</b></div>
+
+    {% if service.phone %}<a href="tel:{{ service.phone }}" class="yx-call">📞 {{ service.phone }}</a>{% endif %}
+  </div>
+
+  {% include 'taxi/_review_form.html' %}
+
+  <div class="sec-title">💬 Sharhlar <small>({{ service.review_count }})</small></div>
+  {% for r in reviews %}
+  <div class="rev">
+    <div class="h">
+      <div style="display:flex;align-items:center;">
+        <span class="av">{{ r.user.name|default:r.user.phone|first }}</span>
+        <b>{{ r.user.name|default:r.user.phone }}</b>
+      </div>
+      <span class="st">{{ r.rating|stars }}</span>
+    </div>
+    {% if r.comment %}<p style="color:var(--muted);margin-top:0.6rem;">{{ r.comment }}</p>{% endif %}
+    <div style="color:var(--muted);font-size:0.72rem;margin-top:0.5rem;">{{ r.created_at|date:"d.m.Y H:i" }}</div>
+  </div>
+  {% empty %}
+  <div class="empty-state"><div class="icon">💬</div><h3>Hali sharh yo'q</h3><p>Birinchi bo'lib baho bering!</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}{{ job.title }} — {{ job.company }} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
+  @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
+
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .info-card h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 0.9rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border); }
+  .info-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; width: 20px; text-align: center; }
+  .info-row-body { flex: 1; }
+  .info-row-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 0.1rem; }
+
+  .salary-display { font-size: 1.6rem; font-weight: 900; color: var(--accent2); margin-bottom: 0.25rem; }
+  .salary-display.negotiable { font-size: 1.1rem; color: var(--text2); font-weight: 500; }
+
+  .action-btns { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .breadcrumb { display: flex; gap: 0.5rem; align-items: center; font-size: 0.85rem; color: var(--text2); margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .breadcrumb a:hover { color: var(--accent); }
+
+  .requirements-list li { padding: 0.35rem 0; font-size: 0.9rem; color: var(--text2); display: flex; gap: 0.5rem; align-items: flex-start; list-style: none; }
+  .requirements-list li::before { content: '✓'; color: var(--accent2); flex-shrink: 0; margin-top: 0.05rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Bosh sahifa</a>
+    <span>›</span>
+    <a href="{% url 'job_list' %}">Ish e'lonlari</a>
+    <span>›</span>
+    <span style="color:var(--text);">{{ job.title }}</span>
+  </div>
+
+  <div class="detail-layout">
+    <!-- Left column -->
+    <div>
+      <!-- Header -->
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+          <div style="flex:1;">
+            <h1 style="font-size:1.5rem; font-weight:800; margin-bottom:0.4rem;">{{ job.title }}</h1>
+            <div style="color:var(--text2); font-size:0.95rem; font-weight:500;">🏢 {{ job.company }}</div>
+            {% if job.company_description %}
+            <p style="color:var(--text2); font-size:0.85rem; margin-top:0.5rem; line-height:1.6;">{{ job.company_description }}</p>
+            {% endif %}
+            {% if job.manager_name or job.manager_phone %}
+            <div style="margin-top:0.6rem; font-size:0.85rem; color:var(--text2);">
+              👤 {% if job.manager_name %}{{ job.manager_name }}{% endif %}
+              {% if job.manager_phone %} · <a href="tel:{{ job.manager_phone }}" style="color:var(--accent);">{{ job.manager_phone }}</a>{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          <!-- Salary -->
+          <div style="text-align:right;">
+            {% if job.salary_min and job.salary_max %}
+              <div class="salary-display">{{ job.salary_min|uz_price }} – {{ job.salary_max|uz_price }}</div>
+              <div style="color:var(--text2); font-size:0.78rem;">so'm / oy</div>
+            {% elif job.salary_min %}
+              <div class="salary-display">{{ job.salary_min|uz_price }}+</div>
+              <div style="color:var(--text2); font-size:0.78rem;">so'mdan / oy</div>
+            {% elif job.salary_max %}
+              <div class="salary-display">{{ job.salary_max|uz_price }}</div>
+              <div style="color:var(--text2); font-size:0.78rem;">so'mgacha / oy</div>
+            {% else %}
+              <div class="salary-display negotiable">Kelishiladi</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+          <span class="badge badge-blue">{{ job.get_job_type_display }}</span>
+          {% if job.location %}<span class="badge badge-gray">📍 {{ job.location }}</span>{% endif %}
+          {% if job.deadline %}<span class="badge badge-amber">📅 Muddati: {{ job.deadline|date:"d.m.Y" }}</span>{% endif %}
+          <span class="badge badge-gray">👁 {{ job.views }} ko'rildi</span>
+        </div>
+
+        <!-- Owner actions -->
+        {% if user.is_authenticated and user.pk == job.user_id %}
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; padding-top:1rem; border-top:1px solid var(--border);">
+          <a href="{% url 'job_edit' job.pk  %}" class="btn btn-outline" style="font-size:0.85rem;">✏️ Tahrirlash</a>
+          <a href="{% url 'job_delete' job.pk  %}" class="btn btn-red" style="font-size:0.85rem;">🗑 O'chirish</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Description -->
+      {% if job.description %}
+      <div class="info-card">
+        <h3>📋 Vakansiya haqida</h3>
+        <div style="font-size:0.9rem; line-height:1.8; color:var(--text2); white-space:pre-line;">{{ job.description }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Requirements -->
+      {% if job.requirements %}
+      <div class="info-card">
+        <h3>✅ Talablar</h3>
+        <ul class="requirements-list">
+          {% for line in job.requirements.splitlines %}
+          {% if line.strip %}
+          <li>{{ line.strip }}</li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right sidebar -->
+    <div>
+      <!-- Apply / Contact -->
+      <div class="info-card">
+        <h3>📞 Murojaat qilish</h3>
+        <div class="action-btns">
+          {% if job.contact_phone %}
+          <a href="tel:{{ job.contact_phone }}" class="btn btn-accent">📞 {{ job.contact_phone }}</a>
+          {% endif %}
+          {% if job.contact_telegram %}
+          <a href="https://t.me/{{ job.contact_telegram }}" target="_blank" class="btn btn-outline">✈️ Telegram orqali</a>
+          {% endif %}
+          {% if not job.contact_phone and not job.contact_telegram %}
+          <p style="color:var(--text2); font-size:0.85rem; text-align:center;">Kontakt ko'rsatilmagan</p>
+          {% endif %}
+        </div>
+        {% if job.deadline %}
+        <div style="margin-top:0.85rem; padding-top:0.85rem; border-top:1px solid var(--border); text-align:center; color:var(--text2); font-size:0.82rem;">
+          ⏰ Ariza topshirish muddati: <strong style="color:var(--text);">{{ job.deadline }}</strong>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Job details -->
+      <div class="info-card">
+        <h3>ℹ️ Ish tafsilotlari</h3>
+        {% if job.company %}
+        <div class="info-row">
+          <span class="info-row-icon">🏢</span>
+          <div class="info-row-body">
+            <div class="info-row-label">Kompaniya</div>
+            <div>{{ job.company }}</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <span class="info-row-icon">🕐</span>
+          <div class="info-row-body">
+            <div class="info-row-label">Ish turi</div>
+            <div>{{ job.get_job_type_display }}</div>
+          </div>
+        </div>
+        {% if job.location %}
+        <div class="info-row">
+          <span class="info-row-icon">📍</span>
+          <div class="info-row-body">
+            <div class="info-row-label">Manzil</div>
+            <div>{{ job.location }}</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <span class="info-row-icon">📅</span>
+          <div class="info-row-body">
+            <div class="info-row-label">Joylangan sana</div>
+            <div>{{ job.created_at|date:"d.m.Y" }}</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-row-icon">👁</span>
+          <div class="info-row-body">
+            <div class="info-row-label">Ko'rishlar soni</div>
+            <div>{{ job.views }} marta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posted by -->
+      <div class="info-card">
+        <h3>👤 E'lon egasi</h3>
+        <a href="{% url 'public_profile' job.user.pk  %}" style="text-decoration:none; color:inherit; display:flex; gap:0.75rem; align-items:center;">
+          <div style="width:44px; height:44px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:1.2rem; overflow:hidden; flex-shrink:0;">
+            {% if job.user.avatar %}<img src="{{ job.user.avatar.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% else %}👤{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;">{{ job.user.name|default:job.user.phone }}</div>
+            <div style="color:var(--text2); font-size:0.75rem;">{{ job.user.created_at|date:"d.m.Y" }}dan beri a'zo</div>
+          </div>
+        </a>
+      </div>
+
+      <a href="{% url 'job_list' %}" class="btn btn-ghost" style="width:100%; justify-content:center;">← Barchasi</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

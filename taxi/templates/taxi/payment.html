@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}To'lov — Taksi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .yx { --yel:#ffdb4d; --yel-d:#fac515; --card:#17171c; --card2:#1f1f27; --line:#2a2a33; --muted:#8b8b99; }
+  .pay-wrap { max-width: 480px; margin: 0 auto; }
+  .trip-summary { background: var(--card); border:1px solid var(--line); border-radius:18px; padding:1.2rem; margin-bottom:1.2rem; }
+  .ts-route { font-size:1.1rem; font-weight:700; }
+  .ts-route .ar { color:var(--yel); margin:0 .3rem; }
+  .ts-amount { display:flex; justify-content:space-between; align-items:center; margin-top:1rem;
+    padding-top:1rem; border-top:1px solid var(--line); }
+  .ts-amount .lbl { color:var(--muted); }
+  .ts-amount .val { font-size:1.5rem; font-weight:800; color:var(--yel); }
+
+  /* Virtual card */
+  .vcard { position:relative; border-radius:18px; padding:1.3rem; margin-bottom:1.3rem; color:#fff;
+    background: linear-gradient(135deg, #2b2b38, #16161d); border:1px solid var(--line); min-height:170px;
+    display:flex; flex-direction:column; justify-content:space-between; }
+  .vcard .chip { width:40px;height:30px;border-radius:6px;background:linear-gradient(135deg,#ffe375,var(--yel-d)); }
+  .vcard .vnum { font-size:1.25rem; letter-spacing:2px; font-weight:600; font-family:monospace; }
+  .vcard .vbot { display:flex; justify-content:space-between; font-size:.8rem; color:#cfcfd8; }
+  .vcard .brand { position:absolute; top:1.1rem; right:1.3rem; font-weight:800; font-size:1rem; color:var(--yel); }
+
+  .method-tabs { display:flex; gap:.5rem; margin-bottom:1.2rem; }
+  .method-tab { flex:1; text-align:center; padding:.8rem; border-radius:13px; border:1px solid var(--line);
+    background:var(--card); color:var(--muted); font-weight:700; font-family:inherit; font-size:.95rem; cursor:pointer; }
+  .method-tab.active { border-color:var(--yel); color:var(--text); background:var(--card2); }
+  .method-tab:focus-visible { outline:2px solid var(--yel); outline-offset:2px; }
+
+  .pay-btn { width:100%; background:var(--yel); color:#1a1505; border:none; border-radius:14px;
+    padding:1rem; font-weight:800; font-size:1.05rem; cursor:pointer; margin-top:.5rem; }
+  .pay-btn:hover { background:var(--yel-d); }
+  .sec-note { color:var(--muted); font-size:.78rem; text-align:center; margin-top:.9rem; }
+  .demo-badge { background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.3); color:#93c5fd;
+    border-radius:10px; padding:.6rem .9rem; font-size:.82rem; margin-bottom:1.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container yx">
+<div class="pay-wrap">
+  {% for m in messages %}
+  <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
+  {% endfor %}
+
+  <a href="{% url 'taxi:taxist_detail' trip.taxist.pk %}" style="color:var(--muted);font-size:.88rem;">← Orqaga</a>
+  <h1 style="font-size:1.5rem;margin:.6rem 0 1.2rem;">To'lov</h1>
+
+  <div class="demo-badge">ℹ️ Bu demo to'lov. Payme/Click integratsiyasi hali ulanmagan — "To'lash" tugmasi bosilsa, to'lov amalga oshirilgan deb hisoblanadi. Karta ma'lumotlari saqlanmaydi (faqat oxirgi 4 raqam).</div>
+
+  <!-- Sayohat xulosasi -->
+  <div class="trip-summary">
+    <div class="ts-route">{{ trip.point_a }}<span class="ar">→</span>{{ trip.point_b }}</div>
+    <div style="color:var(--muted);font-size:.85rem;margin-top:.3rem;">
+      🚗 {{ trip.taxist.full_name }}{% if trip.is_delivery %} · 📦 Dostavka{% else %} · 🧍 Yo'lovchi{% endif %}
+    </div>
+    <div class="ts-amount">
+      <span class="lbl">To'lov summasi</span>
+      <span class="val">{{ trip.price|som }} so'm</span>
+    </div>
+  </div>
+
+  <form method="post" id="payForm">
+    {% csrf_token %}
+
+    <div class="method-tabs">
+      <button type="button" class="method-tab active" data-m="card" aria-pressed="true">💳 Karta</button>
+      <button type="button" class="method-tab" data-m="cash" aria-pressed="false">💵 Naqd</button>
+    </div>
+    <input type="hidden" name="payment_method" id="methodInput" value="card">
+
+    <!-- Karta bloki -->
+    <div id="cardBlock">
+      <div class="vcard">
+        <div class="brand" id="brandLbl"></div>
+        <div class="chip"></div>
+        <div class="vnum" id="vnum">•••• •••• •••• ••••</div>
+        <div class="vbot">
+          <span id="vholder">KARTA EGASI</span>
+          <span id="vexp">MM/YY</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="cardNumber">Karta raqami</label>
+        <input type="text" name="card_number" id="cardNumber" class="form-control" inputmode="numeric"
+               placeholder="0000 0000 0000 0000" maxlength="23" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cardHolder">Karta egasi</label>
+        <input type="text" name="card_holder" id="cardHolder" class="form-control" placeholder="ISM FAMILIYA" autocomplete="off">
+      </div>
+      <div style="display:flex;gap:.8rem;">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label" for="expiry">Amal qilish (MM/YY)</label>
+          <input type="text" name="expiry" id="expiry" class="form-control" placeholder="12/27" maxlength="5" autocomplete="off">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label" for="cvv">CVV</label>
+          <input type="password" name="cvv" id="cvv" class="form-control" inputmode="numeric" placeholder="•••" maxlength="4" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="pay-btn" id="payBtn">{{ trip.price|som }} so'm to'lash</button>
+    <div class="sec-note">🔒 Ma'lumotlaringiz himoyalangan. To'liq karta raqami va CVV saqlanmaydi.</div>
+  </form>
+</div>
+</div>
+
+<script>
+(function () {
+  var num = document.getElementById('cardNumber');
+  var vnum = document.getElementById('vnum');
+  var holder = document.getElementById('cardHolder');
+  var vholder = document.getElementById('vholder');
+  var exp = document.getElementById('expiry');
+  var vexp = document.getElementById('vexp');
+  var brand = document.getElementById('brandLbl');
+  var cardBlock = document.getElementById('cardBlock');
+  var methodInput = document.getElementById('methodInput');
+  var payBtn = document.getElementById('payBtn');
+  var tabs = document.querySelectorAll('.method-tab');
+  var amountTxt = payBtn.textContent;
+
+  function fmtNumber(v) {
+    var d = v.replace(/\D/g, '').slice(0, 16);
+    return d.replace(/(.{4})/g, '$1 ').trim();
+  }
+  function detectBrand(d) {
+    if (d.indexOf('8600') === 0) return 'UZCARD';
+    if (d.indexOf('9860') === 0) return 'HUMO';
+    if (d.charAt(0) === '4') return 'VISA';
+    if (d.charAt(0) === '5') return 'MASTERCARD';
+    return '';
+  }
+  if (num) num.addEventListener('input', function () {
+    num.value = fmtNumber(num.value);
+    var d = num.value.replace(/\D/g, '');
+    vnum.textContent = (num.value || '•••• •••• •••• ••••').padEnd(19, '•');
+    brand.textContent = detectBrand(d);
+  });
+  if (holder) holder.addEventListener('input', function () {
+    vholder.textContent = (holder.value || 'KARTA EGASI').toUpperCase();
+  });
+  if (exp) exp.addEventListener('input', function () {
+    var d = exp.value.replace(/\D/g, '').slice(0, 4);
+    if (d.length >= 3) d = d.slice(0, 2) + '/' + d.slice(2);
+    exp.value = d;
+    vexp.textContent = d || 'MM/YY';
+  });
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+      t.classList.add('active'); t.setAttribute('aria-pressed','true');
+      var m = t.dataset.m;
+      methodInput.value = m;
+      cardBlock.style.display = (m === 'card') ? '' : 'none';
+      payBtn.textContent = (m === 'cash') ? "Naqd — buyurtmani yakunlash" : amountTxt;
+    });
+  });
+})();
+</script>
+{% endblock %}

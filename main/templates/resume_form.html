@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}{% if resume %}Resume tahrirlash{% else %}Resume yaratish{% endif %} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* Experience choice cards */
+  .exp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem; }
+  .exp-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .exp-btn:hover { border-color: var(--accent); }
+  .exp-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .exp-btn .exp-ico { font-size: 1.5rem; }
+  .exp-btn .exp-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
+  .exp-btn.active .exp-lbl { color: var(--accent); }
+  .exp-btn .exp-dot-row { display: flex; gap: 3px; margin-top: 0.3rem; }
+  .edot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .edot.on { background: var(--accent); }
+
+  /* Skills tag input */
+  .skills-input-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; min-height: 46px; cursor: text; transition: border-color 0.15s; }
+  .skills-input-wrap:focus-within { border-color: var(--accent); }
+  .skill-tag { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem 0.2rem 0.75rem; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 100px; font-size: 0.78rem; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .skill-tag-remove { cursor: pointer; opacity: 0.6; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
+  .skill-tag-remove:hover { opacity: 1; }
+  .skills-input-wrap input { background: none; border: none; outline: none; color: var(--text); font-size: 1rem; flex: 1; min-width: 120px; padding: 0.2rem 0; }
+  .skills-hint { font-size: 0.75rem; color: var(--text2); margin-top: 0.35rem; }
+
+  .required-star { color: var(--red); margin-left: 2px; }
+  .char-counter { text-align: right; font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .form-hint { font-size: 0.78rem; color: var(--text2); margin-top: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+  <!-- Breadcrumb -->
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a> <span>›</span>
+    <a href="{% url 'resume_list' %}">Resumelar</a> <span>›</span>
+    <span style="color:var(--text);">{% if resume %}Tahrirlash{% else %}Yangi resume{% endif %}</span>
+  </div>
+
+  <div class="page-header">
+    <h1>{% if resume %}✏️ Resumeni tahrirlash{% else %}📄 Resume yaratish{% endif %}</h1>
+    <p>{% if resume %}Ma'lumotlarni yangilang{% else %}O'zingiz haqida to'liq ma'lumot kiriting{% endif %}</p>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="flash flash-{% if 'error' in msg.tags %}error{% elif 'warning' in msg.tags %}warning{% elif 'info' in msg.tags %}info{% else %}success{% endif %}">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="experience" id="expInput" value="{{ resume.experience|default:post.experience|default:'no_exp' }}">
+    <input type="hidden" name="skills" id="skillsHidden" value="{{ resume.skills|default:post.skills|default:'' }}">
+
+    <!-- 1. Kasb nomi -->
+    <div class="form-card">
+      <div class="form-card-title">💼 Kasb / Lavozim</div>
+      <div class="form-group">
+        <label class="form-label">Kasb nomi (sarlavha)<span class="required-star">*</span></label>
+        <input class="form-control" type="text" name="title" placeholder="Masalan: Frontend dasturchi, Buxgalter, Oshpaz..." value="{{ resume.title|default:post.title|default:'' }}" required maxlength="200">
+        {% if form.title.errors %}<div style="color:var(--red);font-size:0.8rem;margin-top:0.3rem;">{{ form.title.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Joylashuv</label>
+          <input class="form-control" type="text" name="location" placeholder="Samarqand, Registon tumani" value="{{ resume.location|default:post.location|default:'' }}" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label class="form-label">💰 Kutilgan maosh (so'm/oy)</label>
+          <input class="form-control" type="number" name="salary_min" placeholder="5 000 000" value="{{ resume.salary_min|default:post.salary_min|default:'' }}" min="0">
+          <div class="form-hint">Bo'sh qoldirsa ko'rsatilmaydi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Tajriba darajasi -->
+    <div class="form-card">
+      <div class="form-card-title">📅 Tajriba darajasi</div>
+      <div class="exp-grid">
+        <div class="exp-btn {% if resume.experience == 'no_exp' or post.experience == 'no_exp' or not resume.experience and not post.experience %}active{% endif %}" onclick="selectExp('no_exp', this)">
+          <span class="exp-ico">🌱</span>
+          <span class="exp-lbl">Tajribasiz</span>
+          <div class="exp-dot-row"><span class="edot"></span><span class="edot"></span><span class="edot"></span><span class="edot"></span><span class="edot"></span></div>
+        </div>
+        <div class="exp-btn {% if resume.experience == '1_year' or post.experience == '1_year' %}active{% endif %}" onclick="selectExp('1_year', this)">
+          <span class="exp-ico">📗</span>
+          <span class="exp-lbl">1 yilgacha</span>
+          <div class="exp-dot-row"><span class="edot on"></span><span class="edot"></span><span class="edot"></span><span class="edot"></span><span class="edot"></span></div>
+        </div>
+        <div class="exp-btn {% if resume.experience == '1_3' or post.experience == '1_3' %}active{% endif %}" onclick="selectExp('1_3', this)">
+          <span class="exp-ico">📘</span>
+          <span class="exp-lbl">1–3 yil</span>
+          <div class="exp-dot-row"><span class="edot on"></span><span class="edot on"></span><span class="edot"></span><span class="edot"></span><span class="edot"></span></div>
+        </div>
+        <div class="exp-btn {% if resume.experience == '3_5' or post.experience == '3_5' %}active{% endif %}" onclick="selectExp('3_5', this)">
+          <span class="exp-ico">📙</span>
+          <span class="exp-lbl">3–5 yil</span>
+          <div class="exp-dot-row"><span class="edot on"></span><span class="edot on"></span><span class="edot on"></span><span class="edot"></span><span class="edot"></span></div>
+        </div>
+        <div class="exp-btn {% if resume.experience == '5_plus' or post.experience == '5_plus' %}active{% endif %}" onclick="selectExp('5_plus', this)">
+          <span class="exp-ico">🏆</span>
+          <span class="exp-lbl">5+ yil</span>
+          <div class="exp-dot-row"><span class="edot on"></span><span class="edot on"></span><span class="edot on"></span><span class="edot on"></span><span class="edot on"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Ko'nikmalar -->
+    <div class="form-card">
+      <div class="form-card-title">🛠 Ko'nikmalar (Skills)</div>
+      <div class="form-group">
+        <label class="form-label">Ko'nikmalarni vergul bilan ajratib kiriting</label>
+        <div class="skills-input-wrap" id="skillsWrap">
+          <!-- tags rendered by JS -->
+          <input type="text" id="skillsInput" placeholder="Masalan: Python, Excel, Ingliz tili..." onkeydown="handleSkillKey(event)" oninput="handleSkillInput(this)">
+        </div>
+        <div class="skills-hint">Enter yoki vergul bilan qo'shing · Belgini bosib o'chiring</div>
+      </div>
+    </div>
+
+    <!-- 4. O'zi haqida -->
+    <div class="form-card">
+      <div class="form-card-title">👤 O'zi haqida</div>
+      <div class="form-group">
+        <label class="form-label">Qisqacha tavsif<span class="required-star">*</span></label>
+        <textarea class="form-control" name="about" rows="6" placeholder="O'zingiz, tajribangiz, maqsadlaringiz haqida yozing..." required id="aboutField" oninput="countChars('aboutField','aboutCount')">{{ resume.about|default:post.about|default:'' }}</textarea>
+        <div class="char-counter"><span id="aboutCount">0</span> belgi</div>
+      </div>
+    </div>
+
+    <!-- 5. Kontakt -->
+    <div class="form-card">
+      <div class="form-card-title">📞 Kontakt</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📞 Telefon raqam</label>
+          <input class="form-control" type="tel" name="contact_phone" placeholder="+998901234567" value="{{ resume.contact_phone|default:post.contact_phone|default:user.phone }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">✈️ Telegram username</label>
+          <input class="form-control" type="text" name="contact_telegram" placeholder="username (@ belgisisiz)" value="{{ resume.contact_telegram|default:post.contact_telegram|default:'' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button type="submit" class="btn btn-accent" style="padding:0.7rem 2rem; font-size:1rem;">
+        {% if resume %}✅ Saqlash{% else %}📄 Resume joylash{% endif %}
+      </button>
+      <a href="{% if resume %}/resumes/{{ resume.pk }}/{% else %}/resumes/{% endif %}" class="btn btn-ghost">Bekor qilish</a>
+      {% if resume %}
+      <a href="{% url 'resume_delete' resume.pk  %}" class="btn btn-red" style="margin-left:auto;">🗑 O'chirish</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Experience selector ──
+function selectExp(val, el) {
+  document.getElementById('expInput').value = val;
+  document.querySelectorAll('.exp-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Skills tag input ──
+let skills = [];
+
+function initSkills() {
+  const raw = document.getElementById('skillsHidden').value;
+  if (raw.trim()) {
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach(addSkill);
+  }
+}
+
+function addSkill(text) {
+  text = text.replace(/,/g, '').trim();
+  if (!text || skills.includes(text)) return;
+  skills.push(text);
+  renderSkills();
+}
+
+function removeSkill(idx) {
+  skills.splice(idx, 1);
+  renderSkills();
+}
+
+function renderSkills() {
+  const wrap = document.getElementById('skillsWrap');
+  const input = document.getElementById('skillsInput');
+  // Remove old tags
+  wrap.querySelectorAll('.skill-tag').forEach(t => t.remove());
+  // Re-render
+  skills.forEach((s, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'skill-tag';
+    tag.innerHTML = `${s} <span class="skill-tag-remove" onclick="removeSkill(${i})">✕</span>`;
+    wrap.insertBefore(tag, input);
+  });
+  document.getElementById('skillsHidden').value = skills.join(', ');
+}
+
+function handleSkillKey(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.replace(/,/g, '').trim();
+    if (val) { addSkill(val); e.target.value = ''; }
+  } else if (e.key === 'Backspace' && e.target.value === '' && skills.length) {
+    removeSkill(skills.length - 1);
+  }
+}
+
+function handleSkillInput(el) {
+  if (el.value.endsWith(',')) {
+    const val = el.value.slice(0, -1).trim();
+    if (val) { addSkill(val); el.value = ''; }
+  }
+}
+
+function countChars(fieldId, counterId) {
+  document.getElementById(counterId).textContent =
+    document.getElementById(fieldId).value.length.toLocaleString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSkills();
+  countChars('aboutField', 'aboutCount');
+  document.getElementById('skillsWrap').addEventListener('click', () => {
+    document.getElementById('skillsInput').focus();
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{{ place.name }} — Shofirkon{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>#pmap{height:300px;border-radius:var(--radius);border:1px solid var(--border);z-index:1} .btn-sm{min-height:44px;min-width:44px;}</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1080px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'places:place_list' %}?category={{ place.category }}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> {{ place.get_category_display }}</a>
+
+  <div class="detail-grid">
+    <div>
+      <div class="gallery-main" style="aspect-ratio:16/9;">
+        {% if place.image %}<img src="{{ place.image.url }}" alt="{{ place.name }}">{% else %}<div class="media-ph" style="font-size:4rem;">{{ place.icon }}</div>{% endif %}
+      </div>
+      {% if images %}
+      <div class="gallery-thumbs">
+        {% for img in images %}<img src="{{ img.image.url }}" alt="">{% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-top:1.5rem;">
+        <div>
+          <h1 style="font-size:1.7rem;">{{ place.name }}</h1>
+          <div style="display:flex;align-items:center;gap:.6rem;margin-top:.5rem;flex-wrap:wrap;">
+            <span class="badge badge-indigo">{{ place.icon }} {{ place.get_category_display }}</span>
+            {% if review_count %}<span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> {{ avg_rating }} · {{ review_count }} sharh</span>{% endif %}
+            <span style="color:var(--text3);font-size:.82rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-star"/></svg> {{ place.views }} ko'rish</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          {% if user.is_authenticated %}
+          <button id="favBtn" class="btn {% if is_favorite %}btn-accent{% else %}btn-outline{% endif %} btn-sm" onclick="toggleFav()"><svg class="ic"><use href="#i-heart"/></svg> <span id="favLbl">{% if is_favorite %}Saqlangan{% else %}Saqlash{% endif %}</span></button>
+          {% endif %}
+          <button class="btn btn-outline btn-sm" onclick="sharePlace()"><svg class="ic"><use href="#i-arrow-right"/></svg> Ulashish</button>
+          {% if user.is_authenticated and user.id == place.owner_id or user.is_staff %}
+          <a href="{% url 'places:place_edit' place.pk %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-settings"/></svg></a>
+          <a href="{% url 'places:place_delete' place.pk %}" class="btn btn-outline btn-sm">O'chirish</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if place.description %}<p style="color:var(--text2);margin:1.1rem 0;line-height:1.65;">{{ place.description }}</p>{% endif %}
+
+      <h2 style="font-size:1.15rem;margin:1.75rem 0 .8rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Joylashuv</h2>
+      <div id="pmap"></div>
+
+      {% if nearby %}
+      <h2 style="font-size:1.15rem;margin:1.75rem 0 1rem;">Yaqin atrofda</h2>
+      <div class="grid-3">
+        {% for p in nearby %}
+        <a href="{% url 'places:place_detail' p.pk %}" class="card card-pad" style="display:block;color:inherit;">
+          <div style="font-weight:700;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">{{ p.icon }}</span> {{ p.name }}</div>
+          {% if p.address %}<div class="lc-sub" style="margin-top:.4rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3);"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <h2 style="font-size:1.15rem;margin:1.75rem 0 1rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--gold)"><use href="#i-star"/></svg> Sharhlar va baholar</h2>
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'places:place_review' place.pk %}" class="card card-pad" style="margin-bottom:1rem;">
+        {% csrf_token %}
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">
+          <span style="font-weight:600;font-size:.88rem;">Bahoyingiz:</span>
+          <span class="rating-stars" id="starPick">
+            {% for i in "12345" %}<span data-v="{{ forloop.counter }}" style="cursor:pointer;color:#d6ddee;">★</span>{% endfor %}
+          </span>
+          <input type="hidden" name="rating" id="ratingInput" value="{{ my_review.rating|default:5 }}">
+        </div>
+        <textarea name="text" class="form-control" placeholder="Tajribangiz bilan o'rtoqlashing...">{{ my_review.text|default:'' }}</textarea>
+        <button class="btn btn-accent btn-sm" style="margin-top:.6rem;">{% if my_review %}Sharhni yangilash{% else %}Sharh qoldirish{% endif %}</button>
+      </form>
+      {% endif %}
+      {% for r in reviews %}
+      <div class="card card-pad" style="margin-bottom:.5rem;padding:.85rem 1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:650;font-size:.9rem;">{{ r.user.name|default:r.user.phone }}</div>
+          <div class="stars">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}<span style="color:#d6ddee">★</span>{% endif %}{% endfor %}</div>
+        </div>
+        {% if r.text %}<div style="color:var(--text2);margin-top:.35rem;font-size:.9rem;">{{ r.text }}</div>{% endif %}
+        <div style="color:var(--text3);font-size:.74rem;margin-top:.3rem;">{{ r.created_at|timesince }} oldin</div>
+      </div>
+      {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali sharh yo'q — birinchi bo'ling!</p>{% endfor %}
+    </div>
+
+    <aside>
+      <div class="card card-pad sticky-card">
+        <h3 style="font-size:1.05rem;margin-bottom:.5rem;">Ma'lumot</h3>
+        {% if place.address %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg> <span>Manzil</span> <b style="text-align:right;">{{ place.address }}</b></div>{% endif %}
+        {% if place.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg> <span>Telefon</span> <b><a href="tel:{{ place.phone }}" style="color:var(--accent);">{{ place.phone }}</a></b></div>{% endif %}
+        {% if place.working_hours %}<div class="info-row"><svg class="ic"><use href="#i-clock"/></svg> <span>Ish vaqti</span> <b>{{ place.working_hours }}</b></div>{% endif %}
+        {% if place.website %}<div class="info-row"><svg class="ic"><use href="#i-doc"/></svg> <span>Sayt</span> <b><a href="{{ place.website }}" target="_blank" rel="noopener" style="color:var(--accent);">Ochish</a></b></div>{% endif %}
+        {% if place.phone %}<a href="tel:{{ place.phone }}" class="btn btn-accent btn-block" style="margin-top:1rem;"><svg class="ic"><use href="#i-phone"/></svg> Qo'ng'iroq qilish</a>{% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const pm=L.map('pmap').setView([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}], 16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pm);
+L.circleMarker([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}],{radius:11,color:'#fff',weight:2,fillColor:'{{ place.color }}',fillOpacity:.95}).addTo(pm).bindPopup("{{ place.name|escapejs }}").openPopup();
+
+function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
+window.toggleFav = function(){
+  fetch("{% url 'places:place_favorite' place.pk %}", {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')}})
+    .then(function(r){return r.json();}).then(function(d){
+      var b=document.getElementById('favBtn'), l=document.getElementById('favLbl');
+      if(d.favorite){ b.classList.add('btn-accent'); b.classList.remove('btn-outline'); l.textContent='Saqlangan'; }
+      else { b.classList.remove('btn-accent'); b.classList.add('btn-outline'); l.textContent='Saqlash'; }
+    }).catch(function(){});
+};
+window.sharePlace = function(){
+  var url = location.href;
+  if (navigator.share) navigator.share({title:"{{ place.name|escapejs }}", url:url});
+  else { navigator.clipboard.writeText(url); alert("Havola nusxalandi!"); }
+};
+(function(){
+  var pick=document.getElementById('starPick'); if(!pick) return;
+  var input=document.getElementById('ratingInput');
+  function paint(v){ pick.querySelectorAll('span').forEach(function(s){ s.style.color = (+s.dataset.v<=v)?'var(--gold)':'#d6ddee'; }); }
+  paint(+input.value);
+  pick.querySelectorAll('span').forEach(function(s){
+    s.addEventListener('mouseenter', function(){ paint(+s.dataset.v); });
+    s.addEventListener('click', function(){ input.value=s.dataset.v; paint(+s.dataset.v); });
+  });
+  pick.addEventListener('mouseleave', function(){ paint(+input.value); });
+})();
+</script>
+{% endblock %}

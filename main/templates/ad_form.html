@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}{% if ad %}E'lonni tahrirlash{% else %}E'lon yaratish{% endif %} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* Category visual buttons */
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.6rem; }
+  .cat-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+  .cat-btn:hover { border-color: var(--accent); }
+  .cat-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .cat-btn .cat-ico { font-size: 1.6rem; }
+  .cat-btn .cat-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
+  .cat-btn.active .cat-lbl { color: var(--accent); }
+
+  /* Price type buttons */
+  .price-type-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .price-type-btn { flex: 1; min-width: 90px; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border); background: var(--surface2); color: var(--text2); transition: all 0.15s; }
+  .price-type-btn:hover { border-color: var(--accent); }
+  .price-type-btn.active { border-color: var(--accent2); background: rgba(16,185,129,0.08); color: var(--accent2); }
+
+  /* Image upload */
+  .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(245,158,11,0.04); }
+  .upload-zone input { display: none; }
+  .image-previews { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .img-preview { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+
+  .form-footer { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 780px;">
+  <div class="page-header">
+    <h1>{% if ad %}✏️ E'lonni tahrirlash{% else %}📢 Yangi e'lon yaratish{% endif %}</h1>
+    <p>{% if ad %}E'lon ma'lumotlarini yangilang{% else %}E'loningizni to'ldiring va joylashtiring{% endif %}</p>
+  </div>
+
+  {% if messages %}
+  {% for message in messages %}
+  <div class="flash flash-{% if 'error' in message.tags %}error{% elif 'warning' in message.tags %}warning{% elif 'info' in message.tags %}info{% else %}success{% endif %}">{{ message }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- 1. Category -->
+    <div class="form-card">
+      <h3>📂 Kategoriya tanlang</h3>
+      <div class="cat-grid">
+        {% for val, label in categories %}
+        <label class="cat-btn {% if ad.category == val or post.category == val %}active{% endif %}" onclick="selectCat(this)">
+          <input type="radio" name="category" value="{{ val }}" style="display:none;" {% if ad.category == val or post.category == val %}checked{% endif %}>
+          <span class="cat-ico">
+            {% if val == 'uy_joy' %}🏠{% elif val == 'ish' %}💼{% elif val == 'avtomobil' %}🚗{% elif val == 'qishloq' %}🌾{% elif val == 'kurs' %}📚{% elif val == 'xizmat' %}🔧{% elif val == 'hayvonlar' %}🐾{% else %}📦{% endif %}
+          </span>
+          <span class="cat-lbl">{{ label }}</span>
+        </label>
+        {% empty %}
+        {% for val, label in form.category.field.choices %}
+        {% if val %}
+        <label class="cat-btn {% if form.category.value == val %}active{% endif %}" onclick="selectCat(this)">
+          <input type="radio" name="category" value="{{ val }}" style="display:none;" {% if form.category.value == val %}checked{% endif %}>
+          <span class="cat-ico">
+            {% if val == 'uy_joy' %}🏠{% elif val == 'ish' %}💼{% elif val == 'avtomobil' %}🚗{% elif val == 'qishloq' %}🌾{% elif val == 'kurs' %}📚{% elif val == 'xizmat' %}🔧{% elif val == 'hayvonlar' %}🐾{% else %}📦{% endif %}
+          </span>
+          <span class="cat-lbl">{{ label }}</span>
+        </label>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 2. Main info -->
+    <div class="form-card">
+      <h3>📝 Asosiy ma'lumotlar</h3>
+      <div class="form-group">
+        <label class="form-label">Sarlavha *</label>
+        <input class="form-control" type="text" name="title" placeholder="Masalan: iPhone 15 Pro, 256GB" value="{{ ad.title|default:post.title|default:'' }}" required>
+        {% if form.title.errors %}<div style="color:var(--red); font-size:0.8rem; margin-top:0.3rem;">{{ form.title.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tavsif</label>
+        <textarea class="form-control" name="description" rows="5" placeholder="Mahsulot yoki xizmat haqida batafsil yozing...">{{ ad.description|default:post.description|default:'' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Manzil</label>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input class="form-control" type="text" name="location" id="locationInput" placeholder="Masalan: Samarqand, Registon ko'chasi" value="{{ ad.location|default:post.location|default:'' }}" style="flex:1;">
+          <button type="button" id="geoBtn" onclick="getMyLocation()" class="btn btn-ghost" style="padding:0.55rem 0.9rem; white-space:nowrap; font-size:0.85rem;" title="Joriy joylashuvni aniqlash">
+            📍 Joylashuv
+          </button>
+        </div>
+        <div id="geoStatus" style="font-size:0.78rem; color:var(--text2); margin-top:0.3rem; display:none;"></div>
+        <input type="hidden" id="latInput" name="latitude" value="{{ ad.latitude|default:post.latitude|default:'' }}">
+        <input type="hidden" id="lngInput" name="longitude" value="{{ ad.longitude|default:post.longitude|default:'' }}">
+      </div>
+    </div>
+
+    <!-- 3. Price -->
+    <div class="form-card">
+      <h3>💰 Narx</h3>
+      <div class="form-group">
+        <label class="form-label">Narx turi</label>
+        <div class="price-type-btns" id="priceTypeBtns">
+          <button type="button" class="price-type-btn {% if ad.price_type == 'fixed' or post.price_type == 'fixed' or not ad.price_type and not post.price_type %}active{% endif %}" onclick="selectPriceType('fixed', this)">💲 Belgilangan</button>
+          <button type="button" class="price-type-btn {% if ad.price_type == 'free' or post.price_type == 'free' %}active{% endif %}" onclick="selectPriceType('free', this)">🎁 Bepul</button>
+        </div>
+        <input type="hidden" name="price_type" id="priceTypeInput" value="{{ ad.price_type|default:post.price_type|default:'fixed' }}">
+      </div>
+      <div class="form-group" id="priceField" {% if ad.price_type == 'free' or post.price_type == 'free' %}style="display:none;"{% endif %}>
+        <label class="form-label">Narx (so'm)</label>
+        <input class="form-control" type="number" name="price" placeholder="1000000" value="{{ ad.price|default:post.price|default:'' }}" min="0">
+      </div>
+    </div>
+
+    <!-- 4. Images -->
+    <div class="form-card">
+      <h3>🖼 Rasmlar (maksimal 8 ta)</h3>
+      <div class="upload-zone" onclick="document.getElementById('imgInput').click()">
+        <input type="file" id="imgInput" name="images" multiple accept="image/*" onchange="previewImages(this)">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📷</div>
+        <div style="font-weight:600; color:var(--text2);">Rasm yuklash uchun bosing</div>
+        <div style="font-size:0.8rem; color:var(--text2); margin-top:0.25rem;">JPG, PNG, WebP — 5MB gacha, maksimal 10 ta</div>
+      </div>
+      <div id="imgCount" style="font-size:0.82rem;color:var(--accent);font-weight:600;margin-top:0.5rem;display:none;"></div>
+      <div class="image-previews" id="imagePreviews">
+        {% if ad %}
+          {% for img in ad.images.all %}
+          <img src="{{ img.image.url }}" class="img-preview" alt="">
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 5. Contacts -->
+    <div class="form-card">
+      <h3>📞 Kontakt ma'lumotlar</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📞 Telefon raqam</label>
+          <input class="form-control" type="tel" name="contact_phone" placeholder="+998901234567" value="{{ ad.contact_phone|default:post.contact_phone|default:user.phone }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">✈️ Telegram username</label>
+          <input class="form-control" type="text" name="contact_telegram" placeholder="username (@ belgisisiz)" value="{{ ad.contact_telegram|default:post.contact_telegram|default:'' }}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📸 Instagram</label>
+          <input class="form-control" type="text" name="contact_instagram" placeholder="instagram_username" value="{{ ad.contact_instagram|default:post.contact_instagram|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">📘 Facebook</label>
+          <input class="form-control" type="text" name="contact_facebook" placeholder="facebook.com/..." value="{{ ad.contact_facebook|default:post.contact_facebook|default:'' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="form-footer">
+      <button type="submit" class="btn btn-accent" style="padding: 0.7rem 2rem; font-size: 1rem;">
+        {% if ad %}✅ Saqlash{% else %}📢 E'lon joylashtirish{% endif %}
+      </button>
+      <a href="{% if ad %}/ads/{{ ad.pk }}/{% else %}/ads/{% endif %}" class="btn btn-ghost">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectCat(el) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  el.querySelector('input[type=radio]').checked = true;
+}
+
+function selectPriceType(val, btn) {
+  document.getElementById('priceTypeInput').value = val;
+  document.querySelectorAll('.price-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('priceField').style.display = (val === 'fixed') ? '' : 'none';
+}
+
+function previewImages(input) {
+  const container = document.getElementById('imagePreviews');
+  const countEl = document.getElementById('imgCount');
+  container.innerHTML = '';
+  const files = Array.from(input.files).slice(0, 10);
+  if (countEl) {
+    countEl.style.display = files.length ? 'block' : 'none';
+    countEl.textContent = files.length + ' ta rasm tanlandi';
+  }
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'img-preview';
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getMyLocation() {
+  const btn = document.getElementById('geoBtn');
+  const status = document.getElementById('geoStatus');
+  const input = document.getElementById('locationInput');
+  const latInput = document.getElementById('latInput');
+  const lngInput = document.getElementById('lngInput');
+
+  if (!navigator.geolocation) {
+    status.textContent = '❌ Brauzeringiz joylashuvni aniqlamaydi.';
+    status.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Aniqlanmoqda...';
+  status.textContent = 'Joylashuv aniqlanmoqda...';
+  status.style.display = 'block';
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      if (latInput) latInput.value = latitude;
+      if (lngInput) lngInput.value = longitude;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=uz`
+        );
+        const data = await res.json();
+        const addr = data.address;
+        const parts = [
+          addr.city || addr.town || addr.village || addr.county || '',
+          addr.suburb || addr.neighbourhood || addr.road || '',
+        ].filter(Boolean);
+        const locationStr = parts.join(', ') || data.display_name.split(',').slice(0,2).join(',').trim();
+        input.value = locationStr;
+        status.textContent = '✅ Joylashuv aniqlandi: ' + locationStr;
+        status.style.color = 'var(--accent2, green)';
+      } catch (e) {
+        input.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        status.textContent = '✅ Koordinatalar olindi (manzilni qo\'lda to\'ldiring)';
+      }
+      btn.disabled = false;
+      btn.textContent = '📍 Joylashuv';
+    },
+    (err) => {
+      const msgs = {
+        1: 'Joylashuvga ruxsat berilmadi. Brauzer sozlamalaridan ruxsat bering.',
+        2: 'Joylashuv aniqlanmadi. Internet aloqasini tekshiring.',
+        3: 'Vaqt tugadi. Qayta urinib ko\'ring.',
+      };
+      status.textContent = '❌ ' + (msgs[err.code] || 'Xatolik yuz berdi.');
+      status.style.color = 'var(--red, red)';
+      status.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '📍 Joylashuv';
+    },
+    { timeout: 10000, enableHighAccuracy: true }
+  );
+}
+</script>
+{% endblock %}

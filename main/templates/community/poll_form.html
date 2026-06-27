@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}So'rovnoma yaratish — Mahalla{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:620px;">
+  {% for m in messages %}<div class="flash flash-error"><svg class="ic"><use href="#i-x"/></svg>{{ m }}</div>{% endfor %}
+  <div class="page-header"><h1>Yangi so'rovnoma</h1></div>
+
+  <form method="post" class="card card-pad" id="pollForm">
+    {% csrf_token %}
+    <div class="form-group"><label class="form-label">Savol *</label><input type="text" name="question" class="form-control" required placeholder="Masalan: Ko'chamizga yangi asfalt kerakmi?" value="{{ post.question|default:'' }}"></div>
+    <div class="form-group"><label class="form-label">Tavsif</label><textarea name="description" class="form-control" placeholder="Qo'shimcha ma'lumot...">{{ post.description|default:'' }}</textarea></div>
+
+    <div class="form-group">
+      <label class="form-label">Variantlar *</label>
+      <div id="optWrap">
+        <input type="text" name="options" class="form-control" placeholder="Variant 1" style="margin-bottom:.5rem;">
+        <input type="text" name="options" class="form-control" placeholder="Variant 2" style="margin-bottom:.5rem;">
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addOpt()"><svg class="ic"><use href="#i-plus"/></svg> Variant qo'shish</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tur</label>
+        <select name="poll_type" class="form-control"><option value="single">Bitta variant</option><option value="multiple">Bir nechta variant</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Mahalla</label>
+        <select name="neighborhood" class="form-control"><option value="">— umumiy —</option>{% for n in neighborhoods %}<option value="{{ n.id }}">{{ n.name }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Muddat (kun)</label><input type="number" name="expires_days" class="form-control" min="1" placeholder="cheksiz"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="is_anonymous"> Anonim ovoz berish</label></div>
+    </div>
+    <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-check"/></svg> Yaratish</button>
+  </form>
+</div>
+<script>
+function addOpt(){ var w=document.getElementById('optWrap'); if(w.children.length>=10) return; var i=document.createElement('input'); i.type='text'; i.name='options'; i.className='form-control'; i.placeholder='Variant '+(w.children.length+1); i.style.marginBottom='.5rem'; w.appendChild(i); }
+</script>
+{% endblock %}

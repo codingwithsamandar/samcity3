@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{% if mode == 'edit' %}Do'konni tahrirlash{% else %}Do'kon ochish{% endif %} — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>#pickmap{height:280px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:560px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div class="page-header"><h1>🏪 {% if mode == 'edit' %}Do'konni tahrirlash{% else %}Yangi do'kon{% endif %}</h1></div>
+
+  <form method="post" enctype="multipart/form-data" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Nomi *</label>
+      <input type="text" name="name" class="form-control" required value="{{ store.name|default:post.name|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kategoriya</label>
+      <select name="category" class="form-control">
+        <option value="">— tanlang —</option>
+        {% for c in categories %}<option value="{{ c.pk }}" {% if store.category_id == c.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tavsif</label>
+      <textarea name="description" class="form-control">{{ store.description|default:'' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📍 Joylashuv — xaritadan tanlang</label>
+      <div id="pickmap"></div>
+      <p class="form-hint" style="margin-bottom:.5rem;">Xaritada do'konni bosing — manzil va koordinata avtomatik to'ldiriladi.</p>
+      <input type="hidden" name="latitude" id="latIn" value="{{ store.latitude|default:''|unlocalize }}">
+      <input type="hidden" name="longitude" id="lngIn" value="{{ store.longitude|default:''|unlocalize }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Manzil</label>
+      <input type="text" name="address" id="addrIn" class="form-control" value="{{ store.address|default:'' }}" placeholder="Xaritada belgilang — manzil avtomatik chiqadi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon</label>
+      <input type="text" name="phone" class="form-control" value="{{ store.phone|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Logo</label>
+      <input type="file" name="logo" class="form-control" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+        <input type="checkbox" name="is_active" style="width:auto;" {% if store.is_active or mode == 'create' %}checked{% endif %}> Faol
+      </label>
+    </div>
+    <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Do'kon ochish{% endif %}</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  if (typeof SamMap === 'undefined') return;
+  var latIn = document.getElementById('latIn'),
+      lngIn = document.getElementById('lngIn'),
+      addrIn = document.getElementById('addrIn');
+  var start = (latIn.value && lngIn.value) ? [parseFloat(latIn.value), parseFloat(lngIn.value)] : SamMap.CENTER;
+  var map = SamMap.init('pickmap', { center: start, zoomLevel: 14, fullscreen: false });
+  var marker = (latIn.value && lngIn.value) ? L.marker(start, { draggable: true }).addTo(map) : null;
+
+  function setPoint(ll) {
+    latIn.value = ll.lat.toFixed(6);
+    lngIn.value = ll.lng.toFixed(6);
+    if (marker) { marker.setLatLng(ll); }
+    else { marker = L.marker(ll, { draggable: true }).addTo(map); marker.on('dragend', function () { setPoint(marker.getLatLng()); }); }
+    SamMap.reverseGeocode(ll.lat, ll.lng).then(function (addr) {
+      if (addr && (!addrIn.value || addrIn.dataset.auto === '1')) { addrIn.value = addr; addrIn.dataset.auto = '1'; }
+    });
+  }
+  map.on('click', function (e) { setPoint(e.latlng); });
+  if (marker) marker.on('dragend', function () { setPoint(marker.getLatLng()); });
+})();
+</script>
+{% endblock %}

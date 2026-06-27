@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Yetkazib berish — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-bike"/></svg> Yetkazib berish</span>
+      <h1 style="margin-top:.6rem;">Do'konlar va restoranlar</h1>
+      <p>Sevimli do'konlaringizdan tez va qulay buyurtma bering</p>
+    </div>
+    {% if user.is_authenticated %}
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="{% url 'delivery:my_stores' %}" class="btn btn-outline"><svg class="ic"><use href="#i-building"/></svg> Do'konlarim</a>
+      <a href="{% url 'delivery:my_orders' %}" class="btn btn-outline"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalarim</a>
+      <a href="{% url 'delivery:driver_dashboard' %}" class="btn btn-accent"><svg class="ic"><use href="#i-bike"/></svg> Haydovchi paneli</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <form method="get" class="hero-search" style="max-width:none;margin-bottom:1.1rem;">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input type="search" name="q" placeholder="Do'kon nomini qidiring..." value="{{ q }}">
+    {% if cat_slug %}<input type="hidden" name="cat" value="{{ cat_slug }}">{% endif %}
+    <button type="submit" class="btn btn-accent">Qidirish</button>
+  </form>
+
+  {% if categories %}
+  <div class="chip-row" style="margin-bottom:1.5rem;">
+    <a href="{% url 'delivery:store_list' %}{% if q %}?q={{ q }}{% endif %}" class="chip {% if not cat_slug %}active{% endif %}">Barchasi</a>
+    {% for cat in categories %}
+    <a href="?cat={{ cat.slug }}{% if q %}&q={{ q }}{% endif %}" class="chip {% if cat_slug == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if stores %}
+  <p style="color:var(--text2);font-size:.88rem;margin-bottom:1rem;">{{ paginator.count }} ta do'kon topildi</p>
+  <div class="grid-3">
+    {% for store in stores %}
+    <a href="{% url 'delivery:store_detail' store.pk %}" class="lcard reveal">
+      <div class="lc-media" style="aspect-ratio:16/9;">
+        {% if store.logo %}<img src="{{ store.logo.url }}" alt="{{ store.name }}">{% else %}<div class="media-ph" style="background:linear-gradient(140deg,#19b97f,#0e9f6e);color:#fff;"><svg class="ic" style="width:42px;height:42px;"><use href="#i-building"/></svg></div>{% endif %}
+        <div class="lc-badges">
+          {% if store.category %}<span class="badge badge-gold">{{ store.category.name }}</span>{% endif %}
+          <span class="badge badge-green"><svg class="ic"><use href="#i-check"/></svg> Faol</span>
+        </div>
+      </div>
+      <div class="lc-body">
+        <div class="lc-title">{{ store.name }}</div>
+        {% if store.description %}<div class="lc-sub" style="display:block;color:var(--text2);">{{ store.description|truncatechars:80 }}</div>{% endif %}
+        <div class="lc-sub" style="justify-content:space-between;margin-top:.5rem;border-top:1px solid var(--border);padding-top:.65rem;">
+          {% if store.address %}<span style="display:inline-flex;align-items:center;gap:.25rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3);"><use href="#i-pin"/></svg>{{ store.address|truncatechars:28 }}</span>{% else %}<span></span>{% endif %}
+          <span style="color:var(--text3);font-size:.78rem;">{{ store.created_at|date:"d.m.Y" }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat_slug %}&cat={{ cat_slug }}{% endif %}">← Oldingi</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if i == page_obj.number %}<span class="current">{{ i }}</span>
+      {% elif i == 1 or i == paginator.num_pages or i|add:"-1" == page_obj.number or i|add:"1" == page_obj.number %}
+      <a href="?page={{ i }}{% if q %}&q={{ q }}{% endif %}{% if cat_slug %}&cat={{ cat_slug }}{% endif %}">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat_slug %}&cat={{ cat_slug }}{% endif %}">Keyingi →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon"><svg class="ic"><use href="#i-building"/></svg></div>
+    <h3>Do'kon topilmadi</h3>
+    <p>Boshqa kategoriya yoki kalit so'zni sinab ko'ring</p>
+    {% if q or cat_slug %}<a href="{% url 'delivery:store_list' %}" class="btn btn-ghost" style="margin-top:1rem;">Barcha do'konlar</a>{% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

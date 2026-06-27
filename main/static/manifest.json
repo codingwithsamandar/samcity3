@@ -1,0 +1,45 @@
+{
+  "name": "SamCity — Shahar Superilova",
+  "short_name": "SamCity",
+  "description": "E'lonlar, taksi, yetkazish, joy bron qilish va to'lovlar — barchasi bir joyda.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070a10",
+  "theme_color": "#34d399",
+  "orientation": "portrait-primary",
+  "lang": "uz",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23070a10'/%3E%3Ccircle cx='96' cy='96' r='80' fill='%230f1521'/%3E%3Cpath d='M96 40a42 42 0 0 0-42 42c0 32 42 78 42 78s42-46 42-78A42 42 0 0 0 96 40z' fill='none' stroke='%2334d399' stroke-width='8'/%3E%3Ccircle cx='96' cy='82' r='16' fill='%2334d399'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23070a10'/%3E%3Ccircle cx='256' cy='256' r='210' fill='%230f1521'/%3E%3Cpath d='M256 100a112 112 0 0 0-112 112c0 88 112 210 112 210s112-122 112-210A112 112 0 0 0 256 100z' fill='none' stroke='%2334d399' stroke-width='20'/%3E%3Ccircle cx='256' cy='220' r='42' fill='%2334d399'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "E'lonlar",
+      "url": "/all-ads/",
+      "description": "Barcha e'lonlarni ko'rish"
+    },
+    {
+      "name": "Taksi",
+      "url": "/taxi/",
+      "description": "Taksi buyurtma berish"
+    },
+    {
+      "name": "Yetkazish",
+      "url": "/delivery/",
+      "description": "Do'konlardan buyurtma berish"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["lifestyle", "shopping", "utilities"]
+}

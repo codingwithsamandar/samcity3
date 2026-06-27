@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Kommunal to'lovlar — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Summary stat cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1rem; text-align: center; }
+  .summary-card .s-ico { font-size: 1.5rem; margin-bottom: 0.3rem; }
+  .summary-card .s-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 0.25rem; }
+  .summary-card .s-val { font-size: 1.2rem; font-weight: 800; }
+
+  /* Filter pills */
+  .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+  .filter-pill { padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.82rem; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text2); text-decoration: none; display: inline-block; transition: all 0.15s; white-space: nowrap; }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  /* Monthly totals table */
+  .month-section { margin-bottom: 1.5rem; }
+  .month-header { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px 10px 0 0; font-size: 0.9rem; font-weight: 700; }
+  .month-total { color: var(--accent2); font-size: 1rem; font-weight: 800; }
+
+  /* Payment row */
+  .payment-row { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: var(--surface); border: 1px solid var(--border); border-top: none; transition: background 0.15s; }
+  .payment-row:last-child { border-radius: 0 0 10px 10px; }
+  .payment-row:hover { background: var(--surface2); }
+  .p-icon { font-size: 1.4rem; width: 36px; text-align: center; flex-shrink: 0; }
+  .p-body { flex: 1; min-width: 0; }
+  .p-service { font-weight: 600; font-size: 0.9rem; }
+  .p-meta { color: var(--text2); font-size: 0.75rem; margin-top: 0.1rem; }
+  .p-amount { font-weight: 700; font-size: 0.95rem; white-space: nowrap; text-align: right; }
+  .p-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1>⚡ Kommunal to'lovlar</h1>
+      <p>Oylik xarajatlaringizni kuzatib boring</p>
+    </div>
+    <a href="{% url 'utility_create' %}" class="btn btn-accent">+ To'lov qo'shish</a>
+  </div>
+
+  <!-- Summary statistics -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="s-ico">📅</div>
+      <div class="s-label">Joriy oy</div>
+      <div class="s-val" style="color:var(--accent);">{{ current_month_total|default:0|floatformat:0 }} <span style="font-size:0.7rem; font-weight:400;">so'm</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="s-ico">📊</div>
+      <div class="s-label">O'tgan oy</div>
+      <div class="s-val" style="color:var(--text2);">{{ last_month_total|default:0|floatformat:0 }} <span style="font-size:0.7rem; font-weight:400;">so'm</span></div>
+    </div>
+    <div class="summary-card">
+      <div class="s-ico">✅</div>
+      <div class="s-label">To'langan</div>
+      <div class="s-val" style="color:var(--accent2);">{{ paid_count|default:0 }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-ico">⏰</div>
+      <div class="s-label">Kutilmoqda</div>
+      <div class="s-val" style="color:#f59e0b;">{{ pending_count|default:0 }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-ico">🔴</div>
+      <div class="s-label">Muddati o'tgan</div>
+      <div class="s-val" style="color:var(--red);">{{ overdue_count|default:0 }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <a href="{% url 'utility_list' %}" class="filter-pill {% if not request.GET.service and not request.GET.status %}active{% endif %}">Barchasi</a>
+    <span style="color:var(--text2); font-size:0.78rem; margin: 0 0.25rem;">Xizmat:</span>
+    <a href="?service=elektr" class="filter-pill {% if request.GET.service == 'elektr' %}active{% endif %}">⚡ Elektr</a>
+    <a href="?service=suv" class="filter-pill {% if request.GET.service == 'suv' %}active{% endif %}">💧 Suv</a>
+    <a href="?service=gaz" class="filter-pill {% if request.GET.service == 'gaz' %}active{% endif %}">🔥 Gaz</a>
+    <a href="?service=internet" class="filter-pill {% if request.GET.service == 'internet' %}active{% endif %}">🌐 Internet</a>
+    <a href="?service=telefon" class="filter-pill {% if request.GET.service == 'telefon' %}active{% endif %}">📞 Telefon</a>
+    <a href="?service=uy_fondi" class="filter-pill {% if request.GET.service == 'uy_fondi' %}active{% endif %}">🏘️ Uy-joy fondi</a>
+    <span style="color:var(--text2); font-size:0.78rem; margin: 0 0.25rem;">Holat:</span>
+    <a href="?status=kutilmoqda" class="filter-pill {% if request.GET.status == 'kutilmoqda' %}active{% endif %}">⏳ Kutilmoqda</a>
+    <a href="?status=muddati_otgan" class="filter-pill {% if request.GET.status == 'muddati_otgan' %}active{% endif %}">🔴 Muddati o'tgan</a>
+    {% if request.GET.service or request.GET.status %}<a href="{% url 'utility_list' %}" class="filter-pill">✕ Tozalash</a>{% endif %}
+  </div>
+
+  {% if payments %}
+  <!-- Group by month -->
+  {% regroup payments by period as month_list %}
+  {% for month_group in month_list %}
+  <div class="month-section">
+    <div class="month-header">
+      <span>📅 {{ month_group.grouper }}</span>
+      <span class="month-total">
+        {% with total=0 %}
+        {% for p in month_group.list %}
+        {% endfor %}
+        Jami: {% for p in month_group.list %}{% if forloop.last %}{{ month_group.list|length }} ta{% endif %}{% endfor %}
+        {% endwith %}
+      </span>
+    </div>
+    {% for payment in month_group.list %}
+    <div class="payment-row">
+      <div class="p-icon">
+        {% if payment.service == 'elektr' %}⚡
+        {% elif payment.service == 'suv' %}💧
+        {% elif payment.service == 'gaz' %}🔥
+        {% elif payment.service == 'internet' %}🌐
+        {% elif payment.service == 'telefon' %}📞
+        {% elif payment.service == 'uy_fondi' %}🏘️
+        {% else %}📋{% endif %}
+      </div>
+      <div class="p-body">
+        <div class="p-service">{{ payment.get_service_display }}</div>
+        <div class="p-meta">
+          📅 {{ payment.paid_at|date:"d.m.Y" }}
+          {% if payment.note %} · {{ payment.note }}{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="p-amount">{{ payment.amount|floatformat:0 }} so'm</div>
+        <div style="text-align:right; margin-top:0.25rem;">
+          {% if payment.status == 'tolangan' %}<span class="badge badge-green">✅ To'langan</span>
+          {% elif payment.status == 'kutilmoqda' %}<span class="badge badge-amber">⏳ Kutilmoqda</span>
+          {% elif payment.status == 'muddati_otgan' %}<span class="badge badge-red">🔴 Muddati o'tgan</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="p-actions">
+        <a href="{% url 'utility_edit' payment.pk  %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.25rem 0.6rem;" title="Tahrirlash">✏️</a>
+        <a href="{% url 'utility_delete' payment.pk  %}" class="btn btn-ghost" style="font-size:0.75rem; padding:0.25rem 0.6rem; color:var(--red);" title="O'chirish">🗑</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">⚡</div>
+    <h3>To'lovlar yo'q</h3>
+    <p>Birinchi kommunal to'lovingizni qo'shing</p>
+    <a href="{% url 'utility_create' %}" class="btn btn-accent" style="margin-top:1rem;">+ To'lov qo'shish</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

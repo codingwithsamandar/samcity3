@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}Sayohat — Taksi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .yx { --yel:#ffdb4d; --yel-d:#fac515; --card:#17171c; --card2:#1f1f27; --line:#2a2a33; --muted:#8b8b99; }
+  .t-card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:1.5rem; margin-bottom:1.2rem; }
+  .t-route { font-size:1.3rem; font-weight:800; }
+  .t-route .ar { color:var(--yel); margin:0 .35rem; }
+  .badge-st { display:inline-block; padding:.3rem .8rem; border-radius:100px; font-size:.82rem; font-weight:700; }
+  .st-completed { background:rgba(16,185,129,.15); color:#34d399; }
+  .st-accepted, .st-on_way, .st-searching { background:rgba(255,219,77,.15); color:var(--yel); }
+  .st-cancelled { background:rgba(239,68,68,.12); color:#fca5a5; }
+  .row { display:flex; justify-content:space-between; padding:.7rem 0; border-top:1px solid var(--line); font-size:.92rem; }
+  .row .k { color:var(--muted); }
+  .row .v { font-weight:600; }
+  .pay-btn { display:block; text-align:center; width:100%; background:var(--yel); color:#1a1505;
+    border:none; border-radius:14px; padding:1rem; font-weight:800; font-size:1.02rem; margin-top:1rem; }
+  .sec-title { font-size:1.15rem; font-weight:700; margin:1.5rem 0 1rem; }
+  .paid-tag { background:rgba(16,185,129,.15); color:#34d399; padding:.3rem .7rem; border-radius:8px; font-weight:700; font-size:.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container yx" style="max-width:640px;">
+  {% for m in messages %}
+  <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
+  {% endfor %}
+
+  <a href="{% url 'taxi:my_trips' %}" style="color:var(--muted);font-size:.88rem;">← Sayohatlarim</a>
+
+  <div class="t-card" style="margin-top:.6rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+      <div class="t-route">{{ trip.point_a }}<span class="ar">→</span>{{ trip.point_b }}</div>
+      <span class="badge-st st-{{ trip.status }}">{{ trip.get_status_display }}</span>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <div class="row"><span class="k">Haydovchi</span><span class="v">{{ trip.taxist.full_name }}</span></div>
+      {% if trip.taxist.car %}
+      <div class="row"><span class="k">Mashina</span><span class="v">{{ trip.taxist.car.brand }} {{ trip.taxist.car.model }}{% if trip.taxist.car.plate_number %} · {{ trip.taxist.car.plate_number }}{% endif %}</span></div>
+      {% endif %}
+      <div class="row"><span class="k">Turi</span><span class="v">{% if trip.is_delivery %}📦 Dostavka{% else %}🧍 Yo'lovchi{% endif %}</span></div>
+      <div class="row"><span class="k">To'lov usuli</span><span class="v">{{ trip.get_payment_method_display }}</span></div>
+      <div class="row"><span class="k">To'lov holati</span><span class="v">{% if trip.is_paid %}<span class="paid-tag">✓ To'langan</span>{% else %}{{ trip.get_payment_status_display }}{% endif %}</span></div>
+      <div class="row"><span class="k">Summa</span><span class="v" style="color:var(--yel);font-size:1.15rem;font-weight:800;">{{ trip.price|som }} so'm</span></div>
+      {% if payment.card_last4 %}
+      <div class="row"><span class="k">Karta</span><span class="v">{{ payment.card_brand }} •••• {{ payment.card_last4 }}</span></div>
+      {% endif %}
+      <div class="row"><span class="k">Sana</span><span class="v">{{ trip.created_at|date:"d.m.Y H:i" }}</span></div>
+    </div>
+
+    {% if not trip.is_paid and trip.status != 'cancelled' %}
+    <a href="{% url 'taxi:trip_payment' trip.id %}" class="pay-btn">💳 To'lovni amalga oshirish</a>
+    {% endif %}
+  </div>
+
+  <!-- Baho — faqat yakunlangan sayohatdan keyin -->
+  {% if trip.can_be_reviewed %}
+    <div class="sec-title">⭐ Haydovchini baholang</div>
+    {% include 'taxi/_review_form.html' %}
+  {% endif %}
+</div>
+{% endblock %}

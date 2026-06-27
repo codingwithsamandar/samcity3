@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Kelgan bronlar — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .status-tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .status-tab { padding: 0.45rem 1.1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; background: var(--surface); border: 1px solid var(--border); color: var(--text2); text-decoration: none; transition: all 0.15s; }
+  .status-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .status-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .status-tab .tab-count { background: rgba(0,0,0,0.15); border-radius: 100px; padding: 0.05rem 0.4rem; font-size: 0.72rem; margin-left: 0.3rem; }
+  .status-tab.active .tab-count { background: rgba(0,0,0,0.2); }
+
+  .booking-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 0.75rem; transition: border-color 0.2s; }
+  .booking-card:hover { border-color: #3a3a50; }
+  .booking-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+  .booking-thumb { width: 64px; height: 64px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden; flex-shrink: 0; }
+  .booking-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .booking-info { flex: 1; min-width: 0; }
+  .booking-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .booking-title a { color: inherit; text-decoration: none; }
+  .booking-title a:hover { color: var(--accent); }
+  .booking-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+  .booking-stat { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--text2); }
+  .booking-stat strong { color: var(--text); }
+  .booking-amount { font-size: 1.1rem; font-weight: 800; color: var(--accent2); white-space: nowrap; }
+  .booking-footer { padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; background: var(--surface2); }
+
+  .summary-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .sum-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem; text-align: center; }
+  .sum-val { font-size: 1.3rem; font-weight: 800; }
+  .sum-lbl { font-size: 0.72rem; color: var(--text2); margin-top: 0.15rem; }
+
+  .buyer-info { display: flex; align-items: center; gap: 0.6rem; }
+  .buyer-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1rem; overflow: hidden; flex-shrink: 0; }
+  .buyer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>📥 Kelgan bronlar</h1>
+    <p>Sizning e'lonlaringizga kelgan bron so'rovlari</p>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-bar">
+    <div class="sum-box">
+      <div class="sum-val" style="color:#f59e0b;">{{ pending_count|default:0 }}</div>
+      <div class="sum-lbl">⏳ Kutilmoqda</div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-val" style="color:var(--accent2);">{{ confirmed_count|default:0 }}</div>
+      <div class="sum-lbl">✅ Tasdiqlangan</div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-val" style="color:var(--accent);">{{ completed_count|default:0 }}</div>
+      <div class="sum-lbl">🏁 Yakunlangan</div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-val" style="color:var(--red);">{{ cancelled_count|default:0 }}</div>
+      <div class="sum-lbl">❌ Bekor</div>
+    </div>
+  </div>
+
+  <!-- Status tabs -->
+  <div class="status-tabs">
+    <a href="{% url 'received_bookings' %}" class="status-tab {% if not request.GET.status %}active{% endif %}">
+      Barchasi {% if total_count %}<span class="tab-count">{{ total_count }}</span>{% endif %}
+    </a>
+    <a href="?status=pending" class="status-tab {% if request.GET.status == 'pending' %}active{% endif %}">
+      ⏳ Kutilmoqda {% if pending_count %}<span class="tab-count">{{ pending_count }}</span>{% endif %}
+    </a>
+    <a href="?status=confirmed" class="status-tab {% if request.GET.status == 'confirmed' %}active{% endif %}">
+      ✅ Tasdiqlangan
+    </a>
+    <a href="?status=completed" class="status-tab {% if request.GET.status == 'completed' %}active{% endif %}">
+      🏁 Yakunlangan
+    </a>
+    <a href="?status=cancelled" class="status-tab {% if request.GET.status == 'cancelled' %}active{% endif %}">
+      ❌ Bekor qilingan
+    </a>
+  </div>
+
+  {% if bookings %}
+  {% for booking in bookings %}
+  <div class="booking-card">
+    <!-- Header -->
+    <div class="booking-header">
+      <!-- E'lon rasmi -->
+      <div class="booking-thumb">
+        {% if booking.ad.images.first %}<img src="{{ booking.ad.images.first.image.url }}" alt="">
+        {% else %}
+          {% if booking.ad.category == 'uy_joy' %}🏠
+          {% elif booking.ad.category == 'avtomobil' %}🚗
+          {% else %}📦{% endif %}
+        {% endif %}
+      </div>
+
+      <div class="booking-info">
+        <div class="booking-title">
+          <a href="{% url 'ad_detail' booking.ad.pk  %}">{{ booking.ad.title }}</a>
+        </div>
+
+        <!-- Mijoz ma'lumoti -->
+        <div class="buyer-info" style="margin: 0.3rem 0;">
+          <div class="buyer-avatar">
+            {% if booking.buyer.avatar %}
+              <img src="{{ booking.buyer.avatar.url }}" alt="">
+            {% else %}👤{% endif %}
+          </div>
+          <div>
+            <div style="font-size:0.85rem; font-weight:600;">{{ booking.buyer.name|default:booking.buyer.phone }}</div>
+            <div style="font-size:0.75rem; color:var(--text2);">📞 {{ booking.buyer.phone }}</div>
+          </div>
+        </div>
+
+        <div class="booking-stats">
+          {% if booking.start_date %}
+          <span class="booking-stat">📅 <strong>{{ booking.start_date|date:"d.m.Y" }}</strong></span>
+          {% endif %}
+          {% if booking.end_date %}
+          <span class="booking-stat">→ <strong>{{ booking.end_date|date:"d.m.Y" }}</strong></span>
+          {% endif %}
+          {% if booking.guests > 1 %}
+          <span class="booking-stat">👥 <strong>{{ booking.guests }}</strong> mehmon</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Status & summa -->
+      <div style="text-align:right; flex-shrink:0;">
+        {% if booking.total_amount %}
+        <div class="booking-amount">{{ booking.total_amount|floatformat:0 }} so'm</div>
+        {% endif %}
+        <div style="margin-top:0.3rem;">
+          {% if booking.status == 'pending' %}<span class="badge badge-amber">⏳ Kutilmoqda</span>
+          {% elif booking.status == 'confirmed' %}<span class="badge badge-green">✅ Tasdiqlangan</span>
+          {% elif booking.status == 'completed' %}<span class="badge badge-blue">🏁 Yakunlangan</span>
+          {% elif booking.status == 'cancelled' %}<span class="badge badge-red">❌ Bekor</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Xabar -->
+    {% if booking.message %}
+    <div style="padding: 0.6rem 1.25rem; font-size:0.82rem; color:var(--text2); border-bottom:1px solid var(--border);">
+      💬 {{ booking.message|truncatechars:150 }}
+    </div>
+    {% endif %}
+
+    <!-- Footer: Tasdiqlash / Rad etish tugmalari -->
+    <div class="booking-footer">
+      <span style="color:var(--text2); font-size:0.75rem;">📅 {{ booking.created_at|date:"d.m.Y H:i" }}</span>
+      <div style="display:flex; gap:0.4rem; margin-left:auto; flex-wrap:wrap;">
+        <a href="{% url 'booking_detail' booking.pk  %}" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.75rem;">
+          🔍 Batafsil
+        </a>
+        {% if booking.status == 'pending' %}
+        <form method="post" action="{% url 'booking_detail' booking.pk  %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <button type="submit" class="btn btn-green" style="font-size:0.8rem; padding:0.3rem 0.75rem;">
+            ✅ Tasdiqlash
+          </button>
+        </form>
+        <form method="post" action="{% url 'booking_detail' booking.pk  %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="reject">
+          <button type="submit" class="btn btn-red" style="font-size:0.8rem; padding:0.3rem 0.75rem;"
+            onclick="return confirm('Bronni rad etasizmi?')">
+            ❌ Rad etish
+          </button>
+        </form>
+        {% elif booking.status == 'confirmed' %}
+        <form method="post" action="{% url 'booking_detail' booking.pk  %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="complete">
+          <button type="submit" class="btn btn-accent" style="font-size:0.8rem; padding:0.3rem 0.75rem;">
+            🏁 Yakunlash
+          </button>
+        </form>
+        {% endif %}
+        {% if booking.buyer.phone %}
+        <a href="tel:{{ booking.buyer.phone }}" class="btn btn-outline" style="font-size:0.8rem; padding:0.3rem 0.75rem;">📞 Bog'lanish</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">← Oldingi</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if i == page_obj.number %}<span class="current">{{ i }}</span>
+      {% elif i == 1 or i == paginator.num_pages or i|add:"-1" == page_obj.number or i|add:"1" == page_obj.number %}
+      <a href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Keyingi →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📥</div>
+    <h3>
+      {% if request.GET.status == 'pending' %}Kutilayotgan bron yo'q
+      {% elif request.GET.status == 'cancelled' %}Bekor qilingan bron yo'q
+      {% else %}Hali bron so'rovi kelmagan{% endif %}
+    </h3>
+    <p>E'lonlaringizga bron so'rovlari kelganda bu yerda ko'rinadi</p>
+    <a href="{% url 'my_ads' %}" class="btn btn-accent" style="margin-top:1rem;">📋 Mening e'lonlarim</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

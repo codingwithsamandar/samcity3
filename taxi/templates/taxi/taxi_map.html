@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block body_class %}map-page{% endblock %}
+{% block title %}Taksi chaqirish — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>
+  .tm-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+  #tmap { height: 64vh; min-height: 420px; z-index: 1; }
+  .tm-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 1.1rem; margin-top: 1rem; }
+  .tm-field { display: flex; align-items: center; gap: .7rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
+  .tm-field:last-of-type { border-bottom: none; }
+  .tm-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .tm-dot.a { background: var(--green); } .tm-dot.b { background: var(--red); border-radius: 3px; }
+  .tm-field .v { flex: 1; font-size: .92rem; color: var(--text); }
+  .tm-field .v.empty { color: var(--text3); }
+  .tm-est { display: flex; gap: 1.25rem; flex-wrap: wrap; margin: .9rem 0; }
+  .tm-est .e .n { font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 1.2rem; color: var(--text); }
+  .tm-est .e .l { color: var(--text3); font-size: .76rem; }
+  .map-fab { position: absolute; z-index: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:960px;">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-car"/></svg> Taksi</span>
+    <h1 style="margin-top:.6rem;">Taksi chaqirish</h1>
+    <p>Xaritadan olib ketish va borish nuqtasini tanlang</p>
+  </div>
+
+  <div class="tm-shell">
+    <div style="position:absolute;top:12px;left:12px;right:12px;z-index:500;display:flex;gap:.5rem;">
+      <button class="btn btn-accent" style="box-shadow:var(--shadow-lg);" onclick="useMyLocation()"><svg class="ic"><use href="#i-pin"/></svg> Joylashuvim</button>
+      <div class="glass" style="flex:1;border-radius:12px;padding:.5rem .8rem;font-size:.84rem;display:flex;align-items:center;" id="tapHint">📍 Xaritani bosing: avval olib ketish, keyin borish nuqtasi</div>
+    </div>
+    <div id="tmap"></div>
+  </div>
+
+  <div class="tm-panel">
+    <div class="tm-field"><span class="tm-dot a"></span><span class="v empty" id="pickupLbl">Olib ketish nuqtasi — xaritadan tanlang</span></div>
+    <div class="tm-field"><span class="tm-dot b"></span><span class="v empty" id="destLbl">Borish nuqtasi — xaritadan tanlang</span></div>
+
+    <div class="tm-est">
+      <div class="e"><div class="n" id="estDist">—</div><div class="l">Masofa</div></div>
+      <div class="e"><div class="n" id="estFare">—</div><div class="l">Taxminiy narx</div></div>
+      <div class="e"><div class="n" id="estEta">—</div><div class="l">Vaqt</div></div>
+      <div class="e"><div class="n" id="drvCount">0</div><div class="l">Yaqin haydovchilar</div></div>
+    </div>
+
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="resetPoints()">Tozalash</button>
+      <a href="{% url 'taxi:home' %}" class="btn btn-outline">Haydovchilar ro'yxati</a>
+      <button class="btn btn-accent" id="callBtn" disabled style="margin-left:auto;"><svg class="ic"><use href="#i-car"/></svg> Yaqin haydovchini topish</button>
+    </div>
+    <div id="driverList" style="margin-top:1rem;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var map = SamMap.init('tmap', { zoomLevel: 14 });
+  var pickup=null, dest=null, pickupM=null, destM=null, routeLine=null, driverMarkers=[];
+
+  function setField(which, lat, lng){
+    SamMap.reverseGeocode(lat, lng).then(function(addr){
+      var lbl = document.getElementById(which==='pickup'?'pickupLbl':'destLbl');
+      lbl.textContent = addr || (lat.toFixed(5)+', '+lng.toFixed(5));
+      lbl.classList.remove('empty');
+    });
+  }
+  function refresh(){
+    if (pickup && dest){
+      fetch("{% url 'taxi:estimate' %}?from="+pickup[0]+','+pickup[1]+"&to="+dest[0]+','+dest[1])
+        .then(function(r){return r.json();}).then(function(d){
+          if(!d.ok) return;
+          document.getElementById('estDist').textContent = d.distance_km+' km';
+          document.getElementById('estFare').textContent = d.fare.toLocaleString()+" so'm";
+          document.getElementById('estEta').textContent = '~'+d.eta_min+' daq';
+        });
+      SamMap.route(pickup, dest, 'driving').then(function(r){
+        if(r && r.geometry) routeLine = SamMap.drawRoute(map, r.geometry, routeLine);
+      });
+      document.getElementById('callBtn').disabled = false;
+    }
+  }
+  map.on('click', function(e){
+    var ll=[e.latlng.lat, e.latlng.lng];
+    if(!pickup){ pickup=ll; pickupM=L.marker(ll).addTo(map).bindPopup('🟢 Olib ketish').openPopup(); setField('pickup',ll[0],ll[1]); }
+    else if(!dest){ dest=ll; destM=L.marker(ll).addTo(map).bindPopup('🔴 Borish').openPopup(); setField('dest',ll[0],ll[1]); refresh(); }
+  });
+  window.useMyLocation = function(){
+    SamMap.locate().then(function(loc){
+      var ll=[loc.lat,loc.lng];
+      if(pickupM) map.removeLayer(pickupM);
+      pickup=ll; pickupM=L.marker(ll).addTo(map).bindPopup('🟢 Olib ketish').openPopup();
+      map.setView(ll,15); setField('pickup',ll[0],ll[1]); loadDrivers(ll); refresh();
+    }).catch(function(e){ alert(e.message); });
+  };
+  window.resetPoints = function(){
+    [pickupM,destM,routeLine].forEach(function(l){ if(l) map.removeLayer(l); });
+    driverMarkers.forEach(function(m){ map.removeLayer(m); }); driverMarkers=[];
+    pickup=dest=pickupM=destM=routeLine=null;
+    ['pickupLbl','destLbl'].forEach(function(id){var el=document.getElementById(id);el.classList.add('empty');});
+    document.getElementById('pickupLbl').textContent='Olib ketish nuqtasi — xaritadan tanlang';
+    document.getElementById('destLbl').textContent='Borish nuqtasi — xaritadan tanlang';
+    document.getElementById('estDist').textContent=document.getElementById('estFare').textContent=document.getElementById('estEta').textContent='—';
+    document.getElementById('callBtn').disabled=true; document.getElementById('driverList').innerHTML='';
+  };
+  function loadDrivers(ll){
+    fetch("{% url 'taxi:nearby_drivers' %}?lat="+ll[0]+"&lng="+ll[1]).then(function(r){return r.json();}).then(function(d){
+      driverMarkers.forEach(function(m){ map.removeLayer(m); }); driverMarkers=[];
+      document.getElementById('drvCount').textContent = (d.drivers||[]).length;
+      (d.drivers||[]).forEach(function(dr){
+        var m=L.marker([dr.lat,dr.lng], {icon: SamMap.driverIcon()}).addTo(map).bindPopup('🚗 '+SamMap.esc(dr.name)+' · '+dr.distance_km+' km');
+        driverMarkers.push(m);
+      });
+      document.getElementById('driverList').innerHTML = (d.drivers||[]).slice(0,5).map(function(dr){
+        return '<div style="display:flex;justify-content:space-between;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--border);border-radius:12px;margin-bottom:.5rem;"><span><b>'+SamMap.esc(dr.name)+'</b> '+(dr.car?('· '+SamMap.esc(dr.car)):'')+'</span><span style="color:var(--accent);font-weight:700;">'+dr.distance_km+' km · ~'+dr.eta_min+' daq</span></div>';
+      }).join('') || '<p style="color:var(--text3);font-size:.86rem;">Yaqin atrofda onlayn haydovchi topilmadi.</p>';
+    });
+  }
+  document.getElementById('callBtn').addEventListener('click', function(){ if(pickup) loadDrivers(pickup); });
+})();
+</script>
+{% endblock %}

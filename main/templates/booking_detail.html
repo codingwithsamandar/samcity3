@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Bron #{{ booking.pk|stringformat:"s"|slice:":8" }} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; }
+  @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  .info-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .info-block h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); margin-bottom: 1rem; }
+
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .label { color: var(--text2); }
+  .detail-row .value { font-weight: 600; text-align: right; }
+
+  .user-card { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 0; }
+  .user-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; overflow: hidden; flex-shrink: 0; }
+  .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .timeline { list-style: none; padding: 0; position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .timeline li { padding: 0.5rem 0 0.5rem 2.25rem; position: relative; font-size: 0.82rem; color: var(--text2); }
+  .timeline li::before { content: ''; position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .timeline li.active::before { background: var(--accent2); }
+  .timeline li .tl-time { font-size: 0.72rem; color: var(--text2); display: block; margin-top: 0.1rem; }
+
+  .amount-big { font-size: 2rem; font-weight: 900; color: var(--accent2); }
+  .fee-row { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text2); margin-top: 0.4rem; }
+  .fee-row span:last-child { font-weight: 600; color: var(--text); }
+
+  .action-panel { display: flex; flex-direction: column; gap: 0.5rem; }
+  .ad-thumb { border-radius: 10px; overflow: hidden; background: var(--surface2); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 0.75rem; }
+  .ad-thumb img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb -->
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a>
+    <span>›</span>
+    {% if is_owner %}
+    <a href="{% url 'received_bookings' %}">Kelgan bronlar</a>
+    {% else %}
+    <a href="{% url 'my_bookings' %}">Mening bronlarim</a>
+    {% endif %}
+    <span>›</span>
+    <span style="color:var(--text);">Bron #{{ booking.pk|stringformat:"s"|slice:":8" }}…</span>
+  </div>
+
+  <div class="page-header">
+    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+      <h1>🗓️ Bron tafsilotlari</h1>
+      {% if booking.status == 'pending' %}<span class="badge badge-amber" style="font-size:0.875rem; padding:0.3rem 0.9rem;">⏳ Kutilmoqda</span>
+      {% elif booking.status == 'confirmed' %}<span class="badge badge-green" style="font-size:0.875rem; padding:0.3rem 0.9rem;">✅ Tasdiqlangan</span>
+      {% elif booking.status == 'completed' %}<span class="badge badge-blue" style="font-size:0.875rem; padding:0.3rem 0.9rem;">🏁 Yakunlangan</span>
+      {% elif booking.status == 'cancelled' %}<span class="badge badge-red" style="font-size:0.875rem; padding:0.3rem 0.9rem;">❌ Bekor qilingan</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Left column: Main info -->
+    <div>
+
+      <!-- E'lon info -->
+      <div class="info-block">
+        <h3>🏷️ E'lon</h3>
+        <div style="display:flex; gap:1rem; align-items:flex-start;">
+          <div style="width:80px; height:80px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:2rem; overflow:hidden; flex-shrink:0;">
+            {% if booking.ad.images.first %}
+              <img src="{{ booking.ad.images.first.image.url }}" alt="" style="width:100%; height:100%; object-fit:cover;">
+            {% else %}
+              {% if booking.ad.category == 'uy_joy' %}🏠{% elif booking.ad.category == 'avtomobil' %}🚗{% else %}📦{% endif %}
+            {% endif %}
+          </div>
+          <div>
+            <div style="font-weight:700; font-size:1rem; margin-bottom:0.25rem;">
+              <a href="{% url 'ad_detail' booking.ad.pk  %}" style="color:var(--accent);">{{ booking.ad.title }}</a>
+            </div>
+            <div style="color:var(--text2); font-size:0.82rem;">{{ booking.ad.get_category_display }}</div>
+            {% if booking.ad.location %}
+            <div style="color:var(--text2); font-size:0.82rem;">📍 {{ booking.ad.location }}</div>
+            {% endif %}
+            {% if booking.ad.price %}
+            <div style="font-weight:700; color:var(--accent); margin-top:0.25rem;">{{ booking.ad.price|floatformat:0 }} so'm</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Bron ma'lumotlari -->
+      <div class="info-block">
+        <h3>📋 Bron ma'lumotlari</h3>
+        {% if booking.start_date %}
+        <div class="detail-row">
+          <span class="label">📅 Boshlanish sanasi</span>
+          <span class="value">{{ booking.start_date|date:"d.m.Y" }}</span>
+        </div>
+        {% endif %}
+        {% if booking.end_date %}
+        <div class="detail-row">
+          <span class="label">📅 Tugash sanasi</span>
+          <span class="value">{{ booking.end_date|date:"d.m.Y" }}</span>
+        </div>
+        {% endif %}
+        <div class="detail-row">
+          <span class="label">👥 Mehmonlar soni</span>
+          <span class="value">{{ booking.guests }} kishi</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">🕐 Yuborilgan vaqt</span>
+          <span class="value">{{ booking.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        {% if booking.message %}
+        <div style="margin-top:0.75rem; padding:0.75rem; background:var(--surface2); border-radius:8px; font-size:0.875rem; color:var(--text2);">
+          💬 <em>{{ booking.message }}</em>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- To'lov info -->
+      {% if booking.total_amount %}
+      <div class="info-block">
+        <h3>💳 To'lov</h3>
+        <div class="amount-big">{{ booking.total_amount|floatformat:0 }} so'm</div>
+        {% if booking.platform_fee %}
+        <div class="fee-row">
+          <span>Platforma komissiyasi</span>
+          <span>{{ booking.platform_fee|floatformat:0 }} so'm</span>
+        </div>
+        {% endif %}
+        {% if booking.owner_amount %}
+        <div class="fee-row">
+          <span>Egaga o'tkaziladigan summa</span>
+          <span>{{ booking.owner_amount|floatformat:0 }} so'm</span>
+        </div>
+        {% endif %}
+        <div style="margin-top:0.75rem;">
+          <span class="badge {% if booking.payment_status == 'unpaid' %}badge-red{% elif booking.payment_status == 'held' %}badge-blue{% elif booking.payment_status == 'released' %}badge-green{% else %}badge-amber{% endif %}">
+            {% if booking.payment_status == 'unpaid' %}💳 To'lanmagan
+            {% elif booking.payment_status == 'held' %}🔒 Ushlab turilgan
+            {% elif booking.payment_status == 'released' %}✅ Egaga o'tkazilgan
+            {% elif booking.payment_status == 'refunded' %}↩️ Qaytarilgan
+            {% elif booking.payment_status == 'partial_refund' %}↩️ Qisman qaytarilgan
+            {% endif %}
+          </span>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Status tarixi -->
+      <div class="info-block">
+        <h3>📊 Status tarixi</h3>
+        <ul class="timeline">
+          <li class="active">
+            Bron yaratildi
+            <span class="tl-time">{{ booking.created_at|date:"d.m.Y H:i" }}</span>
+          </li>
+          {% if booking.status != 'pending' %}
+          <li class="active">
+            {% if booking.status == 'confirmed' %}✅ Tasdiqlandi
+            {% elif booking.status == 'cancelled' %}❌ Bekor qilindi{% if booking.cancelled_by %} ({{ booking.cancelled_by }}){% endif %}
+            {% elif booking.status == 'completed' %}🏁 Yakunlandi{% endif %}
+            <span class="tl-time">{{ booking.updated_at|date:"d.m.Y H:i" }}</span>
+          </li>
+          {% endif %}
+          {% if booking.paid_at %}
+          <li class="active">
+            💳 To'lov amalga oshirildi
+            <span class="tl-time">{{ booking.paid_at|date:"d.m.Y H:i" }}</span>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div>
+      <!-- Mijoz / Ega info -->
+      {% if is_owner %}
+      <div class="info-block">
+        <h3>👤 Mijoz</h3>
+        <div class="user-card">
+          <div class="user-avatar">
+            {% if booking.buyer.avatar %}<img src="{{ booking.buyer.avatar.url }}" alt="">{% else %}👤{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:700;">{{ booking.buyer.name|default:booking.buyer.phone }}</div>
+            <div style="font-size:0.8rem; color:var(--text2);">📞 {{ booking.buyer.phone }}</div>
+            {% if booking.buyer.email %}
+            <div style="font-size:0.8rem; color:var(--text2);">✉️ {{ booking.buyer.email }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="info-block">
+        <h3>🏠 E'lon egasi</h3>
+        <div class="user-card">
+          <div class="user-avatar">
+            {% if booking.owner.avatar %}<img src="{{ booking.owner.avatar.url }}" alt="">{% else %}👤{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:700;">{{ booking.owner.name|default:booking.owner.phone }}</div>
+            <div style="font-size:0.8rem; color:var(--text2);">📞 {{ booking.owner.phone }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Harakatlar -->
+      <div class="info-block">
+        <h3>⚡ Harakatlar</h3>
+        <div class="action-panel">
+          <a href="{% url 'ad_detail' booking.ad.pk  %}" class="btn btn-ghost">🔗 E'lonni ko'rish</a>
+
+          {% if is_owner %}
+            {% if booking.status == 'pending' %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="confirm">
+              <button type="submit" class="btn btn-green" style="width:100%;">✅ Bronni tasdiqlash</button>
+            </form>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reject">
+              <button type="submit" class="btn btn-red" style="width:100%;" onclick="return confirm('Bronni rad etasizmi?')">
+                ❌ Rad etish
+              </button>
+            </form>
+            {% elif booking.status == 'confirmed' %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="complete">
+              <button type="submit" class="btn btn-accent" style="width:100%;">🏁 Yakunlash</button>
+            </form>
+            {% endif %}
+            {% if booking.buyer.phone %}
+            <a href="tel:{{ booking.buyer.phone }}" class="btn btn-outline">📞 Mijozga qo'ng'iroq</a>
+            {% endif %}
+
+          {% elif is_buyer %}
+            {% if booking.status == 'pending' %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="cancel">
+              <button type="submit" class="btn btn-red" style="width:100%;" onclick="return confirm('Bronni bekor qilasizmi?')">
+                ❌ Bekor qilish
+              </button>
+            </form>
+            {% endif %}
+            {% if booking.owner.phone %}
+            <a href="tel:{{ booking.owner.phone }}" class="btn btn-outline">📞 Egaga qo'ng'iroq</a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Bron ID -->
+      <div class="info-block" style="font-size:0.78rem; color:var(--text2);">
+        <div>🔑 Bron ID</div>
+        <div style="font-family:monospace; word-break:break-all; margin-top:0.3rem; color:var(--text);">{{ booking.pk }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

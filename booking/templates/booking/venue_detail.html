@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{{ venue.name }} — Joylar{% endblock %}
+
+{% block extra_css %}
+{% if venue.latitude and venue.longitude %}{% include '_map_assets.html' %}
+<style>#venueMap{height:240px;border-radius:14px;overflow:hidden;z-index:1;}</style>
+{% endif %}
+<style>@media (max-width: 860px) { .sticky-card { position: static !important; } }</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1080px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'venue_list' %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> Joylar</a>
+
+  <div class="detail-grid">
+    <div>
+      <div class="gallery-main">
+        {% if venue.image %}<img src="{{ venue.image.url }}" alt="{{ venue.name }}">{% else %}<div class="media-ph" style="background:linear-gradient(140deg,#19b97f,#0e9f6e);color:#fff;"><svg class="ic" style="width:56px;height:56px;"><use href="#i-building"/></svg></div>{% endif %}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-top:1.5rem;">
+        <div>
+          <h1 style="font-size:1.7rem;">{{ venue.name }}</h1>
+          <span class="badge badge-indigo" style="margin-top:.5rem;">{{ venue.get_venue_type_display }}</span>
+        </div>
+        {% if user.is_authenticated and user.id == venue.owner_id %}
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <a href="{% url 'venue_services' venue.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-settings"/></svg> Xizmat/Usta</a>
+          <a href="{% url 'venue_edit' venue.pk %}" class="btn btn-ghost btn-sm">Tahrirlash</a>
+          <a href="{% url 'venue_delete' venue.pk %}" class="btn btn-outline btn-sm">O'chirish</a>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if venue.description %}<p style="color:var(--text2);margin:1.1rem 0;line-height:1.65;">{{ venue.description }}</p>{% endif %}
+
+      <div class="grid-4" style="margin-top:1rem;">
+        {% if venue.capacity %}<div class="card card-pad" style="padding:1rem;"><div style="color:var(--text3);font-size:.78rem;">Sig'imi</div><div style="font-weight:700;margin-top:.2rem;display:flex;align-items:center;gap:.35rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-user"/></svg> {{ venue.capacity }}</div></div>{% endif %}
+        {% if venue.working_hours_start %}<div class="card card-pad" style="padding:1rem;"><div style="color:var(--text3);font-size:.78rem;">Ish vaqti</div><div style="font-weight:700;margin-top:.2rem;">{{ venue.working_hours_start|time:"H:i" }}–{{ venue.working_hours_end|time:"H:i" }}</div></div>{% endif %}
+      </div>
+
+      <!-- ── Xizmatlar ── -->
+      {% if services %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-sparkle"/></svg> Xizmatlar va narxlar</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          {% for s in services %}
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.7rem .9rem;border:1px solid var(--border);border-radius:12px;">
+            <div>
+              <div style="font-weight:650;">{{ s.name }}</div>
+              <div style="color:var(--text3);font-size:.8rem;display:flex;align-items:center;gap:.3rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-clock"/></svg> {{ s.duration_minutes }} daqiqa</div>
+            </div>
+            <div style="font-weight:800;color:var(--accent);font-family:'Plus Jakarta Sans';white-space:nowrap;">{{ s.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Ustalar ── -->
+      {% if staff %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-user"/></svg> Ustalar / ishchilar</h3>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+          {% for st in staff %}
+          <div style="text-align:center;width:104px;">
+            {% if st.photo %}<img src="{{ st.photo.url }}" alt="{{ st.name }}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto;">{% else %}<div class="avatar" style="width:64px;height:64px;font-size:1.3rem;margin:0 auto;">{{ st.name|slice:":1" }}</div>{% endif %}
+            <div style="font-weight:650;font-size:.85rem;margin-top:.4rem;">{{ st.name }}</div>
+            {% if st.specialty %}<div style="color:var(--text3);font-size:.74rem;">{{ st.specialty }}</div>{% endif %}
+            <div style="font-size:.74rem;color:var(--gold);margin-top:.2rem;">★ {{ st.rating|floatformat:1 }} <span style="color:var(--text3);">({{ st.reviews_count }})</span></div>
+            <div style="font-size:.7rem;color:var(--text3);">{{ st.completed_count }} ish · {{ st.experience_years }} yil</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Xarita ── -->
+      {% if venue.latitude and venue.longitude %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Joylashuv</h3>
+        <div id="venueMap"></div>
+        <a href="https://maps.google.com/?q={{ venue.latitude|unlocalize }},{{ venue.longitude|unlocalize }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-top:.7rem;"><svg class="ic"><use href="#i-map"/></svg> Google xaritada ochish</a>
+      </div>
+      {% endif %}
+
+      <!-- ── Band sanalar (faqat butun-kunlik joylar uchun) ── -->
+      {% if not venue.uses_slots %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.05rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-clock"/></svg> Band qilingan sanalar</h3>
+        {% if booked_dates %}
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">{% for d in booked_dates %}<span class="badge badge-red">{{ d|date:"d.m.Y" }}</span>{% endfor %}</div>
+        {% else %}
+        <p style="color:var(--text2);display:flex;align-items:center;gap:.4rem;"><svg class="ic" style="color:var(--green)"><use href="#i-check"/></svg> Bo'sh — istalgan kunni tanlang.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <aside>
+      <div class="card card-pad sticky-card">
+        {% if services %}
+        <div style="color:var(--text3);font-size:.8rem;">Narxlar</div>
+        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{{ services.0.price|floatformat:0 }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm dan</small></div>
+        {% elif venue.price_per_day or venue.price_per_hour %}
+        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{% if venue.price_per_day %}{{ venue.price_per_day }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/kun</small>{% else %}{{ venue.price_per_hour }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/soat</small>{% endif %}</div>
+        {% endif %}
+        {% if venue.address %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg><span>Manzil</span><b style="text-align:right;">{{ venue.address }}</b></div>{% endif %}
+        {% if venue.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg><span>Telefon</span><b><a href="tel:{{ venue.phone }}" style="color:var(--accent);">{{ venue.phone }}</a></b></div>{% endif %}
+        {% if venue.prepay_required %}
+        <div class="info-row"><svg class="ic"><use href="#i-card"/></svg><span>To'lov</span><b>Oldindan</b></div>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:.5rem;line-height:1.5;">⚠️ Bekor qilinsa yoki belgilangan vaqtda kelinmasa, to'langan summaning <b>{{ venue.penalty_percent }}%</b> ushlab qolinadi.</div>
+        {% endif %}
+        <a href="{% url 'venue_book' venue.pk %}" class="btn btn-accent btn-block btn-lg" style="margin-top:1.1rem;"><svg class="ic"><use href="#i-clock"/></svg> Bron qilish</a>
+      </div>
+    </aside>
+  </div>
+</div>
+
+{% if venue.latitude and venue.longitude %}
+<script>
+(function(){
+  if(typeof L==='undefined'||!window.SamMap){return;}
+  try{
+    var m=SamMap.init('venueMap',{center:[{{ venue.latitude|unlocalize }},{{ venue.longitude|unlocalize }}],zoomLevel:16,fullscreen:false});
+    SamMap.placeMarker({lat:{{ venue.latitude|unlocalize }},lng:{{ venue.longitude|unlocalize }},name:"{{ venue.name|escapejs }}",icon:'📍',cat:"{{ venue.get_venue_type_display|escapejs }}",address:"{{ venue.address|escapejs }}"}).addTo(m).openPopup();
+  }catch(e){}
+})();
+</script>
+{% endif %}
+{% endblock %}

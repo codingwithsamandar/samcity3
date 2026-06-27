@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block body_class %}map-page{% endblock %}
+{% block title %}Mahalla xaritasi — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>
+  .cm-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+  #cmap { height: 78vh; min-height: 480px; z-index: 1; }
+  .cm-filters { position: absolute; top: 14px; left: 14px; z-index: 500; display: flex; gap: .4rem; flex-wrap: wrap; max-width: calc(100% - 28px); }
+  .cm-chip { background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 100px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: .35rem; }
+  .cm-chip.off { opacity: .45; }
+  .cm-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1240px;">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Mahalla</span>
+    <h1 style="margin-top:.6rem;">Mahalla xaritasi</h1>
+    <p>Joylar, yordam so'rovlari va favqulodda holatlar — bitta xaritada</p>
+  </div>
+
+  <div class="cm-shell">
+    <div class="cm-filters">
+      <span class="cm-chip" data-layer="place"><span class="cm-dot" style="background:#3551d1;"></span> Joylar</span>
+      <span class="cm-chip" data-layer="help"><span class="cm-dot" style="background:#3551d1;"></span> Yordam</span>
+      <span class="cm-chip" data-layer="emergency"><span class="cm-dot" style="background:#e5484d;"></span> Favqulodda</span>
+    </div>
+    <div id="cmap"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var map = SamMap.init('cmap', { zoomLevel: 13 });
+  var layers = { place: SamMap.cluster(map), help: L.layerGroup().addTo(map), emergency: L.layerGroup().addTo(map) };
+  var shown = { place:true, help:true, emergency:true };
+
+  fetch("{% url 'community_map_geojson' %}").then(function(r){return r.json();}).then(function(d){
+    (d.markers||[]).forEach(function(m){
+      var grp = layers[m.type] || layers.place;
+      SamMap.placeMarker(m).addTo(grp);
+    });
+  });
+
+  document.querySelectorAll('.cm-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var k=chip.dataset.layer; shown[k]=!shown[k]; chip.classList.toggle('off', !shown[k]);
+      if(shown[k]) map.addLayer(layers[k]); else map.removeLayer(layers[k]);
+    });
+  });
+})();
+</script>
+{% endblock %}

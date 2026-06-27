@@ -1,0 +1,66 @@
+name: samcity
+description: SamCity — shahar super-app mobil ilovasi (Flutter).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # Tarmoq
+  dio: ^5.7.0
+  # Holat boshqaruvi
+  flutter_riverpod: ^2.5.1
+  # Navigatsiya
+  go_router: ^14.2.7
+  # Xavfsiz saqlash (JWT token)
+  flutter_secure_storage: ^9.2.2
+  # Sana formatlash
+  intl: ^0.19.0
+  # Rasm keshlash
+  cached_network_image: ^3.4.1
+  # Rasm tanlash (e'lon/mahsulot qo'shish uchun)
+  image_picker: ^1.1.2
+  # Real-time chat (WebSocket)
+  web_socket_channel: ^3.0.1
+  # To'lov sahifasini ochish (Payme/Click)
+  url_launcher: ^6.3.0
+  # Deep link (to'lovdan qaytish: samcity://payment-success)
+  app_links: ^6.3.2
+  # Interaktiv xarita (OpenStreetMap — saytdagi Leaflet bilan bir xil)
+  flutter_map: ^6.2.1
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  # App ikonka va splash generatorlari (prod build uchun)
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
+flutter:
+  uses-material-design: true
+
+# ── App ikonkasi ────────────────────────────────────────────────────────────
+# 1024x1024 PNG ni assets/icon/icon.png ga qo'ying, so'ng:
+#   flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#0E1525"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+
+# ── Splash (ochilish) ekrani ─────────────────────────────────────────────────
+# Logoni assets/icon/splash.png ga qo'ying, so'ng:
+#   flutter pub run flutter_native_splash:create
+flutter_native_splash:
+  color: "#0E1525"
+  image: "assets/icon/splash.png"
+  android_12:
+    color: "#0E1525"
+    image: "assets/icon/splash.png"

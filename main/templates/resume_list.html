@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Resumelar — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .filter-pill { padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; text-decoration: none; display: inline-block; }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .resume-card { display: flex; gap: 1rem; align-items: flex-start; padding: 1.2rem 1.4rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: border-color 0.2s, transform 0.15s; text-decoration: none; color: inherit; }
+  .resume-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .resume-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; overflow: hidden; }
+  .resume-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .resume-body { flex: 1; min-width: 0; }
+  .resume-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .resume-position { color: var(--accent); font-weight: 600; font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .resume-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .resume-desc { color: var(--text2); font-size: 0.85rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .resume-salary { font-size: 0.95rem; font-weight: 700; color: var(--accent2); white-space: nowrap; }
+  .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .search-bar .form-control { flex: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1>📄 Resume va ishchi qidirish</h1>
+      <p>Ish izlayotgan mutaxassislar ro'yxati</p>
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'resume_create' %}" class="btn btn-accent">+ Resume joylash</a>
+    {% endif %}
+  </div>
+
+  <!-- Search -->
+  <form method="get" class="search-bar">
+    <input class="form-control" type="search" name="q" placeholder="🔍 Kasb yoki ism bo'yicha qidiring..." value="{{ request.GET.q }}">
+    <button type="submit" class="btn btn-accent">Qidirish</button>
+    {% if request.GET.q %}<a href="{% url 'resume_list' %}" class="btn btn-ghost">✕</a>{% endif %}
+  </form>
+
+  <!-- Experience filters -->
+  <div class="filter-bar">
+    <a href="{% url 'resume_list' %}" class="filter-pill {% if not request.GET.exp %}active{% endif %}">Barchasi</a>
+    <a href="?exp=no_exp" class="filter-pill {% if request.GET.exp == 'no_exp' %}active{% endif %}">🌱 Tajribasiz</a>
+    <a href="?exp=1_3" class="filter-pill {% if request.GET.exp == '1_3' %}active{% endif %}">📅 1–3 yil</a>
+    <a href="?exp=3_5" class="filter-pill {% if request.GET.exp == '3_5' %}active{% endif %}">💼 3–5 yil</a>
+    <a href="?exp=5_plus" class="filter-pill {% if request.GET.exp == '5_plus' %}active{% endif %}">🏆 5+ yil</a>
+  </div>
+
+  {% if resumes %}
+  <p style="color:var(--text2); font-size:0.85rem; margin-bottom:1rem;">{{ resumes|length }} ta resume topildi</p>
+
+  <div style="display:flex; flex-direction:column; gap:0.75rem;">
+    {% for resume in resumes %}
+    <a href="{% url 'resume_detail' resume.pk  %}" class="resume-card">
+      <div class="resume-avatar">
+        {% if resume.user.avatar %}<img src="{{ resume.user.avatar.url }}" alt="">{% else %}👤{% endif %}
+      </div>
+      <div class="resume-body">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <div class="resume-name">{{ resume.full_name|default:resume.user.name|default:resume.user.phone }}</div>
+            <div class="resume-position">{{ resume.position }}</div>
+          </div>
+          {% if resume.salary_expectation %}
+          <div class="resume-salary">{{ resume.salary_expectation|floatformat:0 }} so'm</div>
+          {% endif %}
+        </div>
+        <div class="resume-meta">
+          <span class="badge badge-blue">{{ resume.get_experience_display|default:"Tajriba ko'rsatilmagan" }}</span>
+          {% if resume.location %}<span class="badge badge-gray">📍 {{ resume.location }}</span>{% endif %}
+          <span class="badge badge-gray">👁 {{ resume.views|default:0 }}</span>
+        </div>
+        {% if resume.about %}
+        <div class="resume-desc">{{ resume.about }}</div>
+        {% endif %}
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+          <span style="color:var(--text2); font-size:0.78rem;">📅 {{ resume.created_at|date:"d.m.Y" }}</span>
+          {% if resume.contact_phone %}<span style="color:var(--text2); font-size:0.78rem;">📞 {{ resume.contact_phone }}</span>{% endif %}
+          <span class="btn btn-outline" style="font-size:0.8rem; padding:0.3rem 0.8rem;">Ko'rish →</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.exp %}&exp={{ request.GET.exp }}{% endif %}">← Oldingi</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if i == page_obj.number %}<span class="current">{{ i }}</span>
+      {% elif i == 1 or i == paginator.num_pages or i|add:"-1" == page_obj.number or i|add:"1" == page_obj.number %}<a href="?page={{ i }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.exp %}&exp={{ request.GET.exp }}{% endif %}">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.exp %}&exp={{ request.GET.exp }}{% endif %}">Keyingi →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📄</div>
+    <h3>Resume topilmadi</h3>
+    <p>Boshqa kalit so'z yoki filtr sinab ko'ring</p>
+    {% if user.is_authenticated %}
+    <a href="{% url 'resume_create' %}" class="btn btn-accent" style="margin-top:1rem;">+ Resume joylash</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

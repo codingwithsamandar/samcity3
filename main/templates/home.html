@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+{% block title %}SamCity — shahringiz uchun hamma narsa bir joyda{% endblock %}
+
+{% block extra_css %}
+<style>
+  .home-ads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.15rem; }
+  @media (max-width: 980px) { .home-ads { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 680px) { .home-ads { grid-template-columns: 1fr 1fr; gap: .8rem; } }
+  .sec-head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .sec-head-row h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+  .sec-head-row p { color: var(--text2); font-size: .94rem; margin-top: .3rem; }
+  .see-all { font-size: .88rem; font-weight: 650; color: var(--accent); display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+  .see-all .ic { width: 1.05em; height: 1.05em; }
+  .toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .toolbar .chip-row { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .toolbar .chip-row::-webkit-scrollbar { display: none; }
+  .ad-ph { font-size: 2.8rem; }
+  /* map preview */
+  .map-preview { position: relative; border-radius: var(--radius-xl); overflow: hidden; min-height: 360px;
+    background: linear-gradient(150deg, var(--surface2), var(--surface)); border: 1px solid var(--glass-brd); box-shadow: var(--shadow-lg); }
+  .map-preview .mp-grid { position: absolute; inset: 0; opacity: .6;
+    background-image: linear-gradient(rgba(52,211,153,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,.12) 1px, transparent 1px);
+    background-size: 46px 46px; }
+  .map-preview .road { position: absolute; background: rgba(34,211,238,.16); border-radius: 100px; }
+  .mp-pin { position: absolute; width: 40px; height: 40px; border-radius: 50% 50% 50% 4px; transform: rotate(45deg);
+    display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-lg); animation: floaty 5s ease-in-out infinite; }
+  .mp-pin .ic { transform: rotate(-45deg); width: 20px; height: 20px; stroke-width: 2; }
+  .map-cta { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 3; }
+  @media (max-width: 720px) { .map-preview { min-height: 280px; } }
+
+  /* ── Mobile-first: service cards appear before hero at <768px ── */
+  .home-sections { display: flex; flex-direction: column; }
+  .home-hero-wrap  { order: 2; }
+  .home-stats-wrap { order: 3; }
+  .home-svc-wrap   { order: 1; } /* services FIRST on mobile */
+  /* On desktop: restore natural order */
+  @media (min-width: 768px) {
+    .home-hero-wrap  { order: 1; }
+    .home-stats-wrap { order: 2; }
+    .home-svc-wrap   { order: 3; }
+  }
+
+  /* Compact service grid on mobile — 2 cols */
+  @media (max-width: 560px) {
+    .svc-grid { grid-template-columns: repeat(2, 1fr) !important; gap: .9rem !important; }
+    .svc-card { padding: 1.15rem 1rem !important; }
+    .svc-card .svc-ic { width: 48px !important; height: 48px !important; margin-bottom: .75rem !important; }
+    .svc-card h3 { font-size: .95rem !important; }
+    .svc-card p { display: none !important; } /* hide desc on tiny screens — icon+label is enough */
+    .home-svc-wrap .section-head { margin-bottom: 1.25rem !important; }
+    .home-svc-wrap .section-head p { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="home-sections">
+<div class="home-hero-wrap">
+<section class="hero">
+  <div class="orb orb-indigo hero-orb-1" style="position:absolute;"></div>
+  <div class="orb orb-gold hero-orb-2" style="position:absolute;"></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow reveal"><svg class="ic"><use href="#i-sparkle"/></svg> Shahringiz uchun raqamli platforma</span>
+        <h1 class="reveal" data-reveal-delay="60">Hamma narsa<br><span class="grad">bir joyda.</span></h1>
+        <p class="lead reveal" data-reveal-delay="120">E'lonlar, taksi, yetkazib berish, joy bron qilish va to'lovlar — barchasi yagona, qulay va ishonchli platformada.</p>
+
+        <form class="hero-search reveal" data-reveal-delay="180" method="get" action="{% url 'all_ads' %}">
+          <svg class="ic"><use href="#i-search"/></svg>
+          <input type="text" name="q" value="{{ query }}" placeholder="Nimani qidiryapsiz? Kvartira, iPhone, ish...">
+          <button class="btn btn-accent" type="submit">Qidirish</button>
+        </form>
+
+        <div class="chip-row reveal" data-reveal-delay="240" style="margin-top:1.25rem;">
+          <a href="{% url 'all_ads' %}?cat=uy_joy" class="chip"><svg class="ic"><use href="#i-home"/></svg> Uy-joy</a>
+          <a href="{% url 'all_ads' %}?cat=avtomobil" class="chip"><svg class="ic"><use href="#i-car"/></svg> Avtomobil</a>
+          <a href="{% url 'job_list' %}" class="chip"><svg class="ic"><use href="#i-briefcase"/></svg> Ish</a>
+          <a href="{% url 'delivery:store_list' %}" class="chip"><svg class="ic"><use href="#i-bike"/></svg> Yetkazish</a>
+          <a href="{% url 'places:nearby' %}" class="chip"><svg class="ic"><use href="#i-pin"/></svg> Yaqinimda</a>
+        </div>
+
+        <div class="hero-trust reveal" data-reveal-delay="300">
+          <div class="avatars"><span>S</span><span>M</span><span>B</span><span>+</span></div>
+          <span><b style="color:var(--text)">{{ total_users }}+</b> foydalanuvchi allaqachon qo'shildi</span>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal" data-reveal-delay="120">
+        <div class="orb orb-violet" data-parallax="0.06" style="width:280px;height:280px;top:30px;right:0;"></div>
+        <div class="hero-stage" data-tilt>
+          <div class="grid-lines"></div>
+          <svg class="hero-pin" style="top:26%;left:30%;width:30px;height:30px;"><use href="#i-pin"/></svg>
+          <svg class="hero-pin" style="top:54%;left:62%;width:24px;height:24px;opacity:.8;"><use href="#i-pin"/></svg>
+          <svg class="hero-pin" style="top:38%;left:78%;width:20px;height:20px;opacity:.6;"><use href="#i-pin"/></svg>
+        </div>
+        <div class="float-card" style="top:14%;left:-4%;">
+          <div class="fc-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div>
+          <div><div class="fc-t">Taksi yo'lda</div><div class="fc-s">3 daqiqada yetib keladi</div></div>
+        </div>
+        <div class="float-card delay1" style="bottom:16%;left:6%;">
+          <div class="fc-ic g-green"><svg class="ic"><use href="#i-bike"/></svg></div>
+          <div><div class="fc-t">Buyurtma tayyor</div><div class="fc-s">Yetkazilmoqda · 12 daq</div></div>
+        </div>
+        <div class="float-card delay2" style="top:46%;right:-6%;">
+          <div class="fc-ic g-indigo"><svg class="ic"><use href="#i-check"/></svg></div>
+          <div><div class="fc-t">To'lov amalga oshdi</div><div class="fc-s">Kommunal · muvaffaqiyatli</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div><!-- /.home-hero-wrap -->
+
+<!-- Quick start — foydalanuvchi yo'nalishi -->
+<section class="section-sm" style="padding-top:0;">
+  <div class="wrap">
+    <div class="grid-3" style="gap:1rem;">
+      <a href="{% url 'all_ads' %}" class="card card-pad" style="text-decoration:none;color:inherit;border:1px solid var(--border);">
+        <div style="font-size:1.6rem;margin-bottom:.5rem;">🛒</div>
+        <strong style="display:block;margin-bottom:.25rem;">Sotib olish / sotish</strong>
+        <span style="color:var(--text2);font-size:.85rem;">E'lonlar bozorida mahsulot toping yoki o'zingiz joylashtiring</span>
+      </a>
+      <a href="{% url 'job_list' %}" class="card card-pad" style="text-decoration:none;color:inherit;border:1px solid var(--border);">
+        <div style="font-size:1.6rem;margin-bottom:.5rem;">💼</div>
+        <strong style="display:block;margin-bottom:.25rem;">Ish topish</strong>
+        <span style="color:var(--text2);font-size:.85rem;">Vakansiyalar va rezyumeler — ish beruvchi yoki ishchi</span>
+      </a>
+      <a href="{% url 'taxi:home' %}" class="card card-pad" style="text-decoration:none;color:inherit;border:1px solid var(--border);">
+        <div style="font-size:1.6rem;margin-bottom:.5rem;">🚕</div>
+        <strong style="display:block;margin-bottom:.25rem;">Taksi & yetkazish</strong>
+        <span style="color:var(--text2);font-size:.85rem;">Taksi — yo'lovchi tashish. Yetkazish — do'kondan mahsulot</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATISTICS ───────────────────────────────────────────── -->
+<div class="home-stats-wrap">
+<section class="section-sm">
+  <div class="wrap">
+    <div class="stat-row">
+      <div class="stat-tile reveal">
+        <svg class="ic"><use href="#i-tag"/></svg>
+        <div class="num" data-count="{{ active_ads|default:0 }}" data-suffix="+">{{ active_ads }}+</div>
+        <div class="lbl">Faol e'lonlar</div>
+      </div>
+      <div class="stat-tile reveal" data-reveal-delay="80">
+        <svg class="ic"><use href="#i-user"/></svg>
+        <div class="num" data-count="{{ total_users|default:0 }}" data-suffix="+">{{ total_users }}+</div>
+        <div class="lbl">Foydalanuvchilar</div>
+      </div>
+      <div class="stat-tile reveal" data-reveal-delay="160">
+        <svg class="ic"><use href="#i-grid"/></svg>
+        <div class="num" data-count="7">7</div>
+        <div class="lbl">Xizmat yo'nalishi</div>
+      </div>
+      <div class="stat-tile reveal" data-reveal-delay="240">
+        <svg class="ic"><use href="#i-clock"/></svg>
+        <div class="num">24/7</div>
+        <div class="lbl">Doim ochiq</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /.home-stats-wrap -->
+
+<!-- ── SERVICE CATEGORIES ───────────────────────────────────── -->
+<div class="home-svc-wrap">
+<section class="section section-soft">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Xizmatlar</span>
+      <h2>Bitta ilova — barcha ehtiyojlar</h2>
+      <p>Kundalik hayotingizni osonlashtiradigan barcha xizmatlar bir joyda jamlangan.</p>
+    </div>
+    <div class="svc-grid">
+      <a href="{% url 'taxi:home' %}" class="svc-card reveal"><div class="svc-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div><h3>Taksi</h3><p>Tez buyurtma va shaffof narx.</p><span class="svc-go">Buyurtma <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'delivery:store_list' %}" class="svc-card reveal" data-reveal-delay="60"><div class="svc-ic g-green"><svg class="ic"><use href="#i-bike"/></svg></div><h3>Yetkazish</h3><p>Do'konlar, ovqat va savat.</p><span class="svc-go">Ko'rish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'venue_list' %}" class="svc-card reveal" data-reveal-delay="120"><div class="svc-ic g-violet"><svg class="ic"><use href="#i-building"/></svg></div><h3>Joylar</h3><p>To'yxona va zallarni bron qiling.</p><span class="svc-go">Bron <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'payments:home' %}" class="svc-card reveal" data-reveal-delay="180"><div class="svc-ic g-indigo"><svg class="ic"><use href="#i-card"/></svg></div><h3>To'lovlar</h3><p>Kommunal va boshqa to'lovlar.</p><span class="svc-go">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'job_list' %}" class="svc-card reveal"><div class="svc-ic g-rose"><svg class="ic"><use href="#i-briefcase"/></svg></div><h3>Ish</h3><p>Vakansiyalar va rezyumelar.</p><span class="svc-go">Topish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'neighborhood_chat' %}" class="svc-card reveal" data-reveal-delay="60"><div class="svc-ic g-cyan"><svg class="ic"><use href="#i-chat"/></svg></div><h3>Mahalla</h3><p>Qo'shnilar bilan chat va e'lon.</p><span class="svc-go">Kirish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'places:map' %}" class="svc-card reveal" data-reveal-delay="120"><div class="svc-ic g-slate"><svg class="ic"><use href="#i-map"/></svg></div><h3>Xarita</h3><p>Joylar va yo'nalishlar.</p><span class="svc-go">Ochish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'places:tourism_list' %}" class="svc-card reveal" data-reveal-delay="180"><div class="svc-ic g-amber"><svg class="ic"><use href="#i-star"/></svg></div><h3>Sayohat</h3><p>Diqqatga sazovor joylar.</p><span class="svc-go">Kashf et <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+    </div>
+  </div>
+</section>
+</div><!-- /.home-svc-wrap -->
+
+</div><!-- /.home-sections -->
+
+<!-- ── NEW LISTINGS (dynamic) ───────────────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head-row reveal">
+      <div><h2>Yangi e'lonlar</h2><p>Eng so'nggi joylashtirilgan e'lonlar</p></div>
+      <a href="{% url 'all_ads' %}" class="see-all">Barchasini ko'rish <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+    </div>
+
+    <div class="toolbar reveal">
+      <div class="chip-row">
+        <a href="{% url 'home' %}" class="chip {% if not cat_filter %}active{% endif %}">Barchasi</a>
+        {% for key, label in cats %}
+        <a href="?cat={{ key }}{% if query %}&q={{ query }}{% endif %}" class="chip {% if cat_filter == key %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </div>
+      <form method="get" style="display:inline-flex;gap:.5rem;align-items:center;">
+        {% if cat_filter %}<input type="hidden" name="cat" value="{{ cat_filter }}">{% endif %}
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        <label for="sortSelect" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Saralash</label>
+        <select id="sortSelect" name="sort" class="form-control" style="width:auto;" onchange="this.form.submit()">
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Eng yangi</option>
+          <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Ommabop</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Narx: arzon</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Narx: qimmat</option>
+        </select>
+        <noscript><button type="submit" class="btn btn-ghost btn-sm">Saralash</button></noscript>
+      </form>
+    </div>
+
+    <div class="home-ads">
+      {% for ad in ads|slice:":12" %}
+      <a href="{% url 'ad_detail' ad.pk %}" class="lcard reveal">
+        <div class="lc-media">
+          {% if ad.images.all %}<img src="{{ ad.images.first.image.url }}" alt="{{ ad.title }}">
+          {% else %}<div class="media-ph ad-ph">{% if ad.category == 'uy_joy' %}🏠{% elif ad.category == 'avtomobil' %}🚗{% elif ad.category == 'ish' %}💼{% elif ad.category == 'xizmat' %}🔧{% elif ad.category == 'qishloq' %}🌾{% elif ad.category == 'hayvonlar' %}🐾{% else %}📦{% endif %}</div>{% endif %}
+          <div class="lc-badges">
+            <span class="badge badge-gray">{{ ad.get_category_display }}</span>
+            {% if ad.is_boosted %}<span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> TOP</span>{% endif %}
+          </div>
+        </div>
+        <div class="lc-body">
+          <div class="lc-price">
+            {% if ad.price_type == 'free' %}<span style="color:var(--green)">Bepul</span>{% elif ad.price_type == 'negotiable' %}Kelishiladi{% elif ad.price %}{{ ad.price|uz_price }} <small>so'm</small>{% else %}—{% endif %}
+          </div>
+          <div class="lc-title" style="display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ ad.title }}</div>
+          <div class="lc-sub" style="justify-content:space-between;margin-top:.5rem;">
+            <span style="display:inline-flex;align-items:center;gap:.25rem;"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg>{% if ad.location %}{{ ad.location|truncatechars:16 }}{% else %}Shahar{% endif %}</span>
+            <span style="color:var(--text3);font-size:.78rem;">{{ ad.created_at|timesince }}</span>
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="icon"><svg class="ic"><use href="#i-search"/></svg></div>
+        <h3>E'lon topilmadi</h3>
+        <p>Boshqa kategoriya yoki qidiruvni sinab ko'ring.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── INTERACTIVE MAP PREVIEW ──────────────────────────────── -->
+<section class="section section-soft">
+  <div class="wrap">
+    <div class="detail-grid" style="grid-template-columns:1fr 1.15fr;align-items:center;">
+      <div class="reveal">
+        <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Xarita</span>
+        <h2 style="font-size:clamp(1.6rem,3vw,2.3rem);margin-top:.7rem;">Shahar kaftingizda</h2>
+        <p style="color:var(--text2);font-size:1rem;margin-top:.8rem;line-height:1.6;">Do'konlar, to'yxonalar, diqqatga sazovor joylar va xizmatlar — barchasi interaktiv xaritada. Eng yaqinini toping va yo'nalishni oching.</p>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.5rem;">
+          <a href="{% url 'places:map' %}" class="btn btn-accent btn-lg"><svg class="ic"><use href="#i-map"/></svg> Xaritani ochish</a>
+          <a href="{% url 'places:nearby' %}" class="btn btn-outline btn-lg"><svg class="ic"><use href="#i-pin"/></svg> Yaqinimda</a>
+        </div>
+      </div>
+      <div class="map-preview reveal" data-reveal-delay="100">
+        <div class="mp-grid"></div>
+        <div class="road" style="top:40%;left:0;right:0;height:14px;"></div>
+        <div class="road" style="top:0;bottom:0;left:55%;width:14px;"></div>
+        <div class="mp-pin g-indigo" style="top:22%;left:24%;"><svg class="ic"><use href="#i-building"/></svg></div>
+        <div class="mp-pin g-gold" style="top:54%;left:60%;animation-delay:-1.5s;"><svg class="ic"><use href="#i-bike"/></svg></div>
+        <div class="mp-pin g-green" style="top:30%;left:72%;animation-delay:-2.5s;"><svg class="ic"><use href="#i-star"/></svg></div>
+        <div class="mp-pin g-violet" style="top:64%;left:30%;animation-delay:-3.5s;"><svg class="ic"><use href="#i-car"/></svg></div>
+        <a href="{% url 'places:map' %}" class="btn btn-accent map-cta"><svg class="ic"><use href="#i-search"/></svg> Joylarni ko'rish</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TOURISM SHOWCASE ─────────────────────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head-row reveal">
+      <div><h2>Sayohat va diqqatga sazovor joylar</h2><p>Shaharning eng go'zal joylarini kashf eting</p></div>
+      <a href="{% url 'places:tourism_list' %}" class="see-all">Barchasi <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    <div class="grid-3">
+      <a href="{% url 'places:tourism_list' %}" class="lcard reveal"><div class="lc-media"><div class="media-ph" style="background:linear-gradient(140deg,#10b981,#0b7d57);color:#fff;"><svg class="ic" style="width:46px;height:46px;"><use href="#i-building"/></svg></div><div class="lc-badges"><span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> Mashhur</span></div></div><div class="lc-body"><div class="lc-title">Tarixiy obidalar</div><div class="lc-sub">Me'moriy yodgorliklar va muzeylar</div></div></a>
+      <a href="{% url 'places:tourism_list' %}" class="lcard reveal" data-reveal-delay="80"><div class="lc-media"><div class="media-ph" style="background:linear-gradient(140deg,#22d3ee,#0891b2);color:#fff;"><svg class="ic" style="width:46px;height:46px;"><use href="#i-pin"/></svg></div></div><div class="lc-body"><div class="lc-title">Tabiat go'shalari</div><div class="lc-sub">Bog'lar, ko'llar va istirohat</div></div></a>
+      <a href="{% url 'places:tourism_list' %}" class="lcard reveal" data-reveal-delay="160"><div class="lc-media"><div class="media-ph" style="background:linear-gradient(140deg,#34d399,#0891b2);color:#fff;"><svg class="ic" style="width:46px;height:46px;"><use href="#i-star"/></svg></div></div><div class="lc-body"><div class="lc-title">Milliy taomlar</div><div class="lc-sub">Eng mazali joylar va restoranlar</div></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- ── BUSINESS / DELIVERY / GOVERNMENT ─────────────────────── -->
+<section class="section section-soft">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Imkoniyatlar</span>
+      <h2>Biznes, yetkazish va davlat xizmatlari</h2>
+      <p>Tadbirkorlar uchun vositalar va aholi uchun qulay raqamli xizmatlar.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card card-pad reveal">
+        <div class="svc-ic g-indigo" style="width:50px;height:50px;border-radius:14px;margin-bottom:1rem;"><svg class="ic"><use href="#i-building"/></svg></div>
+        <h3 style="font-size:1.15rem;">Biznes uchun</h3>
+        <p style="color:var(--text2);font-size:.9rem;margin-top:.4rem;line-height:1.55;">Do'kon oching, mahsulot joylang, e'lon va kursingizni reklama qiling — minglab mijozlarga yeting.</p>
+        <a href="{% url 'delivery:my_stores' %}" class="see-all" style="margin-top:1rem;">Do'kon ochish <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <div class="card card-pad reveal" data-reveal-delay="80">
+        <div class="svc-ic g-green" style="width:50px;height:50px;border-radius:14px;margin-bottom:1rem;"><svg class="ic"><use href="#i-truck"/></svg></div>
+        <h3 style="font-size:1.15rem;">Yetkazib berish</h3>
+        <p style="color:var(--text2);font-size:.9rem;margin-top:.4rem;line-height:1.55;">Tez va ishonchli yetkazib berish. Buyurtmani real vaqtda kuzating, kuryer bo'lib ham ishlang.</p>
+        <a href="{% url 'delivery:store_list' %}" class="see-all" style="margin-top:1rem;">Buyurtma berish <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <div class="card card-pad reveal" data-reveal-delay="160">
+        <div class="svc-ic g-slate" style="width:50px;height:50px;border-radius:14px;margin-bottom:1rem;"><svg class="ic"><use href="#i-shield"/></svg></div>
+        <h3 style="font-size:1.15rem;">Davlat xizmatlari</h3>
+        <p style="color:var(--text2);font-size:.9rem;margin-top:.4rem;line-height:1.55;">Kommunal to'lovlar va boshqa rasmiy to'lovlarni xavfsiz, tezkor va onlayn amalga oshiring.</p>
+        <a href="{% url 'payments:home' %}" class="see-all" style="margin-top:1rem;">To'lovga o'tish <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ─────────────────────────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Fikrlar</span>
+      <h2>Minglab odamlar ishonadi</h2>
+    </div>
+    <div class="grid-3">
+      <div class="tcard reveal"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Taksi va yetkazib berishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi."</p><div class="who"><div class="av">S</div><div><div class="nm">Sardor A.</div><div class="rl">Doimiy foydalanuvchi</div></div></div></div>
+      <div class="tcard reveal" data-reveal-delay="80"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Do'konimni ochdim va birinchi haftadayoq buyurtmalar kela boshladi. Ajoyib platforma."</p><div class="who"><div class="av">M</div><div><div class="nm">Malika Y.</div><div class="rl">Tadbirkor</div></div></div></div>
+      <div class="tcard reveal" data-reveal-delay="160"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Kommunal to'lovlarni navbatga turmasdan to'layman. Hammasi bir necha soniyada."</p><div class="who"><div class="av">B</div><div><div class="nm">Bobur K.</div><div class="rl">Foydalanuvchi</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ──────────────────────────────────────────────────── -->
+<section class="section-sm">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>O'z e'loningizni bugun joylang</h2>
+      <p>Bir daqiqada bepul e'lon bering va minglab odamlarga yeting.</p>
+      <div class="hero-cta">
+        {% if user.is_authenticated %}
+          <a href="{% url 'ad_create' %}" class="btn btn-gold btn-lg"><svg class="ic"><use href="#i-plus"/></svg> E'lon joylash</a>
+          <a href="{% url 'dashboard' %}" class="btn btn-outline btn-lg" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.4);">Boshqaruv paneli</a>
+        {% else %}
+          <a href="{% url 'register' %}" class="btn btn-gold btn-lg"><svg class="ic"><use href="#i-sparkle"/></svg> Boshlash — bepul</a>
+          <a href="{% url 'login' %}" class="btn btn-outline btn-lg" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.4);">Kirish</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MOBILE APP DOWNLOAD BANNER ─────────────────────────────── -->
+<section class="section-sm">
+  <div class="wrap">
+    <div class="reveal" style="background:linear-gradient(135deg,rgba(52,211,153,.12),rgba(34,211,238,.08));border:1px solid rgba(52,211,153,.25);border-radius:var(--radius-xl);padding:2rem 2rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:-20px;top:-20px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,.15),transparent 70%);pointer-events:none;"></div>
+      <div style="font-size:3.5rem;flex:none;">📱</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-.025em;">SamCity ilovasini yuklab oling</div>
+        <div style="color:var(--text2);font-size:.95rem;margin-top:.4rem;line-height:1.55;">Android APK yoki iPhone uchun bepul o'rnating. Tezroq, offline va qulay.</div>
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;flex:none;">
+        <a href="{% url 'app_download' %}" class="btn btn-accent btn-lg">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
+          Yuklab olish
+        </a>
+        <a href="{% url 'app_download' %}#android" class="btn btn-outline btn-lg" style="display:inline-flex;align-items:center;gap:.5rem;">
+          🤖 APK
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

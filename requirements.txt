@@ -1,0 +1,37 @@
+# ── Core (required) ──────────────────────────────────────────────
+Django>=5.2,<5.3
+channels>=4.0
+daphne>=4.0
+pillow>=11.0
+# SMS shlyuzi (Eskiz/Playmobile) HTTP so'rovlari uchun
+requests>=2.32
+# Statik fayllarni Django/daphne o'zi bersin (nginx bo'lmagan deploy — Render/Koyeb)
+whitenoise>=6.6
+
+# ── Mobile REST API (Flutter ilova uchun) ────────────────────────
+djangorestframework>=3.15
+djangorestframework-simplejwt>=5.3
+django-cors-headers>=4.4
+drf-spectacular>=0.27
+django-filter>=24.0
+
+# ── Production (optional — only needed when the matching env vars are set) ──
+# Redis channel layer + cache  → set REDIS_URL
+channels-redis>=4.2 ; python_version >= "3.8"
+redis>=5.0
+# PostgreSQL  → set POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_HOST
+# psycopg 3 (production tavsiyasi) — psycopg2-binary o'rniga
+psycopg[binary]>=3.1
+# Production ASGI/WSGI server
+gunicorn>=21.2
+
+# ── Monitoring (ixtiyoriy — faqat SENTRY_DSN o'rnatilganda ishlaydi) ──
+sentry-sdk>=2.0
+
+# ── Media storage (Render free plan — disk saqlanmaydi) ──
+# Cloudinary: CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET
+django-cloudinary-storage>=0.3.0
+cloudinary>=1.36.0
+# AWS S3: AWS_STORAGE_BUCKET_NAME + AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+django-storages[s3]>=1.14
+boto3>=1.34

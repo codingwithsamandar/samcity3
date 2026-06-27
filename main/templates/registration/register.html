@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Ro'yxatdan o'tish — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height: calc(100dvh - 120px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 480px; }
+  .auth-logo { text-align: center; margin-bottom: 1.5rem; }
+  .auth-logo .logo-text { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+  .auth-logo .logo-text span { color: var(--text); }
+  .auth-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; text-align: center; }
+  .auth-sub { color: var(--text2); font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
+  .auth-tabs { display: flex; background: var(--surface2); border-radius: 10px; padding: 4px; margin-bottom: 1.5rem; gap: 4px; }
+  .auth-tab { flex: 1; text-align: center; padding: 0.5rem; border-radius: 7px; font-size: 0.875rem; font-weight: 600; color: var(--text2); text-decoration: none; transition: all 0.15s; }
+  .auth-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .auth-tab:hover:not(.active) { color: var(--text); }
+  .auth-footer { text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--text2); }
+  .auth-footer a { color: var(--accent); }
+  .input-wrap { position: relative; }
+  .input-prefix { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text2); font-size: 0.9rem; pointer-events: none; font-weight: 600; }
+  .input-wrap.has-prefix .form-control { padding-left: 3.5rem; }
+  .toggle-pass { position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text2); font-size: 1.1rem; padding: 0; line-height: 1; transition: color 0.15s; }
+  .toggle-pass:hover { color: var(--text); }
+  .hint { font-size: 0.75rem; color: var(--text2); margin-top: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-text">Sam<span>City</span></span>
+    </div>
+
+    <div class="auth-tabs">
+      <a href="{% url 'login' %}" class="auth-tab">Kirish</a>
+      <a href="{% url 'register' %}" class="auth-tab active">Ro'yxat</a>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="flash flash-error">⚠ {{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'register' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Ism Familiya</label>
+        <input type="text" name="name" class="form-control" placeholder="Sardor Aliyev"
+               value="{{ request.POST.name|default:'' }}" autocomplete="name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Telefon raqam <span style="color:var(--red)">*</span></label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">+998</span>
+          <input type="tel" name="phone" class="form-control" placeholder="90 123 45 67"
+                 value="{{ request.POST.phone|default:'' }}" autocomplete="tel" required>
+        </div>
+        <div class="hint">Kirish uchun ishlatiladi. Format: +998XXXXXXXXX</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Parol <span style="color:var(--red)">*</span></label>
+        <div class="input-wrap">
+          <input type="password" name="password" id="pass1" class="form-control"
+                 placeholder="Kamida 6 ta belgi" autocomplete="new-password" required>
+          <button type="button" class="toggle-pass" onclick="togglePass('pass1',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Parolni tasdiqlang <span style="color:var(--red)">*</span></label>
+        <div class="input-wrap">
+          <input type="password" name="password2" id="pass2" class="form-control"
+                 placeholder="Parolni qayta kiriting" autocomplete="new-password" required>
+          <button type="button" class="toggle-pass" onclick="togglePass('pass2',this)">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-accent" style="width:100%; justify-content:center; padding:0.7rem; margin-top:0.25rem;">
+        Ro'yxatdan o'tish →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Hisobingiz bormi? <a href="{% url 'login' %}">Kirish</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+</script>
+{% endblock %}

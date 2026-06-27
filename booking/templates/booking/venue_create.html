@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{% if mode == 'edit' %}Joyni tahrirlash{% else %}Joy qo'shish{% endif %} — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>#pickmap{height:300px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:560px;">
+  {% for m in messages %}
+  <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
+  {% endfor %}
+
+  <div class="page-header"><h1>{% if mode == 'edit' %}✏️ Joyni tahrirlash{% else %}➕ Yangi joy qo'shish{% endif %}</h1></div>
+
+  <form method="post" enctype="multipart/form-data" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Joy nomi *</label>
+      <input type="text" name="name" class="form-control" required value="{{ venue.name|default:'' }}" placeholder="Masalan: Diyor To'yxona">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Turi</label>
+      <select name="venue_type" class="form-control">
+        {% for key, label in venue_types %}<option value="{{ key }}" {% if venue.venue_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tavsif</label>
+      <textarea name="description" class="form-control" placeholder="Joy haqida qisqacha...">{{ venue.description|default:'' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Manzil</label>
+      <input type="text" name="address" id="addrIn" class="form-control" value="{{ venue.address|default:'' }}" placeholder="Xaritada belgilang — manzil avtomatik chiqadi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon</label>
+      <input type="text" name="phone" class="form-control" value="{{ venue.phone|default:'' }}" placeholder="+998 ...">
+    </div>
+    <div style="display:flex;gap:0.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Sig'imi (kishi)</label>
+        <input type="number" name="capacity" class="form-control" min="1" value="{{ venue.capacity|default:'' }}">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Kunlik narx</label>
+        <input type="number" name="price_per_day" class="form-control" min="0" value="{{ venue.price_per_day|default:'' }}">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Soatlik narx</label>
+        <input type="number" name="price_per_hour" class="form-control" min="0" value="{{ venue.price_per_hour|default:'' }}">
+      </div>
+    </div>
+    <div style="display:flex;gap:0.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Ish boshlanishi</label>
+        <input type="time" name="working_hours_start" class="form-control" value="{{ venue.working_hours_start|time:'H:i' }}">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Ish tugashi</label>
+        <input type="time" name="working_hours_end" class="form-control" value="{{ venue.working_hours_end|time:'H:i' }}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📍 Joylashuv — xaritadan tanlang *</label>
+      <div id="pickmap"></div>
+      <p class="form-hint" style="margin-bottom:.5rem;">Xaritada joyni bosing — koordinata va manzil avtomatik to'ldiriladi. Markerni surib aniqlashtirsa ham bo'ladi.</p>
+      <div style="display:flex;gap:0.8rem;">
+        <input type="text" name="latitude" id="latIn" class="form-control" value="{{ venue.latitude|default:''|unlocalize }}" placeholder="Kenglik (lat)" readonly>
+        <input type="text" name="longitude" id="lngIn" class="form-control" value="{{ venue.longitude|default:''|unlocalize }}" placeholder="Uzunlik (lng)" readonly>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.8rem;align-items:flex-end;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Bekor qilish jarimasi (%)</label>
+        <input type="number" name="cancel_penalty_percent" class="form-control" min="0" max="15" value="{{ venue.cancel_penalty_percent|default:10 }}">
+        <span class="form-hint">Maksimal 15%. Bekor/kelmaganda ushlanadi.</span>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Kutish vaqti (daqiqa)</label>
+        <input type="number" name="grace_minutes" class="form-control" min="0" value="{{ venue.grace_minutes|default:15 }}">
+        <span class="form-hint">Shu vaqt kutiladi, kelmasa "kelmadi".</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+        <input type="checkbox" name="prepay_required" style="width:auto;" {% if venue.prepay_required or mode != 'edit' %}checked{% endif %}> Oldindan to'lov majburiy
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Rasm</label>
+      <input type="file" name="image" class="form-control" accept="image/*">
+    </div>
+    {% if mode == 'edit' %}
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+        <input type="checkbox" name="is_active" style="width:auto;" {% if venue.is_active %}checked{% endif %}> Faol
+      </label>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Joyni qo'shish{% endif %}</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  if (typeof SamMap === 'undefined') return;
+  var latIn = document.getElementById('latIn'),
+      lngIn = document.getElementById('lngIn'),
+      addrIn = document.getElementById('addrIn');
+  var start = (latIn.value && lngIn.value) ? [parseFloat(latIn.value), parseFloat(lngIn.value)] : SamMap.CENTER;
+  var map = SamMap.init('pickmap', { center: start, zoomLevel: 14, fullscreen: false });
+  var marker = (latIn.value && lngIn.value) ? L.marker(start, { draggable: true }).addTo(map) : null;
+
+  function setPoint(ll) {
+    latIn.value = ll.lat.toFixed(6);
+    lngIn.value = ll.lng.toFixed(6);
+    if (marker) { marker.setLatLng(ll); }
+    else { marker = L.marker(ll, { draggable: true }).addTo(map); marker.on('dragend', function () { setPoint(marker.getLatLng()); }); }
+    // Manzilni avtomatik to'ldirish (foydalanuvchi yozgan bo'lsa — ustiga yozmaymiz)
+    SamMap.reverseGeocode(ll.lat, ll.lng).then(function (addr) {
+      if (addr && (!addrIn.value || addrIn.dataset.auto === '1')) { addrIn.value = addr; addrIn.dataset.auto = '1'; }
+    });
+  }
+  map.on('click', function (e) { setPoint(e.latlng); });
+  if (marker) marker.on('dragend', function () { setPoint(marker.getLatLng()); });
+
+  // Joylashuv tanlanmasdan saqlashga yo'l qo'ymaymiz
+  var form = latIn.closest('form');
+  form.addEventListener('submit', function (e) {
+    if (!latIn.value || !lngIn.value) {
+      e.preventDefault();
+      alert('Iltimos, xaritada joyni belgilang.');
+      document.getElementById('pickmap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+})();
+</script>
+{% endblock %}

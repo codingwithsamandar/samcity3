@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block body_class %}map-page{% endblock %}
+{% block title %}Buyurtmani kuzatish — Shofirkon{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  #trackMap { height: 60vh; min-height: 420px; border-radius: var(--radius-lg); border: 1px solid var(--border); z-index: 1; }
+  .track-bar { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .track-stat { display:flex; gap:1.25rem; flex-wrap:wrap; }
+  .track-stat .ts { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:.75rem 1.1rem; box-shadow:var(--shadow-xs); }
+  .track-stat .ts .v { font-family:'Plus Jakarta Sans'; font-weight:800; font-size:1.15rem; color:var(--text); }
+  .track-stat .ts .l { color:var(--text3); font-size:.76rem; }
+  .live-dot { width:9px; height:9px; border-radius:50%; background:var(--green); display:inline-block; margin-right:.4rem; box-shadow:0 0 0 0 rgba(14,159,110,.6); animation:livepulse 1.8s infinite; }
+  @keyframes livepulse { 0%{box-shadow:0 0 0 0 rgba(14,159,110,.5)} 70%{box-shadow:0 0 0 8px rgba(14,159,110,0)} 100%{box-shadow:0 0 0 0 rgba(14,159,110,0)} }
+  .driver-pin { background:linear-gradient(140deg,var(--accent),var(--accent-d)); width:38px; height:38px; border-radius:50% 50% 50% 4px; transform:rotate(45deg); display:grid; place-items:center; box-shadow:var(--shadow-lg); border:2px solid #fff; }
+  .driver-pin svg { transform:rotate(-45deg); width:20px; height:20px; stroke:#fff; fill:none; stroke-width:2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1080px;">
+  <a href="{% url 'delivery:order_detail' order.id %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> Buyurtma tafsiloti</a>
+
+  <div class="track-bar">
+    <div>
+      <span class="eyebrow"><span class="live-dot"></span> Jonli kuzatuv</span>
+      <h1 style="margin-top:.5rem;font-size:1.5rem;">Buyurtma #{{ order.id|stringformat:'s'|slice:':8' }}</h1>
+    </div>
+    <span id="statusBadge" class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="font-size:.85rem;padding:.45rem .9rem;">{{ order.get_status_display }}</span>
+  </div>
+
+  <div class="track-stat" style="margin-bottom:1.1rem;">
+    <div class="ts"><div class="v" id="distVal">—</div><div class="l">Masofa</div></div>
+    <div class="ts"><div class="v" id="etaVal">—</div><div class="l">Taxminiy yetib kelish (ETA)</div></div>
+    <div class="ts"><div class="v" id="driverVal">{{ order.driver.full_name|default:"—" }}</div><div class="l">Haydovchi</div></div>
+  </div>
+
+  <div id="trackMap"></div>
+
+  <div class="card card-pad" style="margin-top:1.25rem;">
+    <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="useMyLocation()"><svg class="ic"><use href="#i-pin"/></svg> Manzilimni belgilash</button>
+      {% if order.driver.phone %}<a href="tel:{{ order.driver.phone }}" class="btn btn-accent"><svg class="ic"><use href="#i-phone"/></svg> Haydovchiga qo'ng'iroq</a>{% endif %}
+    </div>
+    <p id="trackHint" style="color:var(--text2);font-size:.86rem;margin-top:.8rem;">Haydovchi joylashuvini kutmoqdamiz...</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  var ORDER_ID = "{{ order.id }}";
+  var STORE = { {% if store and store.latitude and store.longitude %}lat: {{ store.latitude|unlocalize }}, lng: {{ store.longitude|unlocalize }}, name: "{{ store.name|escapejs }}"{% else %}lat: null, lng: null{% endif %} };
+  var INIT = { {% if driver_location %}lat: {{ driver_location.latitude|unlocalize }}, lng: {{ driver_location.longitude|unlocalize }}{% else %}lat: null, lng: null{% endif %} };
+
+  var center = INIT.lat ? [INIT.lat, INIT.lng] : (STORE.lat ? [STORE.lat, STORE.lng] : [40.1156, 64.5036]);
+  var map = L.map('trackMap').setView(center, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+
+  var driverIcon = L.divIcon({ className: '', html: '<div class="driver-pin"><svg viewBox="0 0 24 24"><path d="M5 13l1.6-4.8A2.2 2.2 0 0 1 8.7 6.7h6.6a2.2 2.2 0 0 1 2.1 1.5L19 13"/><rect x="3" y="13" width="18" height="5" rx="1.6"/><circle cx="7.5" cy="18.4" r="1.5"/><circle cx="16.5" cy="18.4" r="1.5"/></svg></div>', iconSize: [38, 38], iconAnchor: [19, 36] });
+
+  var driverMarker = null, storeMarker = null, meMarker = null, routeLine = null;
+  var dest = null;  // customer destination (browser geolocation)
+
+  if (STORE.lat) { storeMarker = L.marker([STORE.lat, STORE.lng]).addTo(map).bindPopup('🏪 ' + (STORE.name || "Do'kon")); }
+
+  function haversine(a, b) {
+    var R = 6371, toRad = function (d) { return d * Math.PI / 180; };
+    var dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+    var s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s)); // km
+  }
+
+  function updateRouteAndEta() {
+    if (!driverMarker) return;
+    var from = driverMarker.getLatLng();
+    var target = dest || (STORE.lat ? { lat: STORE.lat, lng: STORE.lng } : null);
+    if (!target) return;
+    var pts = [[from.lat, from.lng], [target.lat, target.lng]];
+    if (routeLine) { routeLine.setLatLngs(pts); }
+    else { routeLine = L.polyline(pts, { color: '#3551d1', weight: 4, opacity: .75, dashArray: '2,10', lineCap: 'round' }).addTo(map); }
+    var km = haversine(pts[0], pts[1]);
+    document.getElementById('distVal').textContent = km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
+    var mins = Math.max(1, Math.round((km / 22) * 60)); // ~22 km/h city avg
+    document.getElementById('etaVal').textContent = '~' + mins + ' daq';
+    // Try a real road route from OSRM (graceful fallback to straight line).
+    fetchOsrm(pts[0], pts[1]);
+  }
+
+  function fetchOsrm(a, b) {
+    var url = 'https://router.project-osrm.org/route/v1/driving/' + a[1] + ',' + a[0] + ';' + b[1] + ',' + b[0] + '?overview=full&geometries=geojson';
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.routes && d.routes[0]) {
+        var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+        if (routeLine) routeLine.setLatLngs(coords); else routeLine = L.polyline(coords, { color: '#3551d1', weight: 4, opacity: .8 }).addTo(map);
+        var km = d.routes[0].distance / 1000, mins = Math.max(1, Math.round(d.routes[0].duration / 60));
+        document.getElementById('distVal').textContent = km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' km';
+        document.getElementById('etaVal').textContent = '~' + mins + ' daq';
+      }
+    }).catch(function () { /* keep straight-line estimate */ });
+  }
+
+  function setDriver(lat, lng) {
+    var ll = [lat, lng];
+    if (driverMarker) { driverMarker.setLatLng(ll); }
+    else { driverMarker = L.marker(ll, { icon: driverIcon }).addTo(map).bindPopup('🚗 Haydovchi'); map.setView(ll, 15); }
+    document.getElementById('trackHint').textContent = 'Haydovchi real vaqtda kuzatilmoqda.';
+    updateRouteAndEta();
+  }
+
+  window.useMyLocation = function () {
+    if (!navigator.geolocation) { alert("Brauzer geolokatsiyani qo'llamaydi"); return; }
+    navigator.geolocation.getCurrentPosition(function (p) {
+      dest = { lat: p.coords.latitude, lng: p.coords.longitude };
+      if (meMarker) meMarker.setLatLng([dest.lat, dest.lng]);
+      else meMarker = L.marker([dest.lat, dest.lng]).addTo(map).bindPopup('📍 Mening manzilim');
+      updateRouteAndEta();
+    }, function () { alert("Joylashuvni aniqlab bo'lmadi"); });
+  };
+
+  function setStatus(text, raw) {
+    var b = document.getElementById('statusBadge');
+    b.textContent = text;
+    b.className = 'badge ' + (raw === 'delivered' ? 'badge-green' : raw === 'cancelled' ? 'badge-red' : 'badge-gold');
+    b.style.fontSize = '.85rem'; b.style.padding = '.45rem .9rem';
+  }
+
+  if (INIT.lat) setDriver(INIT.lat, INIT.lng);
+
+  // ── WebSocket live updates ──
+  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  var ws;
+  function connect() {
+    ws = new WebSocket(proto + '://' + location.host + '/ws/delivery/track/' + ORDER_ID + '/');
+    ws.onmessage = function (e) {
+      var d = JSON.parse(e.data);
+      if ((d.type === 'snapshot' || d.type === 'location') && d.lat != null) setDriver(d.lat, d.lng);
+      if (d.type === 'snapshot' || d.type === 'status') {
+        if (d.status_display) setStatus(d.status_display, d.status);
+        if (d.driver_name) document.getElementById('driverVal').textContent = d.driver_name;
+      }
+    };
+    ws.onclose = function () { setTimeout(connect, 3000); };  // auto-reconnect
+  }
+  connect();
+})();
+</script>
+{% endblock %}

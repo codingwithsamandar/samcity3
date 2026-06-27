@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ req.title }} — Yordam{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-check"/></svg>{{ m }}</div>{% endfor %}
+  <a href="{% url 'help_list' %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> Yordam markazi</a>
+
+  <div class="card" style="overflow:hidden;">
+    {% if req.image %}<img src="{{ req.image.url }}" alt="" style="width:100%;max-height:320px;object-fit:cover;">{% endif %}
+    <div class="card-pad">
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;">
+        {% if req.is_urgent %}<span class="badge badge-red">Shoshilinch</span>{% endif %}
+        <span class="badge {% if req.kind == 'offer' %}badge-green{% else %}badge-indigo{% endif %}">{{ req.get_kind_display }}</span>
+        <span class="badge badge-gray">{{ req.get_category_display }}</span>
+        <span class="badge {% if req.status == 'resolved' %}badge-green{% elif req.status == 'closed' %}badge-gray{% else %}badge-gold{% endif %}">{{ req.get_status_display }}</span>
+      </div>
+      <h1 style="font-size:1.5rem;">{{ req.title }}</h1>
+      <p style="color:var(--text2);margin-top:.7rem;line-height:1.6;white-space:pre-wrap;">{{ req.description }}</p>
+
+      <div style="margin-top:1rem;display:flex;flex-direction:column;gap:.2rem;">
+        {% if req.location %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg><span>Manzil</span><b style="text-align:right;">{{ req.location }}</b></div>{% endif %}
+        {% if req.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg><span>Telefon</span><b><a href="tel:{{ req.phone }}" style="color:var(--accent);">{{ req.phone }}</a></b></div>{% endif %}
+        <div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>E'lon beruvchi</span><b>{{ req.creator.name|default:req.creator.phone }}</b></div>
+        <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Sana</span><b>{{ req.created_at|date:"d.m.Y H:i" }}</b></div>
+      </div>
+
+      {% if not is_owner %}
+        {% if user.is_authenticated %}
+          {% if is_volunteer %}
+          <div class="flash flash-success" style="margin-top:1rem;"><svg class="ic"><use href="#i-check"/></svg> Siz ko'ngilli sifatida ro'yxatdasiz. Rahmat! 🙏</div>
+          {% else %}
+          <form method="post" action="{% url 'help_volunteer' req.id %}" style="margin-top:1rem;">
+            {% csrf_token %}
+            <input type="text" name="message" class="form-control" placeholder="Izoh (ixtiyoriy)" style="margin-bottom:.6rem;">
+            <button class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-heart"/></svg> Yordam beraman</button>
+          </form>
+          {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-block btn-lg" style="margin-top:1rem;">Kirish — yordam berish</a>
+        {% endif %}
+      {% else %}
+      <form method="post" action="{% url 'help_status' req.id %}" style="margin-top:1rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        {% csrf_token %}
+        <select name="status" class="form-control" style="width:auto;">
+          {% for k, l in req.STATUS_CHOICES %}<option value="{{ k }}" {% if req.status == k %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-accent">Holatni yangilash</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 style="font-size:1.1rem;margin:1.75rem 0 1rem;">Ko'ngillilar ({{ req.volunteer_count }})</h2>
+  {% for v in req.volunteers.all %}
+  <div class="card card-pad" style="margin-bottom:.5rem;padding:.85rem 1rem;display:flex;gap:.7rem;align-items:center;">
+    <div class="avatar" style="width:38px;height:38px;">{{ v.user.name|first|default:"U" }}</div>
+    <div><div style="font-weight:650;font-size:.9rem;">{{ v.user.name|default:v.user.phone }}</div>{% if v.message %}<div style="color:var(--text2);font-size:.82rem;">{{ v.message }}</div>{% endif %}</div>
+  </div>
+  {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali ko'ngilli yo'q — birinchi bo'ling!</p>{% endfor %}
+</div>
+{% endblock %}

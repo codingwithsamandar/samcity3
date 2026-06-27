@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Bildirishnomalar — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:760px;">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-bell"/></svg> Bildirishnomalar</span>
+      <h1 style="margin-top:.6rem;">Bildirishnomalar</h1>
+    </div>
+    {% if notifications %}<a href="{% url 'notification_read_all' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-check"/></svg> Hammasini o'qildi</a>{% endif %}
+  </div>
+
+  {% for n in notifications %}
+  <a href="{% url 'notification_read' n.pk %}" class="card" style="display:flex;gap:.9rem;align-items:flex-start;padding:1rem 1.15rem;margin-bottom:.6rem;color:inherit;{% if not n.is_read %}border-color:var(--accent);background:var(--accent-l);{% endif %}">
+    <div style="font-size:1.4rem;flex:none;">{{ n.icon }}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="{% if not n.is_read %}font-weight:700;{% endif %}line-height:1.45;">{{ n.text }}</div>
+      <div style="color:var(--text3);font-size:.76rem;margin-top:.25rem;">{{ n.created_at|timesince }} oldin · {{ n.get_category_display }}</div>
+    </div>
+    {% if not n.is_read %}<span style="width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:.5rem;"></span>{% endif %}
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-bell"/></svg></div><h3>Bildirishnoma yo'q</h3><p>Yangi voqealar shu yerda ko'rinadi.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

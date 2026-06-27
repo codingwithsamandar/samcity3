@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}Profilni tahrirlash{% else %}Taksist bo'lish{% endif %} — Taksi{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:600px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'taxi:home' %}" style="color:var(--text2);font-size:.85rem;">← Taksi bo'limi</a>
+  <div class="page-header" style="margin-top:.6rem;"><h1>🚕 {% if mode == 'edit' %}Taksist profilini tahrirlash{% else %}Taksist sifatida ro'yxatdan o'tish{% endif %}</h1></div>
+
+  <form method="post" enctype="multipart/form-data" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <h3 style="font-size:1rem;margin-bottom:1rem;">👤 Shaxsiy ma'lumot</h3>
+    <div class="form-group">
+      <label class="form-label">Ism familiya *</label>
+      <input type="text" name="full_name" class="form-control" required value="{{ taxist.full_name|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon *</label>
+      <input type="text" name="phone" class="form-control" required value="{{ taxist.phone|default:'' }}" placeholder="+998 ...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hudud</label>
+      <input type="text" name="region" class="form-control" value="{{ taxist.region|default:'Shofirkon' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bog'liq xizmat (ixtiyoriy)</label>
+      <select name="service" class="form-control">
+        <option value="">— mustaqil —</option>
+        {% for s in services %}<option value="{{ s.pk }}" {% if taxist.service_id == s.pk %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rasm (ixtiyoriy)</label>
+      <input type="file" name="photo" class="form-control" accept="image/*">
+    </div>
+
+    <h3 style="font-size:1rem;margin:1.2rem 0 1rem;">🚗 Mashina ma'lumotlari</h3>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Marka</label>
+        <input type="text" name="brand" class="form-control" value="{{ car.brand|default:'' }}" placeholder="Chevrolet">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Model</label>
+        <input type="text" name="model" class="form-control" value="{{ car.model|default:'' }}" placeholder="Cobalt">
+      </div>
+    </div>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Rangi</label>
+        <input type="text" name="color" class="form-control" value="{{ car.color|default:'' }}">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Davlat raqami</label>
+        <input type="text" name="plate_number" class="form-control" value="{{ car.plate_number|default:'' }}">
+      </div>
+    </div>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Yili</label>
+        <input type="number" name="year" class="form-control" value="{{ car.year|default:'' }}" min="1980" max="2030">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">O'rindiqlar</label>
+        <input type="number" name="seats" class="form-control" value="{{ car.seats|default:4 }}" min="1">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Tarif</label>
+        <select name="car_class" class="form-control">
+          {% for key, label in car_classes %}<option value="{{ key }}" {% if car.car_class == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="display:flex;gap:1rem;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.88rem;"><input type="checkbox" name="has_conditioner" style="width:auto;" {% if car.has_conditioner %}checked{% endif %}> ❄️ Konditsioner</label>
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.88rem;"><input type="checkbox" name="has_baby_seat" style="width:auto;" {% if car.has_baby_seat %}checked{% endif %}> 👶 Bolalar o'rindig'i</label>
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.88rem;"><input type="checkbox" name="allows_pets" style="width:auto;" {% if car.allows_pets %}checked{% endif %}> 🐾 Hayvonlar</label>
+    </div>
+
+    <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Ro'yxatdan o'tish{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

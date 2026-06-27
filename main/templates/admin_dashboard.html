@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Analitika — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.15rem}
+  @media(max-width:760px){.chart-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-chart"/></svg> Analitika</span>
+    <h1 style="margin-top:.6rem;">Boshqaruv analitikasi</h1>
+    <p>Platforma bo'yicha umumiy ko'rsatkichlar</p>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr));">
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-user"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.users|default:0 }}">{{ metrics.users }}</div><div class="kpi-lbl">Foydalanuvchilar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-check"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.active_users|default:0 }}">{{ metrics.active_users }}</div><div class="kpi-lbl">Faol foydalanuvchi</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-building"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.stores|default:0 }}">{{ metrics.stores }}</div><div class="kpi-lbl">Do'konlar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-cart"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.products|default:0 }}">{{ metrics.products }}</div><div class="kpi-lbl">Mahsulotlar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-bike"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.orders|default:0 }}">{{ metrics.orders }}</div><div class="kpi-lbl">Buyurtmalar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.drivers|default:0 }}">{{ metrics.drivers }}</div><div class="kpi-lbl">Haydovchilar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.taxi_requests|default:0 }}">{{ metrics.taxi_requests }}</div><div class="kpi-lbl">Taksi so'rovlari</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-violet"><svg class="ic"><use href="#i-building"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.venues|default:0 }}">{{ metrics.venues }}</div><div class="kpi-lbl">Joylar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-violet"><svg class="ic"><use href="#i-doc"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.bookings|default:0 }}">{{ metrics.bookings }}</div><div class="kpi-lbl">Bronlar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-amber"><svg class="ic"><use href="#i-star"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.attractions|default:0 }}">{{ metrics.attractions }}</div><div class="kpi-lbl">Diqqatga sazovor</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-tag"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.ads|default:0 }}">{{ metrics.ads }}</div><div class="kpi-lbl">E'lonlar</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-slate"><svg class="ic"><use href="#i-map"/></svg></div></div><div class="kpi-num" data-count="{{ metrics.places|default:0 }}">{{ metrics.places }}</div><div class="kpi-lbl">Xarita joylari</div></div>
+  </div>
+
+  <h2 style="font-size:1.25rem;margin:2rem 0 1rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--gold)"><use href="#i-card"/></svg> Daromad (so'm)</h2>
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:2rem;">
+    <div class="kpi" style="background:linear-gradient(135deg,var(--accent-l),#fff);"><div class="kpi-num" style="color:var(--accent);">{{ revenue.total }}</div><div class="kpi-lbl">Jami daromad</div></div>
+    <div class="kpi"><div class="kpi-num" style="color:var(--green);">{{ revenue.delivery }}</div><div class="kpi-lbl">Yetkazib berish</div></div>
+    <div class="kpi"><div class="kpi-num" style="color:var(--gold-d);">{{ revenue.taxi }}</div><div class="kpi-lbl">Taksi</div></div>
+    <div class="kpi"><div class="kpi-num" style="color:var(--violet);">{{ revenue.services }}</div><div class="kpi-lbl">To'lovlar</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="card card-pad"><h3 style="font-size:1.05rem;margin-bottom:1rem;">Modullar bo'yicha</h3><canvas id="modChart" height="220"></canvas></div>
+    <div class="card card-pad"><h3 style="font-size:1.05rem;margin-bottom:1rem;">Buyurtma holatlari</h3><canvas id="ordChart" height="220"></canvas></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const modLabels=[{% for l, c in module_chart %}"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const modData=[{% for l, c in module_chart %}{{ c }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const ordLabels=[{% for o in order_status %}"{{ o.label|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const ordData=[{% for o in order_status %}{{ o.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const gridC='rgba(15,23,41,.06)', tickC='#5b6678';
+new Chart(document.getElementById('modChart'),{type:'bar',data:{labels:modLabels,datasets:[{data:modData,backgroundColor:'#4f46e5',borderRadius:8}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:tickC},grid:{display:false}},y:{ticks:{color:tickC},grid:{color:gridC}}}}});
+new Chart(document.getElementById('ordChart'),{type:'doughnut',data:{labels:ordLabels,datasets:[{data:ordData,backgroundColor:['#94a3b8','#4f46e5','#e6a817','#0ea571','#7c3aed','#06b6d4','#22c55e','#e5484d']}]},options:{plugins:{legend:{position:'bottom',labels:{color:tickC}}},cutout:'62%'}});
+</script>
+{% endblock %}

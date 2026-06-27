@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ poll.question }} — So'rovnoma{% endblock %}
+
+{% block extra_css %}
+<style>
+  .opt { position:relative; border:1px solid var(--border2); border-radius:14px; padding:.85rem 1rem; margin-bottom:.6rem; cursor:pointer; overflow:hidden; display:flex; align-items:center; gap:.7rem; }
+  .opt .bar { position:absolute; inset:0; background:var(--accent-l); width:0; transition:width .5s; z-index:0; }
+  .opt .lbl, .opt .pct { position:relative; z-index:1; }
+  .opt .lbl { flex:1; font-weight:600; }
+  .opt .pct { font-weight:800; font-family:'Plus Jakarta Sans'; color:var(--accent); }
+  .opt.voted { border-color:var(--accent); }
+  .opt input { position:relative; z-index:1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:680px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+  <a href="{% url 'poll_list' %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> So'rovnomalar</a>
+
+  <div class="card card-pad">
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+      <h1 style="font-size:1.4rem;">{{ poll.question }}</h1>
+      {% if poll.is_open %}<span class="badge badge-green">Ochiq</span>{% else %}<span class="badge badge-gray">Yopilgan</span>{% endif %}
+    </div>
+    {% if poll.description %}<p style="color:var(--text2);margin-top:.6rem;">{{ poll.description }}</p>{% endif %}
+    <div style="color:var(--text3);font-size:.82rem;margin-top:.5rem;">{{ total }} ovoz · {{ poll.get_poll_type_display }}{% if poll.is_anonymous %} · anonim{% endif %}</div>
+
+    <form method="post" action="{% url 'poll_vote' poll.id %}" style="margin-top:1.25rem;">
+      {% csrf_token %}
+      {% for o in options %}
+      <label class="opt {% if o.voted %}voted{% endif %}">
+        <span class="bar" style="width:{% if has_voted or not poll.is_open %}{{ o.pct }}%{% else %}0{% endif %};"></span>
+        {% if poll.is_open and not has_voted %}<input type="{% if poll.poll_type == 'multiple' %}checkbox{% else %}radio{% endif %}" name="option" value="{{ o.opt.id }}">{% endif %}
+        <span class="lbl">{{ o.opt.text }}</span>
+        {% if has_voted or not poll.is_open %}<span class="pct">{{ o.pct }}%</span>{% endif %}
+      </label>
+      {% endfor %}
+      {% if poll.is_open and not has_voted %}
+        {% if user.is_authenticated %}<button type="submit" class="btn btn-accent btn-block" style="margin-top:.6rem;">Ovoz berish</button>
+        {% else %}<a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-block" style="margin-top:.6rem;">Kirish — ovoz berish</a>{% endif %}
+      {% elif has_voted %}<p style="color:var(--green);font-size:.86rem;margin-top:.6rem;display:flex;align-items:center;gap:.4rem;"><svg class="ic"><use href="#i-check"/></svg> Siz ovoz berdingiz</p>{% endif %}
+    </form>
+  </div>
+
+  <h2 style="font-size:1.1rem;margin:1.75rem 0 1rem;">Izohlar</h2>
+  {% if user.is_authenticated %}
+  <form method="post" action="{% url 'poll_comment' poll.id %}" style="display:flex;gap:.5rem;margin-bottom:1rem;">
+    {% csrf_token %}
+    <input type="text" name="text" class="form-control" placeholder="Fikringizni yozing..." required>
+    <button class="btn btn-accent">Yuborish</button>
+  </form>
+  {% endif %}
+  {% for c in comments %}
+  <div class="card card-pad" style="margin-bottom:.5rem;padding:.85rem 1rem;">
+    <div style="font-weight:650;font-size:.88rem;">{{ c.user.name|default:c.user.phone }} <span style="color:var(--text3);font-weight:400;font-size:.78rem;">· {{ c.created_at|timesince }} oldin</span></div>
+    <div style="color:var(--text2);margin-top:.3rem;">{{ c.text }}</div>
+  </div>
+  {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali izoh yo'q.</p>{% endfor %}
+</div>
+{% endblock %}

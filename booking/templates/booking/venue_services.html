@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Xizmat va ustalar — {{ venue.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:920px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'venue_detail' venue.pk %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> {{ venue.name }}</a>
+
+  <div class="page-header"><h1>Xizmat va ustalar</h1><p>{{ venue.name }} uchun xizmatlar, narxlar va ustalarni boshqaring</p></div>
+
+  <div class="grid-2" style="align-items:start;">
+    <!-- Xizmatlar -->
+    <div class="card card-pad">
+      <h3 style="font-size:1.1rem;margin-bottom:.9rem;">Xizmatlar</h3>
+      {% for s in services %}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border);">
+        <div><b>{{ s.name }}</b><br><small style="color:var(--text3);">{{ s.price|floatformat:0 }} so'm · {{ s.duration_minutes }} daq</small></div>
+        <form method="post" action="{% url 'service_delete' s.pk %}" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-outline btn-sm">O'chir</button></form>
+      </div>
+      {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali xizmat yo'q.</p>{% endfor %}
+
+      <form method="post" action="{% url 'service_add' venue.pk %}" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="name" class="form-control" placeholder="Xizmat nomi (masalan: Soch olish)" required></div>
+        <div class="form-row">
+          <input name="price" type="number" class="form-control" placeholder="Narx (so'm)" min="0" required>
+          <input name="duration_minutes" type="number" class="form-control" placeholder="Daqiqa" value="30" min="10">
+        </div>
+        <button class="btn btn-green btn-block btn-sm" style="margin-top:.7rem;"><svg class="ic"><use href="#i-plus"/></svg> Xizmat qo'shish</button>
+      </form>
+    </div>
+
+    <!-- Ustalar -->
+    <div class="card card-pad">
+      <h3 style="font-size:1.1rem;margin-bottom:.9rem;">Ustalar / ishchilar</h3>
+      {% for st in staff %}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:.6rem;">
+          {% if st.photo %}<img src="{{ st.photo.url }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">{% else %}<div class="avatar" style="width:38px;height:38px;">{{ st.name|slice:":1" }}</div>{% endif %}
+          <div><b>{{ st.name }}</b>{% if st.specialty %}<br><small style="color:var(--text3);">{{ st.specialty }}</small>{% endif %}</div>
+        </div>
+        <form method="post" action="{% url 'staff_delete' st.pk %}" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-outline btn-sm">O'chir</button></form>
+      </div>
+      {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali usta yo'q.</p>{% endfor %}
+
+      <form method="post" action="{% url 'staff_add' venue.pk %}" enctype="multipart/form-data" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="name" class="form-control" placeholder="Usta ismi" required></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="specialty" class="form-control" placeholder="Mutaxassisligi (ixtiyoriy)"></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="photo" type="file" accept="image/*" class="form-control"></div>
+        <button class="btn btn-green btn-block btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Usta qo'shish</button>
+      </form>
+    </div>
+  </div>
+
+  <p style="color:var(--text3);font-size:.84rem;margin-top:1rem;">💡 Joy turi, ish vaqti, joylashuv (xarita) va bekor-jarima foizini <a href="{% url 'venue_edit' venue.pk %}" style="color:var(--accent);">Tahrirlash</a> sahifasidan sozlang.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Joylar va bron — SamCity{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-building"/></svg> Bron qilish</span>
+      <h1 style="margin-top:.6rem;">Joylar va bron</h1>
+      <p>To'yxona, restoran, salon, sport zal va boshqalarni bron qiling</p>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      {% if user.is_authenticated %}
+      <a href="{% url 'my_venue_bookings' %}" class="btn btn-outline"><svg class="ic"><use href="#i-doc"/></svg> Mening bronlarim</a>
+      <a href="{% url 'manage_bookings' %}" class="btn btn-outline"><svg class="ic"><use href="#i-settings"/></svg> Boshqarish</a>
+      {% endif %}
+      <a href="{% url 'venue_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Joy qo'shish</a>
+    </div>
+  </div>
+
+  <div class="chip-row" style="margin-bottom:1.75rem;">
+    <a href="{% url 'venue_list' %}" class="chip {% if not current_type %}active{% endif %}">Barchasi</a>
+    {% for key, label in venue_types %}
+    <a href="?type={{ key }}" class="chip {% if current_type == key %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if venues %}
+  <div class="grid-3">
+    {% for v in venues %}
+    <a href="{% url 'venue_detail' v.pk %}" class="lcard reveal">
+      <div class="lc-media">
+        {% if v.image %}<img src="{{ v.image.url }}" alt="{{ v.name }}">{% else %}<div class="media-ph" style="background:linear-gradient(140deg,#9277fb,#6f4cf2);color:#fff;"><svg class="ic" style="width:42px;height:42px;"><use href="#i-building"/></svg></div>{% endif %}
+        <div class="lc-badges"><span class="badge badge-gold">{{ v.get_venue_type_display }}</span></div>
+      </div>
+      <div class="lc-body">
+        <div class="lc-title">{{ v.name }}</div>
+        {% if v.address %}<div class="lc-sub"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg> {{ v.address }}</div>{% endif %}
+        <div class="lc-sub" style="justify-content:space-between;margin-top:.5rem;border-top:1px solid var(--border);padding-top:.6rem;">
+          <span>{% if v.capacity %}<svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-user"/></svg> {{ v.capacity }} kishi{% endif %}</span>
+          <span style="font-weight:800;color:var(--text);font-family:'Plus Jakarta Sans';">{% if v.price_per_day %}{{ v.price_per_day }}<small style="font-weight:500;color:var(--text3);">/kun</small>{% elif v.price_per_hour %}{{ v.price_per_hour }}<small style="font-weight:500;color:var(--text3);">/soat</small>{% endif %}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-building"/></svg></div><h3>Joy topilmadi</h3><p>Boshqa kategoriyani tanlang yoki yangi joy qo'shing.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

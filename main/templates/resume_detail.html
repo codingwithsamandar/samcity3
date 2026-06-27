@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ resume.title }} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-layout { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
+  @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
+
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .info-card h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 0.9rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border); }
+
+  /* Skill chips */
+  .skills-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .skill-chip { padding: 0.3rem 0.85rem; border-radius: 100px; font-size: 0.8rem; font-weight: 600; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); transition: all 0.15s; }
+  .skill-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Hero profile card */
+  .profile-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; display: flex; gap: 1.25rem; align-items: flex-start; }
+  .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; flex-shrink: 0; border: 2px solid var(--border); }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 480px) { .profile-hero { flex-direction: column; align-items: center; text-align: center; } }
+
+  /* Experience bar visual */
+  .exp-bar { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+  .exp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .exp-dot.filled { background: var(--accent); }
+
+  .action-btns { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .breadcrumb { display: flex; gap: 0.5rem; align-items: center; font-size: 0.85rem; color: var(--text2); margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .breadcrumb a:hover { color: var(--accent); }
+
+  .salary-display { font-size: 1.5rem; font-weight: 900; color: var(--accent2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Bosh sahifa</a>
+    <span>›</span>
+    <a href="{% url 'resume_list' %}">Resumelar</a>
+    <span>›</span>
+    <span style="color:var(--text);">{{ resume.title }}</span>
+  </div>
+
+  <div class="detail-layout">
+    <!-- Left column -->
+    <div>
+      <!-- Profile hero -->
+      <div class="profile-hero">
+        <div class="profile-avatar">
+          {% if resume.user.avatar %}<img src="{{ resume.user.avatar.url }}" alt="">{% else %}👤{% endif %}
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h1 style="font-size:1.4rem; font-weight:800; margin-bottom:0.2rem;">
+                {{ resume.user.name|default:resume.user.phone }}
+              </h1>
+              <div style="color:var(--accent); font-weight:600; font-size:1rem; margin-bottom:0.5rem;">
+                {{ resume.title }}
+              </div>
+            </div>
+            {% if user.is_authenticated and user.pk == resume.user_id %}
+            <a href="{% url 'resume_edit' resume.pk  %}" class="btn btn-outline" style="font-size:0.82rem; flex-shrink:0;">✏️ Tahrirlash</a>
+            {% endif %}
+          </div>
+
+          <!-- Badges row -->
+          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.6rem;">
+            <span class="badge badge-blue">{{ resume.get_experience_display }}</span>
+            {% if resume.location %}<span class="badge badge-gray">📍 {{ resume.location }}</span>{% endif %}
+            {% if resume.status == 'active' %}<span class="badge badge-green">✅ Ish qidiryapti</span>
+            {% elif resume.status == 'hired' %}<span class="badge badge-gray">✔️ Ishga joylashdi</span>
+            {% endif %}
+            <span class="badge badge-gray">👁 {{ resume.views }} ko'rildi</span>
+          </div>
+
+          <!-- Experience visual dots -->
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:0.75rem; color:var(--text2);">Tajriba:</span>
+            <div class="exp-bar">
+              {% with exp=resume.experience %}
+              <div class="exp-dot {% if exp != 'no_exp' %}filled{% endif %}"></div>
+              <div class="exp-dot {% if exp == '1_3' or exp == '3_5' or exp == '5_plus' %}filled{% endif %}"></div>
+              <div class="exp-dot {% if exp == '3_5' or exp == '5_plus' %}filled{% endif %}"></div>
+              <div class="exp-dot {% if exp == '5_plus' %}filled{% endif %}"></div>
+              <div class="exp-dot {% if exp == '5_plus' %}filled{% endif %}"></div>
+              {% endwith %}
+            </div>
+            <span style="font-size:0.78rem; color:var(--text2);">{{ resume.get_experience_display }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills chips -->
+      {% if resume.skills %}
+      <div class="info-card">
+        <h3>🛠 Ko'nikmalar (Skills)</h3>
+        <div class="skills-wrap">
+          {% for skill in resume.skills.split %}
+          {% if skill %}
+          <span class="skill-chip">{{ skill|cut:"," }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- About -->
+      {% if resume.about %}
+      <div class="info-card">
+        <h3>👤 O'zi haqida</h3>
+        <p style="font-size:0.9rem; line-height:1.8; color:var(--text2); white-space:pre-line;">{{ resume.about }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Owner actions -->
+      {% if user.is_authenticated and user.pk == resume.user_id %}
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
+        <a href="{% url 'resume_edit' resume.pk  %}" class="btn btn-outline">✏️ Tahrirlash</a>
+        <a href="{% url 'resume_delete' resume.pk  %}" class="btn btn-red">🗑 O'chirish</a>
+        {% if resume.status == 'active' %}
+        <form method="post" action="{% url 'resume_toggle_hired' resume.pk  %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost" onclick="return confirm('Ishga joylashdim deb belgilash?')">✅ Ishga joylashdim</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right sidebar -->
+    <div>
+      <!-- Expected salary -->
+      {% if resume.salary_min %}
+      <div class="info-card" style="text-align:center;">
+        <h3>💰 Kutilgan maosh</h3>
+        <div class="salary-display">{{ resume.salary_min|floatformat:0 }}</div>
+        <div style="color:var(--text2); font-size:0.8rem; margin-top:0.15rem;">so'mdan / oy</div>
+      </div>
+      {% endif %}
+
+      <!-- Contact buttons -->
+      <div class="info-card">
+        <h3>📞 Bog'lanish</h3>
+        <div class="action-btns">
+          {% if resume.contact_phone %}
+          <a href="tel:{{ resume.contact_phone }}" class="btn btn-accent">📞 {{ resume.contact_phone }}</a>
+          {% endif %}
+          {% if resume.contact_telegram %}
+          <a href="https://t.me/{{ resume.contact_telegram }}" target="_blank" class="btn btn-outline">✈️ Telegram: @{{ resume.contact_telegram }}</a>
+          {% endif %}
+          {% if not resume.contact_phone and not resume.contact_telegram %}
+          <div style="color:var(--text2); font-size:0.85rem; text-align:center; padding:0.5rem 0;">
+            Kontakt ma'lumoti ko'rsatilmagan
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick info -->
+      <div class="info-card">
+        <h3>ℹ️ Qisqacha</h3>
+        <div style="display:flex; flex-direction:column; gap:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
+            <span style="color:var(--text2);">Tajriba</span>
+            <span style="font-weight:600;">{{ resume.get_experience_display }}</span>
+          </div>
+          {% if resume.location %}
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
+            <span style="color:var(--text2);">Manzil</span>
+            <span style="font-weight:600;">{{ resume.location }}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
+            <span style="color:var(--text2);">Holati</span>
+            <span>{% if resume.status == 'active' %}<span class="badge badge-green">Faol</span>{% else %}<span class="badge badge-gray">{{ resume.get_status_display }}</span>{% endif %}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; font-size:0.88rem;">
+            <span style="color:var(--text2);">Joylangan</span>
+            <span style="font-weight:600;">{{ resume.created_at|date:"d.m.Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile link -->
+      <a href="{% url 'public_profile' resume.user.pk  %}" class="info-card" style="display:flex; gap:0.75rem; align-items:center; text-decoration:none; color:inherit; transition: border-color 0.15s;">
+        <div style="width:40px; height:40px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:1.1rem; overflow:hidden; flex-shrink:0;">
+          {% if resume.user.avatar %}<img src="{{ resume.user.avatar.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% else %}👤{% endif %}
+        </div>
+        <div>
+          <div style="font-weight:600; font-size:0.88rem;">{{ resume.user.name|default:resume.user.phone }}</div>
+          <div style="color:var(--accent); font-size:0.75rem;">Profilni ko'rish →</div>
+        </div>
+      </a>
+
+      <a href="{% url 'resume_list' %}" class="btn btn-ghost" style="width:100%; justify-content:center; margin-top:0.5rem;">← Barchasi</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

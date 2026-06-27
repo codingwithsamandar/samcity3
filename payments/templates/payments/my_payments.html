@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}To'lovlar tarixim{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pr { display:flex; align-items:center; gap:1rem; background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:1rem 1.2rem; margin-bottom:.7rem; }
+  .pr .ico { width:44px;height:44px;border-radius:12px;background:var(--surface2);display:flex;
+    align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0; }
+  .pr .nm { font-weight:700; }
+  .pr .meta { color:var(--text2); font-size:.8rem; margin-top:.15rem; }
+  .pr .amt { margin-left:auto; text-align:right; }
+  .pr .amt .v { font-weight:800; color:var(--accent); }
+  .pr .amt .st { color:var(--accent2); font-size:.78rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  <div class="page-header"><h1>🧾 To'lovlar tarixim</h1></div>
+
+  {% for p in payments %}
+  <a href="{% url 'payments:receipt' p.id %}" class="pr" style="text-decoration:none;color:inherit;">
+    <div class="ico">{{ p.get_category_display|slice:":1" }}</div>
+    <div style="min-width:0;">
+      <div class="nm">{{ p.provider_name }}</div>
+      <div class="meta">{{ p.get_category_display }}{% if p.payer_name %} · {{ p.payer_name }}{% endif %} · {{ p.created_at|date:"d.m.Y H:i" }}</div>
+    </div>
+    <div class="amt">
+      <div class="v">{{ p.amount|som }} so'm</div>
+      <div class="st">{% if p.status == 'paid' %}✓ To'langan{% else %}{{ p.get_status_display }}{% endif %}</div>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon">🧾</div><h3>Hali to'lov yo'q</h3><p>To'lovlar bo'limidan to'lov qiling.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

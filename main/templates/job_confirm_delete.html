@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Ish e'lonini o'chirish — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 480px;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; margin-top: 2rem;">
+    <div style="font-size: 3.5rem; margin-bottom: 1rem;">🗑️</div>
+    <h1 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">Ish e'lonini o'chirish</h1>
+    <p style="color: var(--text2); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6;">
+      Rostdan <strong style="color: var(--text);">«{{ job.title }}»</strong> vakansiyasini o'chirmoqchimisiz?<br>
+      Bu amalni qaytarib bo'lmaydi.
+    </p>
+
+    <!-- Job preview card -->
+    <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem;">{{ job.title }}</div>
+          <div style="color: var(--text2); font-size: 0.83rem;">🏢 {{ job.company }}</div>
+        </div>
+        <div style="text-align:right;">
+          {% if job.salary_min and job.salary_max %}
+            <div style="color:var(--accent2); font-weight:700; font-size:0.88rem;">{{ job.salary_min|floatformat:0 }}–{{ job.salary_max|floatformat:0 }}</div>
+            <div style="color:var(--text2); font-size:0.72rem;">so'm/oy</div>
+          {% elif job.salary_min %}
+            <div style="color:var(--accent2); font-weight:700; font-size:0.88rem;">{{ job.salary_min|floatformat:0 }}+</div>
+          {% else %}
+            <div style="color:var(--text2); font-size:0.85rem;">Kelishiladi</div>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem;">
+        <span class="badge badge-blue">{{ job.get_job_type_display }}</span>
+        {% if job.location %}<span class="badge badge-gray">📍 {{ job.location }}</span>{% endif %}
+        <span class="badge badge-gray">👁 {{ job.views }} ko'rildi</span>
+        <span class="badge badge-gray">📅 {{ job.created_at|date:"d.m.Y" }}</span>
+      </div>
+    </div>
+
+    <!-- Warning note -->
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1.5rem; text-align:left; font-size:0.83rem; color:#fca5a5;">
+      ⚠️ E'lon o'chirilgandan so'ng barcha ma'lumotlar yo'qoladi va uni tiklash imkoni bo'lmaydi.
+    </div>
+
+    <!-- Buttons -->
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="padding: 0.65rem 1.75rem; font-size: 0.95rem;">
+          🗑 Ha, o'chirish
+        </button>
+      </form>
+      <a href="{% url 'job_detail' job.pk  %}" class="btn btn-ghost" style="padding: 0.65rem 1.75rem; font-size: 0.95rem;">
+        Yo'q, qaytish
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

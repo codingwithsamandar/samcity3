@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}Haydovchi profili{% else %}Haydovchi bo'lish{% endif %} — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:520px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'delivery:store_list' %}" style="color:var(--text2);font-size:.85rem;">← Yetkazish</a>
+  <div class="page-header" style="margin-top:.6rem;"><h1>🛵 {% if mode == 'edit' %}Haydovchi profilini tahrirlash{% else %}Yetkazib beruvchi bo'lish{% endif %}</h1></div>
+
+  {% if mode != 'edit' %}
+  <div class="flash flash-info" style="margin-bottom:1rem;">
+    ✅ Siz <b>{{ user.get_full_name|default:user.phone|default:user.username }}</b> sifatida tizimga kirgansiz. Yangi akkaunt yaratish shart emas — quyidagi ma'lumotlarni to'ldirsangiz, shu akkauntingizga haydovchi profili qo'shiladi.
+  </div>
+  {% endif %}
+
+  <form method="post" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Ism familiya *</label>
+      <input type="text" name="full_name" class="form-control" required value="{{ driver.full_name|default:user.get_full_name|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon *</label>
+      <input type="text" name="phone" class="form-control" required value="{{ driver.phone|default:user.phone|default:'' }}" placeholder="+998 ...">
+    </div>
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Transport turi</label>
+        <select name="vehicle_type" class="form-control">
+          {% for key, label in vehicles %}<option value="{{ key }}" {% if driver.vehicle_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Davlat raqami</label>
+        <input type="text" name="vehicle_number" class="form-control" value="{{ driver.vehicle_number|default:'' }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Haydovchi bo'lish{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

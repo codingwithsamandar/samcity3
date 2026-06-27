@@ -1,0 +1,100 @@
+{% if user.is_authenticated %}
+<details class="notif-bell">
+  <summary aria-label="Bildirishnomalar"><svg class="ic"><use href="#i-bell"/></svg><span class="notif-count" id="notifCount" {% if not notif_unread %}style="display:none"{% endif %}>{{ notif_unread|default:0 }}</span></summary>
+  <div class="notif-pop">
+    <div class="notif-pop-head">
+      <b>Bildirishnomalar</b>
+      {% if notif_unread %}<a href="{% url 'notification_read_all' %}">Tozalash</a>{% endif %}
+    </div>
+    {% for n in notif_recent %}
+    <a href="{% url 'notification_read' n.pk %}" class="notif-item {% if not n.is_read %}unread{% endif %}">
+      <span class="ni-ic">{{ n.icon }}</span>
+      <span class="ni-tx">{{ n.text }}<span class="ni-time">{{ n.created_at|timesince }} oldin</span></span>
+    </a>
+    {% empty %}
+    <div class="notif-empty">Bildirishnoma yo'q</div>
+    {% endfor %}
+    <a href="{% url 'notification_list' %}" class="notif-all">Barchasini ko'rish →</a>
+  </div>
+</details>
+<style>
+  .notif-bell{position:relative}
+  .notif-bell summary{list-style:none;cursor:pointer;position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:44px;height:44px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);user-select:none;transition:all .15s}
+  .notif-bell summary:hover{background:var(--surface3);border-color:var(--border2)}
+  .notif-bell summary::-webkit-details-marker{display:none}
+  .notif-bell summary .ic{width:20px;height:20px}
+  .notif-count{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;
+    background:var(--red);color:#fff;font-size:.66rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(229,72,77,.4)}
+  .notif-pop{position:absolute;right:0;top:52px;width:340px;max-width:88vw;background:var(--surface);
+    border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-xl);overflow:hidden;z-index:200}
+  .notif-pop-head{display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-bottom:1px solid var(--border)}
+  .notif-pop-head b{font-family:'Plus Jakarta Sans';font-weight:700}
+  .notif-pop-head a{font-size:.78rem;color:var(--accent);font-weight:650}
+  .notif-item{display:flex;gap:.7rem;padding:.8rem 1.1rem;border-bottom:1px solid var(--border);color:inherit;text-decoration:none;transition:background .12s}
+  .notif-item:hover{background:var(--surface2)}
+  .notif-item.unread{background:var(--accent-l)}
+  .ni-ic{font-size:1.2rem;flex:none}
+  .ni-tx{font-size:.86rem;display:flex;flex-direction:column;gap:.15rem;line-height:1.4}
+  .ni-time{color:var(--text3);font-size:.72rem}
+  .notif-empty{padding:1.75rem;text-align:center;color:var(--text3);font-size:.85rem}
+  .notif-all{display:block;text-align:center;padding:.8rem;font-size:.84rem;color:var(--accent);font-weight:650;background:var(--surface2)}
+  #notifToast{position:fixed;top:78px;right:18px;max-width:340px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:14px;box-shadow:var(--shadow-xl);padding:.85rem 1rem;display:flex;gap:.6rem;align-items:flex-start;z-index:9998;opacity:0;transform:translateX(20px);transition:opacity .3s,transform .3s;pointer-events:none}
+  #notifToast.show{opacity:1;transform:translateX(0)}
+  #notifToast .nt-ic{font-size:1.2rem}
+  #notifToast .nt-tx{font-size:.86rem;color:var(--text);line-height:1.4}
+</style>
+<div id="notifToast"><span class="nt-ic">🔔</span><span class="nt-tx"></span></div>
+<script>
+(function () {
+  var countEl = document.getElementById('notifCount');
+  var toast = document.getElementById('notifToast');
+  var pop = document.querySelector('.notif-pop');
+  var emptyEl = pop ? pop.querySelector('.notif-empty') : null;
+  var allLink = pop ? pop.querySelector('.notif-all') : null;
+  var toastTimer = null;
+
+  function setCount(n) {
+    if (!countEl) return;
+    countEl.textContent = n;
+    countEl.style.display = n > 0 ? 'flex' : 'none';
+  }
+  function showToast(text, icon) {
+    if (!toast) return;
+    toast.querySelector('.nt-tx').textContent = text;
+    toast.querySelector('.nt-ic').textContent = icon || '🔔';
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 4500);
+  }
+  function prepend(d) {
+    if (!pop) return;
+    if (emptyEl) { emptyEl.remove(); emptyEl = null; }
+    var a = document.createElement('a');
+    a.className = 'notif-item unread';
+    a.href = d.url || '#';
+    a.innerHTML = '<span class="ni-ic">' + (d.icon || '🔔') + '</span><span class="ni-tx">' +
+      d.text.replace(/</g, '&lt;') + '<span class="ni-time">hozir</span></span>';
+    var head = pop.querySelector('.notif-pop-head');
+    if (head && head.nextSibling) pop.insertBefore(a, head.nextSibling); else pop.insertBefore(a, allLink);
+  }
+
+  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  var ws;
+  function connect() {
+    ws = new WebSocket(proto + '://' + location.host + '/ws/notifications/');
+    ws.onmessage = function (e) {
+      var d = JSON.parse(e.data);
+      if (d.type === 'unread') { setCount(d.count); }
+      else if (d.type === 'notification') {
+        setCount(d.count);
+        showToast(d.text, d.icon);
+        prepend(d);
+      }
+    };
+    ws.onclose = function () { setTimeout(connect, 4000); };
+  }
+  connect();
+})();
+</script>
+{% endif %}

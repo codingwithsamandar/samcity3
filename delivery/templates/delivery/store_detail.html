@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}{{ store.name }} — Shofirkon{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="breadcrumb" style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text2);margin-bottom:1.25rem;flex-wrap:wrap;">
+    <a href="{% url 'home' %}">Bosh sahifa</a><span>›</span>
+    <a href="{% url 'delivery:store_list' %}">Do'konlar</a><span>›</span>
+    <span style="color:var(--text);font-weight:600;">{{ store.name }}</span>
+  </div>
+
+  <!-- Store hero banner -->
+  <div class="card" style="overflow:hidden;margin-bottom:1.5rem;">
+    <div style="position:relative;height:220px;background:linear-gradient(140deg,#19b97f,#0e9f6e);overflow:hidden;">
+      {% if store.logo %}<img src="{{ store.logo.url }}" alt="{{ store.name }}" style="width:100%;height:100%;object-fit:cover;">{% else %}<div style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.85);"><svg class="ic" style="width:64px;height:64px;"><use href="#i-building"/></svg></div>{% endif %}
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35));"></div>
+      <div style="position:absolute;left:1.5rem;bottom:1.25rem;right:1.5rem;color:#fff;">
+        <h1 style="color:#fff;font-size:1.8rem;">{{ store.name }}</h1>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;">
+          {% if store.category %}<span class="badge" style="background:rgba(255,255,255,.92);color:var(--text);">{{ store.category.name }}</span>{% endif %}
+          {% if store.is_active %}<span class="badge badge-green"><svg class="ic"><use href="#i-check"/></svg> Faol</span>{% else %}<span class="badge badge-red">Faol emas</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if user.is_authenticated and user.id == store.owner_id %}
+  <div class="card card-pad" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;background:var(--accent-l);border-color:#cdd6f7;">
+    <span style="color:var(--accent-d);font-size:.85rem;font-weight:650;display:inline-flex;align-items:center;gap:.4rem;"><svg class="ic"><use href="#i-settings"/></svg> Egasi paneli:</span>
+    <a href="{% url 'delivery:product_create' store.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Mahsulot</a>
+    <a href="{% url 'delivery:store_edit' store.pk %}" class="btn btn-ghost btn-sm">Tahrirlash</a>
+    <a href="{% url 'delivery:store_delete' store.pk %}" class="btn btn-outline btn-sm">O'chirish</a>
+    <a href="{% url 'delivery:store_orders' %}" class="btn btn-outline btn-sm"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalar</a>
+  </div>
+  {% endif %}
+
+  <div class="detail-grid">
+    <div>
+      {% if store.description %}
+      <div class="card card-pad" style="margin-bottom:1.5rem;">
+        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Tavsif</h3>
+        <p style="font-size:.92rem;line-height:1.7;color:var(--text2);">{{ store.description }}</p>
+      </div>
+      {% endif %}
+
+      <div class="products-section">
+        <div class="sec-head-row" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem;">
+          <h2 style="font-size:1.3rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-cart"/></svg> Mahsulotlar</h2>
+          <form method="get" class="hero-search" style="margin:0;width:100%;max-width:320px;padding:.35rem .35rem .35rem .9rem;">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input type="search" name="pq" placeholder="Mahsulot qidiring..." value="{{ pq }}">
+            <button type="submit" class="btn btn-accent btn-sm">Qidirish</button>
+          </form>
+        </div>
+
+        {% if pq %}<p style="color:var(--text2);font-size:.85rem;margin-bottom:.75rem;">«{{ pq }}» bo'yicha {{ products|length }} ta natija</p>{% endif %}
+
+        {% if products %}
+        <div class="grid-4">
+          {% for product in products %}
+          <div class="lcard reveal">
+            <a href="{% url 'delivery:product_detail' store.pk product.pk %}" class="lc-media" style="aspect-ratio:4/3;display:block;">
+              {% with first_img=product.images.all.0 %}
+                {% if first_img %}<img src="{{ first_img.image.url }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:38px;height:38px;"><use href="#i-cart"/></svg></div>{% endif %}
+              {% endwith %}
+              {% if product.stock <= 0 %}<div class="lc-badges"><span class="badge badge-red">Tugagan</span></div>{% endif %}
+            </a>
+            <div class="lc-body">
+              <a href="{% url 'delivery:product_detail' store.pk product.pk %}" class="lc-title" style="color:inherit;">{{ product.name }}</a>
+              {% if product.description %}<div class="lc-sub" style="display:block;">{{ product.description|truncatechars:60 }}</div>{% endif %}
+              <div class="lc-price" style="color:var(--accent);">{{ product.price|floatformat:0 }} <small>so'm</small></div>
+              {% if product.stock > 0 %}
+                <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:.6rem;">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button type="submit" class="btn btn-accent btn-block btn-sm"><svg class="ic"><use href="#i-cart"/></svg> Savatga</button>
+                </form>
+              {% else %}
+                <button class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+              {% endif %}
+              {% if user.is_authenticated and user.id == store.owner_id %}
+              <div style="display:flex;gap:.4rem;margin-top:.5rem;">
+                <a href="{% url 'delivery:product_edit' product.pk %}" class="btn btn-ghost btn-sm" style="flex:1;">Tahrir</a>
+                <a href="{% url 'delivery:product_delete' product.pk %}" class="btn btn-outline btn-sm" style="flex:1;">O'chir</a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:2.5rem 1rem;">
+          <div class="icon"><svg class="ic"><use href="#i-cart"/></svg></div>
+          {% if pq %}<h3>Mahsulot topilmadi</h3><p>Boshqa kalit so'zni sinab ko'ring</p><a href="{% url 'delivery:store_detail' store.pk %}" class="btn btn-ghost" style="margin-top:1rem;">Barcha mahsulotlar</a>
+          {% else %}<h3>Hozircha mahsulot yo'q</h3><p>Tez orada yangi mahsulotlar qo'shiladi</p>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <aside>
+      <div class="card card-pad sticky-card">
+        <h3 style="font-size:1.05rem;margin-bottom:.5rem;">Ma'lumot</h3>
+        {% if store.category %}<div class="info-row"><svg class="ic"><use href="#i-tag"/></svg><span>Kategoriya</span><b>{{ store.category.name }}</b></div>{% endif %}
+        {% if store.address %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg><span>Manzil</span><b style="text-align:right;">{{ store.address }}</b></div>{% endif %}
+        {% if store.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg><span>Telefon</span><b><a href="tel:{{ store.phone }}" style="color:var(--accent);">{{ store.phone }}</a></b></div>{% endif %}
+        <div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>Egasi</span><b>{{ store.owner.name|default:store.owner.phone }}</b></div>
+        <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qo'shilgan</span><b>{{ store.created_at|date:"d.m.Y" }}</b></div>
+        {% if store.latitude and store.longitude %}
+        <a href="https://maps.google.com/?q={{ store.latitude|unlocalize }},{{ store.longitude|unlocalize }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-block" style="margin-top:1rem;"><svg class="ic"><use href="#i-map"/></svg> Xaritada ko'rish</a>
+        {% endif %}
+      </div>
+      <a href="{% url 'delivery:store_list' %}" class="btn btn-ghost btn-block" style="margin-top:1rem;">← Barcha do'konlar</a>
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load taxi_extras %}
+{% if user.is_authenticated %}
+<div class="card" style="padding:1.4rem;border-radius:14px;">
+  <h3 style="font-size:1.05rem;margin-bottom:0.9rem;">
+    {% if user_review %}✏️ Bahoyingizni yangilang{% else %}⭐ Baho va sharh qoldiring{% endif %}
+  </h3>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Bahoyingiz</label>
+      <div class="star-input">
+        {% for i in "54321" %}
+        <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}"
+               {% if user_review and user_review.rating|stringformat:'s' == i %}checked{% elif not user_review and i == "5" %}checked{% endif %}>
+        <label for="star{{ i }}" title="{{ i }}">★</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Izoh (ixtiyoriy)</label>
+      <textarea name="comment" class="form-control" placeholder="Tajribangizni yozing...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+    </div>
+    <button type="submit" class="btn btn-accent">{% if user_review %}Yangilash{% else %}Yuborish{% endif %}</button>
+  </form>
+</div>
+
+<style>
+  .star-input { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 0.25rem; }
+  .star-input input { display: none; }
+  .star-input label { font-size: 2rem; line-height: 1; color: var(--border); cursor: pointer; transition: color 0.15s, transform 0.1s; }
+  .star-input label:hover { transform: scale(1.15); }
+  .star-input label:hover,
+  .star-input label:hover ~ label,
+  .star-input input:checked ~ label { color: #ffdb4d; }
+</style>
+{% else %}
+<div class="card" style="padding:1.4rem;text-align:center;color:var(--text2);border-radius:14px;">
+  ⭐ Baho qoldirish uchun <a href="{% url 'login' %}" style="color:var(--accent);font-weight:600;">tizimga kiring</a>.
+</div>
+{% endif %}

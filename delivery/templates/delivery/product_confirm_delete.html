@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Mahsulotni o'chirish{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+  <div class="card" style="padding:1.5rem;">
+    <h1 style="font-size:1.2rem;">🗑 Mahsulotni o'chirish</h1>
+    <p style="color:var(--text2);margin:1rem 0;">«{{ product.name }}» mahsulotini o'chirmoqchimisiz?</p>
+    <form method="post" style="display:flex;gap:.6rem;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-red">Ha, o'chirish</button>
+      <a href="{% url 'delivery:store_detail' product.store.pk %}" class="btn btn-ghost">Bekor qilish</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

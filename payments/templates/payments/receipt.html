@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}To'lov cheki{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rcpt { max-width:420px; margin:0 auto; background:var(--surface); border:1px solid var(--border);
+    border-radius:18px; padding:1.6rem; }
+  .rcpt .ok { text-align:center; margin-bottom:1rem; }
+  .rcpt .ok .ic { font-size:3rem; }
+  .rcpt .ok h2 { font-size:1.2rem; margin-top:.4rem; color:var(--accent2); }
+  .rcpt .amt { text-align:center; font-size:2rem; font-weight:800; color:var(--accent); margin:.5rem 0 1.2rem; }
+  .row { display:flex; justify-content:space-between; padding:.6rem 0; border-top:1px solid var(--border); font-size:.9rem; }
+  .row .k { color:var(--text2); }
+  .row .v { font-weight:600; }
+  .actions { display:flex; gap:.6rem; margin-top:1.3rem; }
+  .actions a { flex:1; text-align:center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="rcpt">
+  <div class="ok">
+    <div class="ic">✅</div>
+    <h2>To'lov muvaffaqiyatli!</h2>
+  </div>
+  <div class="amt">{{ payment.amount|som }} so'm</div>
+
+  <div class="row"><span class="k">Muassasa</span><span class="v">{{ payment.provider_name }}</span></div>
+  <div class="row"><span class="k">Turi</span><span class="v">{{ payment.get_category_display }}</span></div>
+  {% if payment.payer_name %}<div class="row"><span class="k">To'lovchi</span><span class="v">{{ payment.payer_name }}</span></div>{% endif %}
+  {% if payment.period %}<div class="row"><span class="k">Davr</span><span class="v">{{ payment.period }}</span></div>{% endif %}
+  {% if payment.card_last4 %}<div class="row"><span class="k">Karta</span><span class="v">{{ payment.card_brand }} •••• {{ payment.card_last4 }}</span></div>{% endif %}
+  <div class="row"><span class="k">Holat</span><span class="v" style="color:var(--accent2);">✓ {{ payment.get_status_display }}</span></div>
+  <div class="row"><span class="k">Sana</span><span class="v">{{ payment.paid_at|date:"d.m.Y H:i" }}</span></div>
+
+  <div class="actions">
+    <a href="{% url 'payments:home' %}" class="btn btn-ghost">To'lovlar</a>
+    <a href="{% url 'payments:my_payments' %}" class="btn btn-accent">Tarixim</a>
+  </div>
+</div>
+</div>
+{% endblock %}

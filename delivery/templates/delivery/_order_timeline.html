@@ -1,0 +1,15 @@
+{% comment %}Buyurtma jarayoni timeline. `order` kontekstda bo'lishi kerak.{% endcomment %}
+{% with s=order.status %}
+{% if s == 'cancelled' %}
+  <div class="flash flash-error" style="margin:1rem 0;"><svg class="ic"><use href="#i-x"/></svg> Buyurtma bekor qilingan</div>
+{% else %}
+<div class="timeline" style="margin:1.25rem 0;">
+  <div class="tl-step {% if s == 'pending' or s == 'accepted' or s == 'preparing' or s == 'ready' or s == 'assigned' or s == 'on_the_way' or s == 'delivered' %}done{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Qabul qilindi</div><div class="tl-s">Buyurtmangiz qabul qilindi</div></div>
+  <div class="tl-step {% if s == 'preparing' or s == 'ready' or s == 'assigned' or s == 'on_the_way' or s == 'delivered' %}done{% elif s == 'accepted' %}active{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Tayyorlanmoqda</div><div class="tl-s">Do'kon buyurtmani tayyorlamoqda</div></div>
+  <div class="tl-step {% if s == 'ready' or s == 'assigned' or s == 'on_the_way' or s == 'delivered' %}done{% elif s == 'preparing' %}active{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Tayyor</div><div class="tl-s">Buyurtma yetkazishga tayyor</div></div>
+  <div class="tl-step {% if s == 'assigned' or s == 'on_the_way' or s == 'delivered' %}done{% elif s == 'ready' %}active{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Haydovchi biriktirildi</div><div class="tl-s">Kuryer yo'lga chiqmoqda</div></div>
+  <div class="tl-step {% if s == 'on_the_way' or s == 'delivered' %}done{% elif s == 'assigned' %}active{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Yo'lda</div><div class="tl-s">Buyurtma manzilingizga yetkazilmoqda</div></div>
+  <div class="tl-step {% if s == 'delivered' %}done{% elif s == 'on_the_way' %}active{% endif %}"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div class="tl-t">Yetkazildi</div><div class="tl-s">Buyurtma muvaffaqiyatli yetkazildi</div></div>
+</div>
+{% endif %}
+{% endwith %}

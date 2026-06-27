@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Mening do'konlarim — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:880px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-building"/></svg> Biznes</span>
+      <h1 style="margin-top:.6rem;">Mening do'konlarim</h1>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="{% url 'delivery:store_orders' %}" class="btn btn-outline"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalar</a>
+      <a href="{% url 'delivery:store_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Do'kon ochish</a>
+    </div>
+  </div>
+
+  {% for store in stores %}
+  <div class="card card-pad" style="margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:.9rem;">
+      <div class="svc-ic g-green" style="width:48px;height:48px;border-radius:13px;">{% if store.logo %}<img src="{{ store.logo.url }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:13px;">{% else %}<svg class="ic"><use href="#i-building"/></svg>{% endif %}</div>
+      <div>
+        <a href="{% url 'delivery:store_detail' store.pk %}" style="font-weight:700;font-size:1.05rem;color:var(--text);">{{ store.name }}</a>
+        <div style="color:var(--text2);font-size:.84rem;margin-top:.2rem;">{% if store.category %}{{ store.category.name }} · {% endif %}{{ store.products.count }} mahsulot · {% if store.is_active %}<span style="color:var(--green);font-weight:600;">faol</span>{% else %}<span style="color:var(--red);">faol emas</span>{% endif %}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+      <a href="{% url 'delivery:product_create' store.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Mahsulot</a>
+      <a href="{% url 'delivery:store_edit' store.pk %}" class="btn btn-ghost btn-sm">Tahrirlash</a>
+      <a href="{% url 'delivery:store_delete' store.pk %}" class="btn btn-outline btn-sm">O'chirish</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-building"/></svg></div><h3>Hali do'koningiz yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'delivery:store_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Do'kon ochish</a></p></div>
+  {% endfor %}
+</div>
+{% endblock %}

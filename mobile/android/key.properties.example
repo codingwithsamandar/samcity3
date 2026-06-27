@@ -1,0 +1,15 @@
+# Release imzo kaliti sozlamalari — NAMUNA.
+# Buni `key.properties` deb nusxalang va o'z qiymatlaringiz bilan to'ldiring.
+# DIQQAT: key.properties va .jks/.keystore fayllarni hech qachon git'ga qo'shmang.
+#
+# 1) Kalit yaratish (bir marta):
+#    keytool -genkey -v -keystore ~/samcity-release.jks \
+#      -keyalg RSA -keysize 2048 -validity 10000 -alias samcity
+#
+# 2) Quyidagilarni to'ldiring:
+
+storePassword=PAROL_SHU_YERGA
+keyPassword=PAROL_SHU_YERGA
+keyAlias=samcity
+# Mutlaq yo'l yoki android/ ga nisbatan yo'l:
+storeFile=/Users/you/samcity-release.jks

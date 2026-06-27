@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load taxi_extras %}
+{% block title %}Taksist paneli — Taksi{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div><h1>🚕 Taksist paneli</h1></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <a href="{% url 'taxi:taxist_detail' taxist.pk %}" class="btn btn-outline">Profilni ko'rish</a>
+      <a href="{% url 'taxi:taxist_edit' %}" class="btn btn-ghost">Profilni tahrirlash</a>
+    </div>
+  </div>
+
+  <div class="card" style="padding:1.2rem;margin-bottom:1.2rem;">
+    <div style="font-weight:700;font-size:1.1rem;">{{ taxist.full_name }}</div>
+    <div style="color:var(--text2);font-size:.85rem;margin-top:.2rem;">📞 {{ taxist.phone }} · 📍 {{ taxist.region }}{% if taxist.service %} · {{ taxist.service.name }}{% endif %}</div>
+    {% if car %}
+    <div style="color:var(--text2);font-size:.85rem;margin-top:.4rem;">🚗 {{ car.brand }} {{ car.model }}{% if car.plate_number %} · {{ car.plate_number }}{% endif %} · {{ car.get_car_class_display }}</div>
+    {% else %}
+    <div style="color:var(--red);font-size:.85rem;margin-top:.4rem;">⚠️ Mashina ma'lumoti to'ldirilmagan — profilni tahrirlang.</div>
+    {% endif %}
+    <div style="color:var(--text2);font-size:.85rem;margin-top:.4rem;">🧍 {{ taxist.trips_count }} yo'lovchi · ⭐ {{ taxist.avg_rating }} ({{ taxist.review_count }} baho)</div>
+  </div>
+
+  <h2 style="font-size:1.1rem;margin:1rem 0;">📍 Marshrutlar</h2>
+  {% for route in routes %}
+  <div class="card" style="padding:.9rem 1.1rem;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <b>{{ route.point_a }} → {{ route.point_b }}</b>
+      <div style="color:var(--text2);font-size:.82rem;">🧍 {{ route.passenger_price|som }} so'm{% if route.delivery_price %} · 📦 {{ route.delivery_price|som }} so'm{% endif %}{% if route.note %} · {{ route.note }}{% endif %}</div>
+    </div>
+    <form method="post" action="{% url 'taxi:route_delete' route.id %}">{% csrf_token %}<button class="btn btn-outline" style="font-size:.8rem;">O'chirish</button></form>
+  </div>
+  {% empty %}
+  <p style="color:var(--text2);">Hali marshrut yo'q. Quyida qo'shing.</p>
+  {% endfor %}
+
+  <div class="card" style="padding:1.2rem;margin-top:1rem;">
+    <h3 style="font-size:1rem;margin-bottom:1rem;">+ Yangi marshrut</h3>
+    <form method="post" action="{% url 'taxi:route_add' %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:.8rem;">
+        <div class="form-group" style="flex:1;"><label class="form-label">A punkt *</label><input type="text" name="point_a" class="form-control" required placeholder="Shofirkon"></div>
+        <div class="form-group" style="flex:1;"><label class="form-label">B punkt *</label><input type="text" name="point_b" class="form-control" required placeholder="Buxoro"></div>
+      </div>
+      <div style="display:flex;gap:.8rem;">
+        <div class="form-group" style="flex:1;"><label class="form-label">Yo'lovchi narxi (so'm) *</label><input type="number" name="passenger_price" class="form-control" required min="0"></div>
+        <div class="form-group" style="flex:1;"><label class="form-label">Dostavka narxi (ixtiyoriy)</label><input type="number" name="delivery_price" class="form-control" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Izoh</label><input type="text" name="note" class="form-control"></div>
+      <button type="submit" class="btn btn-accent">Marshrut qo'shish</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %}
+{# Shared map assets — include once per map page (inside extra_css or extra_js). #}
+{# Birlamchi: cdnjs (Cloudflare — global, ishonchli). Zaxira: unpkg. #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css"/>
+<script>
+  window.SAMMAP = {
+    center: [40.1156, 64.5036],
+    routeUrl: "{% url 'places:route' %}",
+    revGeoUrl: "{% url 'places:reverse_geocode' %}",
+    geojsonUrl: "{% url 'places:geojson' %}"
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous"></script>
+<script>
+  // Zaxira CDN: agar cdnjs'dan Leaflet yuklanmasa, unpkg'dan sinxron yuklaydi.
+  if (typeof L === 'undefined') {
+    document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"><\/script>');
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" crossorigin="anonymous"></script>
+<script>
+  if (typeof L !== 'undefined' && typeof L.markerClusterGroup === 'undefined') {
+    document.write('<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"><\/script>');
+  }
+</script>
+<script src="{% static 'js/samcity-map.js' %}"></script>

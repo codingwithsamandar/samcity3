@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}To'lovlar — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pm-card { display:flex; align-items:center; gap:1rem; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:1.1rem 1.2rem; transition:transform .16s, box-shadow .16s, border-color .16s; box-shadow:var(--shadow-xs); }
+  .pm-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:#cfd8ee; }
+  .pm-ico { width:54px; height:54px; border-radius:15px; display:grid; place-items:center; font-size:1.6rem; flex-shrink:0;
+    background:var(--accent-l); color:var(--accent); }
+  .pm-card .nm { font-weight:700; font-size:1.05rem; }
+  .pm-card .meta { color:var(--text2); font-size:.84rem; margin-top:.15rem; }
+  .pm-card .amt { margin-left:auto; text-align:right; }
+  .pm-card .amt .v { font-weight:800; color:var(--text); font-family:'Plus Jakarta Sans'; }
+  .pm-card .amt .free { color:var(--text3); font-size:.82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="yx-order" style="position:relative;overflow:hidden;border-radius:var(--radius-xl);padding:1.9rem;margin-bottom:1.5rem;background:linear-gradient(150deg,var(--accent),var(--violet) 75%,var(--accent-d));color:#fff;box-shadow:var(--shadow-xl);">
+    <div style="position:relative;z-index:1;">
+      <span class="eyebrow" style="background:rgba(255,255,255,.18);color:#fff;"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</span>
+      <h1 style="color:#fff;font-size:clamp(1.6rem,3.4vw,2.2rem);margin-top:.7rem;">Barcha to'lovlar bir joyda</h1>
+      <p style="color:rgba(255,255,255,.88);margin-top:.4rem;max-width:520px;">Kommunal, kurslar, bog'cha, maktab, internet va boshqa to'lovlarni xavfsiz amalga oshiring.</p>
+      <form method="get" class="hero-search" style="margin-top:1.25rem;max-width:520px;">
+        <svg class="ic"><use href="#i-search"/></svg>
+        <input type="text" name="q" value="{{ q }}" placeholder="Muassasa yoki xizmat nomi...">
+        {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+        <button type="submit" class="btn btn-gold">Qidirish</button>
+      </form>
+      {% if user.is_authenticated %}
+      <a href="{% url 'payments:my_payments' %}" style="display:inline-flex;align-items:center;gap:.3rem;margin-top:1rem;color:#fff;font-weight:600;font-size:.9rem;"><svg class="ic"><use href="#i-doc"/></svg> To'lovlar tarixim</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="chip-row" style="margin-bottom:1.5rem;">
+    <a href="{% url 'payments:home' %}" class="chip {% if not cat %}active{% endif %}">Barchasi</a>
+    {% for key, label in categories %}
+    <a href="?cat={{ key }}" class="chip {% if cat == key %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if providers %}
+  <div class="grid-2">
+    {% for p in providers %}
+    <div class="pm-card">
+      <div class="pm-ico">{{ p.get_category_display|slice:":1" }}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="nm">{{ p.name }}</div>
+        <div class="meta">{{ p.get_category_display }}{% if p.address %} · {{ p.address }}{% endif %}</div>
+        <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent btn-sm" style="margin-top:.5rem;">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <div class="amt">
+        {% if p.has_fixed_amount %}<div class="v">{{ p.amount|som }} so'm</div>{% else %}<div class="free">Erkin summa</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-card"/></svg></div><h3>Muassasa topilmadi</h3><p>Boshqa kategoriyani tanlang.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

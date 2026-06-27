@@ -1,0 +1,78 @@
+# ═══════════════════════════════════════════════════════════════════
+#  SamCity — root .gitignore (Django backend + Flutter mobil ilova)
+# ═══════════════════════════════════════════════════════════════════
+
+# ── Python / virtualenv ──────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.Python
+
+# ── Django ───────────────────────────────────────────────────────
+db.sqlite3
+db.sqlite3-journal
+*.log
+logs/
+staticfiles/
+/static_collected/
+media/
+local_settings.py
+
+# ── Maxfiy: muhit o'zgaruvchilari (.env.example saqlanadi) ────────
+.env
+.env.*
+!.env.example
+
+# ── Flutter / Dart ───────────────────────────────────────────────
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/pubspec.lock
+mobile/**/generated_plugin_registrant.*
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/captures/
+mobile/android/key.properties
+mobile/android/app/upload-keystore.jks
+mobile/**/*.iml
+
+# ── IDE / muharrirlar ────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*~
+
+# ── OS fayllari ──────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Docker / deploy lokal ────────────────────────────────────────
+*.pid
+docker-compose.override.yml
+# Sertifikatlar: .pem fayllar maxfiy, lekin papka + hujjat saqlanadi
+certs/*
+!certs/README.md
+!certs/.gitkeep

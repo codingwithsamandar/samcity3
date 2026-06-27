@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ viewed_user.name|default:viewed_user.phone }} — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pub-profile-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; }
+  @media(max-width:768px) { .pub-profile-layout { grid-template-columns: 1fr; } }
+
+  .profile-avatar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+  .avatar-wrap { width: 80px; height: 80px; border-radius: 50%; background: var(--surface2); margin: 0 auto 1rem; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid var(--border); }
+  .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-name { font-size: 1.05rem; font-weight: 700; }
+  .profile-phone { color: var(--text2); font-size: 0.85rem; margin-top: 0.25rem; }
+  .profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .stat-item { text-align: center; }
+  .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+  .stat-lbl { font-size: 0.72rem; color: var(--text2); margin-top: 0.1rem; }
+
+  .content-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+  .content-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .content-card-header h2 { font-size: 1rem; font-weight: 700; }
+
+  .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+  .ad-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.15s; }
+  .ad-card:hover { border-color: #3a3a50; }
+  .ad-card-img { width: 100%; height: 130px; object-fit: cover; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--text2); }
+  .ad-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .ad-card-body { padding: 0.75rem; }
+  .ad-card-title { font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ad-card-price { color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-top: 0.25rem; }
+  .ad-card-meta { font-size: 0.75rem; color: var(--text2); margin-top: 0.2rem; }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text2); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+  .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text2); font-size: 0.875rem; margin-bottom: 1.25rem; transition: color 0.15s; }
+  .back-link:hover { color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem; padding-bottom:2rem;">
+
+  <a href="javascript:history.back()" class="back-link">← Orqaga</a>
+
+  <div class="pub-profile-layout">
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="profile-avatar-card">
+        <div class="avatar-wrap">
+          {% if viewed_user.avatar %}
+            <img src="{{ viewed_user.avatar.url }}" alt="{{ viewed_user.name }}">
+          {% elif viewed_user.avatar_url %}
+            <img src="{{ viewed_user.avatar_url }}" alt="{{ viewed_user.name }}">
+          {% else %}
+            👤
+          {% endif %}
+        </div>
+        <div class="profile-name">{{ viewed_user.name|default:"Ism kiritilmagan" }}</div>
+        <div class="profile-phone">{{ viewed_user.phone }}</div>
+        <div style="margin-top:0.5rem;">
+          {% if viewed_user.role == 'business' %}<span class="badge badge-amber">🏢 Biznes egasi</span>
+          {% elif viewed_user.role == 'driver' %}<span class="badge badge-blue">🚕 Haydovchi</span>
+          {% elif viewed_user.role == 'admin' %}<span class="badge badge-red">⚙️ Admin</span>
+          {% else %}<span class="badge badge-gray">👤 Foydalanuvchi</span>{% endif %}
+        </div>
+
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div class="stat-val">{{ ads_count }}</div>
+            <div class="stat-lbl">E'lonlar</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val">{{ total_views }}</div>
+            <div class="stat-lbl">Ko'rishlar</div>
+          </div>
+        </div>
+
+        {% if viewed_user.bio %}
+        <p style="font-size:0.85rem; color:var(--text2); margin-top:1rem; text-align:left; border-top:1px solid var(--border); padding-top:1rem;">
+          {{ viewed_user.bio }}
+        </p>
+        {% endif %}
+
+        {% if request.user == viewed_user %}
+        <a href="{% url 'profile' %}" class="btn btn-ghost" style="width:100%; margin-top:1rem; font-size:0.85rem;">
+          ⚙️ Mening profilim
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div>
+      <div class="content-card">
+        <div class="content-card-header">
+          <h2>📋 Faol e'lonlar</h2>
+          <span class="badge badge-gray">{{ ads_count }} ta</span>
+        </div>
+
+        {% if ads %}
+          <div class="ads-grid">
+            {% for ad in ads %}
+            <a href="{% url 'ad_detail' ad.pk %}" class="ad-card" style="text-decoration:none; color:inherit;">
+              <div class="ad-card-img">
+                {% with ad.images.first as img %}
+                  {% if img %}
+                    <img src="{{ img.image.url }}" alt="{{ ad.title }}">
+                  {% else %}
+                    🖼️
+                  {% endif %}
+                {% endwith %}
+              </div>
+              <div class="ad-card-body">
+                <div class="ad-card-title">{{ ad.title }}</div>
+                <div class="ad-card-price">
+                  {% if ad.price %}{{ ad.price|floatformat:0 }} so'm{% else %}Narx kelishiladi{% endif %}
+                </div>
+                <div class="ad-card-meta">{{ ad.location|default:"" }}</div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>Hozircha faol e'lonlar yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
