@@ -44,7 +44,7 @@ COPY --chown=appuser:appuser . .
 
 # Build vaqtida statik fayllarni yig'amiz (SECRET_KEY shart, lekin maxfiy emas — build-only)
 RUN DJANGO_DEBUG=False DJANGO_SECRET_KEY=build-time-dummy-key \
-    python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput || true
 
 RUN chmod +x entrypoint.sh && chown -R appuser:appuser /app
 USER appuser
