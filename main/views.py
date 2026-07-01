@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 import random
@@ -699,10 +700,63 @@ def neighborhood_chat(request):
     for neighborhood in Neighborhood.objects.all():
         ChatRoom.objects.get_or_create(neighborhood=neighborhood)
 
-    neighborhoods = Neighborhood.objects.select_related('chat_room').prefetch_related(
+    neighborhoods = list(Neighborhood.objects.select_related('chat_room').prefetch_related(
         'chat_room__messages', 'admins'
-    )
-    return render(request, 'neighborhood_chat.html', {'neighborhoods': neighborhoods})
+    ))
+
+    # Foydalanuvchi tanlagan "o'z mahallasi" — ro'yxat tepasiga pin qilinadi.
+    my_neighborhood = None
+    if request.user.is_authenticated and request.user.neighborhood_id:
+        my_neighborhood = next(
+            (n for n in neighborhoods if n.pk == request.user.neighborhood_id), None)
+        if my_neighborhood:
+            neighborhoods = [my_neighborhood] + [n for n in neighborhoods if n.pk != my_neighborhood.pk]
+
+    return render(request, 'neighborhood_chat.html', {
+        'neighborhoods': neighborhoods,
+        'my_neighborhood': my_neighborhood,
+    })
+
+
+@login_required
+@require_POST
+def set_neighborhood(request):
+    """Foydalanuvchi o'z mahallasini tanlaydi (yoki bekor qiladi).
+
+    Mahalla tanlanganda foydalanuvchi o'sha mahalla chat guruhiga avtomatik
+    (tasdiqlangan a'zo sifatida) qo'shiladi. Mahalla o'zgartirilsa — avvalgi
+    guruhdan chiqariladi va yangisiga qo'shiladi.
+    """
+    old = request.user.neighborhood
+    nbhd_id = request.POST.get('neighborhood_id') or ''
+
+    # Eski mahalla guruhidan chiqarish (mahalla o'zgargan yoki bekor qilingan bo'lsa).
+    if old and (not nbhd_id or str(old.pk) != str(nbhd_id)):
+        old_room = ChatRoom.objects.filter(neighborhood=old).first()
+        if old_room:
+            ChatMember.objects.filter(room=old_room, user=request.user).delete()
+
+    if nbhd_id:
+        nbhd = get_object_or_404(Neighborhood, pk=nbhd_id)
+        request.user.neighborhood = nbhd
+        request.user.save(update_fields=['neighborhood'])
+        # Yangi mahalla guruhiga avtomatik qo'shish (tasdiqlangan a'zo).
+        room, _ = ChatRoom.objects.get_or_create(neighborhood=nbhd)
+        ChatMember.objects.update_or_create(
+            room=room, user=request.user,
+            defaults={'is_approved': True, 'is_banned': False, 'approved_at': timezone.now()},
+        )
+        messages.success(
+            request, f"Mahallangiz «{nbhd.name}» deb belgilandi — guruhga qo'shildingiz.")
+    else:
+        request.user.neighborhood = None
+        request.user.save(update_fields=['neighborhood'])
+        messages.info(request, "Mahalla belgisi olib tashlandi.")
+
+    # AJAX (popup) so'rovi bo'lsa JSON qaytaramiz.
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True})
+    return redirect('neighborhood_chat')
 
 
 def _enrich_chat_message(msg, request_user):

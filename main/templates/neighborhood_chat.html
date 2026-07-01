@@ -25,6 +25,70 @@
   .page-intro-text { flex: 1; }
   .page-intro-text h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
   .page-intro-text p { color: var(--text2); font-size: 0.82rem; line-height: 1.5; }
+
+  /* ── Mahalla selektori ("mening mahallam") ── */
+  .mahalla-picker { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;
+    flex-wrap: wrap; justify-content: space-between; }
+  .mahalla-picker.active { border-color: rgba(245,158,11,0.45); background: linear-gradient(120deg, rgba(245,158,11,0.06), transparent 60%); }
+  .mp-left { display: flex; gap: .85rem; align-items: center; min-width: 0; }
+  .mp-icon { width: 46px; height: 46px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    font-size: 1.5rem; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.22); }
+  .mp-title { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text3); }
+  .mp-current { font-size: 1.05rem; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+  .mp-pin { font-size: .66rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--accent-d);
+    background: var(--accent-l); padding: .15rem .5rem; border-radius: 100px; }
+  .mp-sub { font-size: .85rem; color: var(--text2); margin-top: .1rem; }
+  .mp-form { display: flex; gap: .55rem; align-items: center; flex-wrap: wrap; }
+  .mp-select { min-width: 200px; height: 44px; padding-top: 0; padding-bottom: 0; }
+  .mp-clear { background: none; border: none; color: var(--text3); font-size: .8rem; cursor: pointer; font-family: inherit; text-decoration: underline; padding: .3rem; }
+
+  /* Pin qilingan "mening mahallam" kartasi */
+  .neighborhood-card.is-mine { border-color: rgba(245,158,11,0.55); box-shadow: 0 0 0 1px rgba(245,158,11,0.25); }
+  .mine-badge { position: absolute; top: 0; left: 0; font-size: .68rem; font-weight: 800; letter-spacing: .02em;
+    color: #000; background: var(--accent); padding: .25rem .7rem; border-radius: 0 0 10px 0; display: inline-flex; align-items: center; gap: .3rem; }
+
+  /* ── Mahalla kiritish modali ── */
+  .mahalla-modal[hidden] { display: none; }
+  .mahalla-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; }
+  .mm-backdrop { position: absolute; inset: 0; background: rgba(8,12,20,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  .mm-dialog { position: relative; width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: 0 24px 70px rgba(8,12,20,.4); padding: 1.6rem 1.5rem 1.5rem; text-align: center;
+    animation: mmPop .22s cubic-bezier(.2,.85,.3,1); }
+  @keyframes mmPop { from { opacity:0; transform: translateY(14px) scale(.97); } to { opacity:1; transform:none; } }
+  .mm-x { position: absolute; top: .8rem; right: .8rem; width: 34px; height: 34px; border-radius: 9px; border: none;
+    background: var(--surface2); color: var(--text2); font-size: 1rem; cursor: pointer; }
+  .mm-x:hover { background: var(--surface3); }
+  .mm-icon { width: 60px; height: 60px; margin: 0 auto .7rem; border-radius: 16px; display: grid; place-items: center;
+    font-size: 1.9rem; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.25); }
+  .mm-dialog h2 { font-size: 1.25rem; font-weight: 800; }
+  .mm-desc { color: var(--text2); font-size: .88rem; line-height: 1.5; margin: .4rem 0 1.2rem; }
+  .mm-step { text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: .9rem 1rem; }
+  .mm-step-h { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: .92rem; margin-bottom: .7rem; }
+  .mm-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: .78rem;
+    font-weight: 800; display: grid; place-items: center; flex: none; }
+  .mm-or { color: var(--text3); font-size: .8rem; font-weight: 600; margin: .7rem 0; position: relative; }
+  .mm-loc-result { margin-top: .7rem; font-size: .85rem; line-height: 1.4; }
+  .mm-ok { color: var(--green); }
+  .mm-err { color: var(--red); }
+  /* Aniqlash natijasi kartalari */
+  .mm-loc-card { border-radius: 11px; padding: .6rem .8rem; font-size: .84rem; line-height: 1.45; }
+  .mm-loc-card.load { background: var(--surface3); color: var(--text2); }
+  .mm-loc-card.warn { background: var(--gold-l); color: var(--gold-d); }
+  .mm-loc-card.err  { background: var(--red-l);  color: var(--red); }
+  .mm-addr { font-size: .8rem; color: var(--text2); margin-bottom: .5rem; word-break: break-word; }
+  .mm-pin-ic { opacity: .8; }
+  .mm-found { display: flex; align-items: center; gap: .7rem; background: var(--green-l);
+    border: 1px solid rgba(14,159,110,.3); border-radius: 12px; padding: .7rem .85rem; }
+  .mm-found-ic { font-size: 1.5rem; flex: none; }
+  .mm-found-name { font-weight: 800; font-size: 1rem; color: var(--text); }
+  .mm-found-sub { font-size: .76rem; color: #0a7a54; }
+  .mm-check { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; background: var(--green);
+    color: #fff; font-weight: 800; display: grid; place-items: center; flex: none; }
+  .mm-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; vertical-align: -2px; animation: mmSpin .7s linear infinite; }
+  .mm-spin.sm { width: 11px; height: 11px; }
+  @keyframes mmSpin { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 
@@ -56,11 +120,39 @@
     {% endif %}
   </div>
 
+  {% if user.is_authenticated %}
+  <!-- Mahalla selektori: foydalanuvchi o'z mahallasini belgilaydi -->
+  <div class="mahalla-picker {% if my_neighborhood %}active{% endif %}">
+    <div class="mp-left">
+      <div class="mp-icon">📍</div>
+      <div>
+        <div class="mp-title">Sizning mahallangiz</div>
+        {% if my_neighborhood %}
+        <div class="mp-current">{{ my_neighborhood.name }} <span class="mp-pin">Pin qilingan</span></div>
+        {% else %}
+        <div class="mp-sub">O'z mahallangizni belgilang — u har doim ro'yxat tepasida chiqadi.</div>
+        {% endif %}
+      </div>
+    </div>
+    <form method="post" action="{% url 'set_neighborhood' %}" class="mp-form">
+      {% csrf_token %}
+      <select name="neighborhood_id" class="form-control mp-select" aria-label="Mahallani tanlash">
+        <option value="">— Mahallani tanlang —</option>
+        {% for nbhd in neighborhoods %}
+        <option value="{{ nbhd.pk }}" {% if my_neighborhood and nbhd.pk == my_neighborhood.pk %}selected{% endif %}>{{ nbhd.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-accent btn-sm">Saqlash</button>
+    </form>
+  </div>
+  {% endif %}
+
   {% if neighborhoods %}
   <div class="neighborhoods-grid">
     {% for nbhd in neighborhoods %}
     {% if nbhd.chat_room %}
-    <a href="{% url 'neighborhood_chat_room' nbhd.chat_room.pk %}" class="neighborhood-card">
+    <a href="{% url 'neighborhood_chat_room' nbhd.chat_room.pk %}" class="neighborhood-card{% if my_neighborhood and nbhd.pk == my_neighborhood.pk %} is-mine{% endif %}">
+      {% if my_neighborhood and nbhd.pk == my_neighborhood.pk %}<span class="mine-badge">📍 Mening mahallam</span>{% endif %}
       <div class="nbhd-header">
         <div class="nbhd-avatar">🏘️</div>
         <div class="nbhd-info">
@@ -110,4 +202,140 @@
   </div>
   {% endif %}
 </div>
+
+{% if user.is_authenticated %}
+<!-- Mahalla kiritish modali -->
+<div class="mahalla-modal" id="mahallaModal" {% if my_neighborhood %}hidden{% endif %}>
+  <div class="mm-backdrop" onclick="closeMahallaModal()"></div>
+  <div class="mm-dialog">
+    <button type="button" class="mm-x" onclick="closeMahallaModal()" aria-label="Yopish">✕</button>
+    <div class="mm-icon">📍</div>
+    <h2>Iltimos, mahallangizni kiriting</h2>
+    <p class="mm-desc">Mahallangizni belgilang — siz avtomatik o'sha mahalla chat guruhiga qo'shilasiz.</p>
+
+    <form method="post" action="{% url 'set_neighborhood' %}" id="mahallaModalForm">
+      {% csrf_token %}
+
+      <!-- 1. Joylashuvni aniqlash -->
+      <div class="mm-step">
+        <div class="mm-step-h"><span class="mm-num">1</span> Hozirgi joylashuvni aniqlash</div>
+        <button type="button" class="btn btn-outline btn-block" id="detectLocBtn" onclick="detectLocation()">
+          <svg class="ic"><use href="#i-pin"/></svg> Joylashuvimni aniqlash
+        </button>
+        <div class="mm-loc-result" id="locResult"></div>
+      </div>
+
+      <div class="mm-or">— yoki —</div>
+
+      <!-- 2. Mahalani tanlash -->
+      <div class="mm-step">
+        <div class="mm-step-h"><span class="mm-num">2</span> Mahalani tanlash</div>
+        <select name="neighborhood_id" id="modalSelect" class="form-control" required>
+          <option value="">— Mahallani tanlang —</option>
+          {% for nbhd in neighborhoods %}
+          <option value="{{ nbhd.pk }}">{{ nbhd.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-accent btn-block" id="mahallaSubmitBtn" style="margin-top:1.1rem;" disabled>
+        Avval mahallani tanlang
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script>
+(function () {
+  var modal = document.getElementById('mahallaModal');
+  if (!modal) return;
+  var NB = [];
+  fetch("{% url 'places:neighborhoods_geojson' %}")
+    .then(function (r) { return r.json(); })
+    .then(function (d) { NB = d.neighborhoods || []; })
+    .catch(function () {});
+
+  window.openMahallaModal = function () { modal.removeAttribute('hidden'); document.body.style.overflow = 'hidden'; };
+  window.closeMahallaModal = function () { modal.setAttribute('hidden', ''); document.body.style.overflow = ''; };
+
+  // Mahalla belgilanmagan bo'lsa — avtomatik ochiladi.
+  {% if not my_neighborhood %}
+  setTimeout(window.openMahallaModal, 400);
+  {% endif %}
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.closeMahallaModal(); });
+
+  // Nuqta poligon ichidami? (ray-casting; [lat,lng] format)
+  function pointInPoly(lat, lng, ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var yi = ring[i][0], xi = ring[i][1], yj = ring[j][0], xj = ring[j][1];
+      var hit = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+      if (hit) inside = !inside;
+    }
+    return inside;
+  }
+
+  function updateSubmitLabel() {
+    var sel = document.getElementById('modalSelect');
+    var btn = document.getElementById('mahallaSubmitBtn');
+    if (!sel || !btn) return;
+    var opt = sel.options[sel.selectedIndex];
+    if (sel.value) {
+      btn.disabled = false;
+      btn.textContent = '«' + opt.textContent.trim() + '» — tasdiqlash va qo\'shilish';
+    } else {
+      btn.disabled = true;
+      btn.textContent = 'Avval mahallani tanlang';
+    }
+  }
+  var selEl = document.getElementById('modalSelect');
+  if (selEl) selEl.addEventListener('change', updateSubmitLabel);
+
+  window.detectLocation = function () {
+    var res = document.getElementById('locResult');
+    var btn = document.getElementById('detectLocBtn');
+    if (!navigator.geolocation) {
+      res.innerHTML = '<div class="mm-loc-card err">Brauzer joylashuvni qo\'llab-quvvatlamaydi.</div>'; return;
+    }
+    btn.disabled = true;
+    res.innerHTML = '<div class="mm-loc-card load"><span class="mm-spin"></span> Joylashuv aniqlanmoqda…</div>';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      btn.disabled = false;
+      var lat = pos.coords.latitude, lng = pos.coords.longitude, found = null;
+      NB.forEach(function (n) { if (n.boundary && pointInPoly(lat, lng, n.boundary)) found = n; });
+
+      var mahallaHtml = found
+        ? '<div class="mm-found"><span class="mm-found-ic">🏘️</span><div>'
+          + '<div class="mm-found-name">' + found.name + '</div>'
+          + '<div class="mm-found-sub">Aniqlangan mahallangiz</div></div>'
+          + '<span class="mm-check">✓</span></div>'
+        : '<div class="mm-loc-card warn">Joylashuvingiz hech bir mahalla chegarasida emas — quyidan qo\'lda tanlang.</div>';
+
+      if (found) { document.getElementById('modalSelect').value = found.id; updateSubmitLabel(); }
+      res.innerHTML = '<div class="mm-addr" id="mmAddr"><span class="mm-spin sm"></span> Manzil aniqlanmoqda…</div>' + mahallaHtml;
+
+      // Manzilni aniqlash (reverse geocode) — "hozir turgan joyingiz".
+      fetch("{% url 'places:reverse_geocode' %}?lat=" + lat + "&lng=" + lng)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var a = document.getElementById('mmAddr');
+          if (a) a.innerHTML = '<span class="mm-pin-ic">📌</span> ' + (d.address || (lat.toFixed(5) + ', ' + lng.toFixed(5)));
+        })
+        .catch(function () {
+          var a = document.getElementById('mmAddr');
+          if (a) a.innerHTML = '<span class="mm-pin-ic">📌</span> ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+        });
+    }, function (err) {
+      btn.disabled = false;
+      res.innerHTML = '<div class="mm-loc-card err">Joylashuvni aniqlab bo\'lmadi (' + (err.message || 'ruxsat berilmadi') + '). Qo\'lda tanlang.</div>';
+    }, { enableHighAccuracy: true, timeout: 8000 });
+  };
+})();
+</script>
+{% endif %}
 {% endblock %}

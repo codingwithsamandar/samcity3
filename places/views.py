@@ -58,6 +58,32 @@ def map_view(request):
     })
 
 
+def neighborhoods_geojson(request):
+    """Mahalla chegaralari (poligonlar) — xaritada ko'rsatish uchun.
+
+    Faqat chegarasi bor mahallalar qaytariladi. Har biri chat xonasiga bog'lanadi.
+    """
+    from main.models import Neighborhood
+    items = []
+    qs = (Neighborhood.objects
+          .exclude(boundary__isnull=True)
+          .select_related('chat_room'))
+    for n in qs:
+        if not n.boundary:
+            continue
+        room = getattr(n, 'chat_room', None)
+        items.append({
+            'id': n.pk,
+            'name': n.name,
+            'color': n.color or '#3551d1',
+            'boundary': n.boundary,          # [[lat,lng], ...]
+            'center': n.centroid(),
+            'description': n.description,
+            'room_url': (reverse('neighborhood_chat_room', args=[room.pk]) if room else ''),
+        })
+    return JsonResponse({'neighborhoods': items})
+
+
 def places_geojson(request):
     category = request.GET.get('category', '').strip()
     qs = Place.objects.filter(is_active=True)

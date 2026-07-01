@@ -8,6 +8,7 @@ urlpatterns = [
     path('directory/', views.place_list, name='place_list'),
     path('nearby/', views.nearby, name='nearby'),
     path('geojson/', views.places_geojson, name='geojson'),
+    path('neighborhoods/', views.neighborhoods_geojson, name='neighborhoods_geojson'),
     path('api/route/', views.route_api, name='route'),
     path('api/reverse-geocode/', views.reverse_geocode_api, name='reverse_geocode'),
     path('add/', views.place_create, name='place_create'),

@@ -260,7 +260,24 @@ def help_status(request, req_id):
 # ════════════════════════════════════════════════════════════════════════════
 
 def community_map(request):
-    return render(request, 'community/mahalla_map.html', {})
+    """Mahalla xaritasi — faqat foydalanuvchining o'z mahallasini ko'rsatadi."""
+    import json
+    my = None
+    if request.user.is_authenticated and request.user.neighborhood_id:
+        n = request.user.neighborhood
+        if n and n.boundary:
+            my = {
+                'id': n.pk,
+                'name': n.name,
+                'color': n.color or '#3551d1',
+                'boundary': n.boundary,
+                'center': n.centroid(),
+                'description': n.description,
+            }
+    return render(request, 'community/mahalla_map.html', {
+        'my_neighborhood_json': json.dumps(my),
+        'has_my_neighborhood': my is not None,
+    })
 
 
 def community_map_geojson(request):

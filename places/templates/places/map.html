@@ -7,6 +7,11 @@
 <style>
   .map-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
   #map { height: 80vh; min-height: 520px; z-index: 1; }
+  /* Mahalla nomi yorlig'i (poligon markazida) */
+  .mahalla-label span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap;
+    background: rgba(255,255,255,.88); border:1px solid rgba(0,0,0,.12); padding:1px 7px; border-radius:7px;
+    font-size:11px; font-weight:700; color:#1b2433; box-shadow:0 1px 4px rgba(0,0,0,.18); }
+  .map-controls .btn.on { background: var(--accent); color:#fff; }
   @media (max-width: 820px) { #map { height: 70vh; min-height: 440px; } }
 
   /* Floating glass sidebar */
@@ -86,11 +91,19 @@
       <button class="cat-btn" data-cat="{{ key }}" onclick="filterCat(this)"><span class="dot" data-c="{{ key }}"></span> {{ label }}</button>
       {% endfor %}
       <button class="cat-btn" data-cat="driver" onclick="filterCat(this)"><span class="dot" data-c="driver"></span> 🚗 Taksistlar (onlayn)</button>
+
+      <h3 style="margin-top:1rem;">Mahallalar</h3>
+      <button class="cat-btn mahalla-side-btn" id="mahallaToggleSide" onclick="toggleMahallas()" title="Shaharni mahallalarga ajratib, chegaralarini ko'rsatadi">
+        <span class="dot" style="background:var(--accent)"></span> 🗺️ Mahalalarga ajratish
+      </button>
     </div>
 
     <div class="map-controls">
     <button class="btn btn-ghost" onclick="locateMe()" title="Mening joylashuvim" style="white-space:nowrap;">
       <svg class="ic"><use href="#i-pin"/></svg> <span>Joylashuvim</span>
+    </button>
+    <button class="btn btn-ghost" id="mahallaToggle" onclick="toggleMahallas()" title="Mahalalarga ajratish" style="white-space:nowrap;">
+      <svg class="ic"><use href="#i-map"/></svg> <span>Mahalalarga ajratish</span>
     </button>
     </div>
 
@@ -159,6 +172,50 @@ if(map){
   fetch("{% url 'places:geojson' %}").then(r=>r.json()).then(d=>{ALL=d.places;render('{{ active_cat }}');
     {% if active_cat %}document.querySelectorAll('.cat-btn').forEach(b=>{if(b.dataset.cat==='{{ active_cat }}'){b.classList.add('on');}else{b.classList.remove('on');}});{% endif %}
   });
+}
+
+// ── Mahalalarga ajratish (mahalla poligonlari + chegaralari) ──────────────
+var mahallaLayer=null, mahallaShown=false, mahallaLoaded=false;
+function buildMahallaLayer(d){
+  mahallaLayer = L.layerGroup();
+  (d.neighborhoods||[]).forEach(function(n){
+    if(!n.boundary || !n.boundary.length) return;
+    var poly = L.polygon(n.boundary, {color:n.color, weight:2, opacity:.9, fillColor:n.color, fillOpacity:.12});
+    var html = '<div style="min-width:170px"><b>'+n.name+'</b>'
+      + (n.description ? ('<br><span style="color:#5b6678;font-size:.85em">'+n.description+'</span>') : '')
+      + (n.room_url ? ('<br><a href="'+n.room_url+'" style="display:inline-block;margin-top:.55rem;font-weight:700;color:'+n.color+'">💬 Mahalla chatiga kirish →</a>') : '')
+      + '</div>';
+    poly.bindPopup(html);
+    poly.on('mouseover', function(){ this.setStyle({fillOpacity:.30}); });
+    poly.on('mouseout',  function(){ this.setStyle({fillOpacity:.12}); });
+    poly.addTo(mahallaLayer);
+    if(n.center){
+      L.marker(n.center, {interactive:false, keyboard:false,
+        icon: L.divIcon({className:'mahalla-label', html:'<span>'+n.name+'</span>', iconSize:[0,0]})
+      }).addTo(mahallaLayer);
+    }
+  });
+}
+function syncMahallaButtons(){
+  var side = document.getElementById('mahallaToggleSide');
+  var top  = document.getElementById('mahallaToggle');
+  if(side) side.classList.toggle('on', mahallaShown);
+  if(top)  top.classList.toggle('on', mahallaShown);
+  if(top){ var s = top.querySelector('span'); if(s) s.textContent = mahallaShown ? 'Mahallalar yoqilgan' : 'Mahalalarga ajratish'; }
+}
+// Tugma bosilganda: birinchi marta yuklaydi, keyin ko'rsatadi/yashiradi.
+function toggleMahallas(){
+  if(!map) return;
+  if(!mahallaLoaded){
+    fetch("{% url 'places:neighborhoods_geojson' %}").then(r=>r.json()).then(function(d){
+      buildMahallaLayer(d); mahallaLoaded=true; mahallaShown=true;
+      mahallaLayer.addTo(map); syncMahallaButtons();
+    }).catch(function(){});
+    return;
+  }
+  mahallaShown = !mahallaShown;
+  if(mahallaShown) mahallaLayer.addTo(map); else map.removeLayer(mahallaLayer);
+  syncMahallaButtons();
 }
 </script>
 {% endblock %}

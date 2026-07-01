@@ -65,7 +65,11 @@
         <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>
         <a href="{% url 'my_bookings' %}"><svg class="ic"><use href="#i-doc"/></svg> Bronlar</a>
         <a href="{% url 'profile_edit' %}"><svg class="ic"><use href="#i-settings"/></svg> Sozlamalar</a>
-        <a href="{% url 'logout' %}" style="color:var(--red);"><svg class="ic" style="color:var(--red);"><use href="#i-logout"/></svg> Chiqish</a>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">{% csrf_token %}
+          <button type="submit" style="display:flex;align-items:center;gap:.75rem;width:100%;padding:.85rem 1.1rem;color:var(--red);font-size:.9rem;font-weight:550;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+            <svg class="ic" style="width:18px;height:18px;color:var(--red);"><use href="#i-logout"/></svg> Chiqish
+          </button>
+        </form>
       </nav>
     </div>
 

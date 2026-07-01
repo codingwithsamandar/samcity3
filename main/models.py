@@ -43,6 +43,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     avatar = models.ImageField(upload_to='avatars/%Y/%m/', blank=True, null=True, validators=[validate_file_type])
     avatar_url = models.TextField(blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
+    # Foydalanuvchi tanlagan "o'z mahallasi" — chatda tepada pin/ajratib ko'rsatiladi.
+    neighborhood = models.ForeignKey(
+        'Neighborhood', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='residents', verbose_name='Mahalla',
+    )
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=5.0,
                                  validators=[MinValueValidator(0), MaxValueValidator(5)])
     is_active = models.BooleanField(default=True)
@@ -174,6 +179,12 @@ class AdImage(models.Model):
 class Neighborhood(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    # ── Xaritadagi joylashuv va chegara ──────────────────────────────────────
+    center_lat = models.FloatField('Markaz (kenglik)', null=True, blank=True)
+    center_lng = models.FloatField('Markaz (uzunlik)', null=True, blank=True)
+    # Chegara — poligon nuqtalari ro'yxati: [[lat, lng], [lat, lng], ...]
+    boundary = models.JSONField('Chegara (poligon)', null=True, blank=True, default=None)
+    color = models.CharField('Rang', max_length=9, blank=True, default='#3551d1')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -183,6 +194,20 @@ class Neighborhood(models.Model):
 
     def __str__(self):
         return self.name
+
+    def boundary_latlng(self):
+        """Leaflet uchun [[lat,lng],...] qaytaradi (yoki bo'sh ro'yxat)."""
+        return self.boundary or []
+
+    def centroid(self):
+        """Markaz nuqtasi — chegara bo'lsa undan, aks holda center maydonidan."""
+        pts = self.boundary or []
+        if pts:
+            return [round(sum(p[0] for p in pts) / len(pts), 6),
+                    round(sum(p[1] for p in pts) / len(pts), 6)]
+        if self.center_lat is not None and self.center_lng is not None:
+            return [self.center_lat, self.center_lng]
+        return None
 
 
 class ChatRoom(models.Model):

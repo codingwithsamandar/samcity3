@@ -24,7 +24,7 @@
 
   .yx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
   .yx-svc { display: flex; align-items: center; gap: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 1.1rem 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); }
+    padding: 1.1rem 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); min-width: 0; }
   .yx-svc:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #cfd8ee; }
   .yx-num { width: 58px; height: 58px; flex-shrink: 0; border-radius: 16px; background: linear-gradient(140deg, #efbb52, #c98f1d); color: #3a2a05;
     display: grid; place-items: center; font-weight: 800; font-size: 1.05rem; box-shadow: var(--shadow-gold); }
@@ -36,20 +36,21 @@
   .yx-rate { display: inline-flex; align-items: center; gap: .3rem; background: var(--gold-l); color: var(--gold-d); padding: .26rem .55rem; border-radius: 8px; font-weight: 700; font-size: .8rem; }
   .yx-rate .c { color: var(--text3); font-weight: 500; }
 
-  .yx-tx { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); }
+  .yx-tx { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; transition: transform .18s, box-shadow .18s, border-color .18s; box-shadow: var(--shadow-xs); min-width: 0; }
   .yx-tx:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #cfd8ee; }
-  .yx-tx-top { display: flex; align-items: center; gap: .9rem; }
+  .yx-tx-top { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+  .yx-tx .nm, .yx-tx .cr { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .yx-av { width: 54px; height: 54px; flex-shrink: 0; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 1.3rem; }
   .yx-tx .nm { font-weight: 700; font-size: 1.06rem; }
   .yx-tx .cr { color: var(--text2); font-size: .83rem; margin-top: .1rem; }
-  .yx-trips { margin-left: auto; text-align: center; background: var(--surface2); border-radius: 12px; padding: .45rem .7rem; }
+  .yx-trips { margin-left: auto; text-align: center; background: var(--surface2); border-radius: 12px; padding: .45rem .7rem; flex-shrink: 0; }
   .yx-trips b { display: block; color: var(--accent); font-size: 1.15rem; font-weight: 800; line-height: 1; }
   .yx-trips span { color: var(--text3); font-size: .66rem; }
-  .yx-routes { margin-top: 1rem; display: flex; flex-direction: column; gap: .5rem; }
-  .yx-rc { display: flex; align-items: center; justify-content: space-between; gap: .6rem; background: var(--surface2); border-radius: 12px; padding: .6rem .85rem; }
-  .yx-rc .pth { font-weight: 600; font-size: .9rem; }
+  .yx-routes { margin-top: 1rem; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+  .yx-rc { display: flex; align-items: center; justify-content: space-between; gap: .6rem; background: var(--surface2); border-radius: 12px; padding: .6rem .85rem; min-width: 0; }
+  .yx-rc .pth { font-weight: 600; font-size: .9rem; min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .yx-rc .pth .ar { color: var(--accent); margin: 0 .25rem; }
-  .yx-rc .pr { font-weight: 700; font-size: .88rem; white-space: nowrap; }
+  .yx-rc .pr { font-weight: 700; font-size: .88rem; white-space: nowrap; flex-shrink: 0; }
   .yx-rc .pr small { color: var(--text3); font-weight: 500; }
   .yx-more { color: var(--text3); font-size: .8rem; padding-left: .2rem; }
   .yx-tx-foot { display: flex; align-items: center; justify-content: space-between; margin-top: .9rem; }
@@ -112,10 +113,10 @@
       {% for t in taxists %}
       <a href="{% url 'taxi:taxist_detail' t.pk %}" class="yx-tx" style="color:inherit;">
         <div class="yx-tx-top">
-          {% if t.photo %}<img src="{{ t.photo.url }}" class="yx-av" alt="">{% else %}<div class="yx-av">{{ t.full_name|first }}</div>{% endif %}
+          {% if t.photo %}<img src="{{ t.photo.url }}" class="yx-av" alt="" onerror="this.outerHTML='<div class=&quot;yx-av&quot;>{{ t.full_name|first|escapejs }}</div>'">{% else %}<div class="yx-av">{{ t.full_name|first }}</div>{% endif %}
           <div style="min-width:0;flex:1;">
             <div class="nm">{{ t.full_name }}</div>
-            <div class="cr"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-car"/></svg> {{ t.car_model|default:t.car.brand|default:"—" }}{% if t.car.plate_number %} · <b style="color:var(--text);letter-spacing:.5px;">{{ t.car.plate_number }}</b>{% endif %}</div>
+            <div class="cr"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-car"/></svg> {% if t.car_model and t.car_model != "—" %}{{ t.car_model }}{% elif t.car.brand %}{{ t.car.brand }}{% if t.car.model %} {{ t.car.model }}{% endif %}{% endif %}{% if t.car.plate_number %} · <b style="color:var(--text);letter-spacing:.5px;">{{ t.car.plate_number }}</b>{% endif %}{% if not t.car_model and not t.car.brand and not t.car.plate_number %}Mashina ma'lumoti yo'q{% endif %}</div>
             <div class="cr"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-phone"/></svg> {{ t.phone }}</div>
           </div>
           <div class="yx-trips"><b>{{ t.trips_count }}</b><span>yo'lovchi</span></div>

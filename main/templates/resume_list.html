@@ -25,13 +25,21 @@
 
 {% block content %}
 <div class="container">
+  <div class="segmented" style="margin-bottom:1.25rem;">
+    <a href="{% url 'job_list' %}" style="text-decoration:none;">💼 Vakansiyalar</a>
+    <button type="button" class="active">🙋 Ishchilar (rezyume)</button>
+  </div>
+
   <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
     <div>
       <h1>📄 Resume va ishchi qidirish</h1>
-      <p>Ish izlayotgan mutaxassislar ro'yxati</p>
+      <p>Ish izlayotgan mutaxassislar ro'yxati — o'zingiz haqingizda va nima qila olishingiz haqida yozing</p>
     </div>
     {% if user.is_authenticated %}
-    <a href="{% url 'resume_create' %}" class="btn btn-accent">+ Resume joylash</a>
+    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+      <a href="{% url 'resume_create' %}" class="btn btn-accent">+ Resume joylash</a>
+      <a href="{% url 'job_create' %}" class="btn btn-outline">+ Vakansiya joylash (ish beruvchi)</a>
+    </div>
     {% endif %}
   </div>
 

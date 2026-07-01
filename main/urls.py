@@ -6,7 +6,17 @@ from . import community_views
 from . import marketplace_views
 
 class LogoutGetView(LogoutView):
-    http_method_names = ['get', 'post']
+    """Logout'ni GET (havola) yoki POST orqali bajaradi.
+
+    Django 5.x'da LogoutView faqat POST'da chiqaradi — GET esa TemplateView'dan
+    meros olingan get() tufayli sessiyani tozalamasdan "chiqdingiz" sahifasini
+    ko'rsatadi (foydalanuvchi tizimda qolib ketadi). get() ni post() ga
+    yo'naltirib, havola orqali chiqishni ham haqiqiy ishlaydigan qilamiz.
+    """
+    http_method_names = ['get', 'post', 'options']
+
+    def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
 
 urlpatterns = [
     # Asosiy
@@ -44,6 +54,7 @@ urlpatterns = [
 
     # Mahalla chat
     path('neighborhood-chat/', views.neighborhood_chat, name='neighborhood_chat'),
+    path('neighborhood-chat/set-mahalla/', views.set_neighborhood, name='set_neighborhood'),
     path('neighborhood-chat/<int:room_id>/', views.neighborhood_chat_room, name='neighborhood_chat_room'),
     path('api/chat/<int:room_id>/messages/', views.chat_messages_api, name='chat_messages_api'),
     path('api/chat/<int:room_id>/history/', views.chat_history, name='chat_history'),

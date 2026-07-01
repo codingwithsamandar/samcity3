@@ -113,10 +113,67 @@ class BookingAdmin(admin.ModelAdmin):
 
 
 # ── CHAT ─────────────────────────────────────────────────────────────────────
+from django import forms
+from django.utils.safestring import mark_safe
+
+
+class PolygonEditorWidget(forms.Textarea):
+    """Adminda mahalla chegarasini xaritada chizib/tahrirlab beradigan widget.
+
+    Pastdagi JSON maydon (chegara nuqtalari) Leaflet xaritasi bilan sinxron.
+    """
+    def render(self, name, value, attrs=None, renderer=None):
+        attrs = attrs or {}
+        attrs.setdefault('id', 'id_%s' % name)
+        attrs['style'] = 'width:100%;font-family:monospace;font-size:12px;height:90px;'
+        textarea = super().render(name, value, attrs, renderer)
+        return mark_safe(
+            '<div class="mahalla-poly-editor">'
+            '<div id="mahallaEditorMap" style="height:440px;border:1px solid #ccc;'
+            'border-radius:8px;margin:.4rem 0;"></div>'
+            '<p style="font-size:12px;color:#555;margin:.2rem 0 .4rem;">'
+            "Chizish/tahrirlash: chap-yuqoridagi ✐ bilan yangi poligon chizing yoki "
+            "mavjud tugunlarni torting. Maydon avtomatik yangilanadi.</p>"
+            '<details><summary style="cursor:pointer;font-size:12px;color:#666;">'
+            'Chegara (JSON)</summary>' + textarea + '</details></div>'
+        )
+
+    class Media:
+        css = {'all': (
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.css',
+        )}
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js',
+            'admin/js/mahalla_polygon_editor.js',
+        )
+
+
+class NeighborhoodAdminForm(forms.ModelForm):
+    class Meta:
+        model = Neighborhood
+        fields = '__all__'
+        widgets = {'boundary': PolygonEditorWidget}
+
+
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at')
+    form = NeighborhoodAdminForm
+    list_display = ('name', 'color_swatch', 'has_boundary', 'created_at')
     search_fields = ('name',)
+    fields = ('name', 'description', 'color', 'center_lat', 'center_lng', 'boundary')
+
+    @admin.display(description='Rang')
+    def color_swatch(self, obj):
+        return mark_safe(
+            f'<span style="display:inline-block;width:16px;height:16px;border-radius:4px;'
+            f'background:{obj.color or "#ccc"};border:1px solid #999;vertical-align:middle;"></span> '
+            f'{obj.color}')
+
+    @admin.display(description='Chegara', boolean=True)
+    def has_boundary(self, obj):
+        return bool(obj.boundary)
 
 
 @admin.register(ChatRoom)

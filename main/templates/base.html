@@ -770,6 +770,75 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.8 2.2L21.5 19l-2.2.8-.8 2.2-.8-2.2L15.5 19l2.2-.8z"/></symbol>
 </svg>
 
+<style>
+  /* ── NAVBAR REDESIGN ─────────────────────────────────────────── */
+  /* Account dropdown (desktop) */
+  .nav-account { position: relative; }
+  .nav-account-btn { display:inline-flex; align-items:center; gap:.5rem; padding:.28rem .6rem .28rem .32rem;
+    border-radius:100px; border:1px solid var(--border); background:var(--surface2); cursor:pointer;
+    color:var(--text); font-family:inherit; font-weight:600; font-size:.85rem; transition:all .15s; min-height:44px; }
+  .nav-account-btn:hover { border-color:var(--border2); background:var(--surface3); }
+  .nav-account .avatar { width:30px; height:30px; border-radius:50%; flex:none; display:grid; place-items:center;
+    color:#fff; font-weight:700; font-size:.82rem; background:linear-gradient(140deg, var(--accent), var(--violet)); }
+  .nav-account .avatar .ic { width:1em; height:1em; }
+  .nav-account-name { max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .nav-account-btn .chev { width:1em; height:1em; opacity:.55; transition:transform .2s; }
+  .nav-account.open .nav-account-btn .chev { transform:rotate(180deg); }
+
+  .account-menu { position:absolute; top:calc(100% + .55rem); right:0; min-width:248px; background:var(--surface);
+    border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-lg); padding:.5rem;
+    opacity:0; visibility:hidden; transform:translateY(-8px) scale(.98); transform-origin:top right;
+    transition:opacity .16s ease, transform .16s ease, visibility .16s; z-index:130; }
+  .nav-account.open .account-menu { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+  .account-head { display:flex; align-items:center; gap:.7rem; padding:.55rem .65rem .75rem; margin-bottom:.4rem;
+    border-bottom:1px solid var(--border); }
+  .account-head .avatar { width:42px; height:42px; font-size:1rem; }
+  .account-head .meta { min-width:0; }
+  .account-head .nm { font-weight:700; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-head .sub { color:var(--text3); font-size:.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-menu a, .account-menu button { display:flex; width:100%; align-items:center; gap:.7rem; padding:.68rem .65rem;
+    border-radius:10px; color:var(--text); font-weight:550; font-size:.9rem; background:none; border:none;
+    cursor:pointer; font-family:inherit; text-align:left; transition:background .12s; }
+  .account-menu a .ic, .account-menu button .ic { color:var(--text3); width:1.15em; height:1.15em; }
+  .account-menu a:hover, .account-menu button:hover { background:var(--surface2); }
+  .account-menu form { margin:0; }
+  .account-menu .danger { color:var(--red); }
+  .account-menu .danger .ic { color:var(--red); }
+  .account-menu .am-divider { height:1px; background:var(--border); margin:.4rem 0; }
+
+  /* Mobile drawer → slide-in side panel */
+  @media (max-width: 860px) { .nav-account { display:none; } }
+  #mobileMenu { position:fixed; inset:0; z-index:200; background:rgba(8,12,20,.45); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  .mm-panel { position:fixed; inset:auto; top:0; right:0; bottom:0; left:auto; width:min(87vw, 344px);
+    background:var(--surface); border-left:1px solid var(--border);
+    padding:1rem .85rem calc(1rem + env(safe-area-inset-bottom)); overflow-y:auto;
+    box-shadow:-14px 0 44px rgba(8,12,20,.20); animation:mmSlide .24s cubic-bezier(.2,.85,.3,1); }
+  @keyframes mmSlide { from { transform:translateX(100%); } to { transform:none; } }
+  .mm-head { display:flex; align-items:center; justify-content:space-between; padding:.2rem .4rem 1rem; margin-bottom:.4rem; border-bottom:1px solid var(--border); }
+  .mm-user { display:flex; align-items:center; gap:.65rem; min-width:0; }
+  .mm-user .avatar { width:40px; height:40px; border-radius:50%; flex:none; display:grid; place-items:center;
+    color:#fff; font-weight:700; background:linear-gradient(140deg, var(--accent), var(--violet)); }
+  .mm-user .avatar .ic { width:1.1em; height:1.1em; }
+  .mm-user .nm { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mm-user .sub { color:var(--text3); font-size:.78rem; }
+  .mm-close { width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--surface2);
+    color:var(--text); display:grid; place-items:center; cursor:pointer; flex:none; }
+  .mm-close .ic { width:1.2em; height:1.2em; }
+  .mm-label { font-size:.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text3); padding:.6rem 1rem .25rem; }
+  .mm-panel form { margin:0; }
+  .mm-panel form button { display:flex; width:100%; align-items:center; gap:.7rem; padding:.9rem 1rem; border-radius:12px;
+    color:var(--red); font-weight:550; font-size:1rem; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left; }
+  .mm-panel form button .ic { color:var(--red); }
+  .mm-panel form button:hover { background:var(--red-l); }
+
+  /* Bottom-nav active indicator */
+  @media (max-width: 720px) {
+    .bottom-nav a { position:relative; }
+    .bottom-nav a.active::before { content:""; position:absolute; top:0; width:26px; height:3px;
+      border-radius:0 0 5px 5px; background:var(--accent); }
+  }
+</style>
+
 <nav class="nav">
   <div class="nav-inner">
     <a href="{% url 'home' %}" class="nav-logo"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<b>City</b></a>
@@ -800,10 +869,28 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
       </button>
       {% if user.is_authenticated %}
         {% include 'notifications/_bell.html' %}
-        <a href="{% url 'dashboard' %}" class="btn btn-ghost hide-sm"><svg class="ic"><use href="#i-grid"/></svg><span class="lbl">Panel</span></a>
-        {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" class="btn btn-ghost hide-sm"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">Analitika</span></a>{% endif %}
-        <a href="{% url 'profile' %}" class="btn btn-ghost hide-sm"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">{{ user.name|default:user.phone }}</span></a>
-        <a href="{% url 'logout' %}" class="btn btn-outline hide-sm">Chiqish</a>
+        <div class="nav-account" id="navAccount">
+          <button type="button" class="nav-account-btn" id="navAccountBtn" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar">{% if user.name %}{{ user.name|first|upper }}{% else %}<svg class="ic"><use href="#i-user"/></svg>{% endif %}</span>
+            <span class="nav-account-name">{{ user.name|default:user.phone }}</span>
+            <svg class="ic chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="account-menu" role="menu">
+            <div class="account-head">
+              <span class="avatar">{% if user.name %}{{ user.name|first|upper }}{% else %}<svg class="ic"><use href="#i-user"/></svg>{% endif %}</span>
+              <div class="meta">
+                <div class="nm">{{ user.name|default:"Foydalanuvchi" }}</div>
+                <div class="sub">{{ user.phone }}</div>
+              </div>
+            </div>
+            <a href="{% url 'dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
+            <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
+            <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> Bildirishnomalar</a>
+            {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> Analitika</a>{% endif %}
+            <div class="am-divider"></div>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="danger" role="menuitem"><svg class="ic"><use href="#i-logout"/></svg> Chiqish</button></form>
+          </div>
+        </div>
       {% else %}
         <a href="{% url 'login' %}" class="btn btn-outline">Kirish</a>
         <a href="{% url 'register' %}" class="btn btn-accent">Ro'yxat</a>
@@ -815,6 +902,22 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
 
 <!-- Mobile drawer -->
 <div id="mobileMenu"><div class="mm-panel">
+  <div class="mm-head">
+    {% if user.is_authenticated %}
+    <div class="mm-user">
+      <span class="avatar">{% if user.name %}{{ user.name|first|upper }}{% else %}<svg class="ic"><use href="#i-user"/></svg>{% endif %}</span>
+      <div style="min-width:0;">
+        <div class="nm">{{ user.name|default:"Foydalanuvchi" }}</div>
+        <div class="sub">{{ user.phone }}</div>
+      </div>
+    </div>
+    {% else %}
+    <a href="{% url 'home' %}" class="nav-logo" style="font-size:1.15rem;"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<b>City</b></a>
+    {% endif %}
+    <button type="button" class="mm-close" aria-label="Yopish" onclick="document.getElementById('mobileMenu').style.display='none'"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+
+  <div class="mm-label">Bo'limlar</div>
   <a href="{% url 'home' %}"><svg class="ic"><use href="#i-home"/></svg> Bosh sahifa</a>
   <a href="{% url 'all_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> E'lonlar</a>
   <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> Ish</a>
@@ -826,17 +929,35 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <a href="{% url 'neighborhood_chat' %}"><svg class="ic"><use href="#i-chat"/></svg> Chat</a>
   <div class="mm-divider"></div>
   {% if user.is_authenticated %}
+    <div class="mm-label">Hisob</div>
     <a href="{% url 'delivery:cart' %}"><svg class="ic"><use href="#i-cart"/></svg> Savat</a>
     <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
     {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}"><svg class="ic"><use href="#i-chart"/></svg> Analitika</a>{% endif %}
     <a href="{% url 'profile' %}"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
     <a href="{% url 'notification_list' %}"><svg class="ic"><use href="#i-bell"/></svg> Bildirishnomalar</a>
-    <a href="{% url 'logout' %}"><svg class="ic"><use href="#i-logout"/></svg> Chiqish</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><svg class="ic"><use href="#i-logout"/></svg> Chiqish</button></form>
   {% else %}
     <a href="{% url 'login' %}"><svg class="ic"><use href="#i-user"/></svg> Kirish</a>
     <a href="{% url 'register' %}"><svg class="ic"><use href="#i-sparkle"/></svg> Ro'yxatdan o'tish</a>
   {% endif %}
 </div></div>
+
+<script>
+  /* Account dropdown (desktop) */
+  (function () {
+    var acc = document.getElementById('navAccount');
+    if (!acc) return;
+    var btn = document.getElementById('navAccountBtn');
+    function close() { acc.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = acc.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) { if (!acc.contains(e.target)) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  })();
+</script>
 
 {% block content %}{% endblock %}
 

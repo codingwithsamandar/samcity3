@@ -346,7 +346,7 @@ class Command(BaseCommand):
                 full_name=nm, phone=u.phone,
                 defaults={
                     'user': u, 'service': RNG.choice(svc_objs),
-                    'car_model': "—", 'region': 'Shofirkon',
+                    'region': 'Shofirkon',
                     'trips_count': RNG.randint(40, 2200),
                     'is_active': True, 'is_online': online,
                     'latitude': lat if online else None,

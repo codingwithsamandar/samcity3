@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block body_class %}map-page{% endblock %}
-{% block title %}Mahalla xaritasi — SamCity{% endblock %}
+{% block title %}Mening mahallam — xarita — SamCity{% endblock %}
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
@@ -8,20 +8,41 @@
   .cm-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
   #cmap { height: 78vh; min-height: 480px; z-index: 1; }
   .cm-filters { position: absolute; top: 14px; left: 14px; z-index: 500; display: flex; gap: .4rem; flex-wrap: wrap; max-width: calc(100% - 28px); }
-  .cm-chip { background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 100px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: .35rem; }
+  .cm-chip { background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 100px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: .35rem; }
   .cm-chip.off { opacity: .45; }
   .cm-dot { width: 10px; height: 10px; border-radius: 50%; }
+  /* "Mening mahallam" nishoni */
+  .cm-mine-tag { position: absolute; top: 14px; right: 14px; z-index: 500; background: var(--accent); color: #fff;
+    border-radius: 100px; padding: .45rem .95rem; font-size: .85rem; font-weight: 700; box-shadow: var(--shadow);
+    display: inline-flex; align-items: center; gap: .4rem; }
+  .cm-label span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; background: rgba(255,255,255,.92);
+    border:1px solid rgba(0,0,0,.12); padding:2px 9px; border-radius:8px; font-size:12.5px; font-weight:800; color:#1b2433; box-shadow:0 1px 5px rgba(0,0,0,.2); }
+  /* Mahalla tanlanmagan banner */
+  .cm-empty { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; justify-content:space-between;
+    background: linear-gradient(120deg, var(--accent-l), transparent 70%); border:1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+  .cm-empty .t { font-weight:800; font-size:1.05rem; }
+  .cm-empty .s { color: var(--text2); font-size:.9rem; margin-top:.2rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container" style="max-width:1240px;">
   <div class="page-header">
-    <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Mahalla</span>
+    <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Mening mahallam</span>
     <h1 style="margin-top:.6rem;">Mahalla xaritasi</h1>
-    <p>Joylar, yordam so'rovlari va favqulodda holatlar — bitta xaritada</p>
+    <p>Faqat sizning mahallangiz — joylar, yordam so'rovlari va favqulodda holatlar</p>
   </div>
 
+  {% if not has_my_neighborhood %}
+  <div class="cm-empty">
+    <div>
+      <div class="t">📍 Mahallangiz hali belgilanmagan</div>
+      <div class="s">Xaritada o'z mahallangizni ko'rish uchun avval uni belgilang.</div>
+    </div>
+    <a href="{% url 'neighborhood_chat' %}" class="btn btn-accent">Mahallani belgilash</a>
+  </div>
+  {% else %}
   <div class="cm-shell">
     <div class="cm-filters">
       <span class="cm-chip" data-layer="place"><span class="cm-dot" style="background:#3551d1;"></span> Joylar</span>
@@ -30,16 +51,48 @@
     </div>
     <div id="cmap"></div>
   </div>
+  {% endif %}
 </div>
 
+{% if has_my_neighborhood %}
 <script>
 (function(){
-  var map = SamMap.init('cmap', { zoomLevel: 13 });
+  var MY = {{ my_neighborhood_json|safe }};
+  var map = SamMap.init('cmap', { zoomLevel: 14, center: MY.center || [40.1156, 64.5036] });
+
+  // Nuqta poligon ichidami? (ray-casting, [lat,lng])
+  function inPoly(lat, lng, ring){
+    var inside=false;
+    for(var i=0,j=ring.length-1;i<ring.length;j=i++){
+      var yi=ring[i][0], xi=ring[i][1], yj=ring[j][0], xj=ring[j][1];
+      if(((yi>lat)!==(yj>lat)) && (lng < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
+  // Faqat o'z mahalla poligoni + tashqarisini xiralashtiruvchi "mask".
+  if(MY.boundary && MY.boundary.length){
+    var poly = L.polygon(MY.boundary, {color:MY.color, weight:3, opacity:1, fillColor:MY.color, fillOpacity:.10}).addTo(map);
+    // Mask: butun dunyo (tashqi halqa) - mahalla (ichki teshik) => tashqarisi xira.
+    var world = [[ -85,-180],[ -85,180],[85,180],[85,-180]];
+    L.polygon([world, MY.boundary], {stroke:false, fillColor:'#0b1220', fillOpacity:.45, interactive:false}).addTo(map);
+    // poligonni mask ustiga qайta qo'yamiz (chegarasi ko'rinsin)
+    poly.bringToFront();
+    if(MY.center){
+      L.marker(MY.center, {interactive:false, keyboard:false,
+        icon: L.divIcon({className:'cm-label', html:'<span>'+MY.name+'</span>', iconSize:[0,0]})}).addTo(map);
+    }
+    try{ map.fitBounds(poly.getBounds(), {padding:[40,40], maxZoom:16}); }catch(e){}
+    map.setMaxBounds(poly.getBounds().pad(0.6));
+  }
+
   var layers = { place: SamMap.cluster(map), help: L.layerGroup().addTo(map), emergency: L.layerGroup().addTo(map) };
   var shown = { place:true, help:true, emergency:true };
 
+  // Faqat mahalla chegarasi ichidagi markerlar.
   fetch("{% url 'community_map_geojson' %}").then(function(r){return r.json();}).then(function(d){
     (d.markers||[]).forEach(function(m){
+      if(MY.boundary && MY.boundary.length && !inPoly(m.lat, m.lng, MY.boundary)) return; // tashqaridagini ko'rsatmaymiz
       var grp = layers[m.type] || layers.place;
       SamMap.placeMarker(m).addTo(grp);
     });
@@ -53,4 +106,5 @@
   });
 })();
 </script>
+{% endif %}
 {% endblock %}

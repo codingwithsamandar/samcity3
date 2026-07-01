@@ -76,3 +76,9 @@ docker-compose.override.yml
 certs/*
 !certs/README.md
 !certs/.gitkeep
+
+# ── Claude Code lokal sozlamalari va worktree'lar (shaxsiy, GitHub'ga kerak emas) ──
+.claude/
+
+# ── settings.py zaxira nusxasi ──
+sdev/settings_old.py
