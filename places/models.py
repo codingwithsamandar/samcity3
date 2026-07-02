@@ -18,13 +18,15 @@ CATEGORY_CHOICES = [
     ('wedding', 'To\'yxonalar'),
     ('restaurant', 'Restoranlar'),
     ('delivery_store', 'Do\'konlar'),
+    ('school', 'Maktablar'),
+    ('kindergarten', 'Bog\'chalar'),
 ]
 
 CATEGORY_ICON = {
     'furniture': '🛋️', 'electronics': '📱', 'tourist': '🗺️', 'government': '🏛️',
     'organization': '🏢', 'post': '✉️', 'bank': '🏦', 'pharmacy': '💊',
     'hospital': '🏥', 'hotel': '🏨', 'wedding': '💍', 'restaurant': '🍽️',
-    'delivery_store': '🛒',
+    'delivery_store': '🛒', 'school': '🏫', 'kindergarten': '🧸',
 }
 
 CATEGORY_COLOR = {
@@ -32,7 +34,7 @@ CATEGORY_COLOR = {
     'government': '#475569', 'organization': '#0891b2', 'post': '#ea580c',
     'bank': '#15803d', 'pharmacy': '#dc2626', 'hospital': '#e11d48',
     'hotel': '#7c3aed', 'wedding': '#db2777', 'restaurant': '#d97706',
-    'delivery_store': '#059669',
+    'delivery_store': '#059669', 'school': '#0284c7', 'kindergarten': '#f472b6',
 }
 
 

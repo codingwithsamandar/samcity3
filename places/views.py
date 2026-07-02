@@ -58,6 +58,71 @@ def map_view(request):
     })
 
 
+def _point_in_polygon(lat, lng, ring):
+    """Ray-casting: nuqta poligon ichidami? `ring` — [[lat,lng], ...].
+
+    JS tomonidagi `inPoly()` (samcity-map.js/mahalla_map.html) bilan bir xil
+    algoritm — natija ikkala tomonda ham mos keladi.
+    """
+    inside = False
+    j = len(ring) - 1
+    for i in range(len(ring)):
+        yi, xi = ring[i][0], ring[i][1]
+        yj, xj = ring[j][0], ring[j][1]
+        if (yi > lat) != (yj > lat) and lng < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def neighborhood_detail(request, pk):
+    """Bitta mahalla — chegarasi "bitta xarita" sifatida, ichidagi joylar bilan."""
+    from main.models import Neighborhood
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    return render(request, 'places/neighborhood_detail.html', {
+        'neighborhood': neighborhood,
+        'categories': CATEGORY_CHOICES,
+        'boundary_json': json.dumps(neighborhood.boundary or []),
+        'centroid_json': json.dumps(neighborhood.centroid()),
+    })
+
+
+def neighborhood_places_geojson(request, pk):
+    """Berilgan mahalla chegarasi ichidagi faol joylar (server tomonida hisoblanadi)."""
+    from main.models import Neighborhood
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    ring = neighborhood.boundary or []
+
+    items = []
+    if ring:
+        qs = Place.objects.filter(is_active=True)
+        cat = request.GET.get('category', '').strip()
+        if cat:
+            qs = qs.filter(category=cat)
+        for p in qs:
+            if not _point_in_polygon(p.latitude, p.longitude, ring):
+                continue
+            items.append({
+                'id': p.pk, 'name': p.name, 'category': p.category,
+                'cat': p.get_category_display(), 'icon': p.icon, 'color': p.color,
+                'lat': p.latitude, 'lng': p.longitude, 'address': p.address,
+                'phone': p.phone, 'hours': p.working_hours, 'desc': p.description,
+                'url': reverse('places:place_detail', args=[p.pk]),
+            })
+
+    room = getattr(neighborhood, 'chat_room', None)
+    return JsonResponse({
+        'neighborhood': {
+            'id': neighborhood.pk, 'name': neighborhood.name,
+            'color': neighborhood.color or '#3551d1',
+            'boundary': ring, 'center': neighborhood.centroid(),
+            'description': neighborhood.description,
+            'room_url': (reverse('neighborhood_chat_room', args=[room.pk]) if room else ''),
+        },
+        'places': items,
+    })
+
+
 def neighborhoods_geojson(request):
     """Mahalla chegaralari (poligonlar) — xaritada ko'rsatish uchun.
 

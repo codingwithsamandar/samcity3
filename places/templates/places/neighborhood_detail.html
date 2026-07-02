@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block body_class %}map-page{% endblock %}
+{% block title %}{{ neighborhood.name }} — mahalla xaritasi — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>
+  .nb-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+  #nbmap { height: 78vh; min-height: 480px; z-index: 1; }
+  @media (max-width: 560px) { #nbmap { height: 62vh; min-height: 380px; } }
+
+  .nb-filters { position: absolute; top: 14px; left: 14px; z-index: 500; display: flex; gap: .4rem; flex-wrap: wrap; max-width: calc(100% - 100px); }
+  .nb-chip { background: rgba(255,255,255,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border); border-radius: 100px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600;
+    cursor: pointer; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: .35rem; color: #1b2433; }
+  .nb-chip.off { opacity: .4; }
+  .nb-chip .n { background: rgba(0,0,0,.08); border-radius: 100px; padding: 0 .4rem; font-size: .74rem; }
+
+  .nb-label span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; background: rgba(255,255,255,.92);
+    border:1px solid rgba(0,0,0,.12); padding:3px 10px; border-radius:9px; font-size:13px; font-weight:800; color:#1b2433; box-shadow:0 1px 5px rgba(0,0,0,.2); }
+
+  .nb-chat-fab { position: absolute; bottom: 18px; right: 16px; z-index: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1240px;">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Mahalla xaritasi</span>
+      <h1 style="margin-top:.6rem;">🏘️ {{ neighborhood.name }}</h1>
+      {% if neighborhood.description %}<p>{{ neighborhood.description }}</p>{% endif %}
+    </div>
+    <a href="{% url 'places:map' %}" class="btn btn-outline"><svg class="ic"><use href="#i-arrow-right" style="transform:rotate(180deg)"/></svg> Butun shahar xaritasi</a>
+  </div>
+
+  {% if not neighborhood.boundary %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-map"/></svg></div>
+    <h3>Bu mahalla chegarasi hali belgilanmagan</h3>
+    <p>Admin panelda chegarani chizgach, shu yerda ko'rinadi.</p>
+  </div>
+  {% else %}
+  <div class="nb-shell">
+    <div class="nb-filters" id="nbFilters"></div>
+    <div id="nbmap"></div>
+  </div>
+  {% endif %}
+</div>
+
+{% if neighborhood.boundary %}
+<script>
+(function () {
+  var boundary = {{ boundary_json|safe }};
+  var map = SamMap.init('nbmap', { zoomLevel: 14, center: {{ centroid_json|safe }} });
+  var color = "{{ neighborhood.color|default:'#3551d1' }}";
+
+  // Chegara + tashqarisini xiralashtiruvchi mask (mahalla — "bitta xarita" sifatida).
+  var poly = L.polygon(boundary, { color: color, weight: 3, opacity: 1, fillColor: color, fillOpacity: .08 }).addTo(map);
+  var world = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
+  L.polygon([world, boundary], { stroke: false, fillColor: '#0b1220', fillOpacity: .45, interactive: false }).addTo(map);
+  poly.bringToFront();
+  L.marker(poly.getBounds().getCenter(), {
+    interactive: false, keyboard: false,
+    icon: L.divIcon({ className: 'nb-label', html: '<span>{{ neighborhood.name|escapejs }}</span>', iconSize: [0, 0] }),
+  }).addTo(map);
+  try { map.fitBounds(poly.getBounds(), { padding: [40, 40], maxZoom: 16 }); } catch (e) {}
+  map.setMaxBounds(poly.getBounds().pad(0.6));
+
+  var cluster = SamMap.cluster(map);
+  var allPlaces = [];
+  var activeCat = '';
+
+  function render() {
+    cluster.clearLayers();
+    var items = activeCat ? allPlaces.filter(function (p) { return p.category === activeCat; }) : allPlaces;
+    items.forEach(function (p) { SamMap.placeMarker(p).addTo(cluster); });
+  }
+
+  function buildFilters() {
+    var counts = {};
+    allPlaces.forEach(function (p) { counts[p.category] = (counts[p.category] || 0) + 1; });
+    var cats = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    var wrap = document.getElementById('nbFilters');
+    if (!cats.length) return;
+    var all = document.createElement('span');
+    all.className = 'nb-chip'; all.dataset.cat = '';
+    all.innerHTML = 'Barchasi <span class="n">' + allPlaces.length + '</span>';
+    wrap.appendChild(all);
+    cats.forEach(function (c) {
+      var sample = allPlaces.find(function (p) { return p.category === c; });
+      var chip = document.createElement('span');
+      chip.className = 'nb-chip'; chip.dataset.cat = c;
+      chip.innerHTML = (sample.icon || '') + ' ' + sample.cat + ' <span class="n">' + counts[c] + '</span>';
+      wrap.appendChild(chip);
+    });
+    wrap.querySelectorAll('.nb-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        wrap.querySelectorAll('.nb-chip').forEach(function (c) { c.classList.remove('off'); });
+        activeCat = chip.dataset.cat;
+        if (activeCat) {
+          wrap.querySelectorAll('.nb-chip').forEach(function (c) { if (c.dataset.cat !== activeCat) c.classList.add('off'); });
+        }
+        render();
+      });
+    });
+  }
+
+  fetch("{% url 'places:neighborhood_places_geojson' neighborhood.pk %}")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      allPlaces = d.places || [];
+      buildFilters();
+      render();
+    });
+})();
+</script>
+{% if neighborhood.chat_room %}
+<a href="{% url 'neighborhood_chat_room' neighborhood.chat_room.pk %}" class="btn btn-accent nb-chat-fab">
+  <svg class="ic"><use href="#i-chat"/></svg> Mahalla chatiga kirish
+</a>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -176,14 +176,17 @@ if(map){
 
 // ── Mahalalarga ajratish (mahalla poligonlari + chegaralari) ──────────────
 var mahallaLayer=null, mahallaShown=false, mahallaLoaded=false;
+var _nbDetailUrlTpl = "{% url 'places:neighborhood_detail' 0 %}";
 function buildMahallaLayer(d){
   mahallaLayer = L.layerGroup();
   (d.neighborhoods||[]).forEach(function(n){
     if(!n.boundary || !n.boundary.length) return;
     var poly = L.polygon(n.boundary, {color:n.color, weight:2, opacity:.9, fillColor:n.color, fillOpacity:.12});
+    var detailUrl = _nbDetailUrlTpl.replace('/0/', '/'+n.id+'/');
     var html = '<div style="min-width:170px"><b>'+n.name+'</b>'
       + (n.description ? ('<br><span style="color:#5b6678;font-size:.85em">'+n.description+'</span>') : '')
-      + (n.room_url ? ('<br><a href="'+n.room_url+'" style="display:inline-block;margin-top:.55rem;font-weight:700;color:'+n.color+'">💬 Mahalla chatiga kirish →</a>') : '')
+      + '<br><a href="'+detailUrl+'" style="display:inline-block;margin-top:.55rem;font-weight:700;color:'+n.color+'">🏘️ Bu mahallani ko\'rish →</a>'
+      + (n.room_url ? ('<br><a href="'+n.room_url+'" style="display:inline-block;margin-top:.35rem;font-weight:700;color:'+n.color+'">💬 Mahalla chatiga kirish →</a>') : '')
       + '</div>';
     poly.bindPopup(html);
     poly.on('mouseover', function(){ this.setStyle({fillOpacity:.30}); });
