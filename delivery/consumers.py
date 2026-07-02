@@ -11,7 +11,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
-from .realtime import order_group
+from .realtime import order_group, store_chat_group
 
 
 class DeliveryTrackingConsumer(AsyncWebsocketConsumer):
@@ -123,3 +123,79 @@ class DeliveryTrackingConsumer(AsyncWebsocketConsumer):
             'dest_lat': None,
             'dest_lng': None,
         }
+
+
+class StoreChatConsumer(AsyncWebsocketConsumer):
+    """Mijoz ↔ do'kon chat xonasi.
+
+    Room: ws/delivery/chat/<thread_id>/
+    Faqat thread ishtirokchilari (mijoz yoki do'kon egasi) qo'shila oladi.
+    Mijoz {type: message, text} yuboradi — xabar saqlanadi, guruhga broadcast
+    qilinadi va qarshi tomonga bildirishnoma yuboriladi (delivery.chat).
+    """
+
+    async def connect(self):
+        self.thread_id = self.scope['url_route']['kwargs']['thread_id']
+        self.user = self.scope.get('user')
+        if not self.user or not self.user.is_authenticated:
+            await self.close()
+            return
+        thread = await self.get_thread()
+        if not thread:
+            await self.close()
+            return
+        self.group_name = store_chat_group(self.thread_id)
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive(self, text_data=None, bytes_data=None):
+        try:
+            data = json.loads(text_data or '{}')
+        except (ValueError, TypeError):
+            return
+        if data.get('type') != 'message':
+            return
+        text = (data.get('text') or '').strip()
+        if not text:
+            return
+        # Xabarni saqlash + broadcast + bildirishnoma (delivery.chat.create_message
+        # push_chat_message orqali o'zi guruhga yuboradi).
+        await self.save_message(text)
+
+    # ── Group event handler ──
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'message',
+            'id': event['id'],
+            'text': event['text'],
+            'sender_id': event['sender_id'],
+            'is_owner': event['is_owner'],
+            'created_at': event['created_at'],
+        }))
+
+    # ── DB access ──
+    @database_sync_to_async
+    def get_thread(self):
+        from .models import StoreChatThread
+        from .chat import is_participant
+        try:
+            thread = StoreChatThread.objects.select_related('store').get(pk=self.thread_id)
+        except (StoreChatThread.DoesNotExist, ValueError):
+            return None
+        return thread if is_participant(thread, self.user) else None
+
+    @database_sync_to_async
+    def save_message(self, text):
+        from .models import StoreChatThread
+        from .chat import create_message, is_participant
+        try:
+            thread = StoreChatThread.objects.select_related('store').get(pk=self.thread_id)
+        except (StoreChatThread.DoesNotExist, ValueError):
+            return
+        if not is_participant(thread, self.user):
+            return
+        create_message(thread, self.user, text)

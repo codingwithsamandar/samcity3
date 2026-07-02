@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -10,9 +11,12 @@ from django.views.decorators.http import require_POST
 
 from main.utils import validate_file_type
 from .models import (
-    DeliveryCategory, Store, Product, ProductImage, Cart, Order, OrderItem,
-    DeliveryDriver, DriverLocation, can_transition,
+    DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
+    DeliveryDriver, DriverLocation, StoreUpdate, StoreSubscription,
+    StoreChatThread, StoreChatMessage, can_transition,
 )
+from .feed import create_store_update
+from .chat import get_or_create_thread, is_participant, create_message
 from .realtime import (
     push_driver_location_for_orders, push_order_status, ACTIVE_DELIVERY_STATUSES,
 )
@@ -86,10 +90,22 @@ def store_detail_view(request, pk):
             Q(name__icontains=pq) | Q(description__icontains=pq)
         )
 
+    is_subscribed = False
+    if request.user.is_authenticated:
+        is_subscribed = StoreSubscription.objects.filter(
+            store=store, user=request.user, is_enabled=True).exists()
+
     return render(request, 'delivery/store_detail.html', {
         'store': store,
         'products': products_qs,
         'pq': pq,
+        # Savatga qo'shish tugmasi: pickup yoqilgan do'konda (yoki global flag)
+        # ko'rinadi. Pickup rejimida bu — "oldindan to'lab, o'zi olib ketish".
+        'cart_enabled': store.pickup_enabled or settings.DELIVERY_CART_ENABLED,
+        'pickup_mode': store.pickup_enabled,
+        'gallery': store.images.all(),
+        'updates': store.updates.select_related('product')[:20],
+        'is_subscribed': is_subscribed,
     })
 
 
@@ -108,6 +124,7 @@ def product_detail_view(request, store_pk, product_pk):
     return render(request, 'delivery/product_detail.html', {
         'store': store,
         'product': product,
+        'cart_enabled': settings.DELIVERY_CART_ENABLED,
     })
 
 
@@ -125,7 +142,12 @@ def cart_view(request):
 
 @login_required
 def checkout(request):
-    """Savatni buyurtmaga aylantirish: manzil + demo to'lov."""
+    """Savatni buyurtmaga aylantirish: manzil + demo to'lov.
+
+    Har do'kon o'z rejimida: pickup (olib ketish) do'konlarida yetkazish narxi
+    yo'q, manzil talab qilinmaydi va to'lov MAJBURIY oldindan karta orqali
+    (naqd RUXSAT ETILMAYDI). Yetkazib berish do'konlari — eski oqim.
+    """
     cart, _ = Cart.objects.get_or_create(user=request.user)
     items = list(cart.items.select_related('product__store'))
 
@@ -142,10 +164,19 @@ def checkout(request):
         return redirect('delivery:cart')
 
     subtotal = sum(it.product.price * it.quantity for it in items)
-    # Har do'kon alohida buyurtma → har biri uchun yetkazish narxi alohida.
-    store_count = len({it.product.store_id for it in items})
-    delivery_fee = DELIVERY_FEE * store_count
+    # Har do'kon alohida buyurtma. Pickup do'konlarida yetkazish narxi yo'q.
+    store_ids = {it.product.store_id for it in items}
+    delivery_store_count = len({it.product.store_id for it in items if not it.product.store.pickup_enabled})
+    has_pickup = any(it.product.store.pickup_enabled for it in items)
+    has_delivery = any(not it.product.store.pickup_enabled for it in items)
+    delivery_fee = DELIVERY_FEE * delivery_store_count
     total = int(subtotal) + delivery_fee
+
+    base_ctx = {
+        'cart': cart, 'items': items, 'subtotal': int(subtotal),
+        'delivery_fee': delivery_fee, 'total': total, 'store_count': len(store_ids),
+        'has_pickup': has_pickup, 'has_delivery': has_delivery,
+    }
 
     if request.method == 'POST':
         full_name = request.POST.get('full_name', '').strip()
@@ -153,15 +184,22 @@ def checkout(request):
         address = request.POST.get('address', '').strip()
         note = request.POST.get('note', '').strip()
         method = request.POST.get('payment_method', 'card')
+        try:
+            pickup_at = _parse_datetime_local(request.POST.get('pickup_at'))
+        except ValueError:
+            pickup_at = None
 
-        ctx = {
-            'cart': cart, 'items': items, 'subtotal': int(subtotal),
-            'delivery_fee': delivery_fee, 'total': total, 'store_count': store_count,
-        }
-
-        if not phone or not address:
-            messages.error(request, "Telefon va manzil majburiy.")
-            return render(request, 'delivery/checkout.html', ctx)
+        if not phone:
+            messages.error(request, "Telefon majburiy.")
+            return render(request, 'delivery/checkout.html', base_ctx)
+        # Manzil faqat yetkazib berish buyurtmasi bo'lsa majburiy.
+        if has_delivery and not address:
+            messages.error(request, "Yetkazib berish uchun manzil majburiy.")
+            return render(request, 'delivery/checkout.html', base_ctx)
+        # Pickup uchun to'lov MAJBURIY oldindan — naqd ruxsat etilmaydi.
+        if has_pickup and method != 'card':
+            messages.error(request, "Olib ketish buyurtmasi faqat karta orqali oldindan to'lanadi.")
+            return render(request, 'delivery/checkout.html', base_ctx)
 
         card_last4 = card_brand = ''
         payment_status = 'unpaid'
@@ -171,7 +209,7 @@ def checkout(request):
             expiry = request.POST.get('expiry', '').strip()
             if len(digits) < 16 or len(cvv) < 3 or not expiry:
                 messages.error(request, "Karta ma'lumotlari to'liq emas.")
-                return render(request, 'delivery/checkout.html', ctx)
+                return render(request, 'delivery/checkout.html', base_ctx)
             # DIQQAT: to'liq karta raqami va CVV SAQLANMAYDI.
             card_last4 = digits[-4:]
             card_brand = _card_brand(digits)
@@ -199,13 +237,20 @@ def checkout(request):
                 groups.setdefault(p.store_id, []).append((it, p))
 
             for store_id, group in groups.items():
+                store = group[0][1].store
+                is_pickup = store.pickup_enabled
+                fee = 0 if is_pickup else DELIVERY_FEE
                 g_subtotal = int(sum(p.price * it.quantity for it, p in group))
+                # Pickup + oldindan to'langan bo'lsa darhol 'to'landi' (accepted).
+                o_status = 'accepted' if (is_pickup and payment_status == 'paid') else 'pending'
                 order = Order.objects.create(
                     user=request.user, full_name=full_name or (request.user.name or ''),
-                    phone=phone, address=address, note=note,
-                    subtotal=g_subtotal, delivery_fee=DELIVERY_FEE, total=g_subtotal + DELIVERY_FEE,
-                    status='pending', payment_method=method, payment_status=payment_status,
+                    phone=phone, address=('' if is_pickup else address), note=note,
+                    subtotal=g_subtotal, delivery_fee=fee, total=g_subtotal + fee,
+                    status=o_status, payment_method=method, payment_status=payment_status,
                     card_last4=card_last4, card_brand=card_brand,
+                    fulfillment_type='pickup' if is_pickup else 'delivery',
+                    pickup_at=pickup_at if is_pickup else None,
                 )
                 for it, p in group:
                     OrderItem.objects.create(
@@ -235,6 +280,8 @@ def checkout(request):
         n = len(created_orders)
         if n > 1:
             messages.success(request, f"{n} ta do'kondan buyurtma qabul qilindi! ✅")
+        elif has_pickup:
+            messages.success(request, "To'lov amalga oshirildi! Buyurtma tayyor bo'lganda xabar beramiz. 🛍️")
         elif method == 'card':
             messages.success(request, "To'lov amalga oshirildi va buyurtma qabul qilindi! ✅")
         else:
@@ -245,10 +292,7 @@ def checkout(request):
             return redirect('delivery:order_detail', order_id=created_orders[0].id)
         return redirect('delivery:my_orders')
 
-    return render(request, 'delivery/checkout.html', {
-        'cart': cart, 'items': items, 'subtotal': int(subtotal),
-        'delivery_fee': delivery_fee, 'total': total, 'store_count': store_count,
-    })
+    return render(request, 'delivery/checkout.html', base_ctx)
 
 
 @login_required
@@ -372,6 +416,23 @@ def _form_post(request):
     return d
 
 
+def _save_gallery_images(request, store):
+    """`gallery` maydonidagi yangi rasmlarni saqlaydi (StoreImage.MAX_IMAGES chegarasi bilan)."""
+    files = request.FILES.getlist('gallery')
+    if not files:
+        return
+    remaining = StoreImage.MAX_IMAGES - store.images.count()
+    if remaining <= 0:
+        messages.warning(request, f"Galereyada {StoreImage.MAX_IMAGES} tadan ko'p rasm bo'lishi mumkin emas.")
+        return
+    for f in files[:remaining]:
+        try:
+            validate_file_type(f)
+            StoreImage.objects.create(store=store, image=f)
+        except Exception as e:
+            messages.warning(request, f"Galereya rasmi: {str(e)}")
+
+
 @login_required
 def store_create(request):
     if request.method == 'POST':
@@ -386,6 +447,9 @@ def store_create(request):
             description=request.POST.get('description', '').strip(),
             address=request.POST.get('address', '').strip(),
             phone=request.POST.get('phone', '').strip(),
+            working_hours=request.POST.get('working_hours', '').strip(),
+            owner_bio=request.POST.get('owner_bio', '').strip(),
+            pickup_enabled='pickup_enabled' in request.POST,
             latitude=_pfloat(request.POST.get('latitude')),
             longitude=_pfloat(request.POST.get('longitude')),
             is_active='is_active' in request.POST or True,
@@ -400,7 +464,15 @@ def store_create(request):
                 store.logo = logo
             except Exception as e:
                 messages.error(request, f"Logo: {str(e)}")
+        owner_photo = request.FILES.get('owner_photo')
+        if owner_photo:
+            try:
+                validate_file_type(owner_photo)
+                store.owner_photo = owner_photo
+            except Exception as e:
+                messages.error(request, f"Egasi rasmi: {str(e)}")
         store.save()
+        _save_gallery_images(request, store)
         # Do'kon ochgan foydalanuvchi avtomatik 'business' roliga o'tadi
         if request.user.role == 'user':
             request.user.role = 'business'
@@ -426,6 +498,9 @@ def store_edit(request, pk):
         store.description = request.POST.get('description', '').strip()
         store.address = request.POST.get('address', '').strip()
         store.phone = request.POST.get('phone', '').strip()
+        store.working_hours = request.POST.get('working_hours', '').strip()
+        store.owner_bio = request.POST.get('owner_bio', '').strip()
+        store.pickup_enabled = 'pickup_enabled' in request.POST
         _lat = _pfloat(request.POST.get('latitude'))
         _lng = _pfloat(request.POST.get('longitude'))
         if _lat is not None and _lng is not None:
@@ -440,12 +515,24 @@ def store_edit(request, pk):
                 store.logo = logo
             except Exception as e:
                 messages.error(request, f"Logo: {str(e)}")
+        owner_photo = request.FILES.get('owner_photo')
+        if owner_photo:
+            try:
+                validate_file_type(owner_photo)
+                store.owner_photo = owner_photo
+            except Exception as e:
+                messages.error(request, f"Egasi rasmi: {str(e)}")
         store.save()
+        remove_ids = request.POST.getlist('remove_image')
+        if remove_ids:
+            StoreImage.objects.filter(store=store, pk__in=remove_ids).delete()
+        _save_gallery_images(request, store)
         messages.success(request, "Do'kon yangilandi! ✅")
         return redirect('delivery:store_detail', pk=store.pk)
 
     return render(request, 'delivery/store_form.html', {
         'mode': 'edit', 'store': store, 'categories': DeliveryCategory.objects.all(),
+        'gallery': store.images.all(),
         'post': _form_post(request),
     })
 
@@ -460,7 +547,114 @@ def store_delete(request, pk):
     return render(request, 'delivery/store_confirm_delete.html', {'store': store})
 
 
+@login_required
+@require_POST
+def store_announcement_create(request, pk):
+    store = get_object_or_404(Store, pk=pk, owner=request.user)
+    text = request.POST.get('text', '').strip()
+    if not text:
+        messages.error(request, "E'lon matni bo'sh bo'lishi mumkin emas.")
+        return redirect('delivery:store_detail', pk=store.pk)
+    image = request.FILES.get('image')
+    if image:
+        try:
+            validate_file_type(image)
+        except Exception as e:
+            messages.warning(request, f"Rasm: {str(e)}")
+            image = None
+    create_store_update(store, 'announcement', text=text, image=image)
+    messages.success(request, "E'lon joylandi! ✅")
+    return redirect('delivery:store_detail', pk=store.pk)
+
+
+@login_required
+@require_POST
+def store_subscribe_toggle(request, pk):
+    """Foydalanuvchi do'kon yangiliklaridan xabardor bo'lish (yoqish/o'chirish)."""
+    store = get_object_or_404(Store, pk=pk)
+    sub, created = StoreSubscription.objects.get_or_create(
+        store=store, user=request.user, defaults={'is_enabled': True})
+    if not created:
+        sub.is_enabled = not sub.is_enabled
+        sub.save(update_fields=['is_enabled'])
+    messages.success(
+        request,
+        "Bildirishnomalar yoqildi 🔔" if sub.is_enabled else "Bildirishnomalar o'chirildi",
+    )
+    return redirect('delivery:store_detail', pk=store.pk)
+
+
+# ── DO'KON BILAN CHAT (mijoz ↔ do'kon) ──────────────────────────────────────────
+
+@login_required
+def store_chat_start(request, store_pk):
+    """Mijoz do'kon bilan chatni boshlaydi (yoki mavjudini ochadi)."""
+    store = get_object_or_404(Store, pk=store_pk, is_active=True)
+    if store.owner_id == request.user.id:
+        # Egasi o'z do'koni bilan chat qilmaydi — kelgan xabarlar panelga o'tsin.
+        return redirect('delivery:store_chat_inbox')
+    thread = get_or_create_thread(store, request.user)
+    return redirect('delivery:store_chat_thread', thread_id=thread.id)
+
+
+@login_required
+def store_chat_thread(request, thread_id):
+    """Chat oynasi — xabarlar tarixi + yozish maydoni (real-time WS bilan)."""
+    thread = get_object_or_404(
+        StoreChatThread.objects.select_related('store', 'customer'), pk=thread_id)
+    if not is_participant(thread, request.user):
+        messages.error(request, "Bu suhbatga kirish huquqingiz yo'q.")
+        return redirect('delivery:store_list')
+
+    # Qarshi tomon xabarlarini o'qilgan deb belgilaymiz.
+    thread.messages.exclude(sender=request.user).filter(is_read=False).update(is_read=True)
+
+    is_owner = request.user.id == thread.store.owner_id
+    return render(request, 'delivery/store_chat_thread.html', {
+        'thread': thread,
+        'store': thread.store,
+        'messages_list': thread.messages.all(),
+        'is_owner': is_owner,
+    })
+
+
+@login_required
+@require_POST
+def store_chat_send(request, thread_id):
+    """Xabar yuborish (JS o'chirilgan holat uchun fallback — WS bo'lmasa)."""
+    thread = get_object_or_404(StoreChatThread.objects.select_related('store'), pk=thread_id)
+    if not is_participant(thread, request.user):
+        messages.error(request, "Bu suhbatga yozish huquqingiz yo'q.")
+        return redirect('delivery:store_list')
+    text = request.POST.get('text', '').strip()
+    if text:
+        create_message(thread, request.user, text)
+    return redirect('delivery:store_chat_thread', thread_id=thread.id)
+
+
+@login_required
+def store_chat_inbox(request):
+    """Do'kon egasi paneli — do'konlariga kelgan barcha suhbatlar (eng so'nggisi tepada)."""
+    threads = (
+        StoreChatThread.objects
+        .filter(store__owner=request.user)
+        .select_related('store', 'customer')
+        .order_by('-updated_at')
+    )
+    return render(request, 'delivery/store_chat_inbox.html', {'threads': threads})
+
+
 # ── PRODUCT MANAGEMENT (egasi) ──────────────────────────────────────────────────
+
+def _parse_datetime_local(v):
+    """<input type=datetime-local> qiymatini timezone-aware datetime'ga aylantiradi."""
+    if not v:
+        return None
+    parsed = timezone.datetime.fromisoformat(v)
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed)
+    return parsed
+
 
 @login_required
 def product_create(request, store_pk):
@@ -471,11 +665,18 @@ def product_create(request, store_pk):
         if not name or price is None:
             messages.error(request, "Mahsulot nomi va narxi majburiy.")
             return render(request, 'delivery/product_form.html', {'mode': 'create', 'store': store, 'post': _form_post(request)})
+        is_available = 'is_available' in request.POST
+        stock = _int_or_none(request.POST.get('stock')) or 0
+        # restock_at faqat mahsulot tugagan (stock==0) bo'lsa ma'noli.
+        try:
+            restock_at = _parse_datetime_local(request.POST.get('restock_at')) if stock <= 0 else None
+        except ValueError:
+            restock_at = None
         product = Product.objects.create(
             store=store, name=name,
             description=request.POST.get('description', '').strip(),
-            price=price, stock=_int_or_none(request.POST.get('stock')) or 0,
-            is_available='is_available' in request.POST,
+            price=price, stock=stock,
+            is_available=is_available, restock_at=restock_at,
         )
         img = request.FILES.get('image')
         if img:
@@ -484,6 +685,8 @@ def product_create(request, store_pk):
                 ProductImage.objects.create(product=product, image=img)
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
+        create_store_update(store, 'new_product', product=product,
+                            text=f"Yangi mahsulot: {product.name}")
         messages.success(request, "Mahsulot qo'shildi! ✅")
         return redirect('delivery:store_detail', pk=store.pk)
     return render(request, 'delivery/product_form.html', {'mode': 'create', 'store': store, 'post': _form_post(request)})
@@ -497,6 +700,9 @@ def product_edit(request, pk):
         return redirect('delivery:store_detail', pk=product.store.pk)
 
     if request.method == 'POST':
+        old_price = product.price
+        was_in_stock = product.stock > 0
+
         product.name = request.POST.get('name', '').strip() or product.name
         product.description = request.POST.get('description', '').strip()
         price = _int_or_none(request.POST.get('price'))
@@ -504,6 +710,11 @@ def product_edit(request, pk):
             product.price = price
         product.stock = _int_or_none(request.POST.get('stock')) or 0
         product.is_available = 'is_available' in request.POST
+        # restock_at faqat mahsulot tugagan (stock==0) bo'lsa saqlanadi.
+        try:
+            product.restock_at = _parse_datetime_local(request.POST.get('restock_at')) if product.stock <= 0 else None
+        except ValueError:
+            product.restock_at = None
         product.save()
         img = request.FILES.get('image')
         if img:
@@ -512,6 +723,19 @@ def product_edit(request, pk):
                 ProductImage.objects.create(product=product, image=img)
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
+
+        if price is not None and price != old_price:
+            create_store_update(product.store, 'price_changed', product=product,
+                                old_price=old_price, new_price=product.price,
+                                text=f"Narx yangilandi: {product.name}")
+        now_in_stock = product.stock > 0
+        if now_in_stock and not was_in_stock:
+            create_store_update(product.store, 'restocked', product=product,
+                                text=f"Qayta sotuvga qaytdi: {product.name}")
+        elif was_in_stock and not now_in_stock:
+            create_store_update(product.store, 'out_of_stock', product=product,
+                                text=f"Tugadi: {product.name}")
+
         messages.success(request, "Mahsulot yangilandi! ✅")
         return redirect('delivery:store_detail', pk=product.store.pk)
 
@@ -557,16 +781,60 @@ def store_order_status(request, order_id):
     if request.method == 'POST':
         new_status = request.POST.get('status', '')
         owner_allowed = {'accepted', 'preparing', 'ready', 'cancelled'}
-        if new_status not in owner_allowed:
+        # Pickup buyurtmasini to'lanmagan holda "yig'ishni" boshlab bo'lmaydi —
+        # to'lov MAJBURIY oldindan (naqd yo'q, karta orqali to'langan bo'lishi shart).
+        if order.is_pickup and not order.is_paid and new_status in {'preparing', 'ready'}:
+            messages.error(request, "Bu buyurtma hali to'lanmagan.")
+        elif new_status not in owner_allowed:
             messages.error(request, "Bu holatni faqat haydovchi o'zgartiradi.")
-        elif not can_transition(order.status, new_status):
-            messages.error(request, f"«{order.get_status_display()}» dan bu holatga o'tib bo'lmaydi.")
+        elif not can_transition(order.status, new_status, order.fulfillment_type):
+            messages.error(request, f"«{order.progress_label()}» dan bu holatga o'tib bo'lmaydi.")
         else:
             order.status = new_status
-            order.save(update_fields=['status'])
+            update_fields = ['status']
+            # Pickup: "tayyor" bo'lganda vaqtni belgilaymiz va mijozga xabar beramiz.
+            if order.is_pickup and new_status == 'ready':
+                order.ready_for_pickup_at = timezone.now()
+                update_fields.append('ready_for_pickup_at')
+            order.save(update_fields=update_fields)
             push_order_status(order)   # jonli yangilash (mijoz/haydovchi)
+            if order.is_pickup and new_status == 'ready':
+                _notify_customer_pickup_ready(order)
             messages.success(request, "Buyurtma holati yangilandi.")
     return redirect('delivery:store_orders')
+
+
+def _notify_customer_pickup_ready(order):
+    """Pickup buyurtma tayyor bo'lganda mijozga bildirishnoma (best-effort)."""
+    try:
+        from notifications.models import notify
+        from django.urls import reverse
+        url = reverse('delivery:order_detail', args=[order.id])
+        notify(order.user, "Buyurtmangiz tayyor, olib keting! 🛍️", url, 'order')
+    except Exception:
+        pass
+
+
+@login_required
+@require_POST
+def order_confirm_pickup(request, order_id):
+    """Mijoz buyurtmani qo'lga olganini tasdiqlaydi — SHUNDAGINA yakunlanadi.
+
+    Faqat buyurtma egasi (mijoz) chaqira oladi va faqat pickup + 'ready' holatida.
+    """
+    order = get_object_or_404(Order, pk=order_id)
+    if order.user_id != request.user.id:
+        messages.error(request, "Bu buyurtmani tasdiqlash huquqingiz yo'q.")
+        return redirect('delivery:my_orders')
+    if not order.can_customer_confirm_pickup:
+        messages.error(request, "Buyurtma hali tayyor emas yoki olib ketish buyurtmasi emas.")
+        return redirect('delivery:order_detail', order_id=order.id)
+    order.status = 'delivered'
+    order.customer_confirmed_at = timezone.now()
+    order.save(update_fields=['status', 'customer_confirmed_at'])
+    push_order_status(order)
+    messages.success(request, "Buyurtmani qabul qilganingiz tasdiqlandi. Rahmat! ✅")
+    return redirect('delivery:order_detail', order_id=order.id)
 
 
 # ── DELIVERY DRIVER ─────────────────────────────────────────────────────────────
@@ -653,7 +921,9 @@ def driver_dashboard(request):
     if not driver:
         return redirect('delivery:driver_register')
     base = Order.objects.select_related('driver').prefetch_related('items')
-    available = base.filter(status='ready', driver__isnull=True)
+    # Pickup buyurtmalari haydovchini talab qilmaydi (mijoz o'zi olib ketadi) —
+    # 'ready' bo'lsa ham haydovchi ro'yxatida ko'rinmasligi kerak.
+    available = base.filter(status='ready', driver__isnull=True, fulfillment_type='delivery')
     my_active = base.filter(driver=driver, status__in=['assigned', 'on_the_way'])
     history = base.filter(driver=driver, status='delivered')
     earnings = history.aggregate(s=Sum('delivery_fee'))['s'] or 0
@@ -677,7 +947,8 @@ def order_accept(request, order_id):
         taken = False
         with transaction.atomic():
             order = (Order.objects.select_for_update()
-                     .filter(pk=order_id, status='ready', driver__isnull=True).first())
+                     .filter(pk=order_id, status='ready', driver__isnull=True,
+                             fulfillment_type='delivery').first())
             if order is not None:
                 order.driver = driver
                 order.status = 'assigned'

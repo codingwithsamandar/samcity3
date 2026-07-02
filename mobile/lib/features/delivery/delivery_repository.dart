@@ -53,6 +53,32 @@ class DeliveryRepository {
     await _api.dio.post('/stores/$storeId/products/', data: data);
   }
 
+  Future<void> updateProduct(
+      String storeId, String productId, Map<String, dynamic> data) async {
+    await _api.dio.patch('/stores/$storeId/products/$productId/', data: data);
+  }
+
+  Future<void> updateStore(String storeId, Map<String, dynamic> data) async {
+    await _api.dio.patch('/my/stores/$storeId/', data: data);
+  }
+
+  /// Do'kon yangiliklari tasmasi (sahifalangan, eng yangisi oldin).
+  Future<List<StoreUpdateItem>> storeUpdates(String storeId) async {
+    final res = await _api.dio.get('/stores/$storeId/updates/');
+    final results = (res.data['results'] as List?) ?? [];
+    return results.map((e) => StoreUpdateItem.fromJson(e)).toList();
+  }
+
+  /// Do'kon yangiliklaridan xabardor bo'lishni yoqadi/o'chiradi.
+  Future<bool> toggleSubscription(String storeId) async {
+    final res = await _api.dio.post('/stores/$storeId/subscribe/');
+    return res.data['subscribed'] ?? false;
+  }
+
+  Future<void> postAnnouncement(String storeId, String text) async {
+    await _api.dio.post('/stores/$storeId/announce/', data: {'text': text});
+  }
+
   Future<Cart> add(String productId, {int quantity = 1}) async {
     final res = await _api.dio.post('/cart/add/',
         data: {'product_id': productId, 'quantity': quantity});
@@ -75,9 +101,10 @@ class DeliveryRepository {
   Future<CheckoutResult> checkout({
     required String fullName,
     required String phone,
-    required String address,
+    String address = '',
     String note = '',
     String paymentMethod = 'cash',
+    DateTime? pickupAt,
   }) async {
     final res = await _api.dio.post('/checkout/', data: {
       'full_name': fullName,
@@ -85,7 +112,29 @@ class DeliveryRepository {
       'address': address,
       'note': note,
       'payment_method': paymentMethod,
+      if (pickupAt != null) 'pickup_at': pickupAt.toIso8601String(),
     });
     return CheckoutResult.fromJson(res.data);
+  }
+
+  /// Mijoz pickup buyurtmani qo'lga olganini tasdiqlaydi (yakuniy holat).
+  Future<DeliveryOrder> confirmPickup(String orderId) async {
+    final res = await _api.dio.post('/orders/$orderId/confirm-pickup/');
+    return DeliveryOrder.fromJson(res.data);
+  }
+
+  /// Do'kon egasi: o'z do'konlariga kelgan buyurtmalar (?fulfillment=pickup).
+  Future<List<DeliveryOrder>> storeOrders({String? fulfillment}) async {
+    final res = await _api.dio.get('/my/orders/', queryParameters: {
+      if (fulfillment != null) 'fulfillment': fulfillment,
+    });
+    final results = (res.data['results'] as List?) ?? (res.data as List?) ?? [];
+    return results.map((e) => DeliveryOrder.fromJson(e)).toList();
+  }
+
+  /// Do'kon egasi buyurtma holatini o'zgartiradi (preparing/ready/...).
+  Future<DeliveryOrder> setStoreOrderStatus(String orderId, String status) async {
+    final res = await _api.dio.post('/my/orders/$orderId/status/', data: {'status': status});
+    return DeliveryOrder.fromJson(res.data);
   }
 }

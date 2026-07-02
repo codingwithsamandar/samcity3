@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ product.name }} — {{ store.name }} — SamCity{% endblock %}
 
 {% block content %}
@@ -41,22 +42,27 @@
       <div class="card card-pad sticky-card">
         <div class="lc-price" style="font-size:1.5rem;color:var(--accent);">{{ product.price|floatformat:0 }} <small>so'm</small></div>
         <div class="info-row" style="margin-top:.5rem;"><svg class="ic"><use href="#i-cart"/></svg><span>Omborda</span><b>{% if product.stock > 0 %}<span style="color:var(--green);">{{ product.stock }} dona</span>{% else %}<span style="color:var(--red);">Tugagan</span>{% endif %}</b></div>
+        {% if product.stock <= 0 and product.restock_at %}
+        <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qayta kelishi</span><b style="color:var(--accent);" data-restock="{{ product.restock_at|date:'c' }}">Hisoblanmoqda…</b></div>
+        {% endif %}
         <div class="info-row"><svg class="ic"><use href="#i-building"/></svg><span>Do'kon</span><b><a href="{% url 'delivery:store_detail' store.pk %}" style="color:var(--accent);">{{ store.name }}</a></b></div>
         {% if store.category %}<div class="info-row"><svg class="ic"><use href="#i-tag"/></svg><span>Kategoriya</span><b>{{ store.category.name }}</b></div>{% endif %}
         <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qo'shilgan</span><b>{{ product.created_at|date:"d.m.Y" }}</b></div>
 
-        {% if user.is_authenticated %}
-          {% if product.stock > 0 %}
-            <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:1rem;">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.path }}">
-              <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-cart"/></svg> Savatga qo'shish</button>
-            </form>
+        {% if cart_enabled %}
+          {% if user.is_authenticated %}
+            {% if product.stock > 0 %}
+              <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:1rem;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-accent btn-block btn-lg"><svg class="ic"><use href="#i-cart"/></svg> Savatga qo'shish</button>
+              </form>
+            {% else %}
+              <button class="btn btn-ghost btn-block btn-lg" style="margin-top:1rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+            {% endif %}
           {% else %}
-            <button class="btn btn-ghost btn-block btn-lg" style="margin-top:1rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-block btn-lg" style="margin-top:1rem;"><svg class="ic"><use href="#i-user"/></svg> Kirish — savatga qo'shish</a>
           {% endif %}
-        {% else %}
-          <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent btn-block btn-lg" style="margin-top:1rem;"><svg class="ic"><use href="#i-user"/></svg> Kirish — savatga qo'shish</a>
         {% endif %}
       </div>
       <a href="{% url 'delivery:store_detail' store.pk %}" class="btn btn-ghost btn-block" style="margin-top:1rem;">← Do'konga qaytish</a>
@@ -64,4 +70,5 @@
 
   </div>
 </div>
+<script src="{% static 'js/restock_countdown.js' %}"></script>
 {% endblock %}

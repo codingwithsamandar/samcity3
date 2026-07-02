@@ -30,7 +30,34 @@ def _order_is_paid(o):
 
 def _order_mark_paid(o):
     o.payment_status = 'paid'
-    o.save(update_fields=['payment_status'])
+    update_fields = ['payment_status']
+    # Pickup (olib ketish) buyurtmasi: to'lov MAJBURIY oldindan. To'langach
+    # buyurtma avtomatik 'to'landi' (accepted) holatiga o'tadi va do'kon egasi
+    # xabardor qilinadi. Yetkazib berish buyurtmalari bu yerda o'zgarmaydi
+    # (ular egasi tomonidan qo'lda qabul qilinadi).
+    if o.fulfillment_type == 'pickup' and o.status == 'pending':
+        o.status = 'accepted'
+        update_fields.append('status')
+    o.save(update_fields=update_fields)
+    if o.fulfillment_type == 'pickup' and 'status' in update_fields:
+        _notify_pickup_paid(o)
+
+
+def _notify_pickup_paid(order):
+    """Pickup buyurtma to'langach do'kon egasiga bildirishnoma (best-effort)."""
+    try:
+        from notifications.models import notify
+        from django.urls import reverse
+        store = None
+        first = order.items.first()
+        if first and first.product and first.product.store:
+            store = first.product.store
+        if store is None:
+            return
+        url = reverse('delivery:store_orders')
+        notify(store.owner, "Yangi olib ketish buyurtmasi to'landi 🛍️", url, 'order')
+    except Exception:
+        pass
 
 def _order_mark_unpaid(o):
     o.payment_status = 'unpaid'

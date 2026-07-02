@@ -25,7 +25,7 @@
       </div>
       <div class="form-group" style="flex:1;">
         <label class="form-label">Zaxira (dona)</label>
-        <input type="number" name="stock" class="form-control" min="0" value="{{ product.stock|default:0 }}">
+        <input type="number" name="stock" id="id_stock" class="form-control" min="0" value="{{ product.stock|default:0 }}">
       </div>
     </div>
     <div class="form-group">
@@ -34,10 +34,23 @@
     </div>
     <div class="form-group">
       <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-        <input type="checkbox" name="is_available" style="width:auto;" {% if product.is_available or mode == 'create' %}checked{% endif %}> Sotuvda mavjud
+        <input type="checkbox" name="is_available" id="id_is_available" style="width:auto;" {% if product.is_available or mode == 'create' %}checked{% endif %}> Sotuvda mavjud
       </label>
+    </div>
+    <div class="form-group" id="restockGroup" style="{% if product.stock > 0 or mode == 'create' %}display:none;{% endif %}">
+      <label class="form-label">Qachon qayta keladi? (tugagan mahsulot uchun)</label>
+      <input type="datetime-local" name="restock_at" class="form-control"
+             value="{{ product.restock_at|date:'Y-m-d\TH:i'|default:'' }}">
+      <p class="form-hint">Zaxira 0 bo'lganda kiritilsa, mahsulot kartochkasida sekundomer ko'rsatiladi.</p>
     </div>
     <button type="submit" class="btn btn-accent" style="width:100%;">{% if mode == 'edit' %}Saqlash{% else %}Qo'shish{% endif %}</button>
   </form>
 </div>
+<script>
+(function () {
+  var stock = document.getElementById('id_stock'), grp = document.getElementById('restockGroup');
+  function sync() { if (grp) grp.style.display = (parseInt(stock.value || '0', 10) <= 0) ? '' : 'none'; }
+  if (stock && grp) { stock.addEventListener('input', sync); sync(); }
+})();
+</script>
 {% endblock %}

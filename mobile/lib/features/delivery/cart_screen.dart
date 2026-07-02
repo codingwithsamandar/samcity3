@@ -27,7 +27,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartControllerProvider);
-    final total = cart.items.isEmpty ? 0 : cart.subtotal + kDeliveryFee;
+    // Pickup do'konlarida yetkazish narxi yo'q; olib ketish + yetkazish
+    // aralashsa, yetkazish narxi faqat yetkazish do'konlari uchun qo'llanadi.
+    final hasPickup = cart.items.any((it) => it.product.pickup);
+    final hasDelivery = cart.items.any((it) => !it.product.pickup);
+    final fee = hasDelivery ? kDeliveryFee : 0;
+    final total = cart.items.isEmpty ? 0 : cart.subtotal + fee;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Savat')),
@@ -43,7 +48,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     itemBuilder: (_, i) => _CartTile(item: cart.items[i]),
                   ),
                 ),
-                _Summary(subtotal: cart.subtotal, fee: kDeliveryFee, total: total),
+                _Summary(
+                  subtotal: cart.subtotal, fee: fee, total: total,
+                  hasPickup: hasPickup, hasDelivery: hasDelivery,
+                ),
               ],
             ),
     );
@@ -127,8 +135,12 @@ class _QtyControl extends StatelessWidget {
 }
 
 class _Summary extends ConsumerWidget {
-  const _Summary({required this.subtotal, required this.fee, required this.total});
+  const _Summary({
+    required this.subtotal, required this.fee, required this.total,
+    required this.hasPickup, required this.hasDelivery,
+  });
   final int subtotal, fee, total;
+  final bool hasPickup, hasDelivery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,8 +153,14 @@ class _Summary extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (hasPickup)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 6),
+              child: Text('🛍️ Olib ketish — oldindan karta orqali to\'lanadi',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9AA6BD))),
+            ),
           _row('Mahsulotlar', subtotal),
-          _row('Yetkazish', fee),
+          if (hasDelivery) _row('Yetkazish', fee),
           const Divider(),
           _row('Jami', total, bold: true),
           const SizedBox(height: 10),
@@ -181,7 +199,7 @@ class _Summary extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF0F1521),
-      builder: (_) => _CheckoutSheet(total: total),
+      builder: (_) => _CheckoutSheet(total: total, hasPickup: hasPickup, hasDelivery: hasDelivery),
     );
     if (outcome == null) return;
     ref.read(cartControllerProvider.notifier).clearLocal();
@@ -217,8 +235,9 @@ class _CheckoutOutcome {
 }
 
 class _CheckoutSheet extends ConsumerStatefulWidget {
-  const _CheckoutSheet({required this.total});
+  const _CheckoutSheet({required this.total, required this.hasPickup, required this.hasDelivery});
   final int total;
+  final bool hasPickup, hasDelivery;
 
   @override
   ConsumerState<_CheckoutSheet> createState() => _CheckoutSheetState();
@@ -232,6 +251,13 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   bool _loading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Pickup buyurtmasi faqat karta (onlayn) orqali oldindan to'lanadi.
+    if (widget.hasPickup) _method = 'online';
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _phone.dispose();
@@ -240,25 +266,31 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   }
 
   Future<void> _submit() async {
-    if (_phone.text.trim().isEmpty || _address.text.trim().isEmpty) {
+    if (_phone.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Telefon va manzil majburiy')));
+          content: Text('Telefon majburiy')));
       return;
     }
+    if (widget.hasDelivery && _address.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Yetkazib berish uchun manzil majburiy')));
+      return;
+    }
+    // Pickup uchun to'lov MAJBURIY oldindan — karta.
+    final method = (widget.hasPickup || _method == 'online') ? 'card' : 'cash';
     setState(() => _loading = true);
     try {
-      // Onlayn to'lov uchun buyurtma 'card' (unpaid) sifatida yaratiladi va
-      // keyin Payme/Click orqali to'lanadi; 'cash' — yetkazishda naqd.
       final result = await ref.read(deliveryRepositoryProvider).checkout(
             fullName: _name.text.trim(),
             phone: _phone.text.trim(),
-            address: _address.text.trim(),
-            paymentMethod: _method == 'online' ? 'card' : 'cash',
+            address: widget.hasDelivery ? _address.text.trim() : '',
+            paymentMethod: method,
           );
       if (mounted) {
+        // Karta bo'lsa — to'lov varaqasiga o'tamiz (Payme/Click).
         Navigator.pop(
           context,
-          _CheckoutOutcome(orders: result.orders, online: _method == 'online'),
+          _CheckoutOutcome(orders: result.orders, online: method == 'card'),
         );
       }
     } catch (_) {
@@ -281,8 +313,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Buyurtmani rasmiylashtirish',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(widget.hasPickup ? 'Olib ketish buyurtmasi' : 'Buyurtmani rasmiylashtirish',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 14),
           TextField(controller: _name,
               decoration: const InputDecoration(labelText: 'Ism (ixtiyoriy)')),
@@ -290,24 +322,29 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           TextField(controller: _phone,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Telefon *')),
-          const SizedBox(height: 10),
-          TextField(controller: _address,
-              decoration: const InputDecoration(labelText: 'Manzil *')),
+          if (widget.hasDelivery) ...[
+            const SizedBox(height: 10),
+            TextField(controller: _address,
+                decoration: const InputDecoration(labelText: 'Manzil *')),
+          ],
           const SizedBox(height: 14),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'cash', label: Text('Naqd'), icon: Icon(Icons.payments)),
-              ButtonSegment(value: 'online', label: Text('Onlayn'), icon: Icon(Icons.credit_card)),
-            ],
-            selected: {_method},
-            onSelectionChanged: (s) => setState(() => _method = s.first),
-          ),
+          if (!widget.hasPickup)
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'cash', label: Text('Naqd'), icon: Icon(Icons.payments)),
+                ButtonSegment(value: 'online', label: Text('Onlayn'), icon: Icon(Icons.credit_card)),
+              ],
+              selected: {_method},
+              onSelectionChanged: (s) => setState(() => _method = s.first),
+            ),
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              _method == 'online'
-                  ? "💳 Payme yoki Click orqali xavfsiz to'lov."
-                  : "🚚 To'lov yetkazib berishda naqd pulda.",
+              widget.hasPickup
+                  ? "🛍️ Do'kondan o'zingiz olib ketasiz. To'lov oldindan Payme/Click orqali."
+                  : (_method == 'online'
+                      ? "💳 Payme yoki Click orqali xavfsiz to'lov."
+                      : "🚚 To'lov yetkazib berishda naqd pulda."),
               style: const TextStyle(fontSize: 11, color: Color(0xFF69748A)),
             ),
           ),
@@ -318,7 +355,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ? const SizedBox(
                     height: 20, width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(_method == 'online'
+                : Text((widget.hasPickup || _method == 'online')
                     ? "${money(widget.total)} so'm — to'lovga o'tish"
                     : "${money(widget.total)} so'm — tasdiqlash"),
           ),

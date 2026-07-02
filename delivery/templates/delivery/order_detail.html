@@ -10,11 +10,24 @@
   <div class="card card-pad">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;">
       <h1 style="font-size:1.4rem;">Buyurtma #{{ order.id|stringformat:'s'|slice:':8' }}</h1>
-      <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}">{{ order.get_status_display }}</span>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        {% if order.is_pickup %}<span class="badge badge-indigo">🛍️ Olib ketish</span>{% endif %}
+        <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}">{{ order.progress_label }}</span>
+      </div>
     </div>
 
-    {% if order.status != 'delivered' and order.status != 'cancelled' and order.status != 'pending' %}
+    {% if not order.is_pickup and order.status != 'delivered' and order.status != 'cancelled' and order.status != 'pending' %}
     <a href="{% url 'delivery:order_track' order.id %}" class="btn btn-accent btn-block" style="margin:1rem 0;"><svg class="ic"><use href="#i-map"/></svg> Jonli kuzatish — haydovchini xaritada ko'ring</a>
+    {% endif %}
+
+    {% if order.can_customer_confirm_pickup %}
+    <div class="card card-pad" style="margin:1rem 0;background:var(--accent-l);border-color:#cdd6f7;">
+      <div style="font-size:.92rem;margin-bottom:.7rem;">🛍️ Buyurtmangiz tayyor! Do'kondan olib ketganingizdan so'ng tasdiqlang.</div>
+      <form method="post" action="{% url 'delivery:order_confirm_pickup' order.id %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-green btn-block"><svg class="ic"><use href="#i-check"/></svg> Qabul qildim</button>
+      </form>
+    </div>
     {% endif %}
 
     {% include 'delivery/_order_timeline.html' %}
@@ -37,12 +50,12 @@
 
     <div style="margin-top:1rem;">
       <div class="summary-line"><span>Mahsulotlar</span><span>{{ order.subtotal }} so'm</span></div>
-      <div class="summary-line"><span>Yetkazish</span><span>{{ order.delivery_fee }} so'm</span></div>
+      {% if not order.is_pickup %}<div class="summary-line"><span>Yetkazish</span><span>{{ order.delivery_fee }} so'm</span></div>{% endif %}
       <div class="summary-line total"><span>Jami</span><span>{{ order.total }} so'm</span></div>
     </div>
 
     <div class="card card-pad" style="margin-top:1.25rem;background:var(--surface2);font-size:.9rem;color:var(--text2);display:flex;flex-direction:column;gap:.45rem;">
-      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> {{ order.address }}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> {% if order.is_pickup %}Do'kondan olib ketish{% if order.pickup_at %} · {{ order.pickup_at|date:"d.m.Y H:i" }}{% endif %}{% else %}{{ order.address }}{% endif %}</div>
       <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-phone"/></svg> {{ order.phone }}</div>
       {% if order.note %}<div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-chat"/></svg> {{ order.note }}</div>{% endif %}
       <div style="display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-card"/></svg> {{ order.get_payment_method_display }} · {% if order.is_paid %}<span style="color:var(--green);font-weight:600;">✓ To'langan{% if order.card_last4 %} ({{ order.card_brand }} •••• {{ order.card_last4 }}){% endif %}</span>{% else %}To'lanmagan{% endif %}</div>

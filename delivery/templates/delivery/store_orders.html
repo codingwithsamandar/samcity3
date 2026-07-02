@@ -23,9 +23,27 @@
       </div>
       <div style="text-align:right;">
         <div style="font-family:'Plus Jakarta Sans';font-weight:800;color:var(--text);">{{ order.total }} so'm</div>
-        <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="margin-top:.3rem;">{{ order.get_status_display }}</span>
+        {% if order.is_pickup %}<span class="badge badge-indigo" style="margin-top:.3rem;">🛍️ Olib ketish</span>{% endif %}
+        <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="margin-top:.3rem;">{{ order.progress_label }}</span>
+        {% if order.is_pickup %}<div style="font-size:.75rem;color:{% if order.is_paid %}var(--green){% else %}var(--red){% endif %};margin-top:.2rem;">{% if order.is_paid %}✓ To'langan{% else %}To'lanmagan{% endif %}</div>{% endif %}
       </div>
     </div>
+    {% if order.is_pickup %}
+      {% if order.is_paid and order.status != 'delivered' and order.status != 'cancelled' %}
+      <div style="margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+        {% if order.status == 'accepted' %}
+        <form method="post" action="{% url 'delivery:store_order_status' order.id %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="status" value="preparing"><button class="btn btn-accent btn-sm">📦 Yig'ishni boshladim</button></form>
+        {% elif order.status == 'preparing' %}
+        <form method="post" action="{% url 'delivery:store_order_status' order.id %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="status" value="ready"><button class="btn btn-green btn-sm">✅ Tayyor — olib ketishga</button></form>
+        {% elif order.status == 'ready' %}
+        <span style="font-size:.85rem;color:var(--text2);">Mijoz olib ketishini kutmoqda…</span>
+        {% endif %}
+        <form method="post" action="{% url 'delivery:store_order_status' order.id %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><button class="btn btn-outline btn-sm">Bekor qilish</button></form>
+      </div>
+      {% elif not order.is_paid %}
+      <div style="margin-top:.9rem;font-size:.85rem;color:var(--text3);">To'lov kutilmoqda — to'langach yig'ishni boshlashingiz mumkin.</div>
+      {% endif %}
+    {% else %}
     <form method="post" action="{% url 'delivery:store_order_status' order.id %}" style="margin-top:.9rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
       {% csrf_token %}
       <select name="status" class="form-control" style="width:auto;">
@@ -34,6 +52,7 @@
       </select>
       <button type="submit" class="btn btn-accent">Holatni yangilash</button>
     </form>
+    {% endif %}
   </div>
   {% empty %}
   <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-doc"/></svg></div><h3>Buyurtma yo'q</h3><p>Do'konlaringizga hali buyurtma kelmagan.</p></div>

@@ -52,3 +52,21 @@ def push_driver_location(order_id, lat, lng, heading=None, speed=None):
 def push_driver_location_for_orders(order_ids, lat, lng, heading=None, speed=None):
     for oid in order_ids:
         push_driver_location(oid, lat, lng, heading, speed)
+
+
+# ── STORE CHAT (mijoz ↔ do'kon) ─────────────────────────────────────────────────
+
+def store_chat_group(thread_id):
+    return f'store_chat_{thread_id}'
+
+
+def push_chat_message(message):
+    """Yangi chat xabarini thread guruhiga jonli yuboradi (best-effort)."""
+    _send(store_chat_group(message.thread_id), {
+        'type': 'chat_message',
+        'id': message.id,
+        'text': message.text,
+        'sender_id': str(message.sender_id),
+        'is_owner': message.sender_id == message.thread.store.owner_id,
+        'created_at': message.created_at.isoformat(),
+    })

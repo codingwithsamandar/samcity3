@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load l10n %}
+{% load l10n static %}
 {% block title %}{{ store.name }} — Shofirkon{% endblock %}
 
 {% block content %}
@@ -33,6 +33,29 @@
     <a href="{% url 'delivery:store_edit' store.pk %}" class="btn btn-ghost btn-sm">Tahrirlash</a>
     <a href="{% url 'delivery:store_delete' store.pk %}" class="btn btn-outline btn-sm">O'chirish</a>
     <a href="{% url 'delivery:store_orders' %}" class="btn btn-outline btn-sm"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalar</a>
+    <a href="{% url 'delivery:store_chat_inbox' %}" class="btn btn-outline btn-sm"><svg class="ic"><use href="#i-chat"/></svg> Suhbatlar</a>
+  </div>
+  {% elif user.is_authenticated %}
+  <div class="card card-pad" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;">
+    <form method="post" action="{% url 'delivery:store_subscribe_toggle' store.pk %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn {% if is_subscribed %}btn-accent{% else %}btn-outline{% endif %} btn-sm">
+        {% if is_subscribed %}🔔 Bildirishnomalar yoqilgan{% else %}🔕 Bildirishnomalarni yoqish{% endif %}
+      </button>
+    </form>
+    <form method="post" action="{% url 'delivery:store_chat_start' store.pk %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-accent btn-sm"><svg class="ic"><use href="#i-chat"/></svg> Do'kon bilan bog'lanish</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if gallery %}
+  <div class="card card-pad" style="margin-bottom:1.5rem;">
+    <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Galereya</h3>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+      {% for img in gallery %}<img src="{{ img.image.url }}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;">{% endfor %}
+    </div>
   </div>
   {% endif %}
 
@@ -42,6 +65,51 @@
       <div class="card card-pad" style="margin-bottom:1.5rem;">
         <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Tavsif</h3>
         <p style="font-size:.92rem;line-height:1.7;color:var(--text2);">{{ store.description }}</p>
+      </div>
+      {% endif %}
+
+      {% if store.owner_bio %}
+      <div class="card card-pad" style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:flex-start;">
+        {% if store.owner_photo %}<img src="{{ store.owner_photo.url }}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;">{% endif %}
+        <div>
+          <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.4rem;">Do'kon egasi haqida</h3>
+          <p style="font-size:.9rem;line-height:1.6;color:var(--text2);">{{ store.owner_bio }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if updates %}
+      <div class="card card-pad" style="margin-bottom:1.5rem;">
+        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.8rem;">Yangiliklar</h3>
+        {% for u in updates %}
+        <div style="padding:.6rem 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
+          <div style="display:flex;justify-content:space-between;gap:.5rem;">
+            <b style="font-size:.85rem;">
+              {% if u.update_type == 'new_product' %}🆕 Yangi mahsulot
+              {% elif u.update_type == 'price_changed' %}💰 Narx yangilandi
+              {% elif u.update_type == 'restocked' %}📦 Qayta keldi
+              {% elif u.update_type == 'out_of_stock' %}⛔ Tugadi
+              {% else %}📢 E'lon{% endif %}
+            </b>
+            <span style="font-size:.75rem;color:var(--text3);">{{ u.created_at|date:"d.m.Y H:i" }}</span>
+          </div>
+          {% if u.text %}<p style="font-size:.87rem;color:var(--text2);margin-top:.2rem;">{{ u.text }}</p>{% endif %}
+          {% if u.update_type == 'price_changed' %}<p style="font-size:.85rem;margin-top:.2rem;"><s style="color:var(--text3);">{{ u.old_price|floatformat:0 }}</s> → <b style="color:var(--accent);">{{ u.new_price|floatformat:0 }}</b> so'm</p>{% endif %}
+          {% if u.image %}<img src="{{ u.image.url }}" style="max-width:160px;border-radius:8px;margin-top:.4rem;">{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if user.is_authenticated and user.id == store.owner_id %}
+      <div class="card card-pad" style="margin-bottom:1.5rem;">
+        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Yangi e'lon joylash</h3>
+        <form method="post" action="{% url 'delivery:store_announcement_create' store.pk %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <textarea name="text" class="form-control" placeholder="Masalan: Bugundan boshlab sut mahsulotlari ham bor" required></textarea>
+          <input type="file" name="image" class="form-control" accept="image/*" style="margin-top:.5rem;">
+          <button type="submit" class="btn btn-accent btn-sm" style="margin-top:.6rem;">E'lon joylash</button>
+        </form>
       </div>
       {% endif %}
 
@@ -57,6 +125,13 @@
 
         {% if pq %}<p style="color:var(--text2);font-size:.85rem;margin-bottom:.75rem;">«{{ pq }}» bo'yicha {{ products|length }} ta natija</p>{% endif %}
 
+        {% if pickup_mode %}
+        <div class="card card-pad" style="margin-bottom:1rem;background:var(--accent-l);border-color:#cdd6f7;display:flex;align-items:center;gap:.6rem;">
+          <span style="font-size:1.3rem;">🛍️</span>
+          <div style="font-size:.86rem;color:var(--text2);">Bu do'kon <b>olib ketish</b> rejimida ishlaydi: mahsulotni oldindan karta orqali to'lab, do'kondan o'zingiz olib ketasiz.</div>
+        </div>
+        {% endif %}
+
         {% if products %}
         <div class="grid-4">
           {% for product in products %}
@@ -71,14 +146,19 @@
               <a href="{% url 'delivery:product_detail' store.pk product.pk %}" class="lc-title" style="color:inherit;">{{ product.name }}</a>
               {% if product.description %}<div class="lc-sub" style="display:block;">{{ product.description|truncatechars:60 }}</div>{% endif %}
               <div class="lc-price" style="color:var(--accent);">{{ product.price|floatformat:0 }} <small>so'm</small></div>
-              {% if product.stock > 0 %}
-                <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:.6rem;">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="btn btn-accent btn-block btn-sm"><svg class="ic"><use href="#i-cart"/></svg> Savatga</button>
-                </form>
-              {% else %}
-                <button class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+              {% if product.stock <= 0 and product.restock_at %}
+                <div style="font-size:.75rem;color:var(--accent);margin-top:.3rem;" data-restock="{{ product.restock_at|date:'c' }}">Hisoblanmoqda…</div>
+              {% endif %}
+              {% if cart_enabled %}
+                {% if product.stock > 0 %}
+                  <form method="post" action="{% url 'delivery:cart_add' product.pk %}" class="add-to-cart-form" style="margin-top:.6rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="btn btn-accent btn-block btn-sm"><svg class="ic"><use href="#i-cart"/></svg> Savatga</button>
+                  </form>
+                {% else %}
+                  <button class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem;opacity:.6;cursor:not-allowed;" disabled>Tugagan</button>
+                {% endif %}
               {% endif %}
               {% if user.is_authenticated and user.id == store.owner_id %}
               <div style="display:flex;gap:.4rem;margin-top:.5rem;">
@@ -106,6 +186,7 @@
         {% if store.category %}<div class="info-row"><svg class="ic"><use href="#i-tag"/></svg><span>Kategoriya</span><b>{{ store.category.name }}</b></div>{% endif %}
         {% if store.address %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg><span>Manzil</span><b style="text-align:right;">{{ store.address }}</b></div>{% endif %}
         {% if store.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg><span>Telefon</span><b><a href="tel:{{ store.phone }}" style="color:var(--accent);">{{ store.phone }}</a></b></div>{% endif %}
+        {% if store.working_hours %}<div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Ish vaqti</span><b>{{ store.working_hours }}</b></div>{% endif %}
         <div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>Egasi</span><b>{{ store.owner.name|default:store.owner.phone }}</b></div>
         <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qo'shilgan</span><b>{{ store.created_at|date:"d.m.Y" }}</b></div>
         {% if store.latitude and store.longitude %}
@@ -117,4 +198,5 @@
 
   </div>
 </div>
+<script src="{% static 'js/restock_countdown.js' %}"></script>
 {% endblock %}

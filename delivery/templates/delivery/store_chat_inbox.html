@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Mijoz suhbatlari — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-chat"/></svg> Suhbatlar</span>
+      <h1 style="margin-top:.6rem;">💬 Mijoz suhbatlari</h1>
+    </div>
+    <a href="{% url 'delivery:my_stores' %}" class="btn btn-outline"><svg class="ic"><use href="#i-building"/></svg> Do'konlarim</a>
+  </div>
+
+  {% for thread in threads %}
+  <a href="{% url 'delivery:store_chat_thread' thread.id %}" class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;color:inherit;">
+    <div>
+      <div style="font-weight:700;">{{ thread.customer.name|default:thread.customer.phone }}</div>
+      <div style="color:var(--text3);font-size:.82rem;margin-top:.15rem;">{{ thread.store.name }}</div>
+    </div>
+    <div style="text-align:right;color:var(--text3);font-size:.8rem;">{{ thread.updated_at|date:"d.m.Y H:i" }}</div>
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-chat"/></svg></div><h3>Hali suhbat yo'q</h3><p>Mijozlar savol berganda shu yerda ko'rinadi.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

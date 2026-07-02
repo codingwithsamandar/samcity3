@@ -108,6 +108,22 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     _load();
   }
 
+  Future<void> _confirmPickup(DeliveryOrder o) async {
+    try {
+      await ref.read(deliveryRepositoryProvider).confirmPickup(o.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Qabul qilinganingiz tasdiqlandi. Rahmat!')));
+      }
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(apiErrorMessage(e))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,6 +175,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
           statusOverride: _liveStatus[o.id],
           displayOverride: _liveDisplay[o.id],
           onPay: () => _pay(o),
+          onConfirmPickup: () => _confirmPickup(o),
         );
       },
     );
@@ -170,19 +187,23 @@ class _OrderCard extends StatelessWidget {
     required this.order,
     required this.flow,
     required this.onPay,
+    required this.onConfirmPickup,
     this.statusOverride,
     this.displayOverride,
   });
   final DeliveryOrder order;
   final List<String> flow;
   final VoidCallback onPay;
+  final VoidCallback onConfirmPickup;
   final String? statusOverride;
   final String? displayOverride;
 
   @override
   Widget build(BuildContext context) {
     final status = statusOverride ?? order.status;
-    final statusText = displayOverride ?? order.statusDisplay;
+    final statusText = displayOverride ?? order.label;
+    // Pickup: mahsulot tayyor bo'lganda mijoz "qabul qildim" deb tasdiqlaydi.
+    final canConfirm = order.canConfirmPickup && status == 'ready';
     final cancelled = status == 'cancelled';
     final stepIndex = flow.indexOf(status);
     final progress = cancelled
@@ -269,6 +290,18 @@ class _OrderCard extends StatelessWidget {
                   onPressed: onPay,
                   icon: const Icon(Icons.credit_card, size: 18),
                   label: const Text("Onlayn to'lash"),
+                ),
+              ),
+            ],
+            if (canConfirm) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                  onPressed: onConfirmPickup,
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text("Qabul qildim"),
                 ),
               ),
             ],

@@ -728,7 +728,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   document.documentElement.setAttribute('data-theme', d?'dark':'light');
 })();
 </script>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" data-server-now="{% now 'c' %}">
 
 <!-- ── Premium ambient layers ──────────────────────────────────── -->
 <div class="aurora-bg" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span><span class="a4"></span></div>

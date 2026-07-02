@@ -13,10 +13,15 @@ from .views import (
 from .delivery_views import (
     StoreViewSet, OrderViewSet, ProductDetailView, CartView,
     cart_add, cart_set, cart_remove, cart_clear, checkout,
-    MyStoresView, StoreProductsView,
+    MyStoresView, MyStoreDetailView, StoreProductsView, StoreProductDetailView,
+    StoreUpdatesView, StoreSubscribeToggleView, StoreAnnouncementCreateView,
+    StoreOrdersView, StoreOrderStatusView, OrderConfirmPickupView,
 )
 from .taxi_views import TaxiServiceViewSet, TaxistViewSet, TripViewSet
 from .chat_views import ChatRoomViewSet, ChatMessagesView
+from .chat_store_views import (
+    StoreChatStartView, StoreChatThreadView, StoreChatListView,
+)
 from .booking_views import VenueViewSet, VenueBookingViewSet
 from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
@@ -66,7 +71,20 @@ urlpatterns = [
     path('products/<int:pk>/', ProductDetailView.as_view(), name='product-detail'),
     path('checkout/', checkout, name='checkout'),
     path('my/stores/', MyStoresView.as_view(), name='my-stores'),
+    path('my/stores/<int:store_pk>/', MyStoreDetailView.as_view(), name='my-store-detail'),
     path('stores/<int:store_pk>/products/', StoreProductsView.as_view(), name='store-products'),
+    path('stores/<int:store_pk>/products/<int:product_pk>/', StoreProductDetailView.as_view(), name='store-product-detail'),
+    path('stores/<int:store_pk>/updates/', StoreUpdatesView.as_view(), name='store-updates'),
+    path('stores/<int:store_pk>/subscribe/', StoreSubscribeToggleView.as_view(), name='store-subscribe'),
+    path('stores/<int:store_pk>/announce/', StoreAnnouncementCreateView.as_view(), name='store-announce'),
+    # Egasi buyurtma boshqaruvi + mijoz pickup tasdig'i
+    path('my/orders/', StoreOrdersView.as_view(), name='my-orders'),
+    path('my/orders/<uuid:order_id>/status/', StoreOrderStatusView.as_view(), name='my-order-status'),
+    path('orders/<uuid:order_id>/confirm-pickup/', OrderConfirmPickupView.as_view(), name='order-confirm-pickup'),
+    # Do'kon bilan chat (mijoz ↔ do'kon)
+    path('stores/<int:store_pk>/chat/', StoreChatStartView.as_view(), name='store-chat-start'),
+    path('delivery/chat/threads/', StoreChatListView.as_view(), name='store-chat-list'),
+    path('delivery/chat/threads/<int:thread_id>/', StoreChatThreadView.as_view(), name='store-chat-thread'),
     path('chat/rooms/<int:room_id>/messages/', ChatMessagesView.as_view(), name='chat-messages'),
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/unread-count/', NotificationUnreadCountView.as_view(), name='notifications-unread-count'),

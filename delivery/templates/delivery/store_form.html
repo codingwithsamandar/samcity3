@@ -46,8 +46,43 @@
       <input type="text" name="phone" class="form-control" value="{{ store.phone|default:'' }}">
     </div>
     <div class="form-group">
+      <label class="form-label">Ish vaqti</label>
+      <input type="text" name="working_hours" class="form-control" placeholder="Masalan: 9:00–22:00, har kuni" value="{{ store.working_hours|default:'' }}">
+    </div>
+    <div class="form-group">
       <label class="form-label">Logo</label>
       <input type="file" name="logo" class="form-control" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Galereya rasmlari (4-6 tagacha)</label>
+      {% if gallery %}
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;">
+        {% for img in gallery %}
+        <label style="position:relative;cursor:pointer;">
+          <img src="{{ img.image.url }}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
+          <span style="position:absolute;top:2px;right:2px;background:#fff;border-radius:50%;padding:1px 4px;font-size:.7rem;">
+            <input type="checkbox" name="remove_image" value="{{ img.pk }}" style="width:auto;"> ✕
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <input type="file" name="gallery" class="form-control" accept="image/*" multiple>
+      <p class="form-hint">Bir nechta rasm tanlashingiz mumkin.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Do'kon egasi haqida (ixtiyoriy)</label>
+      <textarea name="owner_bio" class="form-control" placeholder="Mijozlarga o'zingiz haqingizda qisqa ma'lumot">{{ store.owner_bio|default:'' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Egasi rasmi (ixtiyoriy)</label>
+      <input type="file" name="owner_photo" class="form-control" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+        <input type="checkbox" name="pickup_enabled" style="width:auto;" {% if store.pickup_enabled %}checked{% endif %}> 🛍️ Olib ketish (pickup) rejimi
+      </label>
+      <p class="form-hint">Yoqilsa — mijozlar mahsulotni oldindan karta orqali to'lab, do'kondan o'zi olib ketadi (yetkazib berishsiz).</p>
     </div>
     <div class="form-group">
       <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">

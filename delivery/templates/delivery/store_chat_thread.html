@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ store.name }} bilan suhbat — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chat-wrap { max-width:640px; margin:0 auto; }
+  .chat-box { height:56vh; min-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:.5rem; padding:1rem; background:var(--surface2); border-radius:14px; border:1px solid var(--border); }
+  .msg { max-width:75%; padding:.55rem .8rem; border-radius:14px; font-size:.92rem; line-height:1.45; word-break:break-word; }
+  .msg.mine { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+  .msg.theirs { align-self:flex-start; background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .msg .meta { font-size:.66rem; opacity:.7; margin-top:.2rem; }
+  .chat-form { display:flex; gap:.5rem; margin-top:.8rem; }
+  .chat-form input { flex:1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container chat-wrap">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+    <div>
+      <a href="{% if is_owner %}{% url 'delivery:store_chat_inbox' %}{% else %}{% url 'delivery:store_detail' store.pk %}{% endif %}" style="color:var(--text2);font-size:.85rem;">← Orqaga</a>
+      <h1 style="font-size:1.25rem;margin-top:.3rem;">💬 {% if is_owner %}{{ thread.customer.name|default:thread.customer.phone }}{% else %}{{ store.name }}{% endif %}</h1>
+    </div>
+    {% if not is_owner %}<a href="{% url 'delivery:store_detail' store.pk %}" class="btn btn-ghost btn-sm">Do'kon sahifasi</a>{% endif %}
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    {% for msg in messages_list %}
+    <div class="msg {% if msg.sender_id == user.id %}mine{% else %}theirs{% endif %}">
+      {{ msg.text }}
+      <div class="meta">{{ msg.created_at|date:"d.m H:i" }}</div>
+    </div>
+    {% empty %}
+    <div style="margin:auto;color:var(--text3);font-size:.9rem;text-align:center;">Hali xabar yo'q. Birinchi bo'lib yozing.</div>
+    {% endfor %}
+  </div>
+
+  <form class="chat-form" id="chatForm" method="post" action="{% url 'delivery:store_chat_send' thread.id %}">
+    {% csrf_token %}
+    <input type="text" name="text" id="chatInput" class="form-control" placeholder="Xabar yozing..." autocomplete="off" required>
+    <button type="submit" class="btn btn-accent">Yuborish</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('chatBox'),
+      form = document.getElementById('chatForm'),
+      input = document.getElementById('chatInput'),
+      MY_ID = '{{ user.id }}';
+  function scroll() { box.scrollTop = box.scrollHeight; }
+  scroll();
+
+  function addMsg(text, mine, ts) {
+    var d = document.createElement('div');
+    d.className = 'msg ' + (mine ? 'mine' : 'theirs');
+    var meta = ts ? new Date(ts).toLocaleString('uz', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    d.innerHTML = '';
+    d.appendChild(document.createTextNode(text));
+    var m = document.createElement('div'); m.className = 'meta'; m.textContent = meta;
+    d.appendChild(m);
+    box.appendChild(d); scroll();
+  }
+
+  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  var ws = null, wsOpen = false;
+  try {
+    ws = new WebSocket(proto + '://' + location.host + '/ws/delivery/chat/{{ thread.id }}/');
+    ws.onopen = function () { wsOpen = true; };
+    ws.onclose = function () { wsOpen = false; };
+    ws.onmessage = function (e) {
+      try {
+        var data = JSON.parse(e.data);
+        if (data.type === 'message') {
+          addMsg(data.text, String(data.sender_id) === String(MY_ID), data.created_at);
+        }
+      } catch (_) {}
+    };
+  } catch (_) {}
+
+  form.addEventListener('submit', function (e) {
+    var text = input.value.trim();
+    if (!text) { e.preventDefault(); return; }
+    // WebSocket ochiq bo'lsa — jonli yuboramiz, sahifa yangilanmasin.
+    if (wsOpen) {
+      e.preventDefault();
+      ws.send(JSON.stringify({ type: 'message', text: text }));
+      input.value = '';
+    }
+    // Aks holda oddiy POST (fallback) — server saqlaydi va sahifa qayta yuklanadi.
+  });
+})();
+</script>
+{% endblock %}

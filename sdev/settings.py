@@ -413,6 +413,13 @@ SMS_PLAYMOBILE_LOGIN = os.environ.get('SMS_PLAYMOBILE_LOGIN', '')
 SMS_PLAYMOBILE_PASSWORD = os.environ.get('SMS_PLAYMOBILE_PASSWORD', '')
 SMS_PLAYMOBILE_FROM = os.environ.get('SMS_PLAYMOBILE_FROM', '3700')
 
+# ─── YETKAZIB BERISH: mahalla do'konlari katalogi ────────────────────────────
+# False bo'lsa — do'kon/mahsulot sahifalarida "savatga qo'shish" tugmasi
+# yashiriladi (faqat ko'rish uchun katalog, 1-bosqich talabi). Kod darajasida
+# Cart/Order infratuzilmasi to'liq ishlaydi — keyingi bosqichda shu flag True
+# qilinadi va checkout foydalanuvchiga ochiladi.
+DELIVERY_CART_ENABLED = env_bool('DELIVERY_CART_ENABLED', False)
+
 # ─── MONITORING: Sentry (ixtiyoriy — faqat SENTRY_DSN o'rnatilganda) ──────────
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '').strip()
 if SENTRY_DSN:

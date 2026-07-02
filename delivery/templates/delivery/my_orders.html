@@ -19,7 +19,9 @@
     </div>
     <div style="text-align:right;">
       <div style="font-family:'Plus Jakarta Sans';font-weight:800;color:var(--text);">{{ order.total }} so'm</div>
-      <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="margin-top:.3rem;">{{ order.get_status_display }}</span>
+      {% if order.is_pickup %}<span class="badge badge-indigo" style="margin-top:.3rem;">🛍️</span>{% endif %}
+      <span class="badge {% if order.status == 'delivered' %}badge-green{% elif order.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}" style="margin-top:.3rem;">{{ order.progress_label }}</span>
+      {% if order.can_customer_confirm_pickup %}<div style="font-size:.72rem;color:var(--green);margin-top:.2rem;font-weight:700;">Tayyor — tasdiqlang</div>{% endif %}
     </div>
   </a>
   {% empty %}

@@ -1,7 +1,11 @@
 from django import forms
 from django.contrib import admin
 from main.admin_widgets import LatLngPickerWidget
-from .models import DeliveryCategory, Store, Product, ProductImage, Cart, CartItem, Order, OrderItem, DeliveryDriver
+from .models import (
+    DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, CartItem,
+    Order, OrderItem, DeliveryDriver, StoreUpdate, StoreSubscription,
+    StoreChatThread, StoreChatMessage,
+)
 
 
 # ── DELIVERY CATEGORY ─────────────────────────────────────────────────────────
@@ -20,14 +24,27 @@ class StoreAdminForm(forms.ModelForm):
         widgets = {'latitude': LatLngPickerWidget}
 
 
+class StoreImageInline(admin.TabularInline):
+    model = StoreImage
+    extra = 0
+    max_num = StoreImage.MAX_IMAGES
+
+
 @admin.register(Store)
 class StoreAdmin(admin.ModelAdmin):
     form = StoreAdminForm
-    list_display = ('name', 'owner', 'category', 'phone', 'is_active', 'created_at')
-    list_filter = ('is_active', 'category')
+    list_display = ('name', 'owner', 'category', 'phone', 'working_hours', 'pickup_enabled', 'is_active', 'created_at')
+    list_filter = ('is_active', 'pickup_enabled', 'category')
     search_fields = ('name', 'owner__phone', 'owner__name', 'address', 'phone')
-    list_editable = ('is_active',)
+    list_editable = ('pickup_enabled', 'is_active')
     readonly_fields = ('created_at',)
+    inlines = [StoreImageInline]
+
+
+@admin.register(StoreImage)
+class StoreImageAdmin(admin.ModelAdmin):
+    list_display = ('store', 'image', 'created_at')
+    search_fields = ('store__name',)
 
 
 # ── PRODUCT ───────────────────────────────────────────────────────────────────
@@ -86,10 +103,10 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'phone', 'total', 'status', 'driver', 'payment_status', 'created_at')
-    list_filter = ('status', 'payment_status', 'payment_method')
+    list_display = ('id', 'user', 'phone', 'total', 'fulfillment_type', 'status', 'driver', 'payment_status', 'created_at')
+    list_filter = ('fulfillment_type', 'status', 'payment_status', 'payment_method')
     search_fields = ('user__phone', 'phone', 'address')
-    readonly_fields = ('created_at',)
+    readonly_fields = ('created_at', 'ready_for_pickup_at', 'customer_confirmed_at')
     list_editable = ('status',)
     inlines = [OrderItemInline]
 
@@ -106,3 +123,34 @@ class DeliveryDriverAdmin(admin.ModelAdmin):
     list_filter = ('vehicle_type', 'is_available', 'is_active')
     search_fields = ('full_name', 'phone', 'user__phone')
     list_editable = ('is_available', 'is_active')
+
+
+# ── STORE UPDATE / SUBSCRIPTION (yangiliklar + bildirishnoma obunasi) ──────────
+@admin.register(StoreUpdate)
+class StoreUpdateAdmin(admin.ModelAdmin):
+    list_display = ('store', 'update_type', 'product', 'created_at')
+    list_filter = ('update_type',)
+    search_fields = ('store__name', 'text', 'product__name')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(StoreSubscription)
+class StoreSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('store', 'user', 'is_enabled', 'created_at')
+    list_filter = ('is_enabled',)
+    search_fields = ('store__name', 'user__phone', 'user__name')
+    readonly_fields = ('created_at',)
+
+
+# ── STORE CHAT (3.1-bosqich skeleti) ────────────────────────────────────────────
+@admin.register(StoreChatThread)
+class StoreChatThreadAdmin(admin.ModelAdmin):
+    list_display = ('store', 'customer', 'created_at')
+    search_fields = ('store__name', 'customer__phone', 'customer__name')
+
+
+@admin.register(StoreChatMessage)
+class StoreChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('thread', 'sender', 'is_read', 'created_at')
+    list_filter = ('is_read',)
+    search_fields = ('text',)
