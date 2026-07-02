@@ -14,6 +14,7 @@ from .models import Ad, AdImage, User, Neighborhood, ChatRoom, ChatMessage, Chat
 import logging
 from .utils import validate_file_type, ratelimit
 from sms.backends import send_sms
+from telegrambot.delivery import try_send_telegram, telegram_connect_url
 
 logger = logging.getLogger('shofirkon.security')  # audit log (LOGGING root handlerlariga tushadi)
 OTP_MAX_ATTEMPTS = 5  # noto'g'ri kod kiritishlar chegarasi (brute-force himoyasi)
@@ -199,12 +200,23 @@ def register(request):
                 expires_at=timezone.now() + timedelta(minutes=10)
             )
 
-            # SMS shlyuzi orqali yuborish (xato bo'lsa ham ro'yxat kutilmoqda)
+            # Yuborish: Telegram ulangan bo'lsa Telegram, aks holda SMS
+            # (mavjud SMS oqimi o'zgarmaydi).
+            if try_send_telegram(phone, code):
+                request.session['pending_phone'] = phone
+                messages.success(request, "Tasdiqlash kodi Telegram orqali yuborildi. 📨")
+                return redirect('verify_otp')
             if not send_sms(phone, f"SamCity tasdiqlash kodi: {code}"):
                 logger.warning("OTP SMS yuborilmadi: phone=%s", phone)
-
             request.session['pending_phone'] = phone
-            messages.success(request, "Tasdiqlash kodi yuborildi.")
+            _url = telegram_connect_url()
+            if _url:
+                messages.info(
+                    request,
+                    "Tasdiqlash kodi yuborildi. Telegram orqali tezroq olish uchun "
+                    f"botni ulang: {_url}")
+            else:
+                messages.success(request, "Tasdiqlash kodi yuborildi.")
             return redirect('verify_otp')
 
     return render(request, 'registration/login.html', {'mode': 'register'})

@@ -23,6 +23,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from main.models import User, OTPCode, Ad, AdFavorite
 from sms.backends import send_sms
+from telegrambot.delivery import try_send_telegram, telegram_connect_url
 from .permissions import IsOwnerOrReadOnly
 from .throttles import PhoneSendThrottle
 from .serializers import (
@@ -42,20 +43,27 @@ def _issue_tokens(user):
 
 
 def _create_and_send_otp(phone):
-    """6 xonali OTP yaratadi va SMS shlyuzi orqali yuboradi.
+    """6 xonali OTP yaratadi va yuboradi (Telegram ulangan bo'lsa Telegram, aks
+    holda SMS shlyuzi orqali).
 
     Yuborish muvaffaqiyatsiz bo'lsa ham kod bazada saqlanadi (foydalanuvchi
     qayta yuborishni so'rashi mumkin); xato log'ga yoziladi.
+
+    (code, channel) qaytaradi — channel: 'telegram' | 'sms'.
     """
     code = ''.join(random.choices(string.digits, k=6))
     OTPCode.objects.create(
         phone=phone, code=code,
         expires_at=timezone.now() + timedelta(minutes=OTP_TTL_MINUTES),
     )
+    # Avval Telegram kanalini sinaymiz (raqam ulangan bo'lsa). Ulanmagan yoki
+    # o'chiq bo'lsa — mavjud SMS oqimi o'zgarmasdan ishlaydi.
+    if try_send_telegram(phone, code):
+        return code, 'telegram'
     ok = send_sms(phone, f"SamCity tasdiqlash kodi: {code}")
     if not ok:
         logger.warning("OTP SMS yuborilmadi: phone=%s", phone)
-    return code
+    return code, 'sms'
 
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -73,8 +81,14 @@ class RegisterView(APIView):
             name=ser.validated_data.get('name', '') or '',
             is_active=False,
         )
-        code = _create_and_send_otp(phone)
-        data = {'detail': "Tasdiqlash kodi yuborildi.", 'phone': phone}
+        code, channel = _create_and_send_otp(phone)
+        data = {'detail': "Tasdiqlash kodi yuborildi.", 'phone': phone,
+                'verification_channel': channel}
+        # SMS orqali ketgan bo'lsa — Telegram'ni ulash tavsiyasini beramiz.
+        if channel == 'sms':
+            url = telegram_connect_url()
+            if url:
+                data['telegram_connect_url'] = url
         if settings.DEBUG:
             data['debug_code'] = code  # faqat development'da, tez sinov uchun
         return Response(data, status=status.HTTP_201_CREATED)
@@ -91,8 +105,12 @@ class ResendOTPView(APIView):
         if not User.objects.filter(phone=phone, is_active=False).exists():
             return Response({'detail': "Bunday kutilayotgan ro'yxat topilmadi."},
                             status=status.HTTP_404_NOT_FOUND)
-        code = _create_and_send_otp(phone)
-        data = {'detail': "Yangi kod yuborildi."}
+        code, channel = _create_and_send_otp(phone)
+        data = {'detail': "Yangi kod yuborildi.", 'verification_channel': channel}
+        if channel == 'sms':
+            url = telegram_connect_url()
+            if url:
+                data['telegram_connect_url'] = url
         if settings.DEBUG:
             data['debug_code'] = code
         return Response(data)

@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'places',
     'api',
     'sms',
+    'telegrambot',
 ]
 
 MIDDLEWARE = [
@@ -124,9 +125,29 @@ WSGI_APPLICATION = 'sdev.wsgi.application'
 ASGI_APPLICATION = 'sdev.asgi.application'
 
 # ─── DATABASE ────────────────────────────────────────────────────────────────
-# Default: SQLite (development). Set POSTGRES_DB to switch to PostgreSQL
-# (production). No psycopg2 needed unless Postgres is actually selected.
-if os.environ.get('POSTGRES_DB'):
+# Ustuvorlik: DATABASE_URL > POSTGRES_* > SQLite (dev). Barchasi environment
+# orqali — hech qanday sir kodda yozilmaydi. psycopg faqat Postgres tanlanganda
+# kerak bo'ladi.
+#   DATABASE_URL  — Render/Heroku bergan yagona ulanish satri (postgres://...).
+#   POSTGRES_*    — alohida maydonlar (Render Blueprint fromDatabase shu ko'rinishda).
+_DB_CONN_MAX_AGE = int(os.environ.get('DB_CONN_MAX_AGE', '60'))
+_DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+
+if _DATABASE_URL:
+    from urllib.parse import urlparse, unquote
+    _u = urlparse(_DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _u.path.lstrip('/'),
+            'USER': unquote(_u.username or ''),
+            'PASSWORD': unquote(_u.password or ''),
+            'HOST': _u.hostname or '127.0.0.1',
+            'PORT': str(_u.port or '5432'),
+            'CONN_MAX_AGE': _DB_CONN_MAX_AGE,
+        }
+    }
+elif os.environ.get('POSTGRES_DB'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -135,7 +156,7 @@ if os.environ.get('POSTGRES_DB'):
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
             'HOST': os.environ.get('POSTGRES_HOST', '127.0.0.1'),
             'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+            'CONN_MAX_AGE': _DB_CONN_MAX_AGE,
         }
     }
 else:
@@ -419,6 +440,20 @@ SMS_PLAYMOBILE_FROM = os.environ.get('SMS_PLAYMOBILE_FROM', '3700')
 # Cart/Order infratuzilmasi to'liq ishlaydi — keyingi bosqichda shu flag True
 # qilinadi va checkout foydalanuvchiga ochiladi.
 DELIVERY_CART_ENABLED = env_bool('DELIVERY_CART_ENABLED', False)
+
+# ─── TELEGRAM OTP (demo/dev — SMS o'rniga Telegram orqali kod) ────────────────
+# @BotFather'dan olingan token. Bo'sh bo'lsa — Telegram kanali o'chiq bo'ladi
+# va OTP mavjud SMS/console backend orqali ketaveradi (xatoyoz emas).
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
+# Deep-link (t.me/<username>) uchun — ixtiyoriy; berilmasa getMe orqali topiladi.
+TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', '').strip()
+# Telegram OTP faqat shu flag yoqilganda ishlaydi. Default: DEBUG (dev'da yoniq,
+# production'da SMS oqimiga tegmaydi). Aniq boshqarish uchun env bilan bekor qiling.
+TELEGRAM_OTP_ENABLED = env_bool('TELEGRAM_OTP_ENABLED', DEBUG)
+# Testlarda Telegram OTP o'chiq — tarmoqqa chiqmaslik va OTP oqimini
+# deterministik saqlash uchun (SMS_BACKEND='console' bilan bir xil mantiq).
+if 'test' in _sys.argv:
+    TELEGRAM_OTP_ENABLED = False
 
 # ─── MONITORING: Sentry (ixtiyoriy — faqat SENTRY_DSN o'rnatilganda) ──────────
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '').strip()

@@ -1,9 +1,22 @@
 # ═══════════════════════════════════════════════════════════════════
 #  SamCity — Render.com Blueprint (Infrastructure as Code)
 #  Render'da: New → Blueprint → repo'ni ulang → shu fayl avtomatik o'qiladi.
-#  Web service (Docker/daphne ASGI) + bepul PostgreSQL.
+#
+#  Xizmatlar:
+#    web    — Django ASGI (Daphne) + WebSocket (chat/tracking). Docker image
+#             entrypoint.sh: migrate → collectstatic → daphne.
+#    worker — Telegram OTP boti (doimiy polling). DIQQAT: Render Background
+#             Worker PULLIK plan talab qiladi (free tarifda ishlamaydi).
+#             Kerak bo'lmasa shu blokni o'chirib qo'ying — OTP baribbr SMS'ga
+#             qaytadi (RENDER_DEPLOY.md ga qarang).
+#    samcity-db    — PostgreSQL (bepul)
+#    samcity-redis — Redis/Key-Value (Channels layer + cache; ixtiyoriy)
+#
+#  Qo'lda kiritiladigan (maxfiy) o'zgaruvchilar `sync: false` bilan belgilangan —
+#  ularni Render panelida (Environment) kiritasiz. Batafsil: RENDER_DEPLOY.md
 # ═══════════════════════════════════════════════════════════════════
 services:
+  # ── WEB (Daphne ASGI) ─────────────────────────────────────────────
   - type: web
     name: samcity
     runtime: docker
@@ -18,7 +31,6 @@ services:
         value: "False"
       - key: DJANGO_SECRET_KEY
         generateValue: true    # Render xavfsiz kalitni o'zi yaratadi
-      # '.onrender.com' — barcha onrender subdomenlariga mos (app nomini bilish shart emas)
       - key: DJANGO_ALLOWED_HOSTS
         value: ".onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
@@ -33,29 +45,29 @@ services:
         value: "60"
       - key: JWT_REFRESH_DAYS
         value: "30"
-      # ── PostgreSQL (quyidagi bepul bazadan avtomatik olinadi) ──
+      # ── PostgreSQL (quyidagi bepul bazadan avtomatik) ──
       - key: POSTGRES_DB
-        fromDatabase:
-          name: samcity-db
-          property: database
+        fromDatabase: { name: samcity-db, property: database }
       - key: POSTGRES_USER
-        fromDatabase:
-          name: samcity-db
-          property: user
+        fromDatabase: { name: samcity-db, property: user }
       - key: POSTGRES_PASSWORD
-        fromDatabase:
-          name: samcity-db
-          property: password
+        fromDatabase: { name: samcity-db, property: password }
       - key: POSTGRES_HOST
-        fromDatabase:
-          name: samcity-db
-          property: host
+        fromDatabase: { name: samcity-db, property: host }
       - key: POSTGRES_PORT
-        fromDatabase:
-          name: samcity-db
-          property: port
-      # ── SMS (login/OTP) — Render panelidan to'ldiring (maxfiy) ──
-      # sync:false → blueprint ularni bekor qilmaydi, qiymatni qo'lda kiritasiz
+        fromDatabase: { name: samcity-db, property: port }
+      # ── Redis (Channels real-time layer + cache) ──
+      - key: REDIS_URL
+        fromService: { name: samcity-redis, type: redis, property: connectionString }
+      # ── Telegram OTP (bot orqali tasdiqlash kodi) ──
+      # Token @BotFather'dan olinadi va Render panelida kiritiladi (maxfiy).
+      - key: TELEGRAM_OTP_ENABLED
+        value: "True"          # DEBUG'dan mustaqil — env orqali yoqiladi
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false            # ixtiyoriy (deep-link t.me/<username> uchun)
+      # ── SMS (login/OTP zaxira kanali) — Render panelidan (maxfiy) ──
       - key: SMS_BACKEND
         value: "eskiz"
       - key: SMS_ESKIZ_EMAIL
@@ -64,7 +76,7 @@ services:
         sync: false
       - key: SMS_ESKIZ_FROM
         value: "4546"
-      # ── To'lov shlyuzlari (keyin to'ldirsa bo'ladi) ──
+      # ── To'lov shlyuzlari ──
       - key: PAYME_MERCHANT_ID
         sync: false
       - key: PAYME_MERCHANT_KEY
@@ -73,7 +85,7 @@ services:
         sync: false
       - key: CLICK_SECRET_KEY
         sync: false
-      # ── Supabase S3 Media Storage ──
+      # ── Media Storage (Supabase S3) ──
       - key: AWS_STORAGE_BUCKET_NAME
         value: "media"
       - key: AWS_S3_REGION_NAME
@@ -88,9 +100,58 @@ services:
       - key: SENTRY_DSN
         sync: false
 
+  # ── WORKER — Telegram OTP boti (doimiy polling) ───────────────────
+  # DIQQAT: Render Background Worker PULLIK plan talab qiladi (free emas).
+  # Kerak bo'lmasa — bu butun blokni o'chiring. OTP baribbr ishlaydi:
+  #   • Yuborish web xizmatidan bo'ladi (web'da ham TELEGRAM_BOT_TOKEN bor).
+  #   • Bot faqat foydalanuvchining o'zi raqam ulashi (/start) uchun kerak;
+  #     linkni `link_telegram_demo` bilan qo'lda ham qo'shsa bo'ladi.
+  - type: worker
+    name: samcity-telegram-bot
+    runtime: docker
+    plan: starter              # ⚠️ worker free tarifda mavjud emas
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python manage.py run_telegram_bot
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true    # bot web bilan imzo almashmaydi — alohida kalit bo'ladi
+      # Bazaga kirish (TelegramLink o'qish/yozish uchun)
+      - key: POSTGRES_DB
+        fromDatabase: { name: samcity-db, property: database }
+      - key: POSTGRES_USER
+        fromDatabase: { name: samcity-db, property: user }
+      - key: POSTGRES_PASSWORD
+        fromDatabase: { name: samcity-db, property: password }
+      - key: POSTGRES_HOST
+        fromDatabase: { name: samcity-db, property: host }
+      - key: POSTGRES_PORT
+        fromDatabase: { name: samcity-db, property: port }
+      # Telegram (bot uchun majburiy)
+      - key: TELEGRAM_OTP_ENABLED
+        value: "True"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false            # web'dagi bilan BIR XIL token bo'lishi shart
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+
+  # ── REDIS / Key-Value (Channels real-time layer + cache) ──────────
+  # REDIS_URL o'rnatilmasa settings.py in-memory layer'ga qaytadi (bitta web
+  # instansiyada ishlaydi). Barqaror real-time / ko'p instansiya uchun Redis.
+  # Kerak bo'lmasa: bu blokni va yuqoridagi REDIS_URL env'ni o'chiring.
+  - type: redis
+    name: samcity-redis
+    plan: free
+    region: frankfurt
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []            # faqat ichki tarmoq (tashqi ulanish yo'q)
+
 databases:
   - name: samcity-db
-    plan: free                 # 1GB, 30 kundan keyin muddati tugaydi
+    plan: free                 # 1GB (bepul; muddati cheklangan)
     region: frankfurt
     databaseName: samcity
     user: samcity
