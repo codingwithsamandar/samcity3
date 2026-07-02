@@ -56,9 +56,11 @@ services:
         fromDatabase: { name: samcity-db, property: host }
       - key: POSTGRES_PORT
         fromDatabase: { name: samcity-db, property: port }
-      # ── Redis (Channels real-time layer + cache) ──
-      - key: REDIS_URL
-        fromService: { name: samcity-redis, type: redis, property: connectionString }
+      # ── Redis (Channels real-time layer + cache) — PULLI/ixtiyoriy ──
+      # BEPUL tarif: o'chirib qo'yilgan (in-memory layer ishlaydi). Redis
+      # xizmatini yoqsangiz, quyidagi 2 qatorni oching:
+      # - key: REDIS_URL
+      #   fromService: { name: samcity-redis, type: redis, property: connectionString }
       # ── Telegram OTP (bot orqali tasdiqlash kodi) ──
       # Token @BotFather'dan olinadi va Render panelida kiritiladi (maxfiy).
       - key: TELEGRAM_OTP_ENABLED
@@ -100,54 +102,51 @@ services:
       - key: SENTRY_DSN
         sync: false
 
-  # ── WORKER — Telegram OTP boti (doimiy polling) ───────────────────
-  # DIQQAT: Render Background Worker PULLIK plan talab qiladi (free emas).
-  # Kerak bo'lmasa — bu butun blokni o'chiring. OTP baribbr ishlaydi:
-  #   • Yuborish web xizmatidan bo'ladi (web'da ham TELEGRAM_BOT_TOKEN bor).
-  #   • Bot faqat foydalanuvchining o'zi raqam ulashi (/start) uchun kerak;
-  #     linkni `link_telegram_demo` bilan qo'lda ham qo'shsa bo'ladi.
-  - type: worker
-    name: samcity-telegram-bot
-    runtime: docker
-    plan: starter              # ⚠️ worker free tarifda mavjud emas
-    region: frankfurt
-    dockerfilePath: ./Dockerfile
-    dockerCommand: python manage.py run_telegram_bot
-    autoDeploy: true
-    envVars:
-      - key: DJANGO_DEBUG
-        value: "False"
-      - key: DJANGO_SECRET_KEY
-        generateValue: true    # bot web bilan imzo almashmaydi — alohida kalit bo'ladi
-      # Bazaga kirish (TelegramLink o'qish/yozish uchun)
-      - key: POSTGRES_DB
-        fromDatabase: { name: samcity-db, property: database }
-      - key: POSTGRES_USER
-        fromDatabase: { name: samcity-db, property: user }
-      - key: POSTGRES_PASSWORD
-        fromDatabase: { name: samcity-db, property: password }
-      - key: POSTGRES_HOST
-        fromDatabase: { name: samcity-db, property: host }
-      - key: POSTGRES_PORT
-        fromDatabase: { name: samcity-db, property: port }
-      # Telegram (bot uchun majburiy)
-      - key: TELEGRAM_OTP_ENABLED
-        value: "True"
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false            # web'dagi bilan BIR XIL token bo'lishi shart
-      - key: TELEGRAM_BOT_USERNAME
-        sync: false
-
-  # ── REDIS / Key-Value (Channels real-time layer + cache) ──────────
-  # REDIS_URL o'rnatilmasa settings.py in-memory layer'ga qaytadi (bitta web
-  # instansiyada ishlaydi). Barqaror real-time / ko'p instansiya uchun Redis.
-  # Kerak bo'lmasa: bu blokni va yuqoridagi REDIS_URL env'ni o'chiring.
-  - type: redis
-    name: samcity-redis
-    plan: free
-    region: frankfurt
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []            # faqat ichki tarmoq (tashqi ulanish yo'q)
+  # ════════════════════════════════════════════════════════════════
+  # ⚠️ BEPUL TARIF: worker va redis O'CHIRILGAN (izohga olingan).
+  # Render Background Worker PULLI plan talab qiladi. Web + Postgres bepul.
+  # Telegram OTP baribbr ishlaydi: kod WEB xizmatidan yuboriladi (web'da
+  # TELEGRAM_BOT_TOKEN bor). Bot polling'ni pulli planga o'tsangiz yoki
+  # LOKAL kompyuterda ishga tushirasiz (pastdagi izohga qarang).
+  # Pulli planga o'tsangiz — quyidagi ikki blokdan '# ' larni oching.
+  # ════════════════════════════════════════════════════════════════
+  #
+  # - type: worker
+  #   name: samcity-telegram-bot
+  #   runtime: docker
+  #   plan: starter
+  #   region: frankfurt
+  #   dockerfilePath: ./Dockerfile
+  #   dockerCommand: python manage.py run_telegram_bot
+  #   autoDeploy: true
+  #   envVars:
+  #     - key: DJANGO_DEBUG
+  #       value: "False"
+  #     - key: DJANGO_SECRET_KEY
+  #       generateValue: true
+  #     - key: POSTGRES_DB
+  #       fromDatabase: { name: samcity-db, property: database }
+  #     - key: POSTGRES_USER
+  #       fromDatabase: { name: samcity-db, property: user }
+  #     - key: POSTGRES_PASSWORD
+  #       fromDatabase: { name: samcity-db, property: password }
+  #     - key: POSTGRES_HOST
+  #       fromDatabase: { name: samcity-db, property: host }
+  #     - key: POSTGRES_PORT
+  #       fromDatabase: { name: samcity-db, property: port }
+  #     - key: TELEGRAM_OTP_ENABLED
+  #       value: "True"
+  #     - key: TELEGRAM_BOT_TOKEN
+  #       sync: false
+  #     - key: TELEGRAM_BOT_USERNAME
+  #       sync: false
+  #
+  # - type: redis
+  #   name: samcity-redis
+  #   plan: free
+  #   region: frankfurt
+  #   maxmemoryPolicy: allkeys-lru
+  #   ipAllowList: []
 
 databases:
   - name: samcity-db
