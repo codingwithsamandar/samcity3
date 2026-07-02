@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from main.admin_widgets import LatLngPickerWidget
 from .models import (
     TaxiService, ServiceReview, Taxist, Route, TaxistReview,
     Car, Trip, Payment,
@@ -38,8 +40,16 @@ class TaxistReviewInline(admin.TabularInline):
     readonly_fields = ('created_at',)
 
 
+class TaxistAdminForm(forms.ModelForm):
+    class Meta:
+        model = Taxist
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(Taxist)
 class TaxistAdmin(admin.ModelAdmin):
+    form = TaxistAdminForm
     list_display = ('full_name', 'phone', 'car_model', 'service', 'trips_count',
                     'avg_rating', 'review_count', 'region', 'is_active')
     list_filter = ('is_active', 'region', 'service')

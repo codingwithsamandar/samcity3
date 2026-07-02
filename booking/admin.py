@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from main.admin_widgets import LatLngPickerWidget
 from .models import Venue, VenueBooking, VenueService, VenueStaff
 
 
@@ -12,8 +14,16 @@ class VenueStaffInline(admin.TabularInline):
     extra = 1
 
 
+class VenueAdminForm(forms.ModelForm):
+    class Meta:
+        model = Venue
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
+    form = VenueAdminForm
     list_display = ('name', 'venue_type', 'owner', 'capacity', 'price_per_day',
                     'cancel_penalty_percent', 'is_active', 'created_at')
     list_filter = ('venue_type', 'is_active')

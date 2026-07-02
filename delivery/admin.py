@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from main.admin_widgets import LatLngPickerWidget
 from .models import DeliveryCategory, Store, Product, ProductImage, Cart, CartItem, Order, OrderItem, DeliveryDriver
 
 
@@ -11,8 +13,16 @@ class DeliveryCategoryAdmin(admin.ModelAdmin):
 
 
 # ── STORE ─────────────────────────────────────────────────────────────────────
+class StoreAdminForm(forms.ModelForm):
+    class Meta:
+        model = Store
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(Store)
 class StoreAdmin(admin.ModelAdmin):
+    form = StoreAdminForm
     list_display = ('name', 'owner', 'category', 'phone', 'is_active', 'created_at')
     list_filter = ('is_active', 'category')
     search_fields = ('name', 'owner__phone', 'owner__name', 'address', 'phone')

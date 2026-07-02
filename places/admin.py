@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from main.admin_widgets import LatLngPickerWidget
 from .models import Place, PlaceImage, PlaceReview, PlaceFavorite
 
 
@@ -16,8 +18,16 @@ class PlaceImageInline(admin.TabularInline):
     extra = 1
 
 
+class PlaceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Place
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(Place)
 class PlaceAdmin(admin.ModelAdmin):
+    form = PlaceAdminForm
     list_display = ('name', 'category', 'address', 'phone', 'is_active', 'created_at')
     list_filter = ('category', 'is_active')
     search_fields = ('name', 'address', 'description')

@@ -1,5 +1,7 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .admin_widgets import LatLngPickerWidget
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import (
     User, OTPCode, Ad, AdImage,
@@ -42,8 +44,16 @@ class PollAdmin(admin.ModelAdmin):
     inlines = [PollOptionInline]
 
 
+class HelpRequestAdminForm(forms.ModelForm):
+    class Meta:
+        model = HelpRequest
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(HelpRequest)
 class HelpRequestAdmin(admin.ModelAdmin):
+    form = HelpRequestAdminForm
     list_display = ('title', 'kind', 'category', 'status', 'is_urgent', 'creator', 'created_at')
     list_filter = ('kind', 'category', 'status', 'is_urgent')
     search_fields = ('title', 'description')
@@ -93,8 +103,16 @@ class AdImageInline(admin.TabularInline):
     extra = 0
 
 
+class AdAdminForm(forms.ModelForm):
+    class Meta:
+        model = Ad
+        fields = '__all__'
+        widgets = {'latitude': LatLngPickerWidget}
+
+
 @admin.register(Ad)
 class AdAdmin(admin.ModelAdmin):
+    form = AdAdminForm
     list_display = ('title', 'user', 'category', 'status', 'price', 'is_boosted', 'venue_booking_enabled', 'created_at')
     list_filter = ('status', 'category', 'is_boosted', 'venue_booking_enabled')
     search_fields = ('title', 'user__phone', 'user__name')

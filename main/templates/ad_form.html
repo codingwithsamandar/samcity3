@@ -2,11 +2,13 @@
 {% block title %}{% if ad %}E'lonni tahrirlash{% else %}E'lon yaratish{% endif %} — SamCity{% endblock %}
 
 {% block extra_css %}
+{% include '_map_assets.html' %}
 <style>
   .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
   .form-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+  #adPickmap { height: 240px; border-radius: 14px; border: 1px solid var(--border); z-index: 1; margin-top: .6rem; }
 
   /* Category visual buttons */
   .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.6rem; }
@@ -101,6 +103,8 @@
         <div id="geoStatus" style="font-size:0.78rem; color:var(--text2); margin-top:0.3rem; display:none;"></div>
         <input type="hidden" id="latInput" name="latitude" value="{{ ad.latitude|default:post.latitude|default:'' }}">
         <input type="hidden" id="lngInput" name="longitude" value="{{ ad.longitude|default:post.longitude|default:'' }}">
+        <p class="form-hint" style="margin-top:.6rem;">Yoki xaritada aynan qayerini bosib belgilang:</p>
+        <div id="adPickmap"></div>
       </div>
     </div>
 
@@ -271,5 +275,28 @@ function getMyLocation() {
     { timeout: 10000, enableHighAccuracy: true }
   );
 }
+
+// Xaritadan bosib belgilash (GPS'ga muqobil — istalgan joyni tanlash uchun)
+(function () {
+  if (typeof SamMap === 'undefined') return;
+  var latIn = document.getElementById('latInput'),
+      lngIn = document.getElementById('lngInput'),
+      locIn = document.getElementById('locationInput');
+  var start = (latIn.value && lngIn.value) ? [parseFloat(latIn.value), parseFloat(lngIn.value)] : SamMap.CENTER;
+  var map = SamMap.init('adPickmap', { center: start, zoomLevel: 13, fullscreen: false });
+  var marker = (latIn.value && lngIn.value) ? L.marker(start, { draggable: true }).addTo(map) : null;
+
+  function setPoint(ll) {
+    latIn.value = ll.lat.toFixed(6);
+    lngIn.value = ll.lng.toFixed(6);
+    if (marker) { marker.setLatLng(ll); }
+    else { marker = L.marker(ll, { draggable: true }).addTo(map); marker.on('dragend', function () { setPoint(marker.getLatLng()); }); }
+    SamMap.reverseGeocode(ll.lat, ll.lng).then(function (addr) {
+      if (addr && (!locIn.value || locIn.dataset.auto === '1')) { locIn.value = addr; locIn.dataset.auto = '1'; }
+    });
+  }
+  map.on('click', function (e) { setPoint(e.latlng); });
+  if (marker) marker.on('dragend', function () { setPoint(marker.getLatLng()); });
+})();
 </script>
 {% endblock %}
