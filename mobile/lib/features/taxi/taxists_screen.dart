@@ -16,6 +16,8 @@ class TaxistsScreen extends ConsumerStatefulWidget {
 
 class _TaxistsScreenState extends ConsumerState<TaxistsScreen> {
   late Future<List<Taxist>> _future;
+  final _searchController = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -23,8 +25,14 @@ class _TaxistsScreenState extends ConsumerState<TaxistsScreen> {
     _future = ref.read(taxiRepositoryProvider).taxists();
   }
 
-  void _reload() =>
-      setState(() => _future = ref.read(taxiRepositoryProvider).taxists());
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _reload() => setState(() => _future =
+      ref.read(taxiRepositoryProvider).taxists(query: _query.isEmpty ? null : _query));
 
   @override
   Widget build(BuildContext context) {
@@ -39,35 +47,69 @@ class _TaxistsScreenState extends ConsumerState<TaxistsScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => _reload(),
-        child: FutureBuilder<List<Taxist>>(
-          future: _future,
-          builder: (context, snap) {
-            if (snap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snap.hasError) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(child: Text("Taksistlarni yuklab bo'lmadi")),
-              ]);
-            }
-            final list = snap.data ?? [];
-            if (list.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(child: Text("Hozircha taksistlar yo'q")),
-              ]);
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _TaxistTile(t: list[i]),
-            );
-          },
-        ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Haydovchi, mashina yoki manzil bo\'yicha qidiring...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _searchController.clear();
+                          _query = '';
+                          _reload();
+                        },
+                      ),
+                isDense: true,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              textInputAction: TextInputAction.search,
+              onSubmitted: (v) {
+                _query = v.trim();
+                _reload();
+              },
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => _reload(),
+              child: FutureBuilder<List<Taxist>>(
+                future: _future,
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snap.hasError) {
+                    return ListView(children: const [
+                      SizedBox(height: 120),
+                      Center(child: Text("Taksistlarni yuklab bo'lmadi")),
+                    ]);
+                  }
+                  final list = snap.data ?? [];
+                  if (list.isEmpty) {
+                    return ListView(children: const [
+                      SizedBox(height: 120),
+                      Center(child: Text("Hozircha taksistlar yo'q")),
+                    ]);
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _TaxistTile(t: list[i]),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

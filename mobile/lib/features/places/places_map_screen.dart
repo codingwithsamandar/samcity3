@@ -18,8 +18,10 @@ class PlacesMapScreen extends ConsumerStatefulWidget {
 class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
   static final _center = LatLng(40.1156, 64.5036); // Shofirkon
   final _mapController = MapController();
+  final _searchController = TextEditingController();
   Future<PlacesData>? _future;
   String _cat = '';
+  String _query = '';
 
   @override
   void initState() {
@@ -27,10 +29,17 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
     _future = ref.read(placesRepositoryProvider).places();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _reload() {
     setState(() {
-      _future = ref.read(placesRepositoryProvider)
-          .places(category: _cat.isEmpty ? null : _cat);
+      _future = ref.read(placesRepositoryProvider).places(
+          category: _cat.isEmpty ? null : _cat,
+          query: _query.isEmpty ? null : _query);
     });
   }
 
@@ -110,6 +119,35 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
           final data = snap.data!;
           return Column(
             children: [
+              // Qidiruv
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Joy nomini qidiring...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _searchController.clear();
+                              _query = '';
+                              _reload();
+                            },
+                          ),
+                    isDense: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (v) {
+                    _query = v.trim();
+                    _reload();
+                  },
+                ),
+              ),
               // Toifa filtri
               SizedBox(
                 height: 48,

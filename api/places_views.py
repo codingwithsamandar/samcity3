@@ -1,8 +1,9 @@
 """Joylar (xarita) — mobil API.
 
-`GET /api/places/?category=<key>` — faol joylar ro'yxati (xarita markerlari uchun).
+`GET /api/places/?category=<key>&q=<matn>` — faol joylar ro'yxati (xarita markerlari uchun).
 Autentifikatsiyasiz (ochiq ma'lumot).
 """
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -43,6 +44,9 @@ class PlacesListView(APIView):
         cat = request.query_params.get('category', '').strip()
         if cat:
             qs = qs.filter(category=cat)
+        q = request.query_params.get('q', '').strip()
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(address__icontains=q))
         ser = PlaceSerializer(qs, many=True, context={'request': request})
         return Response({
             'categories': [{'key': k, 'label': v} for k, v in CATEGORY_CHOICES],

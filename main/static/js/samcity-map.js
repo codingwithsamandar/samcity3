@@ -88,7 +88,11 @@
     if (p.hours) html += '<div style="font-size:.82rem;color:#5b6678;">🕒 ' + esc(p.hours) + '</div>';
     if (p.url) html += '<a href="' + p.url + '" style="display:block;text-align:center;margin-top:.65rem;background:#0ea371;color:#fff;padding:.5rem .8rem;border-radius:9px;font-weight:700;font-size:.84rem;">To\'liq ma\'lumot →</a>';
     html += '</div>';
-    m.bindPopup(html, { minWidth: 220, maxWidth: 280 });
+    // maxHeight: mobil xaritada balandlik cheklangan (55vh); rasm+matn+tugma
+    // konteynerdan oshib ketsa, Leaflet uni overflow:hidden bilan yuqoridan
+    // (sarlavha, rasm) kesib tashlaydi. maxHeight ichki scroll yoqadi —
+    // sarlavha har doim yuqorida, ko'rinadigan bo'lib qoladi.
+    m.bindPopup(html, { minWidth: 220, maxWidth: 280, maxHeight: 260 });
     return m;
   }
 
