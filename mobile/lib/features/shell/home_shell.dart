@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/deep_link_service.dart';
 import '../../core/providers.dart';
 import '../ads/ads_list_screen.dart';
 import '../taxi/taxists_screen.dart';
 import '../delivery/stores_screen.dart';
-import '../chat/chat_rooms_screen.dart';
+import '../mahalla/mahalla_screen.dart';
 import '../profile/profile_screen.dart';
 import '../notifications/notif_socket.dart';
 import 'more_services_screen.dart';
@@ -34,7 +33,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           0 => const AdsListScreen(),
           1 => const TaxistsScreen(),
           2 => const StoresScreen(),
-          3 => const ChatRoomsScreen(),
+          3 => const MahallaScreen(),
           4 => const MoreServicesScreen(),
           5 => const ProfileScreen(),
           _ => const SizedBox.shrink(),

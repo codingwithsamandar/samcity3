@@ -22,6 +22,10 @@ from .chat_views import ChatRoomViewSet, ChatMessagesView
 from .chat_store_views import (
     StoreChatStartView, StoreChatThreadView, StoreChatListView,
 )
+from .mahalla_views import (
+    MahallaListView, MahallaDetailView, AnnouncementCreateView,
+    ComplaintListCreateView, ComplaintStatusView,
+)
 from .booking_views import VenueViewSet, VenueBookingViewSet
 from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
@@ -85,6 +89,12 @@ urlpatterns = [
     path('stores/<int:store_pk>/chat/', StoreChatStartView.as_view(), name='store-chat-start'),
     path('delivery/chat/threads/', StoreChatListView.as_view(), name='store-chat-list'),
     path('delivery/chat/threads/<int:thread_id>/', StoreChatThreadView.as_view(), name='store-chat-thread'),
+    # ── Mahalla bo'limi ──
+    path('mahalla/', MahallaListView.as_view(), name='mahalla-list'),
+    path('mahalla/<int:pk>/', MahallaDetailView.as_view(), name='mahalla-detail'),
+    path('mahalla/<int:pk>/announce/', AnnouncementCreateView.as_view(), name='mahalla-announce'),
+    path('mahalla/<int:pk>/complaints/', ComplaintListCreateView.as_view(), name='mahalla-complaints'),
+    path('mahalla/complaints/<uuid:req_id>/status/', ComplaintStatusView.as_view(), name='mahalla-complaint-status'),
     path('chat/rooms/<int:room_id>/messages/', ChatMessagesView.as_view(), name='chat-messages'),
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/unread-count/', NotificationUnreadCountView.as_view(), name='notifications-unread-count'),
