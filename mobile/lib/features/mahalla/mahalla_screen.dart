@@ -190,19 +190,39 @@ class _AnnouncementsTab extends StatelessWidget {
 class _PlacesTab extends StatelessWidget {
   const _PlacesTab({required this.detail});
   final MahallaDetail detail;
+
+  Future<void> _openStoreRequest(BuildContext context) async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true,
+      builder: (_) => _StoreRequestForm(neighborhoodId: detail.neighborhood.id),
+    );
+    if (ok == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Arizangiz yuborildi! Admin tasdiqlagach do\'koningiz ochiladi.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
     if (detail.stores.isNotEmpty) {
-      children.add(const _Header('🛒 Do\'konlar'));
+      children.add(const _Header('🛒 Mahalla do\'konlari'));
       children.addAll(detail.stores.map(_tile));
     }
     for (final g in detail.placeGroups) {
       children.add(_Header('${g.items.isNotEmpty ? g.items.first.icon : ''} ${g.label}'));
       children.addAll(g.items.map(_tile));
     }
-    if (children.isEmpty) return const Center(child: Text('Bu mahallada joy topilmadi'));
-    return ListView(padding: const EdgeInsets.all(8), children: children);
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openStoreRequest(context),
+        icon: const Icon(Icons.add_business_outlined),
+        label: const Text("Do'kon ochish"),
+      ),
+      body: children.isEmpty
+          ? const Center(child: Text('Bu mahallada hali do\'kon/joy yo\'q'))
+          : ListView(padding: const EdgeInsets.all(8), children: children),
+    );
   }
 
   Widget _tile(MahallaPlace p) => ListTile(
@@ -210,6 +230,72 @@ class _PlacesTab extends StatelessWidget {
         title: Text(p.name),
         subtitle: p.address.isNotEmpty ? Text(p.address, maxLines: 1, overflow: TextOverflow.ellipsis) : null,
       );
+}
+
+/// Mahalla do'koni ochish uchun ariza formasi (bottom sheet).
+class _StoreRequestForm extends ConsumerStatefulWidget {
+  const _StoreRequestForm({required this.neighborhoodId});
+  final String neighborhoodId;
+  @override
+  ConsumerState<_StoreRequestForm> createState() => _StoreRequestFormState();
+}
+
+class _StoreRequestFormState extends ConsumerState<_StoreRequestForm> {
+  final _name = TextEditingController();
+  final _desc = TextEditingController();
+  final _addr = TextEditingController();
+  final _phone = TextEditingController();
+  bool _saving = false;
+
+  Future<void> _submit() async {
+    if (_name.text.trim().isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(mahallaRepositoryProvider).createStoreRequest(
+            widget.neighborhoodId,
+            name: _name.text.trim(),
+            description: _desc.text.trim(),
+            address: _addr.text.trim(),
+            phone: _phone.text.trim(),
+          );
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yuborilmadi')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+          left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Text('🏘️ Mahalla do\'koni ochish', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 4),
+        const Text('Admin tasdiqlagach do\'koningiz ochiladi (olib ketish rejimida).',
+            style: TextStyle(color: Color(0xFF9AA6BD), fontSize: 12)),
+        const SizedBox(height: 12),
+        TextField(controller: _name, decoration: const InputDecoration(labelText: 'Do\'kon nomi *')),
+        const SizedBox(height: 8),
+        TextField(controller: _desc, maxLines: 2, decoration: const InputDecoration(labelText: 'Tavsif')),
+        const SizedBox(height: 8),
+        TextField(controller: _addr, decoration: const InputDecoration(labelText: 'Manzil')),
+        const SizedBox(height: 8),
+        TextField(controller: _phone, keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(labelText: 'Telefon')),
+        const SizedBox(height: 14),
+        FilledButton(
+          onPressed: _saving ? null : _submit,
+          child: _saving
+              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Ariza yuborish'),
+        ),
+      ]),
+    );
+  }
 }
 
 class _Header extends StatelessWidget {

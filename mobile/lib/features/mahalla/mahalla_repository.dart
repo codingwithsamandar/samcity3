@@ -50,4 +50,16 @@ class MahallaRepository {
         data: {'title': title, 'text': text});
     return Announcement.fromJson(res.data);
   }
+
+  /// Mahalla do'koni ochish uchun ariza (admin tasdiqlaguncha 'pending').
+  Future<void> createStoreRequest(String neighborhoodId,
+      {required String name, String description = '', String address = '', String phone = ''}) async {
+    await _api.dio.post('/stores/request/', data: {
+      'neighborhood': neighborhoodId,
+      'name': name,
+      'description': description,
+      'address': address,
+      'phone': phone,
+    });
+  }
 }
