@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Mahalla do'koni ochish — ariza — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>#pickmap{height:260px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:560px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div class="page-header"><h1>🏘️ Mahalla do'koni ochish uchun ariza</h1></div>
+  <p style="color:var(--text2);font-size:.9rem;margin-bottom:1rem;">
+    Arizani mahalla admini ko'rib chiqadi. Tasdiqlangach do'koningiz ochiladi va u
+    faqat <b>olib ketish (pickup)</b> rejimida, o'z mahalla sahifangizda ko'rinadi.
+  </p>
+
+  <form method="post" class="card" style="padding:1.5rem;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Do'kon nomi *</label>
+      <input type="text" name="name" class="form-control" required value="{{ post.name }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mahalla *</label>
+      <select name="neighborhood" class="form-control" required>
+        <option value="">— tanlang —</option>
+        {% for n in neighborhoods %}
+        <option value="{{ n.pk }}" {% if n.pk == default_nb %}selected{% endif %}>{{ n.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tavsif</label>
+      <textarea name="description" class="form-control">{{ post.description }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📍 Joylashuv — xaritadan tanlang</label>
+      <div id="pickmap"></div>
+      <input type="hidden" name="latitude" id="latIn" value="{{ post.latitude }}">
+      <input type="hidden" name="longitude" id="lngIn" value="{{ post.longitude }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Manzil</label>
+      <input type="text" name="address" id="addrIn" class="form-control" value="{{ post.address }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefon</label>
+      <input type="text" name="phone" class="form-control" value="{{ post.phone }}">
+    </div>
+    <button type="submit" class="btn btn-accent" style="width:100%;">Ariza yuborish</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  if (typeof SamMap === 'undefined') return;
+  var latIn = document.getElementById('latIn'), lngIn = document.getElementById('lngIn'),
+      addrIn = document.getElementById('addrIn');
+  var start = (latIn.value && lngIn.value) ? [parseFloat(latIn.value), parseFloat(lngIn.value)] : SamMap.CENTER;
+  var map = SamMap.init('pickmap', { center: start, zoomLevel: 14, fullscreen: false });
+  var marker = (latIn.value && lngIn.value) ? L.marker(start, { draggable: true }).addTo(map) : null;
+  function setPoint(ll) {
+    latIn.value = ll.lat.toFixed(6); lngIn.value = ll.lng.toFixed(6);
+    if (marker) { marker.setLatLng(ll); }
+    else { marker = L.marker(ll, { draggable: true }).addTo(map); marker.on('dragend', function () { setPoint(marker.getLatLng()); }); }
+    SamMap.reverseGeocode(ll.lat, ll.lng).then(function (addr) {
+      if (addr && (!addrIn.value || addrIn.dataset.auto === '1')) { addrIn.value = addr; addrIn.dataset.auto = '1'; }
+    });
+  }
+  map.on('click', function (e) { setPoint(e.latlng); });
+  if (marker) marker.on('dragend', function () { setPoint(marker.getLatLng()); });
+})();
+</script>
+{% endblock %}

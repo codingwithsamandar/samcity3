@@ -33,30 +33,39 @@ class DeliveryShowsAllStoresTests(TestCase):
         self.assertIn('NoCoordShop', html)
 
 
-class MahallaPolygonTests(TestCase):
-    """Mahalla sahifasi faqat chegara ichidagi do'konlarni ko'rsatadi (poligon)."""
+class MahallaStoresTests(TestCase):
+    """Mahalla sahifasi faqat SHU mahallaning MAHALLA do'konlarini ko'rsatadi.
+
+    Yetkazib beruvchi do'konlar (store_type='delivery') mahalla sahifasida
+    ko'rinmaydi — koordinatasi chegara ichida bo'lsa ham (ular faqat /delivery/da).
+    """
 
     def setUp(self):
         self.owner = make_user('+998960000010')
         self.nb = Neighborhood.objects.create(name='PolyMahalla', boundary=BOUNDARY,
                                                population=1234, head_name='Rais')
-        self.inside = Store.objects.create(owner=self.owner, name='PolyInside',
-                                           latitude=40.115, longitude=64.505, is_active=True)
-        self.outside = Store.objects.create(owner=self.owner, name='PolyOutside',
-                                            latitude=41.0, longitude=65.0, is_active=True)
+        # Shu mahallaning mahalla do'koni
+        self.inside = Store.objects.create(
+            owner=self.owner, name='PolyInside', store_type='mahalla', neighborhood=self.nb,
+            latitude=40.115, longitude=64.505, pickup_enabled=True, is_active=True)
+        # Yetkazib beruvchi do'kon — koordinatasi chegara ichida bo'lsa ham
+        # mahalla sahifasida CHIQMASLIGI kerak.
+        self.outside = Store.objects.create(
+            owner=self.owner, name='PolyOutside', store_type='delivery',
+            latitude=40.116, longitude=64.506, is_active=True)
 
     def test_contains_point(self):
         self.assertTrue(self.nb.contains_point(40.115, 64.505))
         self.assertFalse(self.nb.contains_point(41.0, 65.0))
 
-    def test_mahalla_page_only_inside_store(self):
+    def test_mahalla_page_only_own_mahalla_store(self):
         html = self.client.get(reverse('mahalla_detail', args=[self.nb.pk]),
                                HTTP_HOST='127.0.0.1').content.decode()
         self.assertIn('PolyInside', html)
         self.assertNotIn('PolyOutside', html)
         self.assertIn('1234', html)  # aholi soni
 
-    def test_geojson_includes_inside_store(self):
+    def test_geojson_includes_mahalla_store_only(self):
         r = self.client.get(reverse('places:neighborhood_places_geojson', args=[self.nb.pk]),
                             HTTP_HOST='127.0.0.1')
         names = [p['name'] for p in r.json()['places']]
@@ -123,8 +132,9 @@ class MahallaApiTests(TestCase):
     def setUp(self):
         self.nb = Neighborhood.objects.create(name='ApiMahalla', boundary=BOUNDARY, population=999)
         self.owner = make_user('+998960000030')
-        self.store = Store.objects.create(owner=self.owner, name='ApiInside',
-                                          latitude=40.115, longitude=64.505, is_active=True)
+        self.store = Store.objects.create(
+            owner=self.owner, name='ApiInside', store_type='mahalla', neighborhood=self.nb,
+            latitude=40.115, longitude=64.505, pickup_enabled=True, is_active=True)
         self.admin_user = make_user('+998960000031')
         ChatAdmin.objects.create(neighborhood=self.nb, user=self.admin_user)
 

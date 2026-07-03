@@ -88,7 +88,8 @@ class StoreListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
         fields = ('id', 'name', 'description', 'address', 'phone', 'working_hours',
-                  'logo', 'category', 'product_count', 'cart_enabled', 'pickup_enabled')
+                  'logo', 'category', 'product_count', 'cart_enabled', 'pickup_enabled',
+                  'store_type')
 
     def get_logo(self, obj):
         return _abs(self.context.get('request'), obj.logo)

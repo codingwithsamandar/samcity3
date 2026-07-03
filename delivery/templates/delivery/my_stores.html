@@ -12,9 +12,23 @@
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
       <a href="{% url 'delivery:store_orders' %}" class="btn btn-outline"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalar</a>
-      <a href="{% url 'delivery:store_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Do'kon ochish</a>
+      {% if user.is_staff %}<a href="{% url 'delivery:store_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Do'kon ochish</a>{% endif %}
+      <a href="{% url 'delivery:store_request_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> 🏘️ Mahalla do'koni</a>
     </div>
   </div>
+
+  {% if my_requests %}
+  <div class="card card-pad" style="margin-bottom:1rem;">
+    <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Arizalarim</h3>
+    {% for r in my_requests %}
+    <div style="display:flex;justify-content:space-between;gap:.5rem;padding:.4rem 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
+      <span style="font-size:.9rem;">{{ r.name }} <span style="color:var(--text3);">· {{ r.neighborhood.name }}</span></span>
+      <span class="badge {% if r.status == 'approved' %}badge-green{% elif r.status == 'rejected' %}badge-red{% else %}badge-gold{% endif %}">{{ r.get_status_display }}</span>
+    </div>
+    {% if r.status == 'rejected' and r.admin_note %}<div style="font-size:.78rem;color:var(--red);padding-bottom:.4rem;">Sabab: {{ r.admin_note }}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
 
   {% for store in stores %}
   <div class="card card-pad" style="margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
@@ -32,7 +46,7 @@
     </div>
   </div>
   {% empty %}
-  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-building"/></svg></div><h3>Hali do'koningiz yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'delivery:store_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Do'kon ochish</a></p></div>
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-building"/></svg></div><h3>Hali do'koningiz yo'q</h3><p style="margin-top:.6rem;"><a href="{% url 'delivery:store_request_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> 🏘️ Mahalla do'koni ochish</a></p></div>
   {% endfor %}
 </div>
 {% endblock %}

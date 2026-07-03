@@ -1,10 +1,10 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from main.admin_widgets import LatLngPickerWidget
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, CartItem,
     Order, OrderItem, DeliveryDriver, StoreUpdate, StoreSubscription,
-    StoreChatThread, StoreChatMessage,
+    StoreChatThread, StoreChatMessage, StoreRequest,
 )
 
 
@@ -33,10 +33,10 @@ class StoreImageInline(admin.TabularInline):
 @admin.register(Store)
 class StoreAdmin(admin.ModelAdmin):
     form = StoreAdminForm
-    list_display = ('name', 'owner', 'category', 'phone', 'working_hours', 'pickup_enabled', 'is_active', 'created_at')
-    list_filter = ('is_active', 'pickup_enabled', 'category')
+    list_display = ('name', 'store_type', 'neighborhood', 'owner', 'category', 'phone', 'pickup_enabled', 'is_active', 'created_at')
+    list_filter = ('store_type', 'is_active', 'pickup_enabled', 'neighborhood', 'category')
     search_fields = ('name', 'owner__phone', 'owner__name', 'address', 'phone')
-    list_editable = ('pickup_enabled', 'is_active')
+    list_editable = ('is_active',)
     readonly_fields = ('created_at',)
     inlines = [StoreImageInline]
 
@@ -154,3 +154,29 @@ class StoreChatMessageAdmin(admin.ModelAdmin):
     list_display = ('thread', 'sender', 'is_read', 'created_at')
     list_filter = ('is_read',)
     search_fields = ('text',)
+
+
+# ── MAHALLA DO'KON ARIZASI (tasdiqlash/rad etish) ───────────────────────────────
+@admin.register(StoreRequest)
+class StoreRequestAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'neighborhood', 'status', 'created_store', 'created_at')
+    list_filter = ('status', 'neighborhood')
+    search_fields = ('name', 'user__phone', 'user__name', 'address')
+    readonly_fields = ('created_store', 'reviewed_by', 'reviewed_at', 'created_at')
+    actions = ('approve_requests', 'reject_requests')
+
+    @admin.action(description="✅ Tasdiqlash — mahalla do'konini yaratish")
+    def approve_requests(self, request, queryset):
+        n = 0
+        for req in queryset.filter(status='pending'):
+            req.approve(reviewer=request.user)
+            n += 1
+        self.message_user(request, f"{n} ta ariza tasdiqlandi va do'kon yaratildi.", messages.SUCCESS)
+
+    @admin.action(description="✕ Rad etish")
+    def reject_requests(self, request, queryset):
+        n = 0
+        for req in queryset.filter(status='pending'):
+            req.reject(reviewer=request.user)
+            n += 1
+        self.message_user(request, f"{n} ta ariza rad etildi.", messages.WARNING)

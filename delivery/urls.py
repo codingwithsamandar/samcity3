@@ -27,6 +27,9 @@ urlpatterns = [
     # ── Store / Product management (egasi) ──────────────────────────────────────
     path('stores/my/', views.my_stores, name='my_stores'),
     path('stores/create/', views.store_create, name='store_create'),
+    # Mahalla do'koni ochish uchun ariza (user → admin tasdig'i)
+    path('stores/request/', views.store_request_create, name='store_request_create'),
+    path('stores/request/<int:req_id>/review/', views.store_request_review, name='store_request_review'),
     path('store/<int:pk>/edit/', views.store_edit, name='store_edit'),
     path('store/<int:pk>/delete/', views.store_delete, name='store_delete'),
     path('store/<int:pk>/announce/', views.store_announcement_create, name='store_announcement_create'),

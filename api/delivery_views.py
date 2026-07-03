@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from delivery.models import (
     Store, StoreImage, Product, Cart, CartItem, Order, OrderItem, DeliveryCategory,
-    StoreUpdate, StoreSubscription,
+    StoreUpdate, StoreSubscription, StoreRequest,
 )
 from delivery.feed import create_store_update
 from .throttles import CheckoutThrottle
@@ -53,7 +53,13 @@ class StoreViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['category']
 
     def get_queryset(self):
-        return Store.objects.filter(is_active=True).select_related('category')
+        qs = Store.objects.filter(is_active=True).select_related('category')
+        # Ro'yxat (/api/stores/) — faqat yetkazib beruvchi do'konlar. Alohida
+        # do'kon (retrieve) esa har ikkala turda ham ochilaveradi (mahalla
+        # ekranidan mahalla do'koniga kirish uchun).
+        if self.action == 'list':
+            qs = qs.filter(store_type='delivery')
+        return qs
 
     def get_serializer_class(self):
         return StoreDetailSerializer if self.action == 'retrieve' else StoreListSerializer
@@ -286,6 +292,13 @@ class MyStoresView(APIView):
         })
 
     def post(self, request):
+        # Yetkazib beruvchi do'konni faqat ADMIN (staff) yaratadi. Oddiy
+        # foydalanuvchi mahalla do'koni uchun /api/stores/request/ orqali ariza beradi.
+        if not request.user.is_staff:
+            return Response(
+                {'detail': "Yetkazib beruvchi do'konni faqat administrator ochadi. "
+                           "Mahalla do'koni uchun ariza bering: /api/stores/request/"},
+                status=status.HTTP_403_FORBIDDEN)
         name = (request.data.get('name') or '').strip()
         if not name:
             return Response({'detail': "Do'kon nomi majburiy."},
@@ -293,7 +306,7 @@ class MyStoresView(APIView):
         cat = DeliveryCategory.objects.filter(pk=request.data.get('category')).first() \
             if request.data.get('category') else None
         store = Store.objects.create(
-            owner=request.user, name=name,
+            owner=request.user, name=name, store_type='delivery',
             description=(request.data.get('description') or '').strip(),
             address=(request.data.get('address') or '').strip(),
             phone=(request.data.get('phone') or '').strip(),
@@ -576,3 +589,52 @@ def _notify_pickup_ready_safe(order):
         notify(order.user, "Buyurtmangiz tayyor, olib keting! 🛍️", url, 'order')
     except Exception:
         pass
+
+
+# ── MAHALLA DO'KONI ARIZASI (mobil) ─────────────────────────────────────────────
+class StoreRequestView(APIView):
+    """GET — foydalanuvchining arizalari; POST — yangi mahalla do'kon arizasi."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        reqs = StoreRequest.objects.filter(user=request.user).select_related('neighborhood')
+        return Response({'results': [self._ser(r) for r in reqs]})
+
+    def post(self, request):
+        from main.models import Neighborhood
+        name = (request.data.get('name') or '').strip()
+        nb = Neighborhood.objects.filter(pk=request.data.get('neighborhood')).first()
+        if not name or nb is None:
+            return Response({'detail': "Do'kon nomi va mahalla majburiy."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        def _f(key):
+            try:
+                return float(request.data.get(key))
+            except (TypeError, ValueError):
+                return None
+
+        req = StoreRequest.objects.create(
+            user=request.user, neighborhood=nb, name=name,
+            description=(request.data.get('description') or '').strip(),
+            address=(request.data.get('address') or '').strip(),
+            phone=(request.data.get('phone') or '').strip(),
+            latitude=_f('latitude'), longitude=_f('longitude'),
+        )
+        # Mahalla adminlari + staff'ni xabardor qilamiz (web bilan bir xil helper).
+        try:
+            from delivery.views import _notify_store_request_admins
+            _notify_store_request_admins(nb, req)
+        except Exception:
+            pass
+        return Response(self._ser(req), status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def _ser(r):
+        return {
+            'id': r.id, 'name': r.name, 'neighborhood': r.neighborhood_id,
+            'neighborhood_name': r.neighborhood.name if r.neighborhood_id else None,
+            'status': r.status, 'status_display': r.get_status_display(),
+            'admin_note': r.admin_note,
+            'created_store': r.created_store_id, 'created_at': r.created_at,
+        }

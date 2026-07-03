@@ -81,20 +81,26 @@ class Command(BaseCommand):
         cat_food = self._category('Oziq-ovqat')
         cat_market = self._category('Bozor')
 
-        # ── 1) To'liq do'kon (pickup yoqilgan) ───────────────────────────────
+        # Demo mahalla (mahalla do'koni uchun kerak)
+        demo_nb = self._neighborhood()
+
+        # ── 1) MAHALLA do'koni (pickup, mahalla sahifasida) ──────────────────
         aziz = self._store(
             owner=owner, name="Aziz do'koni", category=cat_food,
+            store_type='mahalla', neighborhood=demo_nb,
             description="Mahalladagi eng qulay do'kon — yangi mahsulotlar har kuni.",
             address="Shofirkon, Markaziy ko'cha 10", phone='+998 90 123 45 67',
             working_hours="9:00–22:00, har kuni",
             owner_bio="Assalomu alaykum! Men Aziz — 10 yildan beri mahallamizga xizmat qilaman. "
                       "Sifat va halollik — asosiy tamoyilim.",
+            latitude=40.116, longitude=64.506,
             pickup_enabled=True, with_media=True,
         )
 
-        # ── 2) Sodda do'kon (pickup yoqilmagan) ──────────────────────────────
+        # ── 2) YETKAZIB BERUVCHI do'kon (/delivery/ ro'yxatida) ──────────────
         tez = self._store(
             owner=owner, name="Tez bozor", category=cat_market,
+            store_type='delivery', neighborhood=None,
             description="Tez va arzon xaridlar.",
             address="Shofirkon, Bozor ko'chasi 3", phone='+998 90 765 43 21',
             working_hours="8:00–20:00", owner_bio='', pickup_enabled=False, with_media=False,
@@ -179,22 +185,40 @@ class Command(BaseCommand):
             slug=slugify(name), defaults={'name': name})
         return cat
 
+    def _neighborhood(self):
+        """Demo mahalla (mahalla do'koni + mahalla sahifasi uchun)."""
+        from main.models import Neighborhood
+        nb, _ = Neighborhood.objects.get_or_create(
+            name='Demo mahalla',
+            defaults={
+                'population': 5200, 'head_name': 'Aziz Karimov',
+                'center_lat': 40.115, 'center_lng': 64.505,
+                # Kichik kvadrat chegara (Aziz do'koni ichida joylashadi)
+                'boundary': [[40.11, 64.50], [40.11, 64.51], [40.12, 64.51], [40.12, 64.50]],
+            },
+        )
+        return nb
+
     def _store(self, *, owner, name, category, description, address, phone,
-               working_hours, owner_bio, pickup_enabled, with_media):
+               working_hours, owner_bio, pickup_enabled, with_media,
+               store_type='delivery', neighborhood=None, latitude=40.117, longitude=64.512):
         store, _ = Store.objects.get_or_create(
             owner=owner, name=name,
             defaults={
                 'category': category, 'description': description, 'address': address,
                 'phone': phone, 'working_hours': working_hours, 'owner_bio': owner_bio,
                 'pickup_enabled': pickup_enabled, 'is_active': True,
-                'latitude': 40.117, 'longitude': 64.512,
+                'store_type': store_type, 'neighborhood': neighborhood,
+                'latitude': latitude, 'longitude': longitude,
             },
         )
         # Mavjud do'konni ham yangilab qo'yamiz (qayta ishga tushirishda to'g'ri holat).
         Store.objects.filter(pk=store.pk).update(
             category=category, description=description, address=address, phone=phone,
             working_hours=working_hours, owner_bio=owner_bio,
-            pickup_enabled=pickup_enabled, is_active=True)
+            pickup_enabled=pickup_enabled, is_active=True,
+            store_type=store_type, neighborhood=neighborhood,
+            latitude=latitude, longitude=longitude)
         store.refresh_from_db()
 
         # --refresh-images: mavjud rasmlarni o'chirib qayta yaratamiz (masalan

@@ -324,15 +324,19 @@ _PLACE_GROUP_ORDER = [
 
 
 def _stores_in(neighborhood):
-    """Mahalla chegarasi ichidagi faol delivery do'konlari (FK'siz, poligon bo'yicha)."""
+    """Shu mahallaga tegishli MAHALLA do'konlari (store_type='mahalla', FK bo'yicha).
+
+    Yetkazib beruvchi do'konlar bu yerda ko'rinmaydi — ular faqat /delivery/ da.
+    """
     try:
         from delivery.models import Store
     except Exception:
         return []
-    stores = Store.objects.filter(
-        is_active=True, latitude__isnull=False, longitude__isnull=False
-    ).select_related('category')
-    return [s for s in stores if neighborhood.contains_point(s.latitude, s.longitude)]
+    return list(
+        Store.objects.filter(
+            is_active=True, store_type='mahalla', neighborhood=neighborhood,
+        ).select_related('category')
+    )
 
 
 def _places_in_grouped(neighborhood):
@@ -394,11 +398,18 @@ def mahalla_detail(request, pk):
     else:
         requests_qs = neighborhood.citizen_requests.none()
 
+    # Mahalla do'kon arizalari — faqat admin ko'radi (tasdiqlash/rad etish uchun).
+    store_requests = []
+    if is_admin:
+        store_requests = list(
+            neighborhood.store_requests.filter(status='pending').select_related('user'))
+
     return render(request, 'community/mahalla_detail.html', {
         'neighborhood': neighborhood,
         'is_admin': is_admin,
         'announcements': neighborhood.announcements.select_related('created_by')[:30],
         'stores': _stores_in(neighborhood),
+        'store_requests': store_requests,
         'place_groups': _places_in_grouped(neighborhood),
         'chat_room': room,
         'requests': requests_qs,

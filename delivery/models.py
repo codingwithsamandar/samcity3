@@ -23,10 +23,28 @@ class DeliveryCategory(models.Model):
 
 
 class Store(models.Model):
+    # Ikki tur: 'delivery' — katta do'kon/ovqatlanish, admin yaratadi, /delivery/da
+    # ko'rinadi, yetkazib berish bor. 'mahalla' — user ariza berib, admin
+    # tasdiqlagach ochadigan mahalla do'koni; faqat pickup (olib ketish), faqat
+    # o'z mahalla sahifasida ko'rinadi (/delivery/da CHIQMAYDI).
+    STORE_TYPE_CHOICES = [
+        ('delivery', 'Yetkazib beruvchi do\'kon'),
+        ('mahalla', 'Mahalla do\'koni'),
+    ]
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='stores',
+    )
+    store_type = models.CharField(
+        max_length=10, choices=STORE_TYPE_CHOICES, default='delivery', db_index=True,
+        verbose_name='Do\'kon turi',
+    )
+    # Mahalla do'koni uchun — qaysi mahallaga tegishli (faqat 'mahalla' turida).
+    neighborhood = models.ForeignKey(
+        'main.Neighborhood', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='stores', verbose_name='Mahalla',
     )
     category = models.ForeignKey(
         DeliveryCategory,
@@ -199,6 +217,101 @@ class StoreSubscription(models.Model):
 
     def __str__(self):
         return f'{self.user} → {self.store.name} [{"yoqilgan" if self.is_enabled else "o\'chirilgan"}]'
+
+
+# ── MAHALLA DO'KONI ARIZASI (user → admin tasdig'i) ─────────────────────────────
+class StoreRequest(models.Model):
+    """Mahalla do'koni ochish uchun ariza.
+
+    Oddiy foydalanuvchi ariza yuboradi; mahalla admini (yoki staff) ko'rib
+    chiqadi. Tasdiqlansa — shu ma'lumotlardan 'mahalla' turidagi Store yaratiladi
+    va arizachi uning egasi bo'ladi. (Yetkazib beruvchi do'konlarni faqat admin
+    yaratadi — ular uchun ariza kerak emas.)
+    """
+    STATUS_CHOICES = [
+        ('pending', "Ko'rib chiqilmoqda"),
+        ('approved', 'Tasdiqlandi'),
+        ('rejected', 'Rad etildi'),
+    ]
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='store_requests',
+    )
+    neighborhood = models.ForeignKey(
+        'main.Neighborhood', on_delete=models.CASCADE, related_name='store_requests',
+        verbose_name='Mahalla',
+    )
+    name = models.CharField(max_length=200, verbose_name="Do'kon nomi")
+    description = models.TextField(blank=True, verbose_name='Tavsif')
+    address = models.CharField(max_length=300, blank=True, verbose_name='Manzil')
+    phone = models.CharField(max_length=20, blank=True, verbose_name='Telefon')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
+    admin_note = models.CharField(max_length=300, blank=True, verbose_name='Admin izohi (rad sababi/javob)')
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reviewed_store_requests',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_store = models.ForeignKey(
+        Store, on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'delivery_store_requests'
+        verbose_name = "Mahalla do'kon arizasi"
+        verbose_name_plural = "Mahalla do'kon arizalari"
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['neighborhood', 'status'], name='storereq_nbhd_status_idx')]
+
+    def __str__(self):
+        return f'{self.name} — {self.get_status_display()} ({self.user})'
+
+    def approve(self, reviewer=None):
+        """Arizani tasdiqlaydi va 'mahalla' turidagi do'kon yaratadi (idempotent)."""
+        from django.utils import timezone as _tz
+        if self.status == 'approved' and self.created_store_id:
+            return self.created_store
+        store = Store.objects.create(
+            owner=self.user, store_type='mahalla', neighborhood=self.neighborhood,
+            name=self.name, description=self.description, address=self.address,
+            phone=self.phone, latitude=self.latitude, longitude=self.longitude,
+            pickup_enabled=True, is_active=True,
+        )
+        self.status = 'approved'
+        self.created_store = store
+        self.reviewed_by = reviewer
+        self.reviewed_at = _tz.now()
+        self.save(update_fields=['status', 'created_store', 'reviewed_by', 'reviewed_at'])
+        # Arizachini xabardor qilamiz + 'business' roliga o'tkazamiz
+        if getattr(self.user, 'role', '') == 'user':
+            self.user.role = 'business'
+            self.user.save(update_fields=['role'])
+        try:
+            from notifications.models import notify
+            from django.urls import reverse
+            notify(self.user, f"«{self.name}» mahalla do'koningiz tasdiqlandi! ✅",
+                   reverse('delivery:store_detail', args=[store.pk]), 'business')
+        except Exception:
+            pass
+        return store
+
+    def reject(self, reviewer=None, note=''):
+        from django.utils import timezone as _tz
+        self.status = 'rejected'
+        self.admin_note = note or self.admin_note
+        self.reviewed_by = reviewer
+        self.reviewed_at = _tz.now()
+        self.save(update_fields=['status', 'admin_note', 'reviewed_by', 'reviewed_at'])
+        try:
+            from notifications.models import notify
+            msg = f"«{self.name}» do'kon arizangiz rad etildi."
+            if note:
+                msg += f" Sabab: {note}"
+            notify(self.user, msg, '', 'business')
+        except Exception:
+            pass
 
 
 # ── CART ──────────────────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ from .delivery_views import (
     MyStoresView, MyStoreDetailView, StoreProductsView, StoreProductDetailView,
     StoreUpdatesView, StoreSubscribeToggleView, StoreAnnouncementCreateView,
     StoreOrdersView, StoreOrderStatusView, OrderConfirmPickupView,
+    StoreRequestView,
 )
 from .taxi_views import TaxiServiceViewSet, TaxistViewSet, TripViewSet
 from .chat_views import ChatRoomViewSet, ChatMessagesView
@@ -75,6 +76,7 @@ urlpatterns = [
     path('products/<int:pk>/', ProductDetailView.as_view(), name='product-detail'),
     path('checkout/', checkout, name='checkout'),
     path('my/stores/', MyStoresView.as_view(), name='my-stores'),
+    path('stores/request/', StoreRequestView.as_view(), name='store-request'),
     path('my/stores/<int:store_pk>/', MyStoreDetailView.as_view(), name='my-store-detail'),
     path('stores/<int:store_pk>/products/', StoreProductsView.as_view(), name='store-products'),
     path('stores/<int:store_pk>/products/<int:product_pk>/', StoreProductDetailView.as_view(), name='store-product-detail'),

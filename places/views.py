@@ -110,17 +110,16 @@ def neighborhood_places_geojson(request, pk):
                 'url': reverse('places:place_detail', args=[p.pk]),
             })
 
-        # ── Delivery do'konlarini ham chegara ichida qo'shamiz (poligon bo'yicha) ──
-        # Toifa filtri berilgan bo'lsa faqat 'delivery_store' so'ralganda.
+        # ── Shu mahallaga tegishli MAHALLA do'konlarini qo'shamiz (FK bo'yicha) ──
+        # Yetkazib beruvchi do'konlar mahalla xaritasida ko'rinmaydi (ular /delivery/da).
         if not cat or cat == 'delivery_store':
             try:
                 from delivery.models import Store
                 stores = Store.objects.filter(
-                    is_active=True, latitude__isnull=False, longitude__isnull=False
+                    is_active=True, store_type='mahalla', neighborhood=neighborhood,
+                    latitude__isnull=False, longitude__isnull=False,
                 ).select_related('category')
                 for s in stores:
-                    if not _point_in_polygon(s.latitude, s.longitude, ring):
-                        continue
                     items.append({
                         'id': f'store-{s.pk}', 'name': s.name, 'category': 'delivery_store',
                         'cat': (s.category.name if s.category else "Do'kon"),

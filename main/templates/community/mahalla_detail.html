@@ -78,8 +78,26 @@
 
   <!-- ── JOYLAR ── -->
   <div class="mh-panel" data-p="places">
+    {% if is_admin and store_requests %}
+    <div class="card card-pad" style="margin-bottom:1.25rem;border-color:#cdd6f7;background:var(--accent-l);">
+      <h3 style="font-size:.9rem;margin-bottom:.6rem;">🏘️ Do'kon arizalari (tasdiqlash kutmoqda)</h3>
+      {% for r in store_requests %}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.5rem 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
+        <div style="font-size:.9rem;"><b>{{ r.name }}</b> <span style="color:var(--text3);">· {{ r.user.name|default:r.user.phone }}</span>{% if r.address %}<div style="font-size:.78rem;color:var(--text3);">{{ r.address|truncatechars:50 }}</div>{% endif %}</div>
+        <div style="display:flex;gap:.4rem;">
+          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="approve"><button class="btn btn-green btn-sm">✅ Tasdiqlash</button></form>
+          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="reject"><button class="btn btn-outline btn-sm">Rad etish</button></form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;">
+      <h3 style="font-size:.95rem;margin:0;">🛒 Do'konlar</h3>
+      {% if user.is_authenticated %}<a href="{% url 'delivery:store_request_create' %}" class="btn btn-outline btn-sm">🏘️ Do'kon ochish (ariza)</a>{% endif %}
+    </div>
     {% if stores %}
-    <h3 style="font-size:.95rem;margin:.3rem 0 .6rem;">🛒 Do'konlar</h3>
     <div class="grid-4" style="margin-bottom:1.25rem;">
       {% for s in stores %}
       <a href="{% url 'delivery:store_detail' s.pk %}" class="lcard" style="color:inherit;">

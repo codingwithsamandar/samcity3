@@ -13,7 +13,7 @@ from main.utils import validate_file_type
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
     DeliveryDriver, DriverLocation, StoreUpdate, StoreSubscription,
-    StoreChatThread, StoreChatMessage, can_transition,
+    StoreChatThread, StoreChatMessage, StoreRequest, can_transition,
 )
 from .feed import create_store_update
 from .chat import get_or_create_thread, is_participant, create_message
@@ -41,7 +41,9 @@ def _card_brand(digits):
 # ── Store views ───────────────────────────────────────────────────────────────
 
 def store_list_view(request):
-    qs = Store.objects.filter(is_active=True).select_related('owner', 'category')
+    # /delivery/ — faqat YETKAZIB BERUVCHI do'konlar (mahalla do'konlari bu yerda
+    # ko'rinmaydi; ular faqat o'z mahalla sahifasida chiqadi).
+    qs = Store.objects.filter(is_active=True, store_type='delivery').select_related('owner', 'category')
 
     q = request.GET.get('q', '').strip()
     cat_slug = request.GET.get('cat', '').strip()
@@ -403,8 +405,81 @@ def _pfloat(v):
 
 @login_required
 def my_stores(request):
-    stores = Store.objects.filter(owner=request.user).select_related('category')
-    return render(request, 'delivery/my_stores.html', {'stores': stores})
+    stores = Store.objects.filter(owner=request.user).select_related('category', 'neighborhood')
+    my_requests = StoreRequest.objects.filter(user=request.user).select_related('neighborhood')
+    return render(request, 'delivery/my_stores.html', {
+        'stores': stores, 'my_requests': my_requests,
+    })
+
+
+# ── MAHALLA DO'KONI ARIZASI (user → admin tasdig'i) ─────────────────────────────
+
+def _notify_store_request_admins(neighborhood, req):
+    """Yangi ariza haqida mahalla adminlari (rais) + staff'ni xabardor qiladi."""
+    try:
+        from notifications.models import notify
+        from main.models import ChatAdmin, User as _User
+        from django.urls import reverse
+        url = reverse('mahalla_detail', args=[neighborhood.pk])
+        recipients = {a.user for a in ChatAdmin.objects.filter(
+            neighborhood=neighborhood).select_related('user')}
+        recipients.update(_User.objects.filter(is_staff=True))
+        for u in recipients:
+            notify(u, f"Yangi mahalla do'kon arizasi: «{req.name}»", url, 'business')
+    except Exception:
+        pass
+
+
+@login_required
+def store_request_create(request):
+    """Foydalanuvchi mahalla do'koni ochish uchun ariza yuboradi."""
+    from main.models import Neighborhood
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        nb = Neighborhood.objects.filter(pk=request.POST.get('neighborhood')).first()
+        if not name or not nb:
+            messages.error(request, "Do'kon nomi va mahalla majburiy.")
+            return render(request, 'delivery/store_request_form.html', {
+                'neighborhoods': Neighborhood.objects.all(),
+                'default_nb': request.user.neighborhood_id, 'post': _form_post(request),
+            })
+        req = StoreRequest.objects.create(
+            user=request.user, neighborhood=nb, name=name,
+            description=request.POST.get('description', '').strip(),
+            address=request.POST.get('address', '').strip(),
+            phone=request.POST.get('phone', '').strip(),
+            latitude=_pfloat(request.POST.get('latitude')),
+            longitude=_pfloat(request.POST.get('longitude')),
+        )
+        _notify_store_request_admins(nb, req)
+        messages.success(request, "Arizangiz yuborildi! Admin tasdiqlagach do'koningiz ochiladi. 📨")
+        return redirect('delivery:my_stores')
+
+    return render(request, 'delivery/store_request_form.html', {
+        'neighborhoods': Neighborhood.objects.all(),
+        'default_nb': request.user.neighborhood_id, 'post': _form_post(request),
+    })
+
+
+@login_required
+@require_POST
+def store_request_review(request, req_id):
+    """Mahalla admini (rais) yoki staff arizani tasdiqlaydi/rad etadi (web)."""
+    req = get_object_or_404(StoreRequest.objects.select_related('neighborhood'), pk=req_id)
+    if not (request.user.is_staff or req.neighborhood.is_admin(request.user)):
+        messages.error(request, "Bu arizani ko'rib chiqish huquqingiz yo'q.")
+        return redirect('mahalla_detail', pk=req.neighborhood_id)
+    action = request.POST.get('action', '')
+    if req.status != 'pending':
+        messages.info(request, "Bu ariza allaqachon ko'rib chiqilgan.")
+    elif action == 'approve':
+        store = req.approve(reviewer=request.user)
+        messages.success(request, f"«{req.name}» tasdiqlandi va do'kon yaratildi. ✅")
+        return redirect('delivery:store_detail', pk=store.pk)
+    elif action == 'reject':
+        req.reject(reviewer=request.user, note=request.POST.get('note', '').strip())
+        messages.success(request, "Ariza rad etildi.")
+    return redirect('mahalla_detail', pk=req.neighborhood_id)
 
 
 def _form_post(request):
@@ -435,6 +510,13 @@ def _save_gallery_images(request, store):
 
 @login_required
 def store_create(request):
+    # Yetkazib beruvchi do'konni faqat ADMIN (staff) yaratadi. Oddiy foydalanuvchi
+    # mahalla do'koni ochish uchun ariza beradi (store_request_create).
+    if not request.user.is_staff:
+        messages.info(request, "Yetkazib beruvchi do'konni administrator ochadi. "
+                               "Siz mahalla do'koni ochish uchun ariza berishingiz mumkin.")
+        return redirect('delivery:store_request_create')
+
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         if not name:
@@ -443,7 +525,7 @@ def store_create(request):
                 'mode': 'create', 'categories': DeliveryCategory.objects.all(), 'post': _form_post(request),
             })
         store = Store(
-            owner=request.user, name=name,
+            owner=request.user, name=name, store_type='delivery',
             description=request.POST.get('description', '').strip(),
             address=request.POST.get('address', '').strip(),
             phone=request.POST.get('phone', '').strip(),
