@@ -10,7 +10,8 @@ from datetime import timedelta
 from .utils import validate_file_type
 from .models import (
     Poll, PollOption, PollVote, PollComment,
-    HelpRequest, HelpVolunteer, Neighborhood, ChatMember,
+    HelpRequest, HelpVolunteer, Neighborhood, ChatMember, ChatAdmin,
+    NeighborhoodAnnouncement, CitizenRequest, CITIZEN_REQUEST_TRANSITIONS,
 )
 
 
@@ -309,3 +310,196 @@ def community_map_geojson(request):
         })
 
     return JsonResponse({'markers': markers})
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  MAHALLA SAHIFASI (yagona: ma'lumot, e'lonlar, joylar, xarita, chat, murojaat)
+# ════════════════════════════════════════════════════════════════════════════
+
+# Joy toifalarini "mahalla" ko'rinishida guruhlash tartibi (do'kon alohida).
+_PLACE_GROUP_ORDER = [
+    'barber', 'school', 'kindergarten', 'government', 'hospital', 'pharmacy',
+    'bank', 'post', 'restaurant', 'organization',
+]
+
+
+def _stores_in(neighborhood):
+    """Mahalla chegarasi ichidagi faol delivery do'konlari (FK'siz, poligon bo'yicha)."""
+    try:
+        from delivery.models import Store
+    except Exception:
+        return []
+    stores = Store.objects.filter(
+        is_active=True, latitude__isnull=False, longitude__isnull=False
+    ).select_related('category')
+    return [s for s in stores if neighborhood.contains_point(s.latitude, s.longitude)]
+
+
+def _places_in_grouped(neighborhood):
+    """Mahalla ichidagi joylarni toifa bo'yicha guruhlaydi (do'kon toifasidan tashqari)."""
+    from places.models import Place, CATEGORY_CHOICES
+    labels = dict(CATEGORY_CHOICES)
+    inside = [p for p in Place.objects.filter(is_active=True)
+              if p.category != 'delivery_store' and neighborhood.contains_point(p.latitude, p.longitude)]
+    by_cat = {}
+    for p in inside:
+        by_cat.setdefault(p.category, []).append(p)
+    # Belgilangan tartibda, keyin qolganlar
+    ordered = []
+    seen = set()
+    for cat in _PLACE_GROUP_ORDER:
+        if cat in by_cat:
+            ordered.append({'key': cat, 'label': labels.get(cat, cat), 'items': by_cat[cat]})
+            seen.add(cat)
+    for cat, items in by_cat.items():
+        if cat not in seen:
+            ordered.append({'key': cat, 'label': labels.get(cat, cat), 'items': items})
+    return ordered
+
+
+def _notify_neighborhood_admins(neighborhood, text, url, exclude_user=None):
+    """Mahalla adminlariga (ChatAdmin + staff emas — faqat tayinlangan raislar) xabar."""
+    try:
+        from notifications.models import notify
+        admins = ChatAdmin.objects.filter(neighborhood=neighborhood).select_related('user')
+        for a in admins:
+            if exclude_user and a.user_id == exclude_user.id:
+                continue
+            notify(a.user, text, url, 'system')
+    except Exception:
+        pass
+
+
+def mahalla_home(request):
+    """Mahalla bo'limi kirish nuqtasi — foydalanuvchi mahallasiga yo'naltiradi."""
+    if request.user.is_authenticated and request.user.neighborhood_id:
+        return redirect('mahalla_detail', pk=request.user.neighborhood_id)
+    return render(request, 'community/mahalla_home.html', {
+        'neighborhoods': Neighborhood.objects.all(),
+    })
+
+
+def mahalla_detail(request, pk):
+    """Yagona Mahalla sahifasi (tab'lar: ma'lumot, e'lonlar, joylar, xarita, chat, murojaat)."""
+    import json
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    is_admin = neighborhood.is_admin(request.user)
+    room = getattr(neighborhood, 'chat_room', None)
+
+    # Murojaatlar: admin barchani, oddiy foydalanuvchi faqat o'zinikini ko'radi.
+    if is_admin:
+        requests_qs = neighborhood.citizen_requests.select_related('user')[:100]
+    elif request.user.is_authenticated:
+        requests_qs = neighborhood.citizen_requests.filter(user=request.user)[:50]
+    else:
+        requests_qs = neighborhood.citizen_requests.none()
+
+    return render(request, 'community/mahalla_detail.html', {
+        'neighborhood': neighborhood,
+        'is_admin': is_admin,
+        'announcements': neighborhood.announcements.select_related('created_by')[:30],
+        'stores': _stores_in(neighborhood),
+        'place_groups': _places_in_grouped(neighborhood),
+        'chat_room': room,
+        'requests': requests_qs,
+        'req_categories': CitizenRequest.CATEGORY_CHOICES,
+        'req_statuses': CitizenRequest.STATUS_CHOICES,
+        'has_boundary': bool(neighborhood.boundary),
+        'boundary_json': json.dumps(neighborhood.boundary or []),
+        'centroid_json': json.dumps(neighborhood.centroid()),
+    })
+
+
+@login_required
+def announcement_create(request, pk):
+    """Mahalla raisi/admin rasmiy e'lon joylaydi (+ mahalla a'zolariga bildirishnoma)."""
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    if not neighborhood.is_admin(request.user):
+        messages.error(request, "E'lon joylash faqat mahalla admini uchun.")
+        return redirect('mahalla_detail', pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        text = request.POST.get('text', '').strip()
+        if not title or not text:
+            messages.error(request, "Sarlavha va matn majburiy.")
+            return redirect('mahalla_detail', pk=pk)
+        ann = NeighborhoodAnnouncement(
+            neighborhood=neighborhood, title=title, text=text, created_by=request.user)
+        img = request.FILES.get('image')
+        if img:
+            try:
+                validate_file_type(img)
+                ann.image = img
+            except Exception as e:
+                messages.warning(request, f"Rasm: {str(e)}")
+        ann.save()
+        _notify_mahalla(neighborhood, f"📢 Mahalla e'loni: {title[:60]}",
+                        reverse('mahalla_detail', args=[pk]), exclude_user=request.user)
+        messages.success(request, "E'lon joylandi! ✅")
+    return redirect('mahalla_detail', pk=pk)
+
+
+@login_required
+def citizen_request_create(request, pk):
+    """Fuqaro murojaat/shikoyat yuboradi (+ mahalla adminlariga bildirishnoma)."""
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        text = request.POST.get('text', '').strip()
+        category = request.POST.get('category', 'other')
+        if not title or not text:
+            messages.error(request, "Mavzu va matn majburiy.")
+            return redirect('mahalla_detail', pk=pk)
+        if category not in dict(CitizenRequest.CATEGORY_CHOICES):
+            category = 'other'
+        req = CitizenRequest(
+            neighborhood=neighborhood, user=request.user,
+            category=category, title=title, text=text)
+        img = request.FILES.get('image')
+        if img:
+            try:
+                validate_file_type(img)
+                req.image = img
+            except Exception as e:
+                messages.warning(request, f"Rasm: {str(e)}")
+        req.save()
+        _notify_neighborhood_admins(
+            neighborhood, f"🗣 Yangi murojaat: {title[:50]}",
+            reverse('mahalla_detail', args=[pk]), exclude_user=request.user)
+        messages.success(request, "Murojaatingiz yuborildi! Holatini shu yerda kuzatasiz. ✅")
+    return redirect('mahalla_detail', pk=pk)
+
+
+@login_required
+def citizen_request_status(request, req_id):
+    """Mahalla admini murojaat holatini o'zgartiradi + javob yozadi (+ mijozga bildirishnoma)."""
+    req = get_object_or_404(CitizenRequest.objects.select_related('neighborhood', 'user'), pk=req_id)
+    neighborhood = req.neighborhood
+    if not (neighborhood and neighborhood.is_admin(request.user)):
+        messages.error(request, "Murojaatni boshqarish faqat mahalla admini uchun.")
+        return redirect('mahalla_detail', pk=neighborhood.pk if neighborhood else '')
+    if request.method == 'POST':
+        new_status = request.POST.get('status', '')
+        response = request.POST.get('response', '').strip()
+        changed = False
+        if new_status and new_status != req.status:
+            if new_status in CITIZEN_REQUEST_TRANSITIONS.get(req.status, set()):
+                req.status = new_status
+                req.responded_by = request.user
+                changed = True
+            else:
+                messages.error(request, "Bu holatga o'tib bo'lmaydi.")
+        if response:
+            req.response = response
+            req.responded_by = request.user
+            changed = True
+        if changed:
+            req.save()
+            try:
+                from notifications.models import notify
+                notify(req.user, f"Murojaatingiz holati: {req.get_status_display()}",
+                       reverse('mahalla_detail', args=[neighborhood.pk]), 'system')
+            except Exception:
+                pass
+            messages.success(request, "Murojaat yangilandi.")
+    return redirect('mahalla_detail', pk=neighborhood.pk)

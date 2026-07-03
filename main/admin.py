@@ -11,6 +11,7 @@ from .models import (
     Poll, PollOption, PollVote, PollComment,
     HelpRequest, HelpVolunteer,
     AdFavorite, AdReport, AdInquiry, SearchQuery,
+    NeighborhoodAnnouncement, CitizenRequest,
 )
 
 
@@ -178,9 +179,10 @@ class NeighborhoodAdminForm(forms.ModelForm):
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(admin.ModelAdmin):
     form = NeighborhoodAdminForm
-    list_display = ('name', 'color_swatch', 'has_boundary', 'created_at')
-    search_fields = ('name',)
-    fields = ('name', 'description', 'color', 'center_lat', 'center_lng', 'boundary')
+    list_display = ('name', 'population', 'head_name', 'head_phone', 'color_swatch', 'has_boundary', 'created_at')
+    search_fields = ('name', 'head_name', 'head_phone')
+    fields = ('name', 'description', 'population', 'head_name', 'head_phone',
+              'color', 'center_lat', 'center_lng', 'boundary')
 
     @admin.display(description='Rang')
     def color_swatch(self, obj):
@@ -221,6 +223,26 @@ class ChatMemberAdmin(admin.ModelAdmin):
     search_fields = ('user__phone', 'user__name')
     list_editable = ('is_approved', 'is_banned')
     readonly_fields = ('joined_at', 'approved_at')
+
+
+# ── MAHALLA: e'lonlar + fuqaro murojaatlari ──────────────────────────────────
+@admin.register(NeighborhoodAnnouncement)
+class NeighborhoodAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'neighborhood', 'created_by', 'created_at')
+    list_filter = ('neighborhood',)
+    search_fields = ('title', 'text', 'neighborhood__name')
+    readonly_fields = ('created_at',)
+    autocomplete_fields = ['neighborhood', 'created_by']
+
+
+@admin.register(CitizenRequest)
+class CitizenRequestAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'neighborhood', 'user', 'status', 'created_at')
+    list_filter = ('status', 'category', 'neighborhood')
+    search_fields = ('title', 'text', 'user__phone', 'user__name')
+    list_editable = ('status',)
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['neighborhood', 'user', 'responded_by']
 
 
 # ── JOBS & RESUMES ────────────────────────────────────────────────────────────

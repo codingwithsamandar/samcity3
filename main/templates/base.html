@@ -851,7 +851,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
       <a href="{% url 'venue_list' %}" {% if '/booking' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>Joylar</a>
       <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>Xarita</a>
       <a href="{% url 'delivery:store_list' %}" {% if request.path == '/delivery/' %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>Yetkazish</a>
-      <a href="{% url 'neighborhood_chat' %}" {% if 'chat' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-chat"/></svg>Chat</a>
+      <a href="{% url 'mahalla_home' %}" {% if '/mahalla' in request.path or 'chat' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>Mahalla</a>
     </div>
     <div class="nav-auth">
       <a href="{% url 'global_search' %}" class="btn btn-ghost" title="Qidiruv" aria-label="Qidiruv"><svg class="ic"><use href="#i-search"/></svg></a>
@@ -926,7 +926,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <a href="{% url 'venue_list' %}"><svg class="ic"><use href="#i-building"/></svg> Joylar</a>
   <a href="{% url 'places:map' %}"><svg class="ic"><use href="#i-map"/></svg> Xarita</a>
   <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>
-  <a href="{% url 'neighborhood_chat' %}"><svg class="ic"><use href="#i-chat"/></svg> Chat</a>
+  <a href="{% url 'mahalla_home' %}"><svg class="ic"><use href="#i-building"/></svg> Mahalla</a>
   <div class="mm-divider"></div>
   {% if user.is_authenticated %}
     <div class="mm-label">Hisob</div>

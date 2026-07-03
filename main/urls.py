@@ -87,6 +87,13 @@ urlpatterns = [
     path('community/map/', community_views.community_map, name='community_map'),
     path('community/map/geojson/', community_views.community_map_geojson, name='community_map_geojson'),
 
+    # ─── MAHALLA sahifasi (ma'lumot, e'lonlar, joylar, xarita, chat, murojaat) ─
+    path('mahalla/', community_views.mahalla_home, name='mahalla_home'),
+    path('mahalla/<int:pk>/', community_views.mahalla_detail, name='mahalla_detail'),
+    path('mahalla/<int:pk>/announce/', community_views.announcement_create, name='mahalla_announce'),
+    path('mahalla/<int:pk>/complaint/', community_views.citizen_request_create, name='mahalla_complaint'),
+    path('mahalla/complaint/<uuid:req_id>/status/', community_views.citizen_request_status, name='mahalla_complaint_status'),
+
     # ─── COMMUNITY: HELP CENTER ─────────────────────────────────────────────
     path('community/help/', community_views.help_list, name='help_list'),
     path('community/help/create/', community_views.help_create, name='help_create'),

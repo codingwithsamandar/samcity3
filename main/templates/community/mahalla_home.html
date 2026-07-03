@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Mahalla — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:820px;">
+  <div class="page-header">
+    <span class="eyebrow"><svg class="ic"><use href="#i-building"/></svg> Mahalla</span>
+    <h1 style="margin-top:.6rem;">🏘️ Mahallangizni tanlang</h1>
+    <p>O'z mahallangizni tanlang — ma'lumot, e'lonlar, joylar, chat va murojaatlar bir joyda.</p>
+  </div>
+
+  {% if user.is_authenticated %}
+  <p style="color:var(--text3);font-size:.85rem;margin-bottom:1rem;">
+    Doimiy mahalla belgilash uchun <a href="{% url 'set_neighborhood' %}" style="color:var(--accent);">bu yerdan</a> tanlashingiz mumkin.
+  </p>
+  {% endif %}
+
+  {% for n in neighborhoods %}
+  <a href="{% url 'mahalla_detail' n.pk %}" class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;color:inherit;">
+    <div style="display:flex;align-items:center;gap:.8rem;">
+      <span style="width:14px;height:14px;border-radius:4px;background:{{ n.color|default:'#3551d1' }};display:inline-block;"></span>
+      <div>
+        <div style="font-weight:700;">{{ n.name }}</div>
+        {% if n.population %}<div style="color:var(--text3);font-size:.8rem;">👥 {{ n.population }} aholi</div>{% endif %}
+      </div>
+    </div>
+    <svg class="ic" style="color:var(--text3);"><use href="#i-arrow-right"/></svg>
+  </a>
+  {% empty %}
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-building"/></svg></div><h3>Mahallalar hali qo'shilmagan</h3></div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -185,6 +185,10 @@ class Neighborhood(models.Model):
     # Chegara — poligon nuqtalari ro'yxati: [[lat, lng], [lat, lng], ...]
     boundary = models.JSONField('Chegara (poligon)', null=True, blank=True, default=None)
     color = models.CharField('Rang', max_length=9, blank=True, default='#3551d1')
+    # ── Mahalla ma'lumotlari (Mahalla sahifasi uchun) ────────────────────────
+    population = models.PositiveIntegerField('Aholi soni', null=True, blank=True)
+    head_name = models.CharField('Mahalla raisi', max_length=120, blank=True)
+    head_phone = models.CharField('Rais telefoni', max_length=30, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -208,6 +212,34 @@ class Neighborhood(models.Model):
         if self.center_lat is not None and self.center_lng is not None:
             return [self.center_lat, self.center_lng]
         return None
+
+    def contains_point(self, lat, lng):
+        """Nuqta (lat,lng) mahalla chegarasi ichidami? (ray-casting).
+
+        Do'kon/joylarni FK'siz, faqat koordinata bo'yicha mahallaga bog'lash uchun
+        (places.neighborhood_places_geojson bilan bir xil algoritm)."""
+        ring = self.boundary or []
+        if not ring or lat is None or lng is None:
+            return False
+        inside = False
+        j = len(ring) - 1
+        for i in range(len(ring)):
+            yi, xi = ring[i][0], ring[i][1]
+            yj, xj = ring[j][0], ring[j][1]
+            if (yi > lat) != (yj > lat) and lng < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+                inside = not inside
+            j = i
+        return inside
+
+    def is_admin(self, user):
+        """Foydalanuvchi shu mahalla admini (raisi)mi — e'lon/murojaat boshqaruvi uchun.
+
+        Staff yoki shu mahallaning ChatAdmin'i (mavjud infra) admin hisoblanadi."""
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        return self.admins.filter(user=user).exists()
 
 
 class ChatRoom(models.Model):
@@ -300,6 +332,101 @@ class MessageReaction(models.Model):
 
     def __str__(self):
         return f'{self.emoji} — {self.user}'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  MAHALLA — rasmiy e'lonlar + fuqarolar murojaati (Mahalla sahifasi uchun)
+# ════════════════════════════════════════════════════════════════════════════
+
+class NeighborhoodAnnouncement(models.Model):
+    """Mahalla raisi/admin tomonidan joylanadigan rasmiy e'lon.
+
+    Masalan: suv o'chirilishi, umumiy yig'ilish sanasi, obodonlashtirish."""
+    neighborhood = models.ForeignKey(
+        Neighborhood, on_delete=models.CASCADE, related_name='announcements',
+        verbose_name='Mahalla',
+    )
+    title = models.CharField(max_length=200, verbose_name='Sarlavha')
+    text = models.TextField(verbose_name='Matn')
+    image = models.ImageField(upload_to='mahalla/announcements/%Y/%m/', blank=True, null=True,
+                              validators=[validate_file_type])
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='neighborhood_announcements',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'neighborhood_announcements'
+        ordering = ['-created_at']
+        verbose_name = "Mahalla e'loni"
+        verbose_name_plural = "Mahalla e'lonlari"
+        indexes = [models.Index(fields=['neighborhood', '-created_at'], name='nb_ann_created_idx')]
+
+    def __str__(self):
+        return f'{self.neighborhood.name}: {self.title}'
+
+
+class CitizenRequest(models.Model):
+    """Fuqaro murojaati/shikoyati — hokimiyat (mahalla) ishlariga yordam.
+
+    Holat zanjiri: yuborildi → ko'rib chiqilmoqda → hal qilindi / rad etildi."""
+    CATEGORY_CHOICES = [
+        ('road', "Yo'l"),
+        ('water', 'Suv'),
+        ('electricity', 'Svet / elektr'),
+        ('cleaning', 'Tozalik'),
+        ('gas', 'Gaz'),
+        ('lighting', "Ko'cha yoritilishi"),
+        ('landscaping', 'Obodonlashtirish'),
+        ('other', 'Boshqa'),
+    ]
+    STATUS_CHOICES = [
+        ('submitted', 'Yuborildi'),
+        ('reviewing', 'Ko\'rib chiqilmoqda'),
+        ('resolved', 'Hal qilindi'),
+        ('rejected', 'Rad etildi'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    neighborhood = models.ForeignKey(
+        Neighborhood, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='citizen_requests', verbose_name='Mahalla',
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='citizen_requests')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other', db_index=True)
+    title = models.CharField(max_length=200, verbose_name='Mavzu')
+    text = models.TextField(verbose_name='Murojaat matni')
+    image = models.ImageField(upload_to='mahalla/requests/%Y/%m/', blank=True, null=True,
+                              validators=[validate_file_type])
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='submitted', db_index=True)
+    response = models.TextField(blank=True, verbose_name='Rais/admin javobi')
+    responded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='handled_requests',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'citizen_requests'
+        ordering = ['-created_at']
+        verbose_name = 'Fuqaro murojaati'
+        verbose_name_plural = 'Fuqaro murojaatlari'
+        indexes = [
+            models.Index(fields=['neighborhood', 'status', '-created_at'], name='citizen_req_nb_status_idx'),
+            models.Index(fields=['user', '-created_at'], name='citizen_req_user_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_category_display()}: {self.title} [{self.get_status_display()}]'
+
+
+# Murojaat holati o'tishlari (kim qaysi holatga o'tkaza oladi — admin).
+CITIZEN_REQUEST_TRANSITIONS = {
+    'submitted': {'reviewing', 'resolved', 'rejected'},
+    'reviewing': {'resolved', 'rejected'},
+    'resolved': set(),
+    'rejected': set(),
+}
 
 
 class Booking(models.Model):

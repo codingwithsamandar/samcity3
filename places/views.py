@@ -110,6 +110,28 @@ def neighborhood_places_geojson(request, pk):
                 'url': reverse('places:place_detail', args=[p.pk]),
             })
 
+        # ── Delivery do'konlarini ham chegara ichida qo'shamiz (poligon bo'yicha) ──
+        # Toifa filtri berilgan bo'lsa faqat 'delivery_store' so'ralganda.
+        if not cat or cat == 'delivery_store':
+            try:
+                from delivery.models import Store
+                stores = Store.objects.filter(
+                    is_active=True, latitude__isnull=False, longitude__isnull=False
+                ).select_related('category')
+                for s in stores:
+                    if not _point_in_polygon(s.latitude, s.longitude, ring):
+                        continue
+                    items.append({
+                        'id': f'store-{s.pk}', 'name': s.name, 'category': 'delivery_store',
+                        'cat': (s.category.name if s.category else "Do'kon"),
+                        'icon': '🛒', 'color': '#059669',
+                        'lat': s.latitude, 'lng': s.longitude, 'address': s.address,
+                        'phone': s.phone, 'hours': s.working_hours, 'desc': s.description,
+                        'url': reverse('delivery:store_detail', args=[s.pk]),
+                    })
+            except Exception:
+                pass
+
     room = getattr(neighborhood, 'chat_room', None)
     return JsonResponse({
         'neighborhood': {

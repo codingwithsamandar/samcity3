@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}{{ neighborhood.name }} — Mahalla — SamCity{% endblock %}
+
+{% block extra_css %}
+{% include '_map_assets.html' %}
+<style>
+  .mh-tabs { display:flex; gap:.4rem; overflow-x:auto; border-bottom:1px solid var(--border); margin:1rem 0 1.25rem; padding-bottom:.2rem; }
+  .mh-tab { flex:none; padding:.55rem .9rem; border:none; background:none; color:var(--text2); font-weight:650; font-size:.9rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+  .mh-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .mh-panel { display:none; }
+  .mh-panel.active { display:block; }
+  #mhmap { height:60vh; min-height:380px; border-radius:14px; border:1px solid var(--border); z-index:1; }
+  .info-row { display:flex; justify-content:space-between; gap:1rem; padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.92rem; }
+  .req-badge { font-size:.72rem; padding:.15rem .5rem; border-radius:100px; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:960px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <span class="eyebrow"><svg class="ic"><use href="#i-building"/></svg> Mahalla{% if is_admin %} · admin{% endif %}</span>
+      <h1 style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;">
+        <span style="width:16px;height:16px;border-radius:5px;background:{{ neighborhood.color|default:'#3551d1' }};display:inline-block;"></span>
+        {{ neighborhood.name }}
+      </h1>
+    </div>
+    <a href="{% url 'mahalla_home' %}" class="btn btn-ghost btn-sm">Boshqa mahalla</a>
+  </div>
+
+  <div class="mh-tabs" id="mhTabs">
+    <button class="mh-tab active" data-t="info">Ma'lumot</button>
+    <button class="mh-tab" data-t="ann">E'lonlar</button>
+    <button class="mh-tab" data-t="places">Joylar</button>
+    {% if has_boundary %}<button class="mh-tab" data-t="map">Xarita</button>{% endif %}
+    <button class="mh-tab" data-t="req">Murojaatlar</button>
+    {% if chat_room %}<button class="mh-tab" data-t="chat">Chat</button>{% endif %}
+  </div>
+
+  <!-- ── MA'LUMOT ── -->
+  <div class="mh-panel active" data-p="info">
+    <div class="card card-pad">
+      {% if neighborhood.description %}<p style="line-height:1.7;color:var(--text2);margin-bottom:1rem;">{{ neighborhood.description }}</p>{% endif %}
+      {% if neighborhood.population %}<div class="info-row"><span>👥 Aholi soni</span><b>{{ neighborhood.population }}</b></div>{% endif %}
+      {% if neighborhood.head_name %}<div class="info-row"><span>👤 Mahalla raisi</span><b>{{ neighborhood.head_name }}</b></div>{% endif %}
+      {% if neighborhood.head_phone %}<div class="info-row"><span>📞 Rais telefoni</span><b><a href="tel:{{ neighborhood.head_phone }}" style="color:var(--accent);">{{ neighborhood.head_phone }}</a></b></div>{% endif %}
+      {% if not neighborhood.population and not neighborhood.head_name %}<p style="color:var(--text3);">Mahalla ma'lumotlari hali to'ldirilmagan.</p>{% endif %}
+    </div>
+  </div>
+
+  <!-- ── E'LONLAR ── -->
+  <div class="mh-panel" data-p="ann">
+    {% if is_admin %}
+    <form method="post" action="{% url 'mahalla_announce' neighborhood.pk %}" enctype="multipart/form-data" class="card card-pad" style="margin-bottom:1rem;">
+      {% csrf_token %}
+      <h3 style="font-size:.9rem;margin-bottom:.6rem;">📢 Yangi rasmiy e'lon</h3>
+      <input type="text" name="title" class="form-control" placeholder="Sarlavha (masalan: Suv o'chirilishi)" required style="margin-bottom:.5rem;">
+      <textarea name="text" class="form-control" placeholder="E'lon matni..." required></textarea>
+      <input type="file" name="image" class="form-control" accept="image/*" style="margin-top:.5rem;">
+      <button type="submit" class="btn btn-accent btn-sm" style="margin-top:.6rem;">E'lon joylash</button>
+    </form>
+    {% endif %}
+    {% for a in announcements %}
+    <div class="card card-pad" style="margin-bottom:.7rem;">
+      <div style="display:flex;justify-content:space-between;gap:.5rem;">
+        <b>📢 {{ a.title }}</b>
+        <span style="font-size:.75rem;color:var(--text3);white-space:nowrap;">{{ a.created_at|date:"d.m.Y H:i" }}</span>
+      </div>
+      <p style="font-size:.9rem;color:var(--text2);margin-top:.4rem;line-height:1.6;">{{ a.text }}</p>
+      {% if a.image %}<img src="{{ a.image.url }}" style="max-width:220px;border-radius:8px;margin-top:.5rem;">{% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state" style="padding:2rem 1rem;"><h3>E'lonlar yo'q</h3><p>Mahalla rasmiy e'lonlari shu yerda ko'rinadi.</p></div>
+    {% endfor %}
+  </div>
+
+  <!-- ── JOYLAR ── -->
+  <div class="mh-panel" data-p="places">
+    {% if stores %}
+    <h3 style="font-size:.95rem;margin:.3rem 0 .6rem;">🛒 Do'konlar</h3>
+    <div class="grid-4" style="margin-bottom:1.25rem;">
+      {% for s in stores %}
+      <a href="{% url 'delivery:store_detail' s.pk %}" class="lcard" style="color:inherit;">
+        <div class="lc-body">
+          <div class="lc-title">{{ s.name }}</div>
+          {% if s.address %}<div class="lc-sub">{{ s.address|truncatechars:40 }}</div>{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for g in place_groups %}
+    <h3 style="font-size:.95rem;margin:.3rem 0 .6rem;">{{ g.items.0.icon }} {{ g.label }}</h3>
+    <div class="grid-4" style="margin-bottom:1.25rem;">
+      {% for p in g.items %}
+      <a href="{% url 'places:place_detail' p.pk %}" class="lcard" style="color:inherit;">
+        <div class="lc-body">
+          <div class="lc-title">{{ p.name }}</div>
+          {% if p.address %}<div class="lc-sub">{{ p.address|truncatechars:40 }}</div>{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% if not stores and not place_groups %}
+    <div class="empty-state" style="padding:2rem 1rem;"><h3>Bu mahallada joy topilmadi</h3><p>Chegara ichida koordinatasi bor do'kon/joylar shu yerda ko'rinadi.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- ── XARITA ── -->
+  {% if has_boundary %}
+  <div class="mh-panel" data-p="map">
+    <div id="mhmap"></div>
+  </div>
+  {% endif %}
+
+  <!-- ── MUROJAATLAR ── -->
+  <div class="mh-panel" data-p="req">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'mahalla_complaint' neighborhood.pk %}" enctype="multipart/form-data" class="card card-pad" style="margin-bottom:1rem;">
+      {% csrf_token %}
+      <h3 style="font-size:.9rem;margin-bottom:.6rem;">🗣 Hokimiyatga murojaat / shikoyat</h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem;">
+        <select name="category" class="form-control" style="width:auto;">
+          {% for key, label in req_categories %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+        </select>
+        <input type="text" name="title" class="form-control" placeholder="Mavzu" required style="flex:1;min-width:180px;">
+      </div>
+      <textarea name="text" class="form-control" placeholder="Muammoni batafsil yozing..." required></textarea>
+      <input type="file" name="image" class="form-control" accept="image/*" style="margin-top:.5rem;">
+      <button type="submit" class="btn btn-accent btn-sm" style="margin-top:.6rem;">Yuborish</button>
+    </form>
+    {% else %}
+    <div class="flash flash-info">Murojaat yuborish uchun <a href="{% url 'login' %}">tizimga kiring</a>.</div>
+    {% endif %}
+
+    <h3 style="font-size:.9rem;margin:.5rem 0 .6rem;">{% if is_admin %}Barcha murojaatlar{% else %}Mening murojaatlarim{% endif %}</h3>
+    {% for r in requests %}
+    <div class="card card-pad" style="margin-bottom:.7rem;">
+      <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+        <b>{{ r.get_category_display }}: {{ r.title }}</b>
+        <span class="req-badge" style="background:{% if r.status == 'resolved' %}#dcfce7;color:#166534{% elif r.status == 'rejected' %}#fee2e2;color:#991b1b{% elif r.status == 'reviewing' %}#fef9c3;color:#854d0e{% else %}#e0e7ff;color:#3730a3{% endif %};">{{ r.get_status_display }}</span>
+      </div>
+      <p style="font-size:.88rem;color:var(--text2);margin-top:.4rem;">{{ r.text }}</p>
+      {% if r.image %}<img src="{{ r.image.url }}" style="max-width:180px;border-radius:8px;margin-top:.4rem;">{% endif %}
+      {% if is_admin %}<div style="font-size:.78rem;color:var(--text3);margin-top:.3rem;">Muallif: {{ r.user.name|default:r.user.phone }} · {{ r.created_at|date:"d.m.Y H:i" }}</div>{% endif %}
+      {% if r.response %}<div style="margin-top:.5rem;padding:.5rem .7rem;background:var(--surface2);border-radius:8px;font-size:.86rem;"><b>Javob:</b> {{ r.response }}</div>{% endif %}
+
+      {% if is_admin and r.status != 'resolved' and r.status != 'rejected' %}
+      <form method="post" action="{% url 'mahalla_complaint_status' r.id %}" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-start;">
+        {% csrf_token %}
+        <select name="status" class="form-control" style="width:auto;">
+          {% for key, label in req_statuses %}<option value="{{ key }}" {% if r.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <input type="text" name="response" class="form-control" placeholder="Javob (ixtiyoriy)" style="flex:1;min-width:160px;">
+        <button type="submit" class="btn btn-accent btn-sm">Yangilash</button>
+      </form>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state" style="padding:2rem 1rem;"><h3>Murojaat yo'q</h3></div>
+    {% endfor %}
+  </div>
+
+  <!-- ── CHAT ── -->
+  {% if chat_room %}
+  <div class="mh-panel" data-p="chat">
+    <div class="card card-pad" style="text-align:center;">
+      <p style="margin-bottom:1rem;">💬 Mahalla a'zolari bilan real vaqt suhbati.</p>
+      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" class="btn btn-accent"><svg class="ic"><use href="#i-chat"/></svg> Mahalla chatiga kirish</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var tabs = document.getElementById('mhTabs');
+  var mapInited = false;
+  function show(name) {
+    tabs.querySelectorAll('.mh-tab').forEach(function (b) { b.classList.toggle('active', b.dataset.t === name); });
+    document.querySelectorAll('.mh-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.p === name); });
+    if (name === 'map' && !mapInited) { mapInited = true; initMap(); }
+  }
+  tabs.addEventListener('click', function (e) {
+    var b = e.target.closest('.mh-tab'); if (b) show(b.dataset.t);
+  });
+
+  function initMap() {
+    if (typeof SamMap === 'undefined') return;
+    var boundary = {{ boundary_json|safe }};
+    if (!boundary || !boundary.length) return;
+    var map = SamMap.init('mhmap', { zoomLevel: 14, center: {{ centroid_json|safe }} });
+    var color = "{{ neighborhood.color|default:'#3551d1' }}";
+    var poly = L.polygon(boundary, { color: color, weight: 3, fillColor: color, fillOpacity: .08 }).addTo(map);
+    try { map.fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 16 }); } catch (e) {}
+    var cluster = SamMap.cluster(map);
+    fetch("{% url 'places:neighborhood_places_geojson' neighborhood.pk %}")
+      .then(function (r) { return r.json(); })
+      .then(function (d) { (d.places || []).forEach(function (p) { SamMap.placeMarker(p).addTo(cluster); }); });
+    setTimeout(function () { map.invalidateSize(); }, 100);
+  }
+})();
+</script>
+{% endblock %}
