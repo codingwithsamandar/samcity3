@@ -62,6 +62,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--force', action='store_true',
                             help="DEBUG=False bo'lsa ham majburlab ishga tushirish.")
+        parser.add_argument('--refresh-images', action='store_true',
+                            help="Mavjud rasmlarni o'chirib qayta yaratadi (Cloudinary'ga qayta yuklash uchun).")
 
     def handle(self, *args, **opts):
         if not settings.DEBUG and not opts['force']:
@@ -69,6 +71,7 @@ class Command(BaseCommand):
                 "Bu buyruq faqat DEBUG=True muhitida ishlaydi. "
                 "Majburlash uchun --force bering (ehtiyot bo'ling!)."
             )
+        self.refresh = opts.get('refresh_images', False)
 
         self.stdout.write(self.style.MIGRATE_HEADING("SamCity demo do'konlar seed..."))
 
@@ -194,6 +197,14 @@ class Command(BaseCommand):
             pickup_enabled=pickup_enabled, is_active=True)
         store.refresh_from_db()
 
+        # --refresh-images: mavjud rasmlarni o'chirib qayta yaratamiz (masalan
+        # storage Cloudinary'ga o'zgargan bo'lsa — yangi joyga qayta yuklash).
+        if getattr(self, 'refresh', False) and with_media:
+            store.images.all().delete()
+            store.logo = None
+            store.owner_photo = None
+            store.save(update_fields=['logo', 'owner_photo'])
+
         if with_media:
             if not store.logo:
                 store.logo.save(f'{slugify(name)}-logo.png',
@@ -222,6 +233,8 @@ class Command(BaseCommand):
             Product.objects.filter(pk=product.pk).update(
                 price=price, stock=stock, is_available=True, restock_at=restock_at)
             product.refresh_from_db()
+        if getattr(self, 'refresh', False):
+            product.images.all().delete()  # Cloudinary'ga qayta yuklash uchun
         # Bitta rasm (bo'sh bo'lsa)
         if product.images.count() == 0:
             pi = ProductImage(product=product)
