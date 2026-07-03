@@ -416,6 +416,9 @@ def mahalla_detail(request, pk):
         'req_categories': CitizenRequest.CATEGORY_CHOICES,
         'req_statuses': CitizenRequest.STATUS_CHOICES,
         'has_boundary': bool(neighborhood.boundary),
+        # Xarita: chegara CHIZILMAGAN bo'lsa ham, markaz koordinatasi bo'lsa
+        # xarita ko'rsatiladi (mahalla tanlangach xarita chiqishi uchun).
+        'has_map': bool(neighborhood.centroid()),
         'boundary_json': json.dumps(neighborhood.boundary or []),
         'centroid_json': json.dumps(neighborhood.centroid()),
     })

@@ -34,7 +34,7 @@
     <button class="mh-tab active" data-t="info">Ma'lumot</button>
     <button class="mh-tab" data-t="ann">E'lonlar</button>
     <button class="mh-tab" data-t="places">Joylar</button>
-    {% if has_boundary %}<button class="mh-tab" data-t="map">Xarita</button>{% endif %}
+    {% if has_map %}<button class="mh-tab" data-t="map">Xarita</button>{% endif %}
     <button class="mh-tab" data-t="req">Murojaatlar</button>
     {% if chat_room %}<button class="mh-tab" data-t="chat">Chat</button>{% endif %}
   </div>
@@ -130,7 +130,7 @@
   </div>
 
   <!-- ── XARITA ── -->
-  {% if has_boundary %}
+  {% if has_map %}
   <div class="mh-panel" data-p="map">
     <div id="mhmap"></div>
   </div>
@@ -211,11 +211,19 @@
   function initMap() {
     if (typeof SamMap === 'undefined') return;
     var boundary = {{ boundary_json|safe }};
-    if (!boundary || !boundary.length) return;
-    var map = SamMap.init('mhmap', { zoomLevel: 14, center: {{ centroid_json|safe }} });
+    var center = {{ centroid_json|safe }};
+    if ((!boundary || !boundary.length) && !center) return;
+    var map = SamMap.init('mhmap', { zoomLevel: 14, center: center || SamMap.CENTER });
     var color = "{{ neighborhood.color|default:'#3551d1' }}";
-    var poly = L.polygon(boundary, { color: color, weight: 3, fillColor: color, fillOpacity: .08 }).addTo(map);
-    try { map.fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 16 }); } catch (e) {}
+    if (boundary && boundary.length) {
+      // Chegara chizilgan — poligon ko'rsatamiz
+      var poly = L.polygon(boundary, { color: color, weight: 3, fillColor: color, fillOpacity: .08 }).addTo(map);
+      try { map.fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 16 }); } catch (e) {}
+    } else if (center) {
+      // Chegara yo'q — markaz koordinatasiga markaziy nuqta qo'yamiz
+      map.setView(center, 14);
+      L.marker(center).addTo(map).bindPopup("{{ neighborhood.name }}");
+    }
     var cluster = SamMap.cluster(map);
     fetch("{% url 'places:neighborhood_places_geojson' neighborhood.pk %}")
       .then(function (r) { return r.json(); })

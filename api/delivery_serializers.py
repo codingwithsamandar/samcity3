@@ -95,8 +95,9 @@ class StoreListSerializer(serializers.ModelSerializer):
         return _abs(self.context.get('request'), obj.logo)
 
     def get_cart_enabled(self, obj):
-        # Savat/checkout: pickup yoqilgan do'konda (yoki global flag) ochiladi.
-        return bool(obj.pickup_enabled or settings.DELIVERY_CART_ENABLED)
+        # Savat/checkout: yetkazib beruvchi do'kon (delivery oqimi) yoki pickup
+        # yoqilgan mahalla do'konida ochiladi.
+        return bool(obj.store_type == 'delivery' or obj.pickup_enabled or settings.DELIVERY_CART_ENABLED)
 
 
 class StoreDetailSerializer(StoreListSerializer):

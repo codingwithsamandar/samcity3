@@ -101,9 +101,9 @@ def store_detail_view(request, pk):
         'store': store,
         'products': products_qs,
         'pq': pq,
-        # Savatga qo'shish tugmasi: pickup yoqilgan do'konda (yoki global flag)
-        # ko'rinadi. Pickup rejimida bu — "oldindan to'lab, o'zi olib ketish".
-        'cart_enabled': store.pickup_enabled or settings.DELIVERY_CART_ENABLED,
+        # Savatga qo'shish tugmasi: yetkazib beruvchi do'konda (delivery oqimi)
+        # yoki pickup yoqilgan mahalla do'konida ko'rinadi.
+        'cart_enabled': store.store_type == 'delivery' or store.pickup_enabled or settings.DELIVERY_CART_ENABLED,
         'pickup_mode': store.pickup_enabled,
         'gallery': store.images.all(),
         'updates': store.updates.select_related('product')[:20],

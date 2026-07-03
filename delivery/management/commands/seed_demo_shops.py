@@ -166,6 +166,23 @@ class Command(BaseCommand):
             marker='demo-pickup-done', status='delivered',
             ready_at=now - timedelta(hours=2), confirmed_at=now - timedelta(hours=1))
 
+        # Demo owner (Aziz) — Demo mahalla ADMINI qilamiz (arizalarni tasdiqlash
+        # uchun). Endi Aziz bilan kirsangiz mahalla sahifasida "Tasdiqlash" tugmasi
+        # ko'rinadi.
+        from main.models import ChatAdmin
+        ChatAdmin.objects.get_or_create(neighborhood=demo_nb, user=owner)
+
+        # Kutilayotgan demo ariza (Aziz darhol tasdiqlab ko'rishi uchun)
+        from delivery.models import StoreRequest
+        StoreRequest.objects.get_or_create(
+            user=customers[1], neighborhood=demo_nb, name="Sardor do'koni",
+            defaults={
+                'description': "Kichik mahalla do'koni.", 'address': "Demo mahalla, 5-uy",
+                'phone': '+998 90 111 22 33', 'status': 'pending',
+                'latitude': 40.115, 'longitude': 64.505,
+            },
+        )
+
         self._summary(owner, customers, [aziz, tez], norders)
 
     # ── Yordamchilar ─────────────────────────────────────────────────────────

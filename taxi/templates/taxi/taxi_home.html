@@ -71,7 +71,7 @@
       </div>
       <button type="submit" class="btn btn-gold btn-lg yx-go"><svg class="ic"><use href="#i-search"/></svg> {% if q %}Qidirish{% else %}Taksi topish{% endif %}</button>
     </form>
-    <a href="{% url 'taxi:map' %}" class="btn btn-outline btn-lg" style="margin-top:.7rem;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4);position:relative;z-index:1;"><svg class="ic"><use href="#i-map"/></svg> Xaritadan chaqirish</a>
+    <button type="button" disabled class="btn btn-outline btn-lg" style="margin-top:.7rem;background:rgba(255,255,255,.10);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.25);position:relative;z-index:1;cursor:not-allowed;"><svg class="ic"><use href="#i-map"/></svg> Xaritadan chaqirish — tez orada</button>
     {% if user.is_authenticated %}
     <div style="margin-top:1rem;display:flex;gap:1.2rem;flex-wrap:wrap;position:relative;z-index:1;">
       <a href="{% url 'taxi:my_trips' %}" style="color:#fff;font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.3rem;"><svg class="ic"><use href="#i-pin"/></svg> Mening sayohatlarim</a>

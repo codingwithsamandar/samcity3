@@ -36,7 +36,14 @@ def _fare_rates():
 
 # ── TAXI MAP: booking + live driver discovery ────────────────────────────────
 def taxi_map(request):
-    """Ride-hailing style booking map (pickup, destination, nearby drivers, fare)."""
+    """Ride-hailing style booking map (pickup, destination, nearby drivers, fare).
+
+    HOZIRCHA foydalanuvchilar uchun yopiq — "tez orada". Faqat staff sinab
+    ko'rishi mumkin; oddiy foydalanuvchi taksi bosh sahifasiga qaytariladi.
+    """
+    if not request.user.is_staff:
+        messages.info(request, "Xaritadan chaqirish tez orada ishga tushadi. 🚧")
+        return redirect('taxi:home')
     return render(request, 'taxi/taxi_map.html', {})
 
 
