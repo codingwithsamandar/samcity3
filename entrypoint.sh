@@ -21,11 +21,13 @@ python manage.py collectstatic --noinput --no-post-process 2>/dev/null || \
 python manage.py collectstatic --noinput 2>/dev/null || true
 
 # ── Demo ma'lumotlar (bir martalik) ──
-# SEED_DEMO=true bo'lsa, barcha bo'limlar uchun demo seed FON rejimida ishlaydi
-# (daphne'ni bloklamaydi — sayt darhol ochiladi, ma'lumot bir-ikki daqiqada to'ladi).
-# Idempotent — dublikat qilmaydi. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
-if [ "$SEED_DEMO" = "true" ]; then
-  echo "▶ Demo ma'lumotlar fon rejimida seed qilinmoqda (SEED_DEMO=true)..."
+# SEED_DEMO true/TRUE/1/yes bo'lsa, barcha bo'limlar uchun demo seed FON rejimida
+# ishlaydi (daphne'ni bloklamaydi — sayt darhol ochiladi, ma'lumot bir-ikki
+# daqiqada to'ladi). Idempotent. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
+# Katta-kichik harfga sezgir emas (TRUE, True, true — hammasi ishlaydi).
+SEED_DEMO_LC=$(printf '%s' "${SEED_DEMO:-}" | tr '[:upper:]' '[:lower:]')
+if [ "$SEED_DEMO_LC" = "true" ] || [ "$SEED_DEMO_LC" = "1" ] || [ "$SEED_DEMO_LC" = "yes" ]; then
+  echo "▶ Demo ma'lumotlar fon rejimida seed qilinmoqda (SEED_DEMO=$SEED_DEMO)..."
   ( python manage.py seed_all || true ) &
 fi
 
