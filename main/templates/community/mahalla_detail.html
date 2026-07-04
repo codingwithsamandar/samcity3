@@ -231,7 +231,7 @@
 
   <!-- ═══ JOYLAR (xarita + toifalar) ═══ -->
   <div class="view" id="view-joylar">
-    {% if has_map %}<div id="mhmap" style="margin-bottom:16px;"></div>{% endif %}
+    <div id="mhmap" style="margin-bottom:16px;"></div>
     {% for g in place_groups %}
     <div style="margin-bottom:8px;font-weight:700;">{{ g.items.0.icon }} {{ g.label }}</div>
     <div class="shop-row" style="flex-wrap:wrap;margin-bottom:16px;">
@@ -240,7 +240,7 @@
       {% endfor %}
     </div>
     {% empty %}
-    {% if not has_map %}<div class="card-simple"><b>Joy topilmadi</b><p class="empty-note">Maktab, bog'cha, ovqatlanish va boshqa joylar shu yerda ko'rinadi.</p></div>{% endif %}
+    <div class="card-simple"><b>Joy topilmadi</b><p class="empty-note">Maktab, bog'cha, ovqatlanish va boshqa joylar shu yerda ko'rinadi.</p></div>
     {% endfor %}
   </div>
 
@@ -393,7 +393,6 @@
     if (typeof SamMap === 'undefined' || !document.getElementById('mhmap')) return;
     var boundary = {{ boundary_json|safe }};
     var center = {{ centroid_json|safe }};
-    if ((!boundary || !boundary.length) && !center) return;
     var map = SamMap.init('mhmap', { zoomLevel: 14, center: center || SamMap.CENTER });
     var color = "{{ neighborhood.color|default:'#3551d1' }}";
     if (boundary && boundary.length) {
@@ -402,6 +401,9 @@
     } else if (center) {
       map.setView(center, 14);
       L.marker(center).addTo(map).bindPopup("{{ neighborhood.name }}");
+    } else {
+      // Chegara ham, markaz ham belgilanmagan — umumiy hudud xaritasi ko'rsatiladi.
+      map.setView(SamMap.CENTER, 13);
     }
     var cluster = SamMap.cluster(map);
     fetch("{% url 'places:neighborhood_places_geojson' neighborhood.pk %}")
