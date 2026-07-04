@@ -33,7 +33,7 @@ from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
 )
 from .payment_views import InitiatePaymentView
-from .health import HealthView, ReadyView
+from .health import HealthView, ReadyView, SeedStatusView
 from .places_views import PlacesListView
 from .community_views import PollListView, poll_vote, poll_comments, HelpListView
 from .jobs_views import JobListView, ResumeListView
@@ -111,6 +111,7 @@ urlpatterns = [
     path('payments/initiate/', InitiatePaymentView.as_view(), name='payments-initiate'),
     path('health/', HealthView.as_view(), name='health'),
     path('ready/', ReadyView.as_view(), name='ready'),
+    path('seed-status/', SeedStatusView.as_view(), name='seed-status'),
     path('places/', PlacesListView.as_view(), name='places'),
     path('community/polls/', PollListView.as_view(), name='polls'),
     path('community/polls/<uuid:poll_id>/vote/', poll_vote, name='poll-vote'),

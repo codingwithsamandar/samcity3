@@ -20,6 +20,40 @@ class HealthView(APIView):
         return Response({'status': 'ok'})
 
 
+class SeedStatusView(APIView):
+    """Demo ma'lumotlar holati — bo'limlar bo'yicha yozuvlar soni.
+
+    `GET /api/seed-status/` — brauzerdan ochib, demolar qo'shilganini tekshirasiz.
+    Hammasi 0 bo'lsa — seed ishlamagan; sonlar bo'lsa — demo bor.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = []
+
+    def get(self, request):
+        counts = {}
+
+        def _c(label, fn):
+            try:
+                counts[label] = fn()
+            except Exception:
+                counts[label] = -1  # jadval yo'q / xato
+
+        from django.contrib.auth import get_user_model
+        _c('users', lambda: get_user_model().objects.count())
+        _c('ads', lambda: __import__('main.models', fromlist=['Ad']).Ad.objects.count())
+        _c('mahallas', lambda: __import__('main.models', fromlist=['Neighborhood']).Neighborhood.objects.count())
+        _c('polls', lambda: __import__('main.models', fromlist=['Poll']).Poll.objects.count())
+        _c('stores', lambda: __import__('delivery.models', fromlist=['Store']).Store.objects.count())
+        _c('products', lambda: __import__('delivery.models', fromlist=['Product']).Product.objects.count())
+        _c('taxists', lambda: __import__('taxi.models', fromlist=['Taxist']).Taxist.objects.count())
+        _c('venues', lambda: __import__('booking.models', fromlist=['Venue']).Venue.objects.count())
+        _c('places', lambda: __import__('places.models', fromlist=['Place']).Place.objects.count())
+
+        seeded = any(v > 0 for k, v in counts.items() if k in ('stores', 'ads', 'taxists', 'places'))
+        return Response({'seeded': seeded, 'counts': counts})
+
+
 class ReadyView(APIView):
     """Readiness — DB va cache (Redis) ishlayotgan bo'lsa 200, aks holda 503."""
     permission_classes = [AllowAny]
