@@ -1999,3 +1999,35 @@ def boost_ad_view(request, pk):
 def app_download(request):
     """Mobil ilovani yuklab olish sahifasi."""
     return render(request, 'app_download.html')
+
+
+def download_apk(request):
+    """APK'ni to'g'ridan-to'g'ri (SIQISHSIZ) uzatadi.
+
+    DIQQAT: /static/samcity.apk orqali WhiteNoise (CompressedStaticFilesStorage)
+    APK'ni gzip qilib buzib yuboradi (55MB → ~23MB, Android o'rnata olmaydi).
+    Shu view WhiteNoise'ni chetlab o'tib, faylni to'liq va to'g'ri Content-Type
+    bilan beradi.
+    """
+    import os
+    from django.conf import settings
+    from django.http import FileResponse, Http404
+
+    candidates = [
+        os.path.join(settings.BASE_DIR, 'main', 'static', 'samcity.apk'),
+        os.path.join(settings.STATIC_ROOT, 'samcity.apk'),
+    ]
+    path = next((p for p in candidates if os.path.exists(p)), None)
+    if not path:
+        raise Http404("APK topilmadi. Iltimos keyinroq urinib ko'ring.")
+
+    resp = FileResponse(
+        open(path, 'rb'),
+        content_type='application/vnd.android.package-archive',
+    )
+    resp['Content-Length'] = os.path.getsize(path)
+    resp['Content-Disposition'] = 'attachment; filename="samcity.apk"'
+    # WhiteNoise/prokси gzip qo'shmasligi uchun
+    resp['Content-Encoding'] = 'identity'
+    resp['Cache-Control'] = 'public, max-age=3600'
+    return resp

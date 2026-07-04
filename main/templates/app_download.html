@@ -70,7 +70,7 @@
         <div class="dl-desc">
           APK faylni yuklab, o'rnating. Qurilma sozlamalarida "Noma'lum manbalar" bandini yoqing.
         </div>
-        <a href="/static/samcity.apk" class="btn btn-accent btn-lg btn-block" id="apkDownloadBtn" onclick="trackDownload('android')">
+        <a href="{% url 'download_apk' %}" class="btn btn-accent btn-lg btn-block" id="apkDownloadBtn" onclick="trackDownload('android')">
           <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
           APK Yuklab olish
         </a>

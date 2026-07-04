@@ -22,6 +22,7 @@ urlpatterns = [
     # Asosiy
     path('', views.home, name='home'),
     path('app/', views.app_download, name='app_download'),
+    path('download/samcity.apk', views.download_apk, name='download_apk'),
     path('register/', views.register, name='register'),
     path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('login/', views.user_login, name='login'),
