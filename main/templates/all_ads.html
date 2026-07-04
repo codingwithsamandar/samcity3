@@ -100,9 +100,9 @@
       <div class="ad-img">
         {% if ad.is_boosted %}<span class="ad-boosted-badge">⚡ TOP</span>{% endif %}
         {% if user.is_authenticated and user.pk != ad.user_id %}
-        <button class="ad-fav-btn{% if ad.pk in fav_ids %} on{% endif %}" data-pk="{{ ad.pk }}" title="Saqlash"
+        <button class="ad-cart-btn{% if ad.pk in cart_ad_ids %} on{% endif %}" data-pk="{{ ad.pk }}" title="Savatga solish"
           style="position:absolute;top:.5rem;right:.5rem;width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:var(--shadow-sm);cursor:pointer;display:grid;place-items:center;z-index:2;">
-          <svg class="ic" style="width:16px;height:16px;color:{% if ad.pk in fav_ids %}var(--red){% else %}var(--text3){% endif %};"><use href="#i-heart"/></svg>
+          <svg class="ic" style="width:16px;height:16px;color:{% if ad.pk in cart_ad_ids %}var(--accent){% else %}var(--text3){% endif %};"><use href="#i-cart"/></svg>
         </button>
         {% endif %}
         {% if ad.images.first %}
@@ -157,12 +157,12 @@
 <script>
 (function(){
   function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
-  document.querySelectorAll('.ad-fav-btn').forEach(function(btn){
+  document.querySelectorAll('.ad-cart-btn').forEach(function(btn){
     btn.addEventListener('click', function(e){
       e.preventDefault(); e.stopPropagation();
-      fetch('/ads/'+btn.dataset.pk+'/favorite/', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')}})
+      fetch('/delivery/cart/ad/add/'+btn.dataset.pk+'/', {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')}})
         .then(function(r){return r.json();}).then(function(d){
-          var ic=btn.querySelector('.ic'); ic.style.color = d.favorite ? 'var(--red)' : 'var(--text3)';
+          if(d.ok){ btn.classList.add('on'); btn.querySelector('.ic').style.color = 'var(--accent)'; }
         }).catch(function(){});
     });
   });

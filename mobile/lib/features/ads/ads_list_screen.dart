@@ -238,12 +238,48 @@ class _QuickServices extends StatelessWidget {
   }
 }
 
-class _AdCard extends StatelessWidget {
+class _AdCard extends ConsumerStatefulWidget {
   const _AdCard({required this.ad});
   final AdListItem ad;
 
   @override
+  ConsumerState<_AdCard> createState() => _AdCardState();
+}
+
+class _AdCardState extends ConsumerState<_AdCard> {
+  bool _busy = false;
+  bool _added = false;
+
+  Future<void> _addToCart() async {
+    if (_busy) return;
+    final user = ref.read(authControllerProvider).user;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Avval tizimga kiring')),
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(cartControllerProvider.notifier).addAd(widget.ad.id);
+      if (!mounted) return;
+      setState(() => _added = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('E\'lon savatga qo\'shildi')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Xatolik, qayta urinib ko\'ring')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ad = widget.ad;
     return InkWell(
       onTap: () => context.push('/ad/${ad.id}'),
       borderRadius: BorderRadius.circular(16),
@@ -252,22 +288,56 @@ class _AdCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 16 / 11,
-              child: ad.cover != null
-                  ? CachedNetworkImage(
-                      imageUrl: ad.cover!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) =>
-                          Container(color: const Color(0xFF141B29)),
-                      errorWidget: (_, __, ___) =>
-                          const Icon(Icons.image_not_supported),
-                    )
-                  : Container(
-                      color: const Color(0xFF141B29),
-                      child: const Icon(Icons.inventory_2_outlined,
-                          size: 36, color: Color(0xFF69748A)),
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 11,
+                  child: ad.cover != null
+                      ? CachedNetworkImage(
+                          imageUrl: ad.cover!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) =>
+                              Container(color: const Color(0xFF141B29)),
+                          errorWidget: (_, __, ___) =>
+                              const Icon(Icons.image_not_supported),
+                        )
+                      : Container(
+                          color: const Color(0xFF141B29),
+                          child: const Icon(Icons.inventory_2_outlined,
+                              size: 36, color: Color(0xFF69748A)),
+                        ),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.white.withOpacity(0.92),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _addToCart,
+                      child: Padding(
+                        padding: const EdgeInsets.all(7),
+                        child: _busy
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                _added
+                                    ? Icons.shopping_cart
+                                    : Icons.add_shopping_cart,
+                                size: 16,
+                                color: _added
+                                    ? const Color(0xFF34D399)
+                                    : const Color(0xFF69748A),
+                              ),
+                      ),
                     ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(10),

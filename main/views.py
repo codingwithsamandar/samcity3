@@ -137,10 +137,17 @@ def all_ads(request):
     total_count = ads.count()
 
     fav_ids = set()
+    cart_ad_ids = set()
     if request.user.is_authenticated:
         from .models import AdFavorite
+        page_pks = [a.pk for a in page_obj]
         fav_ids = set(AdFavorite.objects.filter(
-            user=request.user, ad__in=[a.pk for a in page_obj]
+            user=request.user, ad__in=page_pks
+        ).values_list('ad_id', flat=True))
+        from delivery.models import CartAd, get_active_cart
+        cart = get_active_cart(request.user)
+        cart_ad_ids = set(CartAd.objects.filter(
+            cart=cart, ad__in=page_pks
         ).values_list('ad_id', flat=True))
 
     qs = request.GET.copy()
@@ -161,6 +168,7 @@ def all_ads(request):
         'price_max': price_max,
         'has_photo': request.GET.get('has_photo', ''),
         'fav_ids': fav_ids,
+        'cart_ad_ids': cart_ad_ids,
         'query_params': query_params,
         'is_paginated': page_obj.has_other_pages(),
         'paginator': paginator,
