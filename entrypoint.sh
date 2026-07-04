@@ -20,6 +20,15 @@ echo "▶ Statik fayllar..."
 python manage.py collectstatic --noinput --no-post-process 2>/dev/null || \
 python manage.py collectstatic --noinput 2>/dev/null || true
 
+# ── Demo ma'lumotlar (bir martalik) ──
+# SEED_DEMO=true bo'lsa, barcha bo'limlar uchun demo seed FON rejimida ishlaydi
+# (daphne'ni bloklamaydi — sayt darhol ochiladi, ma'lumot bir-ikki daqiqada to'ladi).
+# Idempotent — dublikat qilmaydi. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
+if [ "$SEED_DEMO" = "true" ]; then
+  echo "▶ Demo ma'lumotlar fon rejimida seed qilinmoqda (SEED_DEMO=true)..."
+  ( python manage.py seed_all || true ) &
+fi
+
 echo "▶ Daphne (ASGI) ishga tushmoqda :${PORT:-8000} ..."
 # WebSocket (chat/taxi/delivery) uchun ASGI server — gunicorn emas, daphne
 exec daphne -b 0.0.0.0 -p "${PORT:-8000}" sdev.asgi:application

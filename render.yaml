@@ -29,6 +29,12 @@ services:
       # ── Django asosiy ──
       - key: DJANGO_DEBUG
         value: "False"
+      # ── Demo ma'lumotlar (bir martalik) ──
+      # Barcha bo'limlar uchun demo yaratish: shu qiymatni panelda "true" qiling,
+      # saqlang (deploy boshlanadi) → seed fon rejimida ishlaydi. Ma'lumot to'lgach
+      # qaytadan "false" qiling (aks holda har deploy'da fonda qayta ishlaydi — idempotent).
+      - key: SEED_DEMO
+        value: "false"
       - key: DJANGO_SECRET_KEY
         generateValue: true    # Render xavfsiz kalitni o'zi yaratadi
       - key: DJANGO_ALLOWED_HOSTS
