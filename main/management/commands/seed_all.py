@@ -3,24 +3,35 @@ from django.core.management import call_command
 
 
 class Command(BaseCommand):
-    help = ("Barcha demo ma'lumotlarni tayyorlaydi: avval migratsiyalarni qo'llaydi, "
-            "so'ng e'lonlar, taksi, yetkazish va to'lovlar demolarini yaratadi.")
+    help = ("Barcha demo ma'lumotlarni tayyorlaydi: migratsiyalar, e'lonlar, taksi, "
+            "yetkazish, to'lovlar, joylar, mahalla (do'kon/so'rovnoma/xayriya) va "
+            "boy investor demo. Production'da ham ishlaydi (mahalla demo'lari force bilan).")
 
     def handle(self, *args, **opts):
+        # (buyruq, izoh, qo'shimcha kwargs)
         steps = [
-            ('migrate',        "Migratsiyalar (baza jadvallari)"),
-            ('demo_data',      "E'lonlar, ish e'lonlari, rezyumelar"),
-            ('seed_taxi',      "Taksi xizmatlari va taksistlar"),
-            ('seed_delivery',  "Yetkazib berish do'konlari"),
-            ('seed_payments',  "To'lov muassasalari"),
-            ('seed_booking',   "Joylar va bronlar"),
-            ('seed_places',    "Xarita joylari (barcha toifalar)"),
-            ('seed_demo_full', "INVESTOR demo — boy realistik ma'lumot (50+ biznes, 300+ mahsulot)"),
+            ('migrate',        "Migratsiyalar (baza jadvallari)", {}),
+            ('demo_data',      "E'lonlar, ish e'lonlari, rezyumelar", {}),
+            ('seed_taxi',      "Taksi xizmatlari va taksistlar", {}),
+            ('seed_delivery',  "Yetkazib berish do'konlari", {}),
+            ('seed_payments',  "To'lov muassasalari", {}),
+            ('seed_booking',   "Joylar va bronlar", {}),
+            ('seed_places',    "Xarita joylari (barcha toifalar)", {}),
+            ('seed_demo_full', "INVESTOR demo — boy realistik ma'lumot (50+ biznes, 300+ mahsulot)", {}),
+            # ── Mahalla bo'limi ──
+            ('seed_mahallas',    "Mahallalar (xarita chegaralari bilan)", {}),
+            ('seed_demo_shops',  "Mahalla do'koni demo (pickup) + hisoblar", {'force': True}),
+            ('seed_mahalla_demo', "Mahalla do'kon/joy/so'rovnoma/xayriya demo", {'force': True}),
         ]
-        for cmd, label in steps:
-            self.stdout.write(self.style.WARNING(f"\n▶ {label} ..."))
-            call_command(cmd)
+        for cmd, label, kwargs in steps:
+            self.stdout.write(self.style.WARNING(f"\n> {label} ..."))
+            try:
+                call_command(cmd, **kwargs)
+            except Exception as e:
+                # Bitta bosqich xato bersa ham, qolganini davom ettiramiz.
+                self.stdout.write(self.style.ERROR(f"  ! {cmd}: {e}"))
 
         self.stdout.write(self.style.SUCCESS(
-            "\n✅ Hammasi tayyor! Sahifalar: / (e'lonlar), /taxi/, /delivery/, /payments/, /booking/, /jobs/"
+            "\nHammasi tayyor! Sahifalar: / (e'lonlar), /taxi/, /delivery/, "
+            "/payments/, /booking/, /jobs/, /mahalla/"
         ))

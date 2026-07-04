@@ -95,6 +95,12 @@ class Command(BaseCommand):
         # 2) Taksi xizmatlari + sharhlar
         service_map = {}
         for data in SERVICES:
+            # Qayta ishga tushirishga chidamlilik: bir xil short_number'li dublikatlar
+            # bo'lsa (masalan investor-demo bilan), bittasini qoldirib tozalaymiz.
+            dupes = TaxiService.objects.filter(short_number=data['short_number']).order_by('id')
+            if dupes.count() > 1:
+                keep = dupes.first()
+                dupes.exclude(pk=keep.pk).delete()
             svc, _ = TaxiService.objects.update_or_create(
                 short_number=data['short_number'],
                 defaults={**data, 'region': 'Shofirkon', 'is_active': True},
