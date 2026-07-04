@@ -4,7 +4,8 @@
 
 {% block extra_css %}
 <style>
-  .yx { --yel:#ffdb4d; --yel-d:#fac515; --card:#17171c; --card2:#1f1f27; --line:#2a2a33; --muted:#8b8b99; }
+  /* Rang tokenlari base mavzudan — light/dark ikkalasida to'g'ri ishlaydi. */
+  .yx { --yel:#e0a52e; --yel-d:#c98f1d; --card:var(--surface); --card2:var(--surface2); --line:var(--border); --muted:var(--text2); }
   .pay-wrap { max-width: 480px; margin: 0 auto; }
   .trip-summary { background: var(--card); border:1px solid var(--line); border-radius:18px; padding:1.2rem; margin-bottom:1.2rem; }
   .ts-route { font-size:1.1rem; font-weight:700; }

@@ -20,6 +20,7 @@ class Poll {
   final List<PollOption> options;
   final List<int> myVotes;
   final String creatorName;
+  final int commentCount;
 
   Poll({
     required this.id,
@@ -31,6 +32,7 @@ class Poll {
     required this.options,
     required this.myVotes,
     required this.creatorName,
+    this.commentCount = 0,
   });
 
   factory Poll.fromJson(Map<String, dynamic> j) => Poll(
@@ -47,6 +49,7 @@ class Poll {
             .map((e) => e is int ? e : int.tryParse('$e') ?? 0)
             .toList(),
         creatorName: j['creator_name'] ?? '',
+        commentCount: j['comment_count'] ?? 0,
       );
 
   bool get voted => myVotes.isNotEmpty;
@@ -97,6 +100,20 @@ class HelpRequest {
         statusLabel: j['status_label'] ?? '',
         isUrgent: j['is_urgent'] ?? false,
         creatorName: j['creator_name'] ?? '',
+      );
+}
+
+class PollComment {
+  final String id;
+  final String text;
+  final String author;
+  final DateTime? createdAt;
+  PollComment({required this.id, required this.text, required this.author, this.createdAt});
+  factory PollComment.fromJson(Map<String, dynamic> j) => PollComment(
+        id: j['id'].toString(),
+        text: j['text'] ?? '',
+        author: j['author'] ?? '',
+        createdAt: DateTime.tryParse(j['created_at'] ?? ''),
       );
 }
 

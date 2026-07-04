@@ -11,8 +11,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from delivery.models import (
-    Store, StoreImage, Product, Cart, CartItem, Order, OrderItem, DeliveryCategory,
-    StoreUpdate, StoreSubscription, StoreRequest,
+    Store, StoreImage, Product, Cart, CartItem, CartAd, Order, OrderItem,
+    DeliveryCategory, StoreUpdate, StoreSubscription, StoreRequest,
+    CheckoutGroup, get_active_cart,
 )
 from delivery.feed import create_store_update
 from .throttles import CheckoutThrottle
@@ -78,8 +79,8 @@ class ProductDetailView(APIView):
 
 # ── Savat ─────────────────────────────────────────────────────────────────────
 def _cart(user):
-    cart, _ = Cart.objects.get_or_create(user=user)
-    return cart
+    """Faol savat (bo'lmasa yaratiladi)."""
+    return get_active_cart(user)
 
 
 class CartView(APIView):
@@ -87,6 +88,87 @@ class CartView(APIView):
 
     def get(self, request):
         cart = _cart(request.user)
+        return Response(CartSerializer(cart, context={'request': request}).data)
+
+
+# ── Saqlangan savatlar (nomli, ko'p savat) ────────────────────────────────────
+class CartListCreateView(APIView):
+    """GET — foydalanuvchi savatlari; POST {name} — yangi savat (faol qilinadi)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .delivery_serializers import SavedCartSerializer
+        qs = Cart.objects.filter(user=request.user)
+        return Response({'results': SavedCartSerializer(qs, many=True, context={'request': request}).data})
+
+    def post(self, request):
+        name = (request.data.get('name') or '').strip() or 'Yangi savat'
+        Cart.objects.filter(user=request.user).update(is_active=False)
+        cart = Cart.objects.create(user=request.user, name=name[:80], is_active=True)
+        return Response(CartSerializer(cart, context={'request': request}).data,
+                        status=status.HTTP_201_CREATED)
+
+
+class CartManageView(APIView):
+    """PATCH {name} — nomini o'zgartiradi; DELETE — savatni o'chiradi."""
+    permission_classes = [IsAuthenticated]
+
+    def _get(self, request, cart_id):
+        return Cart.objects.filter(pk=cart_id, user=request.user).first()
+
+    def patch(self, request, cart_id):
+        cart = self._get(request, cart_id)
+        if cart is None:
+            return Response({'detail': 'Savat topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        name = (request.data.get('name') or '').strip()
+        if name:
+            cart.name = name[:80]
+            cart.save(update_fields=['name'])
+        return Response(CartSerializer(cart, context={'request': request}).data)
+
+    def delete(self, request, cart_id):
+        cart = self._get(request, cart_id)
+        if cart is None:
+            return Response({'detail': 'Savat topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        was_active = cart.is_active
+        cart.delete()
+        # Faol savat o'chirilsa — boshqasini faol qilamiz (yoki yangisini).
+        if was_active:
+            get_active_cart(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CartActivateView(APIView):
+    """POST — savatni faol qiladi (boshqalari nofaol)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cart_id):
+        cart = Cart.objects.filter(pk=cart_id, user=request.user).first()
+        if cart is None:
+            return Response({'detail': 'Savat topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        Cart.objects.filter(user=request.user).exclude(pk=cart.pk).update(is_active=False)
+        cart.is_active = True
+        cart.save(update_fields=['is_active'])
+        return Response(CartSerializer(cart, context={'request': request}).data)
+
+
+class CartAdView(APIView):
+    """POST {ad_id} — e'lonni faol savatga saqlaydi; DELETE {ad_id} — olib tashlaydi."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from main.models import Ad
+        ad = Ad.objects.filter(pk=request.data.get('ad_id')).first()
+        if ad is None:
+            return Response({'detail': 'E\'lon topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        cart = _cart(request.user)
+        CartAd.objects.get_or_create(cart=cart, ad=ad)
+        return Response(CartSerializer(cart, context={'request': request}).data,
+                        status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        cart = _cart(request.user)
+        CartAd.objects.filter(cart=cart, ad_id=request.data.get('ad_id')).delete()
         return Response(CartSerializer(cart, context={'request': request}).data)
 
 
@@ -232,13 +314,17 @@ def checkout(request):
             p = locked[it.product_id]
             groups.setdefault(p.store_id, []).append((it, p))
 
+        # Barcha buyurtmalarni BITTA checkout guruhiga bog'laymiz — hammasiga
+        # bitta birlashgan to'lov qilinadi.
+        checkout_group = CheckoutGroup.objects.create(user=request.user)
+
         for store_id, group in groups.items():
             store = group[0][1].store
             is_pickup = store.pickup_enabled
             fee = 0 if is_pickup else DELIVERY_FEE
             g_subtotal = int(sum(p.price * it.quantity for it, p in group))
             order = Order.objects.create(
-                user=request.user,
+                user=request.user, group=checkout_group,
                 full_name=data.get('full_name') or (request.user.name or ''),
                 phone=data['phone'],
                 address='' if is_pickup else (data.get('address') or ''),
@@ -274,8 +360,13 @@ def checkout(request):
         pass
 
     ser_out = OrderSerializer(created_orders, many=True, context={'request': request})
-    return Response({'orders': ser_out.data, 'count': len(created_orders)},
-                    status=status.HTTP_201_CREATED)
+    return Response({
+        'orders': ser_out.data,
+        'count': len(created_orders),
+        # Bitta birlashgan to'lov uchun — mijoz shu guruh uchun bitta to'lov qiladi.
+        'checkout_id': str(checkout_group.id),
+        'total': int(sum(o.total for o in created_orders)),
+    }, status=status.HTTP_201_CREATED)
 
 
 # ── EGASI: do'kon va mahsulot boshqaruvi (mobil biznes paneli) ────────────────

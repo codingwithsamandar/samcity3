@@ -96,6 +96,37 @@ class DeliveryRepository {
     return Cart.fromJson(res.data);
   }
 
+  // ── E'lon saqlash (savatning e'lonlar bo'limi) ──
+  Future<Cart> addAdToCart(String adId) async {
+    final res = await _api.dio.post('/cart/ad/', data: {'ad_id': adId});
+    return Cart.fromJson(res.data);
+  }
+
+  Future<Cart> removeAdFromCart(String adId) async {
+    final res = await _api.dio.delete('/cart/ad/', data: {'ad_id': adId});
+    return Cart.fromJson(res.data);
+  }
+
+  // ── Saqlangan (nomli) savatlar ──
+  Future<Cart> createCart(String name) async {
+    final res = await _api.dio.post('/cart/carts/', data: {'name': name});
+    return Cart.fromJson(res.data);
+  }
+
+  Future<Cart> renameCart(String cartId, String name) async {
+    final res = await _api.dio.patch('/cart/carts/$cartId/', data: {'name': name});
+    return Cart.fromJson(res.data);
+  }
+
+  Future<void> deleteCart(String cartId) async {
+    await _api.dio.delete('/cart/carts/$cartId/');
+  }
+
+  Future<Cart> activateCart(String cartId) async {
+    final res = await _api.dio.post('/cart/carts/$cartId/activate/');
+    return Cart.fromJson(res.data);
+  }
+
   /// Savatni buyurtma(lar)ga aylantiradi. Multi-store split tufayli javob
   /// bir nechta buyurtma bo'lishi mumkin ({orders, count}).
   Future<CheckoutResult> checkout({

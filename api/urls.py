@@ -12,6 +12,7 @@ from .views import (
 )
 from .delivery_views import (
     StoreViewSet, OrderViewSet, ProductDetailView, CartView,
+    CartListCreateView, CartManageView, CartActivateView, CartAdView,
     cart_add, cart_set, cart_remove, cart_clear, checkout,
     MyStoresView, MyStoreDetailView, StoreProductsView, StoreProductDetailView,
     StoreUpdatesView, StoreSubscribeToggleView, StoreAnnouncementCreateView,
@@ -34,7 +35,7 @@ from .notifications_views import (
 from .payment_views import InitiatePaymentView
 from .health import HealthView, ReadyView
 from .places_views import PlacesListView
-from .community_views import PollListView, poll_vote, HelpListView
+from .community_views import PollListView, poll_vote, poll_comments, HelpListView
 from .jobs_views import JobListView, ResumeListView
 from .service_views import (
     ProvidersListView, CreateServicePaymentView, MyServicePaymentsView,
@@ -68,6 +69,12 @@ cart_patterns = [
     path('set/', cart_set, name='cart-set'),
     path('remove/', cart_remove, name='cart-remove'),
     path('clear/', cart_clear, name='cart-clear'),
+    # E'lon saqlash (savatning e'lonlar bo'limi)
+    path('ad/', CartAdView.as_view(), name='cart-ad'),
+    # Saqlangan (nomli) savatlar
+    path('carts/', CartListCreateView.as_view(), name='cart-list'),
+    path('carts/<int:cart_id>/', CartManageView.as_view(), name='cart-manage'),
+    path('carts/<int:cart_id>/activate/', CartActivateView.as_view(), name='cart-activate'),
 ]
 
 urlpatterns = [
@@ -107,6 +114,7 @@ urlpatterns = [
     path('places/', PlacesListView.as_view(), name='places'),
     path('community/polls/', PollListView.as_view(), name='polls'),
     path('community/polls/<uuid:poll_id>/vote/', poll_vote, name='poll-vote'),
+    path('community/polls/<uuid:poll_id>/comments/', poll_comments, name='poll-comments'),
     path('community/help/', HelpListView.as_view(), name='help'),
     path('jobs/', JobListView.as_view(), name='jobs'),
     path('resumes/', ResumeListView.as_view(), name='resumes'),

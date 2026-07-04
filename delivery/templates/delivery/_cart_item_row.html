@@ -1,0 +1,15 @@
+{# Savatdagi bitta mahsulot qatori (yetkazish/mahalla bo'limlari — do'kon guruhi ichida). #}
+<div class="item-row">
+  <div class="thumb">{% with img=item.product.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>{% endif %}{% endwith %}</div>
+  <a class="item-info" href="{% url 'delivery:product_detail' item.product.store.pk item.product.pk %}">
+    <div class="name">{{ item.product.name }}</div>
+    <div class="price-each">{{ item.product.price|floatformat:0 }} so'm / dona</div>
+  </a>
+  <div class="stepper">
+    <form method="post" action="{% url 'delivery:cart_decrease' item.product.pk %}">{% csrf_token %}<button type="submit" title="Kamaytirish">−</button></form>
+    <span class="qty">{{ item.quantity }}</span>
+    <form method="post" action="{% url 'delivery:cart_increase' item.product.pk %}">{% csrf_token %}<button type="submit" title="Ko'paytirish">+</button></form>
+  </div>
+  <div class="item-price">{{ item.get_line_total|floatformat:0 }} so'm</div>
+  <div class="item-remove"><form method="post" action="{% url 'delivery:cart_remove' item.product.pk %}">{% csrf_token %}<button type="submit" title="O'chirish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button></form></div>
+</div>

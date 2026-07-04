@@ -25,13 +25,30 @@ def payments_home(request):
     })
 
 
+def detail(request, provider_pk):
+    """Davlat bog'chasi kabi to'lovsiz muassasa haqida ma'lumot sahifasi."""
+    provider = get_object_or_404(Provider, pk=provider_pk, is_active=True)
+    return render(request, 'payments/detail.html', {'provider': provider})
+
+
 @login_required
 def pay(request, provider_pk):
     provider = get_object_or_404(Provider, pk=provider_pk, is_active=True)
 
+    # Davlat bog'chasi (va boshqa to'lovsiz turlar) — faqat ma'lumot sahifasiga.
+    if not provider.is_payable:
+        return redirect('payments:detail', provider_pk=provider.pk)
+
     if request.method == 'POST':
-        payer_name = request.POST.get('payer_name', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        payer_name = f'{first_name} {last_name}'.strip()
         period = request.POST.get('period', '').strip()
+
+        # Ism-familiya majburiy (shaxsiy bog'cha, kurs, maktab).
+        if not first_name or not last_name:
+            messages.error(request, "Ism va familiyani to'liq kiriting.")
+            return render(request, 'payments/pay.html', {'provider': provider})
 
         # Summa: belgilangan bo'lsa o'sha, aks holda foydalanuvchi kiritadi
         if provider.has_fixed_amount:
@@ -60,6 +77,7 @@ def pay(request, provider_pk):
         payment = ServicePayment.objects.create(
             user=request.user, provider=provider,
             provider_name=provider.name, category=provider.category,
+            first_name=first_name, last_name=last_name,
             payer_name=payer_name, period=period, amount=amount,
             card_holder=card_holder, card_last4=digits[-4:],
             card_brand=ServicePayment.detect_brand(digits),

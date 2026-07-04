@@ -62,4 +62,14 @@ urlpatterns = [
     path('cart/remove/<int:product_pk>/',   cart_views.cart_remove,   name='cart_remove'),
     path('cart/increase/<int:product_pk>/', cart_views.cart_increase, name='cart_increase'),
     path('cart/decrease/<int:product_pk>/', cart_views.cart_decrease, name='cart_decrease'),
+
+    # ── Savatning e'lonlar bo'limi (saqlangan e'lonlar) ─────────────────────────
+    path('cart/ad/add/<uuid:ad_pk>/',    cart_views.cart_ad_add,    name='cart_ad_add'),
+    path('cart/ad/remove/<uuid:ad_pk>/', cart_views.cart_ad_remove, name='cart_ad_remove'),
+
+    # ── Saqlangan (nomli) savatlar ──────────────────────────────────────────────
+    path('cart/new/',                    cart_views.cart_create,   name='cart_create'),
+    path('cart/<int:cart_pk>/rename/',   cart_views.cart_rename,   name='cart_rename'),
+    path('cart/<int:cart_pk>/activate/', cart_views.cart_activate, name='cart_activate'),
+    path('cart/<int:cart_pk>/delete/',   cart_views.cart_delete,   name='cart_delete'),
 ]

@@ -21,6 +21,17 @@ def ad_favorite_toggle(request, pk):
     else:
         AdFavorite.objects.create(ad=ad, user=request.user)
         active = True
+    # Yurakcha (saqlash) — savatning e'lonlar bo'limi bilan sinxron: saqlansa
+    # savatga qo'shiladi, olib tashlansa savatdan ham chiqadi.
+    try:
+        from delivery.models import CartAd, get_active_cart
+        cart = get_active_cart(request.user)
+        if active:
+            CartAd.objects.get_or_create(cart=cart, ad=ad)
+        else:
+            CartAd.objects.filter(cart=cart, ad=ad).delete()
+    except Exception:
+        pass
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'ok': True, 'favorite': active})
     return redirect('ad_detail', pk=pk)

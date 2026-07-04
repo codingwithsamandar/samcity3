@@ -1,4 +1,5 @@
 import '../../core/api_client.dart';
+import '../community/community_models.dart';
 import 'mahalla_models.dart';
 
 class MahallaRepository {
@@ -60,6 +61,61 @@ class MahallaRepository {
       'description': description,
       'address': address,
       'phone': phone,
+    });
+  }
+
+  // ── So'rovnomalar (mahallaga cheklangan) ──
+  Future<(bool, List<Poll>)> polls(String neighborhoodId) async {
+    final res = await _api.dio.get('/community/polls/',
+        queryParameters: {'neighborhood': neighborhoodId});
+    final isAdmin = res.data['is_admin'] == true;
+    final items = ((res.data['results'] as List?) ?? [])
+        .map((e) => Poll.fromJson(e)).toList();
+    return (isAdmin, items);
+  }
+
+  Future<Poll> votePoll(String pollId, List<int> optionIds) async {
+    final res = await _api.dio.post('/community/polls/$pollId/vote/',
+        data: {'options': optionIds});
+    return Poll.fromJson(res.data);
+  }
+
+  /// Admin yangi so'rovnoma ochadi (variantlar bo'sh bo'lsa "Ha/Yo'q").
+  Future<Poll> createPoll(String neighborhoodId,
+      {required String question, String description = '', List<String> options = const []}) async {
+    final res = await _api.dio.post('/community/polls/', data: {
+      'neighborhood': neighborhoodId,
+      'question': question,
+      'description': description,
+      'options': options,
+    });
+    return Poll.fromJson(res.data);
+  }
+
+  Future<List<PollComment>> pollComments(String pollId, {String? text}) async {
+    final res = text == null
+        ? await _api.dio.get('/community/polls/$pollId/comments/')
+        : await _api.dio.post('/community/polls/$pollId/comments/', data: {'text': text});
+    return ((res.data['results'] as List?) ?? [])
+        .map((e) => PollComment.fromJson(e)).toList();
+  }
+
+  // ── Valentyorlik / yordam (mahallaga cheklangan) ──
+  Future<List<HelpRequest>> help(String neighborhoodId) async {
+    final res = await _api.dio.get('/community/help/',
+        queryParameters: {'neighborhood': neighborhoodId});
+    return ((res.data['results'] as List?) ?? [])
+        .map((e) => HelpRequest.fromJson(e)).toList();
+  }
+
+  Future<void> createHelp(String neighborhoodId,
+      {required String title, required String description,
+      String kind = 'offer', String category = 'volunteer',
+      String location = '', String phone = ''}) async {
+    await _api.dio.post('/community/help/', data: {
+      'neighborhood': neighborhoodId,
+      'title': title, 'description': description, 'kind': kind,
+      'category': category, 'location': location, 'phone': phone,
     });
   }
 }

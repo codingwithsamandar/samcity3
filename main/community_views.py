@@ -375,11 +375,14 @@ def _notify_neighborhood_admins(neighborhood, text, url, exclude_user=None):
 
 
 def mahalla_home(request):
-    """Mahalla bo'limi kirish nuqtasi — foydalanuvchi mahallasiga yo'naltiradi."""
-    if request.user.is_authenticated and request.user.neighborhood_id:
-        return redirect('mahalla_detail', pk=request.user.neighborhood_id)
+    """Mahalla bo'limi kirish nuqtasi — avval mahalla TANLASH oynasi ko'rsatiladi.
+
+    Foydalanuvchi o'z mahallasini (yoki boshqasini) tanlab, so'ng sahifaga o'tadi.
+    """
+    my_id = request.user.neighborhood_id if request.user.is_authenticated else None
     return render(request, 'community/mahalla_home.html', {
         'neighborhoods': Neighborhood.objects.all(),
+        'my_neighborhood_id': my_id,
     })
 
 
@@ -404,13 +407,57 @@ def mahalla_detail(request, pk):
         store_requests = list(
             neighborhood.store_requests.filter(status='pending').select_related('user'))
 
+    # Foydalanuvchi shu mahalla do'koni egasimi — "Do'kon egasi paneli" havolasi uchun.
+    owns_store = False
+    if request.user.is_authenticated:
+        from delivery.models import Store
+        owns_store = Store.objects.filter(
+            owner=request.user, store_type='mahalla', neighborhood=neighborhood).exists()
+
+    # ── So'rovnomalar (shu mahallaga tegishli) ──
+    polls_qs = (Poll.objects.filter(neighborhood=neighborhood, is_active=True)
+                .select_related('creator').prefetch_related('options__votes'))
+    my_poll_votes = set()
+    if request.user.is_authenticated:
+        my_poll_votes = set(PollVote.objects.filter(
+            option__poll__neighborhood=neighborhood, user=request.user
+        ).values_list('option_id', flat=True))
+    polls_data = []
+    for p in polls_qs[:30]:
+        opts = list(p.options.all())
+        total = sum(o.votes.count() for o in opts)
+        opt_data = [{
+            'opt': o, 'count': o.votes.count(),
+            'pct': round(o.votes.count() * 100 / total) if total else 0,
+            'voted': o.id in my_poll_votes,
+        } for o in opts]
+        polls_data.append({
+            'poll': p, 'options': opt_data, 'total': total,
+            'has_voted': any(od['voted'] for od in opt_data),
+        })
+
+    # ── Valentyorlik / yordam (shu mahallaga tegishli) ──
+    help_requests = (HelpRequest.objects.filter(neighborhood=neighborhood)
+                     .select_related('creator')[:40])
+
+    # ── Dashboard uchun so'nggi chat xabarlari ──
+    chat_messages = []
+    if room is not None:
+        chat_messages = list(
+            room.messages.select_related('user').order_by('-created_at')[:4])
+        chat_messages.reverse()
+
     return render(request, 'community/mahalla_detail.html', {
+        'chat_messages': chat_messages,
         'neighborhood': neighborhood,
         'is_admin': is_admin,
+        'owns_store': owns_store,
         'announcements': neighborhood.announcements.select_related('created_by')[:30],
         'stores': _stores_in(neighborhood),
         'store_requests': store_requests,
         'place_groups': _places_in_grouped(neighborhood),
+        'polls_data': polls_data,
+        'help_requests': help_requests,
         'chat_room': room,
         'requests': requests_qs,
         'req_categories': CitizenRequest.CATEGORY_CHOICES,

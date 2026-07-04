@@ -23,7 +23,7 @@
     <div style="position:relative;z-index:1;">
       <span class="eyebrow" style="background:rgba(255,255,255,.18);color:#fff;"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</span>
       <h1 style="color:#fff;font-size:clamp(1.6rem,3.4vw,2.2rem);margin-top:.7rem;">Barcha to'lovlar bir joyda</h1>
-      <p style="color:rgba(255,255,255,.88);margin-top:.4rem;max-width:520px;">Kommunal, kurslar, bog'cha, maktab, internet va boshqa to'lovlarni xavfsiz amalga oshiring.</p>
+      <p style="color:rgba(255,255,255,.88);margin-top:.4rem;max-width:520px;">Bog'cha, o'quv kurslari va maktab to'lovlarini xavfsiz amalga oshiring.</p>
       <form method="get" class="hero-search" style="margin-top:1.25rem;max-width:520px;">
         <svg class="ic"><use href="#i-search"/></svg>
         <input type="text" name="q" value="{{ q }}" placeholder="Muassasa yoki xizmat nomi...">
@@ -51,10 +51,14 @@
       <div style="flex:1;min-width:0;">
         <div class="nm">{{ p.name }}</div>
         <div class="meta">{{ p.get_category_display }}{% if p.address %} · {{ p.address }}{% endif %}</div>
+        {% if p.is_payable %}
         <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent btn-sm" style="margin-top:.5rem;">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        {% else %}
+        <a href="{% url 'payments:detail' p.pk %}" class="btn btn-ghost btn-sm" style="margin-top:.5rem;">Ma'lumot <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        {% endif %}
       </div>
       <div class="amt">
-        {% if p.has_fixed_amount %}<div class="v">{{ p.amount|som }} so'm</div>{% else %}<div class="free">Erkin summa</div>{% endif %}
+        {% if not p.is_payable %}<div class="free">Ma'lumot</div>{% elif p.has_fixed_amount %}<div class="v">{{ p.amount|som }} so'm</div>{% else %}<div class="free">Erkin summa</div>{% endif %}
       </div>
     </div>
     {% endfor %}

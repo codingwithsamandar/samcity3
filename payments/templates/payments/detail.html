@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load taxi_extras %}
+{% block title %}{{ provider.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pd-wrap { max-width:480px; margin:0 auto; }
+  .pd-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:1.4rem; }
+  .pd-head { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+  .pd-ico { width:54px;height:54px;border-radius:15px;display:grid;place-items:center;font-size:1.6rem;
+    background:var(--accent-l);color:var(--accent);flex-shrink:0; }
+  .pd-head .nm { font-size:1.2rem; font-weight:800; }
+  .pd-head .cat { color:var(--text2); font-size:.85rem; margin-top:.15rem; }
+  .pd-row { display:flex; gap:.6rem; padding:.7rem 0; border-top:1px solid var(--border); font-size:.92rem; }
+  .pd-row .k { color:var(--text2); min-width:90px; }
+  .pd-row .v { font-weight:600; }
+  .pd-note { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.28); color:#93c5fd;
+    border-radius:12px; padding:.8rem 1rem; font-size:.85rem; margin-top:1.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="pd-wrap">
+  <a href="{% url 'payments:home' %}" style="color:var(--text2);font-size:.88rem;">← To'lovlar</a>
+  <h1 style="font-size:1.5rem;margin:.6rem 0 1.2rem;">Ma'lumot</h1>
+
+  <div class="pd-card">
+    <div class="pd-head">
+      <div class="pd-ico">{{ provider.get_category_display|slice:":1" }}</div>
+      <div>
+        <div class="nm">{{ provider.name }}</div>
+        <div class="cat">{{ provider.get_category_display }}</div>
+      </div>
+    </div>
+
+    {% if provider.description %}<div class="pd-row"><span class="k">Tavsif</span><span class="v">{{ provider.description }}</span></div>{% endif %}
+    {% if provider.address %}<div class="pd-row"><span class="k">Manzil</span><span class="v">📍 {{ provider.address }}</span></div>{% endif %}
+    {% if provider.phone %}<div class="pd-row"><span class="k">Telefon</span><span class="v">📞 {{ provider.phone }}</span></div>{% endif %}
+    {% if provider.region %}<div class="pd-row"><span class="k">Hudud</span><span class="v">{{ provider.region }}</span></div>{% endif %}
+
+    <div class="pd-note">ℹ️ Davlat bog'chasi to'lovlari online qabul qilinmaydi. Iltimos, to'lov bo'yicha muassasaga to'g'ridan-to'g'ri murojaat qiling.</div>
+  </div>
+</div>
+</div>
+{% endblock %}

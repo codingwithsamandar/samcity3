@@ -3,224 +3,403 @@
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  .mh-tabs { display:flex; gap:.4rem; overflow-x:auto; border-bottom:1px solid var(--border); margin:1rem 0 1.25rem; padding-bottom:.2rem; }
-  .mh-tab { flex:none; padding:.55rem .9rem; border:none; background:none; color:var(--text2); font-weight:650; font-size:.9rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
-  .mh-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-  .mh-panel { display:none; }
-  .mh-panel.active { display:block; }
-  #mhmap { height:60vh; min-height:380px; border-radius:14px; border:1px solid var(--border); z-index:1; }
-  .info-row { display:flex; justify-content:space-between; gap:1rem; padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.92rem; }
-  .req-badge { font-size:.72rem; padding:.15rem .5rem; border-radius:100px; font-weight:700; }
+  .mhx{
+    --bg:#0A0F1C; --surface:#131B2E; --surface-2:#182238; --surface-3:#1D2A44;
+    --line:#232E47; --turquoise:#22B8B0; --turquoise-soft:rgba(34,184,176,.14);
+    --terracotta:#CE7C4E; --terracotta-soft:rgba(206,124,78,.14);
+    --violet:#8B7CF6; --violet-soft:rgba(139,124,246,.14);
+    --text:#EDEFF6; --text-muted:#8C95AC; --text-dim:#5D667D; --radius:16px;
+    font-family:'Inter',sans-serif; color:var(--text); max-width:1000px; margin:0 auto;
+  }
+  .mhx *{ box-sizing:border-box; }
+  .mhx .badge{ display:inline-flex; align-items:center; gap:8px; background:var(--turquoise-soft); border:1px solid rgba(34,184,176,.35); color:var(--turquoise); font-weight:700; font-size:11.5px; letter-spacing:.09em; padding:6px 14px 6px 10px; border-radius:999px; }
+  .mhx .badge svg{ width:14px; height:14px; }
+  .mhx .header-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-top:18px; flex-wrap:wrap; }
+  .mhx .title-group{ display:flex; align-items:center; gap:12px; }
+  .mhx .title-chip{ width:30px; height:30px; border-radius:9px; box-shadow:0 0 0 4px rgba(84,97,232,.12); flex-shrink:0; }
+  .mhx h1{ font-family:'Unbounded',sans-serif; font-weight:600; font-size:28px; letter-spacing:-.01em; margin:0; color:var(--text); }
+  .mhx .other-mahalla{ display:inline-flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-weight:600; font-size:14px; padding:11px 18px; border-radius:12px; cursor:pointer; text-decoration:none; }
+  .mhx .other-mahalla:hover{ border-color:var(--turquoise); }
+  .mhx .other-mahalla svg{ width:15px; height:15px; opacity:.7; }
+  .mhx nav.tabs{ display:flex; gap:6px; overflow-x:auto; padding:20px 0 10px; scrollbar-width:none; }
+  .mhx nav.tabs::-webkit-scrollbar{ display:none; }
+  .mhx .tab{ display:flex; align-items:center; gap:8px; white-space:nowrap; padding:10px 16px; border-radius:12px; font-size:14.5px; font-weight:600; color:var(--text-muted); cursor:pointer; border:1px solid transparent; position:relative; transition:.15s ease; }
+  .mhx .tab svg{ width:17px; height:17px; opacity:.8; flex-shrink:0; }
+  .mhx .tab:hover{ color:var(--text); background:var(--surface); }
+  .mhx .tab.active{ color:var(--turquoise); background:var(--turquoise-soft); border-color:rgba(34,184,176,.35); }
+  .mhx .girih-rule{ height:10px; width:100%; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='10' viewBox='0 0 40 10'%3E%3Cpath d='M0 5 L5 0 L10 5 L5 10 Z M10 5 L15 0 L20 5 L15 10 Z M20 5 L25 0 L30 5 L25 10 Z M30 5 L35 0 L40 5 L35 10 Z' fill='none' stroke='%23232E47' stroke-width='1'/%3E%3C/svg%3E"); background-repeat:repeat-x; opacity:.9; margin:16px 0 24px; }
+  .mhx .view{ display:none; }
+  .mhx .view.active{ display:block; animation:mhxfade .2s ease; }
+  @keyframes mhxfade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .mhx .grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; }
+  @media (max-width:720px){ .mhx .grid{ grid-template-columns:1fr; } }
+  .mhx .grid .span2{ grid-column:1 / -1; }
+  .mhx .widget{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:12px; }
+  .mhx .widget-head{ display:flex; align-items:center; justify-content:space-between; }
+  .mhx .widget-title{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:15px; }
+  .mhx .widget-title .ic{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .mhx .widget-title .ic svg{ width:16px; height:16px; }
+  .mhx .see-all{ font-size:12.5px; font-weight:700; color:var(--turquoise); cursor:pointer; display:flex; align-items:center; gap:4px; text-decoration:none; }
+  .mhx .see-all svg{ width:13px; height:13px; }
+  .mhx .chat-line{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; }
+  .mhx .avatar{ width:26px; height:26px; border-radius:50%; background:var(--surface-3); flex-shrink:0; }
+  .mhx .chat-line b{ color:var(--text); }
+  .mhx .chat-line span.msg{ color:var(--text-muted); }
+  .mhx .map-box{ height:150px; border-radius:12px; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); position:relative; overflow:hidden; border:1px solid var(--line); cursor:pointer; }
+  .mhx .map-box .pin{ position:absolute; width:10px; height:10px; border-radius:50% 50% 50% 0; background:var(--terracotta); transform:rotate(-45deg); box-shadow:0 0 0 3px rgba(206,124,78,.2); }
+  .mhx .announce-item{ font-size:13.5px; color:var(--text-muted); border-left:2px solid var(--terracotta); padding-left:10px; }
+  .mhx .announce-item b{ color:var(--text); display:block; font-size:14px; margin-bottom:2px; }
+  .mhx .stat-row{ display:flex; gap:10px; }
+  .mhx .stat{ flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; }
+  .mhx .stat b{ display:block; font-family:'Unbounded'; font-size:18px; }
+  .mhx .stat span{ font-size:11px; color:var(--text-dim); }
+  .mhx .shop-row{ display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+  .mhx .shop-card{ min-width:130px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text); text-decoration:none; }
+  .mhx .shop-card .thumb{ height:56px; border-radius:8px; background:var(--surface-3); margin-bottom:8px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .mhx .info-row2{ display:flex; justify-content:space-between; font-size:13.5px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .mhx .info-row2:last-child{ border-bottom:none; }
+  .mhx .info-row2 span{ color:var(--text-muted); }
+  .mhx .full-list{ display:flex; flex-direction:column; gap:12px; }
+  .mhx .card-simple{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; }
+  .mhx #mhmap{ height:56vh; min-height:340px; border-radius:14px; border:1px solid var(--line); z-index:1; }
+  .mhx .subtabs{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .mhx .subtab{ padding:8px 16px; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; border:1px solid var(--line); color:var(--text-muted); }
+  .mhx .subtab[data-color="turquoise"].active{ background:var(--turquoise-soft); color:var(--turquoise); border-color:rgba(34,184,176,.4); }
+  .mhx .subtab[data-color="terracotta"].active{ background:var(--terracotta-soft); color:var(--terracotta); border-color:rgba(206,124,78,.4); }
+  .mhx .subtab[data-color="violet"].active{ background:var(--violet-soft); color:var(--violet); border-color:rgba(139,124,246,.4); }
+  .mhx .subview{ display:none; }
+  .mhx .subview.active{ display:block; }
+  .mhx .empty-note{ color:var(--text-dim); font-size:13.5px; margin:.4rem 0 0; }
+  .mhx .mx-input{ width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px; }
+  .mhx .mx-btn{ display:inline-flex; align-items:center; gap:6px; background:var(--turquoise); color:#04201f; border:none; font-weight:700; font-size:13.5px; padding:9px 16px; border-radius:10px; cursor:pointer; text-decoration:none; }
+  .mhx .mx-btn.ghost{ background:var(--surface-2); color:var(--text); border:1px solid var(--line); }
+  .mhx .mx-btn.terr{ background:var(--terracotta); color:#241206; }
+  .mhx .opt{ margin:6px 0; }
+  .mhx .opt .bar{ height:8px; border-radius:100px; background:var(--surface-3); overflow:hidden; margin-top:3px; }
+  .mhx .opt .bar > span{ display:block; height:100%; background:var(--turquoise); }
+  .mhx .req-badge{ font-size:11px; padding:2px 8px; border-radius:100px; font-weight:700; background:var(--violet-soft); color:var(--violet); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:960px;">
-  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+<div class="mhx">
 
-  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
-    <div>
-      <span class="eyebrow"><svg class="ic"><use href="#i-building"/></svg> Mahalla{% if is_admin %} · admin{% endif %}</span>
-      <h1 style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;">
-        <span style="width:16px;height:16px;border-radius:5px;background:{{ neighborhood.color|default:'#3551d1' }};display:inline-block;"></span>
-        {{ neighborhood.name }}
-      </h1>
+  {% for m in messages %}<div class="card-simple" style="margin-bottom:12px;border-left:3px solid {% if 'error' in m.tags %}var(--terracotta){% else %}var(--turquoise){% endif %};">{{ m }}</div>{% endfor %}
+
+  <span class="badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+    MAHALLA{% if is_admin %} · ADMIN{% endif %}
+  </span>
+
+  <div class="header-row">
+    <div class="title-group">
+      <div class="title-chip" style="background:{{ neighborhood.color|default:'#5461E8' }};"></div>
+      <h1 id="pageTitle">{{ neighborhood.name }}</h1>
     </div>
-    <a href="{% url 'mahalla_home' %}" class="btn btn-ghost btn-sm">Boshqa mahalla</a>
+    <a href="{% url 'mahalla_home' %}" class="other-mahalla">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-5 5 5 5M3 12h18"/></svg>
+      Boshqa mahalla
+    </a>
   </div>
 
-  <div class="mh-tabs" id="mhTabs">
-    <button class="mh-tab active" data-t="info">Ma'lumot</button>
-    <button class="mh-tab" data-t="ann">E'lonlar</button>
-    <button class="mh-tab" data-t="places">Joylar</button>
-    {% if has_map %}<button class="mh-tab" data-t="map">Xarita</button>{% endif %}
-    <button class="mh-tab" data-t="req">Murojaatlar</button>
-    {% if chat_room %}<button class="mh-tab" data-t="chat">Chat</button>{% endif %}
-  </div>
+  <nav class="tabs" id="tabs">
+    <div class="tab active" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Mening mahallam</div>
+    <div class="tab" data-view="dokonlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l1-4h16l1 4M4 7h16v13H4z"/><path d="M9 21v-6h6v6"/></svg>Do'konlar</div>
+    <div class="tab" data-view="joylar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Joylar</div>
+    <div class="tab" data-view="elonlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8M18 5a8 8 0 010 14"/></svg>E'lonlar</div>
+    {% if chat_room %}<div class="tab" data-view="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Chat</div>{% endif %}
+    <div class="tab" data-view="ishtirok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Ishtirok</div>
+  </nav>
 
-  <!-- ── MA'LUMOT ── -->
-  <div class="mh-panel active" data-p="info">
-    <div class="card card-pad">
-      {% if neighborhood.description %}<p style="line-height:1.7;color:var(--text2);margin-bottom:1rem;">{{ neighborhood.description }}</p>{% endif %}
-      {% if neighborhood.population %}<div class="info-row"><span>👥 Aholi soni</span><b>{{ neighborhood.population }}</b></div>{% endif %}
-      {% if neighborhood.head_name %}<div class="info-row"><span>👤 Mahalla raisi</span><b>{{ neighborhood.head_name }}</b></div>{% endif %}
-      {% if neighborhood.head_phone %}<div class="info-row"><span>📞 Rais telefoni</span><b><a href="tel:{{ neighborhood.head_phone }}" style="color:var(--accent);">{{ neighborhood.head_phone }}</a></b></div>{% endif %}
-      {% if not neighborhood.population and not neighborhood.head_name %}<p style="color:var(--text3);">Mahalla ma'lumotlari hali to'ldirilmagan.</p>{% endif %}
-    </div>
-  </div>
+  <div class="girih-rule"></div>
 
-  <!-- ── E'LONLAR ── -->
-  <div class="mh-panel" data-p="ann">
-    {% if is_admin %}
-    <form method="post" action="{% url 'mahalla_announce' neighborhood.pk %}" enctype="multipart/form-data" class="card card-pad" style="margin-bottom:1rem;">
-      {% csrf_token %}
-      <h3 style="font-size:.9rem;margin-bottom:.6rem;">📢 Yangi rasmiy e'lon</h3>
-      <input type="text" name="title" class="form-control" placeholder="Sarlavha (masalan: Suv o'chirilishi)" required style="margin-bottom:.5rem;">
-      <textarea name="text" class="form-control" placeholder="E'lon matni..." required></textarea>
-      <input type="file" name="image" class="form-control" accept="image/*" style="margin-top:.5rem;">
-      <button type="submit" class="btn btn-accent btn-sm" style="margin-top:.6rem;">E'lon joylash</button>
-    </form>
-    {% endif %}
-    {% for a in announcements %}
-    <div class="card card-pad" style="margin-bottom:.7rem;">
-      <div style="display:flex;justify-content:space-between;gap:.5rem;">
-        <b>📢 {{ a.title }}</b>
-        <span style="font-size:.75rem;color:var(--text3);white-space:nowrap;">{{ a.created_at|date:"d.m.Y H:i" }}</span>
+  <!-- ═══ HOME / DASHBOARD ═══ -->
+  <div class="view active" id="view-home">
+    <div class="grid">
+
+      <!-- Mahalla ma'lumoti -->
+      <div class="widget">
+        <div class="widget-title"><span class="ic" style="background:var(--turquoise-soft);color:var(--turquoise)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg></span>Mahalla ma'lumoti</div>
+        {% if neighborhood.population %}<div class="info-row2"><span>👥 Aholi soni</span><b>{{ neighborhood.population }}</b></div>{% endif %}
+        {% if neighborhood.head_name %}<div class="info-row2"><span>👤 Rais</span><b>{{ neighborhood.head_name }}</b></div>{% endif %}
+        {% if neighborhood.head_phone %}<div class="info-row2"><span>📞 Telefon</span><b><a href="tel:{{ neighborhood.head_phone }}" style="color:var(--turquoise);">{{ neighborhood.head_phone }}</a></b></div>{% endif %}
+        {% if not neighborhood.population and not neighborhood.head_name %}<p class="empty-note">Ma'lumot hali to'ldirilmagan.</p>{% endif %}
       </div>
-      <p style="font-size:.9rem;color:var(--text2);margin-top:.4rem;line-height:1.6;">{{ a.text }}</p>
-      {% if a.image %}<img src="{{ a.image.url }}" style="max-width:220px;border-radius:8px;margin-top:.5rem;">{% endif %}
+
+      <!-- Joylar / xarita -->
+      <div class="widget">
+        <div class="widget-head">
+          <div class="widget-title"><span class="ic" style="background:var(--terracotta-soft);color:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Joylar</div>
+          <span class="see-all" data-goto="joylar">Xaritada <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="map-box" data-goto="joylar"><div class="pin" style="top:40px;left:60px;"></div><div class="pin" style="top:80px;left:130px;"></div><div class="pin" style="top:55px;left:200px;"></div></div>
+      </div>
+
+      <!-- Umumiy chat -->
+      <div class="widget span2">
+        <div class="widget-head">
+          <div class="widget-title"><span class="ic" style="background:var(--turquoise-soft);color:var(--turquoise)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span>Umumiy chat</div>
+          {% if chat_room %}<span class="see-all" data-goto="chat">Barchasini ko'rish <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>{% endif %}
+        </div>
+        {% for msg in chat_messages %}
+        <div class="chat-line"><div class="avatar"></div><div><b>{{ msg.user.name|default:msg.user.phone }}</b> — <span class="msg">{{ msg.text|truncatechars:80 }}</span></div></div>
+        {% empty %}
+        <p class="empty-note">Hozircha xabar yo'q. Chatga kirib suhbatni boshlang.</p>
+        {% endfor %}
+      </div>
+
+      <!-- So'nggi e'lon -->
+      <div class="widget">
+        <div class="widget-head">
+          <div class="widget-title"><span class="ic" style="background:var(--terracotta-soft);color:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8"/></svg></span>So'nggi e'lon</div>
+          <span class="see-all" data-goto="elonlar">Barchasi <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        {% for a in announcements|slice:":1" %}
+        <div class="announce-item"><b>{{ a.title }}</b>{{ a.text|truncatechars:110 }}</div>
+        {% empty %}
+        <p class="empty-note">Rasmiy e'lonlar shu yerda chiqadi.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Ishtirok statistikasi -->
+      <div class="widget">
+        <div class="widget-head">
+          <div class="widget-title"><span class="ic" style="background:var(--violet-soft);color:var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>Ishtirok</div>
+          <span class="see-all" data-goto="ishtirok">Bo'limga <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><b>{{ polls_data|length }}</b><span>so'rovnoma</span></div>
+          <div class="stat"><b>{{ help_requests|length }}</b><span>xayriya</span></div>
+          <div class="stat"><b>{{ requests|length }}</b><span>murojaat</span></div>
+        </div>
+      </div>
+
+      <!-- Do'konlar -->
+      <div class="widget span2">
+        <div class="widget-head">
+          <div class="widget-title"><span class="ic" style="background:var(--turquoise-soft);color:var(--turquoise)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l1-4h16l1 4M4 7h16v13H4z"/><path d="M9 21v-6h6v6"/></svg></span>Do'konlar</div>
+          <span class="see-all" data-goto="dokonlar">Barchasi <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="shop-row">
+          {% for s in stores|slice:":8" %}
+          <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">🛒</div>{{ s.name|truncatechars:22 }}</a>
+          {% empty %}
+          <p class="empty-note">Bu mahallada hali do'kon yo'q.</p>
+          {% endfor %}
+        </div>
+      </div>
+
     </div>
-    {% empty %}
-    <div class="empty-state" style="padding:2rem 1rem;"><h3>E'lonlar yo'q</h3><p>Mahalla rasmiy e'lonlari shu yerda ko'rinadi.</p></div>
-    {% endfor %}
   </div>
 
-  <!-- ── JOYLAR ── -->
-  <div class="mh-panel" data-p="places">
+  <!-- ═══ DO'KONLAR ═══ -->
+  <div class="view" id="view-dokonlar">
     {% if is_admin and store_requests %}
-    <div class="card card-pad" style="margin-bottom:1.25rem;border-color:#cdd6f7;background:var(--accent-l);">
-      <h3 style="font-size:.9rem;margin-bottom:.6rem;">🏘️ Do'kon arizalari (tasdiqlash kutmoqda)</h3>
+    <div class="card-simple" style="margin-bottom:16px;border-left:3px solid var(--terracotta);">
+      <b>🏘️ Do'kon arizalari (tasdiqlash kutmoqda)</b>
       {% for r in store_requests %}
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.5rem 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
-        <div style="font-size:.9rem;"><b>{{ r.name }}</b> <span style="color:var(--text3);">· {{ r.user.name|default:r.user.phone }}</span>{% if r.address %}<div style="font-size:.78rem;color:var(--text3);">{{ r.address|truncatechars:50 }}</div>{% endif %}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:10px 0;{% if not forloop.last %}border-bottom:1px solid var(--line);{% endif %}">
+        <div style="font-size:13.5px;"><b>{{ r.name }}</b> <span style="color:var(--text-dim);">· {{ r.user.name|default:r.user.phone }}</span></div>
         <div style="display:flex;gap:.4rem;">
-          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="approve"><button class="btn btn-green btn-sm">✅ Tasdiqlash</button></form>
-          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="reject"><button class="btn btn-outline btn-sm">Rad etish</button></form>
+          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="approve"><button class="mx-btn">✅ Tasdiqlash</button></form>
+          <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="reject"><button class="mx-btn ghost">Rad etish</button></form>
         </div>
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;">
-      <h3 style="font-size:.95rem;margin:0;">🛒 Do'konlar</h3>
-      {% if user.is_authenticated %}<a href="{% url 'delivery:store_request_create' %}" class="btn btn-outline btn-sm">🏘️ Do'kon ochish (ariza)</a>{% endif %}
+    <div class="card-simple" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div><b>🏪 Do'kon egasimisiz?</b><div class="empty-note">Mahsulot va olib ketish buyurtmalarini boshqaring.</div></div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+        {% if owns_store %}<a href="{% url 'delivery:my_stores' %}" class="mx-btn">Egasi paneli</a><a href="{% url 'delivery:store_orders' %}" class="mx-btn ghost">Buyurtmalar</a>{% endif %}
+        {% if user.is_authenticated %}<a href="{% url 'delivery:store_request_create' %}" class="mx-btn ghost">🏘️ Do'kon ochish</a>{% endif %}
+      </div>
     </div>
-    {% if stores %}
-    <div class="grid-4" style="margin-bottom:1.25rem;">
+
+    <div class="shop-row" style="flex-wrap:wrap;">
       {% for s in stores %}
-      <a href="{% url 'delivery:store_detail' s.pk %}" class="lcard" style="color:inherit;">
-        <div class="lc-body">
-          <div class="lc-title">{{ s.name }}</div>
-          {% if s.address %}<div class="lc-sub">{{ s.address|truncatechars:40 }}</div>{% endif %}
-        </div>
-      </a>
+      <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">🛒</div><b>{{ s.name|truncatechars:24 }}</b>{% if s.address %}<div style="color:var(--text-dim);margin-top:3px;">{{ s.address|truncatechars:28 }}</div>{% endif %}</a>
+      {% empty %}
+      <div class="card-simple" style="width:100%;"><b>Bu mahallada hali do'kon yo'q</b><p class="empty-note">Do'kon ochish uchun ariza bering.</p></div>
       {% endfor %}
     </div>
-    {% endif %}
+  </div>
 
+  <!-- ═══ JOYLAR (xarita + toifalar) ═══ -->
+  <div class="view" id="view-joylar">
+    {% if has_map %}<div id="mhmap" style="margin-bottom:16px;"></div>{% endif %}
     {% for g in place_groups %}
-    <h3 style="font-size:.95rem;margin:.3rem 0 .6rem;">{{ g.items.0.icon }} {{ g.label }}</h3>
-    <div class="grid-4" style="margin-bottom:1.25rem;">
+    <div style="margin-bottom:8px;font-weight:700;">{{ g.items.0.icon }} {{ g.label }}</div>
+    <div class="shop-row" style="flex-wrap:wrap;margin-bottom:16px;">
       {% for p in g.items %}
-      <a href="{% url 'places:place_detail' p.pk %}" class="lcard" style="color:inherit;">
-        <div class="lc-body">
-          <div class="lc-title">{{ p.name }}</div>
-          {% if p.address %}<div class="lc-sub">{{ p.address|truncatechars:40 }}</div>{% endif %}
-        </div>
-      </a>
+      <a class="shop-card" href="{% url 'places:place_detail' p.pk %}"><div class="thumb">{{ p.icon }}</div>{{ p.name|truncatechars:22 }}</a>
       {% endfor %}
-    </div>
-    {% endfor %}
-
-    {% if not stores and not place_groups %}
-    <div class="empty-state" style="padding:2rem 1rem;"><h3>Bu mahallada joy topilmadi</h3><p>Chegara ichida koordinatasi bor do'kon/joylar shu yerda ko'rinadi.</p></div>
-    {% endif %}
-  </div>
-
-  <!-- ── XARITA ── -->
-  {% if has_map %}
-  <div class="mh-panel" data-p="map">
-    <div id="mhmap"></div>
-  </div>
-  {% endif %}
-
-  <!-- ── MUROJAATLAR ── -->
-  <div class="mh-panel" data-p="req">
-    {% if user.is_authenticated %}
-    <form method="post" action="{% url 'mahalla_complaint' neighborhood.pk %}" enctype="multipart/form-data" class="card card-pad" style="margin-bottom:1rem;">
-      {% csrf_token %}
-      <h3 style="font-size:.9rem;margin-bottom:.6rem;">🗣 Hokimiyatga murojaat / shikoyat</h3>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem;">
-        <select name="category" class="form-control" style="width:auto;">
-          {% for key, label in req_categories %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
-        </select>
-        <input type="text" name="title" class="form-control" placeholder="Mavzu" required style="flex:1;min-width:180px;">
-      </div>
-      <textarea name="text" class="form-control" placeholder="Muammoni batafsil yozing..." required></textarea>
-      <input type="file" name="image" class="form-control" accept="image/*" style="margin-top:.5rem;">
-      <button type="submit" class="btn btn-accent btn-sm" style="margin-top:.6rem;">Yuborish</button>
-    </form>
-    {% else %}
-    <div class="flash flash-info">Murojaat yuborish uchun <a href="{% url 'login' %}">tizimga kiring</a>.</div>
-    {% endif %}
-
-    <h3 style="font-size:.9rem;margin:.5rem 0 .6rem;">{% if is_admin %}Barcha murojaatlar{% else %}Mening murojaatlarim{% endif %}</h3>
-    {% for r in requests %}
-    <div class="card card-pad" style="margin-bottom:.7rem;">
-      <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
-        <b>{{ r.get_category_display }}: {{ r.title }}</b>
-        <span class="req-badge" style="background:{% if r.status == 'resolved' %}#dcfce7;color:#166534{% elif r.status == 'rejected' %}#fee2e2;color:#991b1b{% elif r.status == 'reviewing' %}#fef9c3;color:#854d0e{% else %}#e0e7ff;color:#3730a3{% endif %};">{{ r.get_status_display }}</span>
-      </div>
-      <p style="font-size:.88rem;color:var(--text2);margin-top:.4rem;">{{ r.text }}</p>
-      {% if r.image %}<img src="{{ r.image.url }}" style="max-width:180px;border-radius:8px;margin-top:.4rem;">{% endif %}
-      {% if is_admin %}<div style="font-size:.78rem;color:var(--text3);margin-top:.3rem;">Muallif: {{ r.user.name|default:r.user.phone }} · {{ r.created_at|date:"d.m.Y H:i" }}</div>{% endif %}
-      {% if r.response %}<div style="margin-top:.5rem;padding:.5rem .7rem;background:var(--surface2);border-radius:8px;font-size:.86rem;"><b>Javob:</b> {{ r.response }}</div>{% endif %}
-
-      {% if is_admin and r.status != 'resolved' and r.status != 'rejected' %}
-      <form method="post" action="{% url 'mahalla_complaint_status' r.id %}" style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-start;">
-        {% csrf_token %}
-        <select name="status" class="form-control" style="width:auto;">
-          {% for key, label in req_statuses %}<option value="{{ key }}" {% if r.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
-        </select>
-        <input type="text" name="response" class="form-control" placeholder="Javob (ixtiyoriy)" style="flex:1;min-width:160px;">
-        <button type="submit" class="btn btn-accent btn-sm">Yangilash</button>
-      </form>
-      {% endif %}
     </div>
     {% empty %}
-    <div class="empty-state" style="padding:2rem 1rem;"><h3>Murojaat yo'q</h3></div>
+    {% if not has_map %}<div class="card-simple"><b>Joy topilmadi</b><p class="empty-note">Maktab, bog'cha, ovqatlanish va boshqa joylar shu yerda ko'rinadi.</p></div>{% endif %}
     {% endfor %}
   </div>
 
-  <!-- ── CHAT ── -->
+  <!-- ═══ E'LONLAR ═══ -->
+  <div class="view" id="view-elonlar">
+    {% if is_admin %}
+    <form method="post" action="{% url 'mahalla_announce' neighborhood.pk %}" enctype="multipart/form-data" class="card-simple" style="margin-bottom:16px;">
+      {% csrf_token %}
+      <b>📢 Yangi rasmiy e'lon</b>
+      <input type="text" name="title" class="mx-input" placeholder="Sarlavha" required style="margin-top:10px;">
+      <textarea name="text" class="mx-input" placeholder="E'lon matni..." required></textarea>
+      <button class="mx-btn terr" type="submit">E'lon joylash</button>
+    </form>
+    {% endif %}
+    <div class="full-list">
+      {% for a in announcements %}
+      <div class="card-simple announce-item"><b>{{ a.title }}</b>{{ a.text }}{% if a.image %}<div><img src="{{ a.image.url }}" style="max-width:220px;border-radius:8px;margin-top:8px;"></div>{% endif %}<div style="color:var(--text-dim);font-size:11px;margin-top:6px;">{{ a.created_at|date:"d.m.Y H:i" }}</div></div>
+      {% empty %}
+      <div class="card-simple"><b>E'lonlar yo'q</b><p class="empty-note">Mahalla rasmiy e'lonlari shu yerda ko'rinadi.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ═══ CHAT ═══ -->
   {% if chat_room %}
-  <div class="mh-panel" data-p="chat">
-    <div class="card card-pad" style="text-align:center;">
-      <p style="margin-bottom:1rem;">💬 Mahalla a'zolari bilan real vaqt suhbati.</p>
-      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" class="btn btn-accent"><svg class="ic"><use href="#i-chat"/></svg> Mahalla chatiga kirish</a>
+  <div class="view" id="view-chat">
+    <div class="card-simple" style="text-align:center;">
+      <p style="margin-bottom:14px;">💬 Mahalla a'zolari bilan real vaqt suhbati.</p>
+      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" class="mx-btn" style="display:inline-flex;">Mahalla chatiga kirish</a>
     </div>
   </div>
   {% endif %}
+
+  <!-- ═══ ISHTIROK (So'rovnoma + Xayriyalik + Murojaat) ═══ -->
+  <div class="view" id="view-ishtirok">
+    <div class="subtabs">
+      <div class="subtab active" data-color="turquoise" data-sub="sorov">So'rovnomalar</div>
+      <div class="subtab" data-color="terracotta" data-sub="xayriya">Xayriyalik</div>
+      <div class="subtab" data-color="violet" data-sub="murojaat">Murojaatlar</div>
+    </div>
+
+    <!-- SO'ROVNOMALAR -->
+    <div class="subview active" id="sub-sorov">
+      {% if is_admin %}<a href="{% url 'poll_create' %}?mahalla={{ neighborhood.pk }}" class="mx-btn" style="margin-bottom:14px;">+ So'rovnoma ochish</a>{% endif %}
+      {% for pd in polls_data %}
+      <div class="card-simple" style="margin-bottom:12px;">
+        <b>{{ pd.poll.question }}</b>
+        {% if pd.poll.description %}<p class="empty-note">{{ pd.poll.description }}</p>{% endif %}
+        {% if pd.has_voted or not pd.poll.is_open %}
+          {% for od in pd.options %}
+          <div class="opt"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>{% if od.voted %}✅ {% endif %}{{ od.opt.text }}</span><b>{{ od.pct }}%</b></div><div class="bar"><span style="width:{{ od.pct }}%;"></span></div></div>
+          {% endfor %}
+        {% elif user.is_authenticated %}
+          <form method="post" action="{% url 'poll_vote' pd.poll.id %}" style="margin-top:10px;">
+            {% csrf_token %}
+            {% for od in pd.options %}
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0;cursor:pointer;"><input type="{% if pd.poll.poll_type == 'multiple' %}checkbox{% else %}radio{% endif %}" name="option" value="{{ od.opt.id }}"> {{ od.opt.text }}</label>
+            {% endfor %}
+            <button class="mx-btn" type="submit" style="margin-top:8px;">Ovoz berish</button>
+          </form>
+        {% else %}
+          <p class="empty-note">Ovoz berish uchun <a href="{% url 'login' %}" style="color:var(--turquoise);">tizimga kiring</a>.</p>
+        {% endif %}
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text-dim);"><span>{{ pd.total }} ovoz · {{ pd.poll.creator.name|default:pd.poll.creator.phone }}</span><a href="{% url 'poll_detail' pd.poll.id %}" style="color:var(--turquoise);">💬 Izohlar</a></div>
+      </div>
+      {% empty %}
+      <div class="card-simple"><b>Faol so'rovnoma yo'q</b><p class="empty-note">Hozircha ovoz berish uchun so'rovnoma qo'shilmagan.</p></div>
+      {% endfor %}
+    </div>
+
+    <!-- XAYRIYALIK / KO'NGILLILIK -->
+    <div class="subview" id="sub-xayriya">
+      {% if user.is_authenticated %}<a href="{% url 'help_create' %}?mahalla={{ neighborhood.pk }}" class="mx-btn terr" style="margin-bottom:14px;">+ Taklif / so'rov</a>{% endif %}
+      {% for h in help_requests %}
+      <div class="card-simple" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;"><b>{{ h.title }}</b><span class="req-badge" style="background:var(--terracotta-soft);color:var(--terracotta);">{{ h.get_kind_display }}</span></div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">{{ h.get_category_display }}</div>
+        <p class="empty-note">{{ h.description|truncatechars:200 }}</p>
+        <a href="{% url 'help_detail' h.id %}" class="mx-btn ghost" style="margin-top:8px;">Batafsil</a>
+      </div>
+      {% empty %}
+      <div class="card-simple"><b>Xayriyalik / ko'ngillilik</b><p class="empty-note">Yordam so'rovlari va takliflari shu yerda ko'rinadi.</p></div>
+      {% endfor %}
+    </div>
+
+    <!-- MUROJAATLAR -->
+    <div class="subview" id="sub-murojaat">
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'mahalla_complaint' neighborhood.pk %}" enctype="multipart/form-data" class="card-simple" style="margin-bottom:16px;">
+        {% csrf_token %}
+        <b>🗣 Hokimiyatga murojaat</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+          <select name="category" class="mx-input" style="width:auto;margin:0;">{% for key, label in req_categories %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+          <input type="text" name="title" class="mx-input" placeholder="Mavzu" required style="flex:1;min-width:160px;margin:0;">
+        </div>
+        <textarea name="text" class="mx-input" placeholder="Muammoni batafsil yozing..." required></textarea>
+        <button class="mx-btn" style="background:var(--violet);color:#120a2e;" type="submit">Yuborish</button>
+      </form>
+      {% else %}
+      <div class="card-simple"><p class="empty-note">Murojaat yuborish uchun <a href="{% url 'login' %}" style="color:var(--violet);">tizimga kiring</a>.</p></div>
+      {% endif %}
+      {% for r in requests %}
+      <div class="card-simple" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;"><b>{{ r.get_category_display }}: {{ r.title }}</b><span class="req-badge">{{ r.get_status_display }}</span></div>
+        <p class="empty-note">{{ r.text }}</p>
+        {% if r.response %}<div style="margin-top:8px;padding:10px;background:var(--surface-2);border-radius:8px;font-size:13px;"><b>Javob:</b> {{ r.response }}</div>{% endif %}
+        {% if is_admin and r.status != 'resolved' and r.status != 'rejected' %}
+        <form method="post" action="{% url 'mahalla_complaint_status' r.id %}" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          {% csrf_token %}
+          <select name="status" class="mx-input" style="width:auto;margin:0;">{% for key, label in req_statuses %}<option value="{{ key }}" {% if r.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+          <input type="text" name="response" class="mx-input" placeholder="Javob (ixtiyoriy)" style="flex:1;min-width:150px;margin:0;">
+          <button class="mx-btn ghost" type="submit">Yangilash</button>
+        </form>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="card-simple"><b>Murojaatlar</b><p class="empty-note">Fuqarolar tomonidan yuborilgan murojaatlar shu yerda ko'rinadi.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+
 </div>
 
 <script>
 (function () {
-  var tabs = document.getElementById('mhTabs');
+  var titles = { home:"Mening mahallam", dokonlar:"Do'konlar", joylar:"Joylar", elonlar:"E'lonlar", chat:"Umumiy chat", ishtirok:"Ishtirok" };
   var mapInited = false;
-  function show(name) {
-    tabs.querySelectorAll('.mh-tab').forEach(function (b) { b.classList.toggle('active', b.dataset.t === name); });
-    document.querySelectorAll('.mh-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.p === name); });
-    if (name === 'map' && !mapInited) { mapInited = true; initMap(); }
+  function goTo(name){
+    document.querySelectorAll('.mhx .tab').forEach(function(t){ t.classList.toggle('active', t.dataset.view === name); });
+    document.querySelectorAll('.mhx .view').forEach(function(v){ v.classList.toggle('active', v.id === 'view-' + name); });
+    var pt = document.getElementById('pageTitle'); if (titles[name]) pt.textContent = titles[name];
+    if (name === 'joylar' && !mapInited) { mapInited = true; initMap(); }
   }
-  tabs.addEventListener('click', function (e) {
-    var b = e.target.closest('.mh-tab'); if (b) show(b.dataset.t);
+  document.getElementById('tabs').addEventListener('click', function(e){
+    var tab = e.target.closest('.tab'); if (tab) goTo(tab.dataset.view);
+  });
+  document.querySelectorAll('.mhx [data-goto]').forEach(function(el){
+    el.addEventListener('click', function(){ goTo(el.dataset.goto); });
+  });
+  document.querySelectorAll('.mhx .subtab').forEach(function(st){
+    st.addEventListener('click', function(){
+      document.querySelectorAll('.mhx .subtab').forEach(function(x){ x.classList.remove('active'); });
+      st.classList.add('active');
+      document.querySelectorAll('.mhx .subview').forEach(function(v){ v.classList.remove('active'); });
+      document.getElementById('sub-' + st.dataset.sub).classList.add('active');
+    });
   });
 
-  function initMap() {
-    if (typeof SamMap === 'undefined') return;
+  function initMap(){
+    if (typeof SamMap === 'undefined' || !document.getElementById('mhmap')) return;
     var boundary = {{ boundary_json|safe }};
     var center = {{ centroid_json|safe }};
     if ((!boundary || !boundary.length) && !center) return;
     var map = SamMap.init('mhmap', { zoomLevel: 14, center: center || SamMap.CENTER });
     var color = "{{ neighborhood.color|default:'#3551d1' }}";
     if (boundary && boundary.length) {
-      // Chegara chizilgan — poligon ko'rsatamiz
       var poly = L.polygon(boundary, { color: color, weight: 3, fillColor: color, fillOpacity: .08 }).addTo(map);
       try { map.fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 16 }); } catch (e) {}
     } else if (center) {
-      // Chegara yo'q — markaz koordinatasiga markaziy nuqta qo'yamiz
       map.setView(center, 14);
       L.marker(center).addTo(map).bindPopup("{{ neighborhood.name }}");
     }

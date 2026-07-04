@@ -245,8 +245,13 @@ class AdViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         ad = self.get_object()
+        # Yurakcha (saqlash) savatning e'lonlar bo'limi bilan sinxron.
+        from delivery.models import CartAd, get_active_cart
+        cart = get_active_cart(request.user)
         if request.method == 'DELETE':
             AdFavorite.objects.filter(ad=ad, user=request.user).delete()
+            CartAd.objects.filter(cart=cart, ad=ad).delete()
             return Response({'favorited': False})
         AdFavorite.objects.get_or_create(ad=ad, user=request.user)
+        CartAd.objects.get_or_create(cart=cart, ad=ad)
         return Response({'favorited': True}, status=status.HTTP_201_CREATED)

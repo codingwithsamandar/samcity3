@@ -64,6 +64,31 @@ def _order_mark_unpaid(o):
     o.save(update_fields=['payment_status'])
 
 
+def _checkout_get(pk):
+    from delivery.models import CheckoutGroup
+    return CheckoutGroup.objects.filter(pk=pk).first()
+
+def _checkout_owner(g):
+    return g.user_id
+
+def _checkout_amount(g):
+    return g.total_amount()
+
+def _checkout_is_paid(g):
+    return g.is_paid()
+
+def _checkout_mark_paid(g):
+    # Guruhdagi har bir buyurtmani to'langan deb belgilaymiz (pickup avtomatik
+    # 'accepted' bo'ladi va do'kon egasi xabardor qilinadi — _order_mark_paid).
+    for o in g.orders.all():
+        if o.payment_status != 'paid':
+            _order_mark_paid(o)
+
+def _checkout_mark_unpaid(g):
+    for o in g.orders.all():
+        _order_mark_unpaid(o)
+
+
 def _trip_get(pk):
     from taxi.models import Trip
     return Trip.objects.filter(pk=pk).first()
@@ -140,6 +165,9 @@ PAYABLES = {
     'order': dict(get=_order_get, owner=_order_owner, amount=_order_amount,
                   is_paid=_order_is_paid, mark_paid=_order_mark_paid,
                   mark_unpaid=_order_mark_unpaid),
+    'checkout': dict(get=_checkout_get, owner=_checkout_owner, amount=_checkout_amount,
+                     is_paid=_checkout_is_paid, mark_paid=_checkout_mark_paid,
+                     mark_unpaid=_checkout_mark_unpaid),
     'trip': dict(get=_trip_get, owner=_trip_owner, amount=_trip_amount,
                  is_paid=_trip_is_paid, mark_paid=_trip_mark_paid,
                  mark_unpaid=_trip_mark_unpaid),
@@ -154,6 +182,7 @@ PAYABLES = {
 # Payme account / boshqa joylarda ishlatiladigan kalit nomlari
 ACCOUNT_KEYS = {
     'order_id': 'order',
+    'checkout_id': 'checkout',
     'trip_id': 'trip',
     'booking_id': 'booking',
     'service_id': 'service',

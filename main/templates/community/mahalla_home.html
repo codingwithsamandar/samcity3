@@ -16,11 +16,11 @@
   {% endif %}
 
   {% for n in neighborhoods %}
-  <a href="{% url 'mahalla_detail' n.pk %}" class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;color:inherit;">
+  <a href="{% url 'mahalla_detail' n.pk %}" class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem;color:inherit;{% if n.pk == my_neighborhood_id %}border-color:var(--accent);{% endif %}">
     <div style="display:flex;align-items:center;gap:.8rem;">
       <span style="width:14px;height:14px;border-radius:4px;background:{{ n.color|default:'#3551d1' }};display:inline-block;"></span>
       <div>
-        <div style="font-weight:700;">{{ n.name }}</div>
+        <div style="font-weight:700;">{{ n.name }}{% if n.pk == my_neighborhood_id %} <span class="req-badge" style="background:var(--accent-l);color:var(--accent);font-size:.68rem;padding:.1rem .45rem;border-radius:100px;">Mening mahallam</span>{% endif %}</div>
         {% if n.population %}<div style="color:var(--text3);font-size:.8rem;">👥 {{ n.population }} aholi</div>{% endif %}
       </div>
     </div>

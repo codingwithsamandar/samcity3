@@ -23,10 +23,34 @@ class _AdDetailScreenState extends ConsumerState<AdDetailScreen> {
     _future = ref.read(adsRepositoryProvider).detail(widget.id);
   }
 
+  Future<void> _saveToCart() async {
+    try {
+      await ref.read(cartControllerProvider.notifier).addAd(widget.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("E'lon savatga saqlandi 🛒")));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Saqlab bo\'lmadi')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('E\'lon')),
+      appBar: AppBar(
+        title: const Text('E\'lon'),
+        actions: [
+          IconButton(
+            tooltip: 'Savatga saqlash',
+            onPressed: _saveToCart,
+            icon: const Icon(Icons.bookmark_add_outlined),
+          ),
+        ],
+      ),
       body: FutureBuilder<AdDetail>(
         future: _future,
         builder: (context, snap) {

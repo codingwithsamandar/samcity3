@@ -89,7 +89,7 @@ class StoreListSerializer(serializers.ModelSerializer):
         model = Store
         fields = ('id', 'name', 'description', 'address', 'phone', 'working_hours',
                   'logo', 'category', 'product_count', 'cart_enabled', 'pickup_enabled',
-                  'store_type')
+                  'store_type', 'neighborhood')
 
     def get_logo(self, obj):
         return _abs(self.context.get('request'), obj.logo)
@@ -145,18 +145,65 @@ class CartItemSerializer(serializers.ModelSerializer):
         return int(obj.get_line_total())
 
 
-class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
-    total_items = serializers.IntegerField(source='get_total_items', read_only=True)
-    total_quantity = serializers.IntegerField(source='get_total_quantity', read_only=True)
-    subtotal = serializers.SerializerMethodField()
+class SavedCartSerializer(serializers.ModelSerializer):
+    """Saqlangan savatlar ro'yxati uchun qisqa ko'rinish."""
+    item_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ('id', 'items', 'total_items', 'total_quantity', 'subtotal')
+        fields = ('id', 'name', 'is_active', 'item_count')
+
+    def get_item_count(self, obj):
+        return obj.items.count() + obj.ad_items.count()
+
+
+class CartSerializer(serializers.ModelSerializer):
+    """Faol savat — 3 bo'lim (e'lonlar / yetkazish / mahalla) + saqlangan savatlar."""
+    ads = serializers.SerializerMethodField()
+    delivery_items = serializers.SerializerMethodField()
+    mahalla_items = serializers.SerializerMethodField()
+    total_items = serializers.IntegerField(source='get_total_items', read_only=True)
+    total_quantity = serializers.IntegerField(source='get_total_quantity', read_only=True)
+    subtotal = serializers.SerializerMethodField()
+    delivery_subtotal = serializers.SerializerMethodField()
+    mahalla_subtotal = serializers.SerializerMethodField()
+    carts = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ('id', 'name', 'ads', 'delivery_items', 'mahalla_items',
+                  'total_items', 'total_quantity', 'subtotal',
+                  'delivery_subtotal', 'mahalla_subtotal', 'carts')
+
+    def _items(self, obj):
+        return list(obj.items.select_related('product__store').prefetch_related('product__images'))
+
+    def _by_type(self, obj, store_type):
+        return [it for it in self._items(obj) if it.product.store.store_type == store_type]
+
+    def get_delivery_items(self, obj):
+        return CartItemSerializer(self._by_type(obj, 'delivery'), many=True, context=self.context).data
+
+    def get_mahalla_items(self, obj):
+        return CartItemSerializer(self._by_type(obj, 'mahalla'), many=True, context=self.context).data
+
+    def get_ads(self, obj):
+        from api.serializers import AdListSerializer
+        ads = [ca.ad for ca in obj.ad_items.select_related('ad').prefetch_related('ad__images')]
+        return AdListSerializer(ads, many=True, context=self.context).data
 
     def get_subtotal(self, obj):
         return int(obj.get_subtotal())
+
+    def get_delivery_subtotal(self, obj):
+        return int(sum(it.product.price * it.quantity for it in self._by_type(obj, 'delivery')))
+
+    def get_mahalla_subtotal(self, obj):
+        return int(sum(it.product.price * it.quantity for it in self._by_type(obj, 'mahalla')))
+
+    def get_carts(self, obj):
+        qs = Cart.objects.filter(user=obj.user)
+        return SavedCartSerializer(qs, many=True, context=self.context).data
 
 
 # ── Order ───────────────────────────────────────────────────────────────────

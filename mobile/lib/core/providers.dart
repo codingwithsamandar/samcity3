@@ -80,6 +80,21 @@ class CartController extends StateNotifier<Cart> {
       state = await _repo.setQty(productId, qty);
   Future<void> remove(String productId) async =>
       state = await _repo.remove(productId);
+
+  // E'lon saqlash (savatning e'lonlar bo'limi)
+  Future<void> addAd(String adId) async => state = await _repo.addAdToCart(adId);
+  Future<void> removeAd(String adId) async => state = await _repo.removeAdFromCart(adId);
+
+  // Saqlangan (nomli) savatlar
+  Future<void> createCart(String name) async => state = await _repo.createCart(name);
+  Future<void> renameCart(String cartId, String name) async =>
+      state = await _repo.renameCart(cartId, name);
+  Future<void> activateCart(String cartId) async => state = await _repo.activateCart(cartId);
+  Future<void> deleteCart(String cartId) async {
+    await _repo.deleteCart(cartId);
+    await refresh();
+  }
+
   void clearLocal() => state = Cart.empty();
 }
 

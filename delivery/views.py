@@ -14,6 +14,7 @@ from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
     DeliveryDriver, DriverLocation, StoreUpdate, StoreSubscription,
     StoreChatThread, StoreChatMessage, StoreRequest, can_transition,
+    CheckoutGroup, get_active_cart,
 )
 from .feed import create_store_update
 from .chat import get_or_create_thread, is_participant, create_message
@@ -132,12 +133,52 @@ def product_detail_view(request, store_pk, product_pk):
 
 # ── Cart view ─────────────────────────────────────────────────────────────────
 
+def _group_by_store(items):
+    """Savat elementlarini do'kon bo'yicha guruhlaydi (yig'indi + soni bilan)."""
+    groups = {}
+    for it in items:
+        sid = it.product.store_id
+        g = groups.setdefault(sid, {'store': it.product.store, 'items': [], 'total': 0, 'qty': 0})
+        g['items'].append(it)
+        g['total'] += int(it.product.price * it.quantity)
+        g['qty'] += it.quantity
+    return list(groups.values())
+
+
 @login_required
 def cart_view(request):
-    """Foydalanuvchi savati sahifasi."""
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    _ = cart.items.select_related('product__store').prefetch_related('product__images')
-    return render(request, 'delivery/cart.html', {'cart': cart})
+    """Foydalanuvchi savati sahifasi — 3 mustaqil bo'lim (e'lon / yetkazish /
+    mahalla), har bo'lim do'kon bo'yicha guruhlangan + saqlangan savatlar."""
+    cart = get_active_cart(request.user)
+    items = list(cart.items.select_related('product__store').prefetch_related('product__images'))
+    delivery_items = [it for it in items if it.product.store.store_type == 'delivery']
+    mahalla_items = [it for it in items if it.product.store.store_type == 'mahalla']
+    ad_items = list(cart.ad_items.select_related('ad').prefetch_related('ad__images'))
+
+    delivery_groups = _group_by_store(delivery_items)
+    mahalla_groups = _group_by_store(mahalla_items)
+    delivery_qty = sum(it.quantity for it in delivery_items)
+    mahalla_qty = sum(it.quantity for it in mahalla_items)
+    delivery_fee = DELIVERY_FEE * len(delivery_groups)
+    ad_estimated = int(sum(ci.ad.price for ci in ad_items if ci.ad.price))
+
+    ctx = {
+        'cart': cart,
+        'ad_items': ad_items,
+        'ad_estimated': ad_estimated,
+        'delivery_groups': delivery_groups,
+        'mahalla_groups': mahalla_groups,
+        'delivery_qty': delivery_qty,
+        'mahalla_qty': mahalla_qty,
+        'delivery_subtotal': int(sum(it.product.price * it.quantity for it in delivery_items)),
+        'mahalla_subtotal': int(sum(it.product.price * it.quantity for it in mahalla_items)),
+        'delivery_fee': delivery_fee,
+        'delivery_store_count': len(delivery_groups),
+        'saved_carts': Cart.objects.filter(user=request.user),
+        'has_delivery': bool(delivery_items),
+        'has_mahalla': bool(mahalla_items),
+    }
+    return render(request, 'delivery/cart.html', ctx)
 
 
 # ── CHECKOUT / BUYURTMA ─────────────────────────────────────────────────────────
@@ -150,8 +191,15 @@ def checkout(request):
     yo'q, manzil talab qilinmaydi va to'lov MAJBURIY oldindan karta orqali
     (naqd RUXSAT ETILMAYDI). Yetkazib berish do'konlari — eski oqim.
     """
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart = get_active_cart(request.user)
     items = list(cart.items.select_related('product__store'))
+
+    # Bo'lim bo'yicha checkout: faqat yetkazish yoki faqat mahalla mahsulotlari.
+    section = request.GET.get('section')
+    if section == 'delivery':
+        items = [it for it in items if it.product.store.store_type == 'delivery']
+    elif section == 'mahalla':
+        items = [it for it in items if it.product.store.store_type == 'mahalla']
 
     if not items:
         messages.warning(request, "Savatingiz bo'sh. Avval mahsulot qo'shing.")
@@ -238,6 +286,9 @@ def checkout(request):
                 p = locked[it.product_id]
                 groups.setdefault(p.store_id, []).append((it, p))
 
+            # Barcha buyurtmalar bitta checkout guruhida — bitta birlashgan to'lov.
+            checkout_group = CheckoutGroup.objects.create(user=request.user)
+
             for store_id, group in groups.items():
                 store = group[0][1].store
                 is_pickup = store.pickup_enabled
@@ -246,7 +297,8 @@ def checkout(request):
                 # Pickup + oldindan to'langan bo'lsa darhol 'to'landi' (accepted).
                 o_status = 'accepted' if (is_pickup and payment_status == 'paid') else 'pending'
                 order = Order.objects.create(
-                    user=request.user, full_name=full_name or (request.user.name or ''),
+                    user=request.user, group=checkout_group,
+                    full_name=full_name or (request.user.name or ''),
                     phone=phone, address=('' if is_pickup else address), note=note,
                     subtotal=g_subtotal, delivery_fee=fee, total=g_subtotal + fee,
                     status=o_status, payment_method=method, payment_status=payment_status,
@@ -263,7 +315,9 @@ def checkout(request):
                     p.save(update_fields=['stock'])
                 created_orders.append(order)
 
-            cart.items.all().delete()
+            # Faqat buyurtma qilingan mahsulotlarni savatdan olib tashlaymiz
+            # (bo'lim bo'yicha checkout — boshqa bo'lim savatda qoladi).
+            cart.items.filter(pk__in=[it.pk for it in items]).delete()
 
         # Do'kon egalariga yangi buyurtma haqida bildirishnoma (bittadan)
         try:

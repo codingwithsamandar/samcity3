@@ -7,6 +7,7 @@ app_name = 'payments'
 
 urlpatterns = [
     path('', views.payments_home, name='home'),
+    path('detail/<uuid:provider_pk>/', views.detail, name='detail'),
     path('pay/<uuid:provider_pk>/', views.pay, name='pay'),
     path('receipt/<uuid:payment_id>/', views.receipt, name='receipt'),
     path('my/', views.my_payments, name='my_payments'),

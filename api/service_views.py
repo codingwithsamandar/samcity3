@@ -22,11 +22,13 @@ class ProviderSerializer(serializers.ModelSerializer):
     category_label = serializers.CharField(source='get_category_display', read_only=True)
     logo = serializers.SerializerMethodField()
     has_fixed_amount = serializers.BooleanField(read_only=True)
+    is_payable = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Provider
         fields = ('id', 'name', 'category', 'category_label', 'description',
-                  'address', 'phone', 'logo', 'amount', 'has_fixed_amount', 'region')
+                  'address', 'phone', 'logo', 'amount', 'has_fixed_amount',
+                  'is_payable', 'region')
 
     def get_logo(self, obj):
         return _abs(self.context.get('request'), obj.logo)
@@ -38,7 +40,8 @@ class ServicePaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServicePayment
-        fields = ('id', 'provider_name', 'category', 'category_label', 'payer_name',
+        fields = ('id', 'provider_name', 'category', 'category_label',
+                  'first_name', 'last_name', 'payer_name',
                   'period', 'amount', 'status', 'status_label', 'created_at', 'paid_at')
 
 
@@ -67,6 +70,16 @@ class CreateServicePaymentView(APIView):
         if provider is None:
             return Response({'detail': 'Muassasa topilmadi.'},
                             status=status.HTTP_404_NOT_FOUND)
+        if not provider.is_payable:
+            return Response(
+                {'detail': "Bu muassasa uchun online to'lov qabul qilinmaydi."},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        first_name = (request.data.get('first_name') or '').strip()
+        last_name = (request.data.get('last_name') or '').strip()
+        if not first_name or not last_name:
+            return Response({'detail': "Ism va familiyani to'liq kiriting."},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             amount = int(str(request.data.get('amount') or provider.amount or 0).replace(' ', ''))
         except (ValueError, TypeError):
@@ -78,7 +91,8 @@ class CreateServicePaymentView(APIView):
         payment = ServicePayment.objects.create(
             user=request.user, provider=provider, provider_name=provider.name,
             category=provider.category, amount=amount, status='pending',
-            payer_name=(request.data.get('payer_name') or '').strip(),
+            first_name=first_name, last_name=last_name,
+            payer_name=f'{first_name} {last_name}'.strip(),
             period=(request.data.get('period') or '').strip(),
         )
         return Response(ServicePaymentSerializer(payment).data,

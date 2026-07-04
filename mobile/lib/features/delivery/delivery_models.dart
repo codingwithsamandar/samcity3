@@ -19,6 +19,9 @@ class Store {
   final String? category;
   final int productCount;
   final bool cartEnabled;
+  final String storeType; // delivery | mahalla
+  final bool pickupEnabled;
+  final String? neighborhoodId;
 
   Store({
     required this.id,
@@ -31,7 +34,12 @@ class Store {
     this.category,
     required this.productCount,
     this.cartEnabled = false,
+    this.storeType = 'delivery',
+    this.pickupEnabled = false,
+    this.neighborhoodId,
   });
+
+  bool get isMahalla => storeType == 'mahalla';
 
   factory Store.fromJson(Map<String, dynamic> j) => Store(
         id: j['id'].toString(),
@@ -44,6 +52,9 @@ class Store {
         category: j['category'],
         productCount: j['product_count'] ?? 0,
         cartEnabled: j['cart_enabled'] ?? false,
+        storeType: j['store_type'] ?? 'delivery',
+        pickupEnabled: j['pickup_enabled'] ?? false,
+        neighborhoodId: j['neighborhood']?.toString(),
       );
 }
 
@@ -197,21 +208,89 @@ class CartItem {
       );
 }
 
-class Cart {
-  final List<CartItem> items;
-  final int totalQuantity;
-  final int subtotal;
-  Cart({required this.items, required this.totalQuantity, required this.subtotal});
+/// Savatga saqlangan e'lon (savatning e'lonlar bo'limi).
+class CartAdItem {
+  final String id;
+  final String title;
+  final int? price;
+  final String priceType;
+  final String? cover;
+  CartAdItem({required this.id, required this.title, this.price, this.priceType = 'fixed', this.cover});
 
-  factory Cart.fromJson(Map<String, dynamic> j) => Cart(
-        items: ((j['items'] as List?) ?? [])
-            .map((e) => CartItem.fromJson(e))
-            .toList(),
-        totalQuantity: j['total_quantity'] ?? 0,
-        subtotal: (j['subtotal'] is num) ? (j['subtotal'] as num).toInt() : 0,
+  factory CartAdItem.fromJson(Map<String, dynamic> j) => CartAdItem(
+        id: j['id'].toString(),
+        title: j['title'] ?? '',
+        price: (j['price'] is num) ? (j['price'] as num).toInt() : null,
+        priceType: j['price_type'] ?? 'fixed',
+        cover: j['cover'],
       );
 
-  static Cart empty() => Cart(items: [], totalQuantity: 0, subtotal: 0);
+  String get priceLabel => price != null ? "${money(price!)} so'm" : 'Bepul / kelishilgan';
+}
+
+/// Saqlangan (nomli) savat — ro'yxat/almashtirish uchun.
+class SavedCart {
+  final String id;
+  final String name;
+  final bool isActive;
+  final int itemCount;
+  SavedCart({required this.id, required this.name, required this.isActive, required this.itemCount});
+
+  factory SavedCart.fromJson(Map<String, dynamic> j) => SavedCart(
+        id: j['id'].toString(),
+        name: j['name'] ?? 'Savat',
+        isActive: j['is_active'] ?? false,
+        itemCount: j['item_count'] ?? 0,
+      );
+}
+
+class Cart {
+  final String id;
+  final String name;
+  final List<CartAdItem> ads;
+  final List<CartItem> deliveryItems;
+  final List<CartItem> mahallaItems;
+  final int totalQuantity;
+  final int subtotal;
+  final int deliverySubtotal;
+  final int mahallaSubtotal;
+  final List<SavedCart> carts;
+
+  Cart({
+    this.id = '',
+    this.name = 'Savat',
+    this.ads = const [],
+    this.deliveryItems = const [],
+    this.mahallaItems = const [],
+    this.totalQuantity = 0,
+    this.subtotal = 0,
+    this.deliverySubtotal = 0,
+    this.mahallaSubtotal = 0,
+    this.carts = const [],
+  });
+
+  /// Sotib olinadigan barcha mahsulotlar (2 bo'lim birga).
+  List<CartItem> get products => [...deliveryItems, ...mahallaItems];
+  bool get hasProducts => deliveryItems.isNotEmpty || mahallaItems.isNotEmpty;
+
+  static int _i(dynamic v) => v is num ? v.toInt() : 0;
+  static List<CartItem> _items(dynamic v) =>
+      ((v as List?) ?? []).map((e) => CartItem.fromJson(e)).toList();
+
+  factory Cart.fromJson(Map<String, dynamic> j) => Cart(
+        id: j['id']?.toString() ?? '',
+        name: j['name'] ?? 'Savat',
+        ads: ((j['ads'] as List?) ?? []).map((e) => CartAdItem.fromJson(e)).toList(),
+        deliveryItems: _items(j['delivery_items']),
+        mahallaItems: _items(j['mahalla_items']),
+        totalQuantity: _i(j['total_quantity']),
+        subtotal: _i(j['subtotal']),
+        deliverySubtotal: _i(j['delivery_subtotal']),
+        mahallaSubtotal: _i(j['mahalla_subtotal']),
+        carts: ((j['carts'] as List?) ?? []).map((e) => SavedCart.fromJson(e)).toList(),
+      );
+
+  static Cart empty() => Cart();
 }
 
 class OrderLine {
@@ -297,14 +376,18 @@ class DeliveryOrder {
 class CheckoutResult {
   final List<DeliveryOrder> orders;
   final int count;
-  CheckoutResult({required this.orders, required this.count});
+  final String checkoutId; // birlashgan to'lov guruhi (bitta to'lov)
+  final int total;
+  CheckoutResult({required this.orders, required this.count, this.checkoutId = '', this.total = 0});
 
   factory CheckoutResult.fromJson(Map<String, dynamic> j) => CheckoutResult(
         orders: ((j['orders'] as List?) ?? [])
             .map((e) => DeliveryOrder.fromJson(e))
             .toList(),
         count: j['count'] ?? 0,
+        checkoutId: j['checkout_id']?.toString() ?? '',
+        total: (j['total'] is num) ? (j['total'] as num).toInt() : 0,
       );
 
-  int get totalAmount => orders.fold(0, (sum, o) => sum + o.total);
+  int get totalAmount => total > 0 ? total : orders.fold(0, (sum, o) => sum + o.total);
 }

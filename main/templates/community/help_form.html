@@ -23,7 +23,7 @@
       <div class="form-group"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="{{ post.phone|default:'' }}"></div>
     </div>
     <div class="form-group"><label class="form-label">Mahalla</label>
-      <select name="neighborhood" class="form-control"><option value="">— umumiy —</option>{% for n in neighborhoods %}<option value="{{ n.id }}">{{ n.name }}</option>{% endfor %}</select>
+      <select name="neighborhood" class="form-control"><option value="">— umumiy —</option>{% for n in neighborhoods %}<option value="{{ n.id }}" {% if request.GET.mahalla == n.id|stringformat:'s' %}selected{% endif %}>{{ n.name }}</option>{% endfor %}</select>
     </div>
     <div class="form-group"><label class="form-label">Rasm</label><input type="file" name="image" class="form-control" accept="image/*"></div>
     <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="is_urgent"> Shoshilinch (favqulodda)</label></div>

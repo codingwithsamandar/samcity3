@@ -2,84 +2,267 @@
 {% block title %}Savat — SamCity{% endblock %}
 
 {% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  .cart-item { display:grid; grid-template-columns:auto 1fr auto; gap:1rem; align-items:center; padding:1rem; border-bottom:1px solid var(--border); }
-  .cart-item:last-child { border-bottom:none; }
-  .cart-thumb { width:64px; height:64px; border-radius:14px; background:var(--surface2); display:grid; place-items:center; overflow:hidden; flex:none; }
-  .cart-thumb img { width:100%; height:100%; object-fit:cover; }
-  .cart-thumb .ic { width:28px; height:28px; color:var(--text3); }
-  .qty-controls { display:inline-flex; align-items:center; gap:.4rem; background:var(--surface2); border:1px solid var(--border); border-radius:100px; padding:3px; }
-  .qty-btn { width:44px; height:44px; border-radius:50%; border:none; background:var(--surface2); color:var(--text); cursor:pointer; display:grid; place-items:center; font-size:1.05rem; font-weight:700; transition:all .14s; box-shadow:var(--shadow-xs); }
-  .qty-btn:hover { background:var(--accent); color:#fff; }
-  .qty-value { min-width:26px; text-align:center; font-weight:700; font-size:.92rem; }
-  .qty-btn.danger:hover { background:var(--red); }
-  .cart-right { display:flex; flex-direction:column; align-items:flex-end; gap:.5rem; }
-  @media (max-width:560px){ .cart-item{ grid-template-columns:auto 1fr; } .cart-right{ grid-column:1/-1; flex-direction:row; justify-content:space-between; align-items:center; } }
+  .cartx{
+    --bg:#0A0F1C; --surface:#131B2E; --surface-2:#182238; --surface-3:#1D2A44;
+    --line:#232E47; --turquoise:#22B8B0; --turquoise-soft:rgba(34,184,176,.14);
+    --terracotta:#CE7C4E; --terracotta-soft:rgba(206,124,78,.14);
+    --violet:#8B7CF6; --violet-soft:rgba(139,124,246,.14);
+    --text:#EDEFF6; --text-muted:#8C95AC; --text-dim:#5D667D; --radius:16px;
+    font-family:'Inter',sans-serif; color:var(--text); max-width:1160px; margin:0 auto;
+  }
+  .cartx *{ box-sizing:border-box; }
+  .cartx a{ text-decoration:none; }
+  .cartx .crumb{ font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+  .cartx .crumb b{ color:var(--text); font-weight:600; }
+  .cartx .crumb .sep{ opacity:.5; }
+  .cartx .header-row{ display:flex; align-items:center; gap:12px; margin-top:14px; }
+  .cartx .cart-icon{ width:38px; height:38px; border-radius:11px; background:var(--turquoise-soft); border:1px solid rgba(34,184,176,.35); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cartx .cart-icon svg{ width:19px; height:19px; color:var(--turquoise); }
+  .cartx h1{ font-family:'Unbounded',sans-serif; font-weight:600; font-size:26px; margin:0; letter-spacing:-.01em; color:var(--text); }
+  .cartx h1 span{ color:var(--text-dim); font-weight:500; }
+  .cartx .cart-tabs{ display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; align-items:center; }
+  .cartx .cart-tab{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:11px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid var(--line); color:var(--text-muted); background:var(--surface-2); }
+  .cartx .cart-tab.active{ color:var(--turquoise); background:var(--turquoise-soft); border-color:rgba(34,184,176,.4); }
+  .cartx .cart-tab svg{ width:14px; height:14px; opacity:.7; }
+  .cartx .cart-tab button{ all:unset; cursor:pointer; }
+  .cartx .cart-input{ padding:10px 14px; border-radius:11px; border:1px dashed var(--line); background:transparent; color:var(--text); font-size:14px; width:180px; }
+  .cartx .cart-input::placeholder{ color:var(--text-dim); }
+  .cartx .cart-add{ display:flex; align-items:center; gap:6px; padding:10px 16px; border-radius:11px; font-size:14px; font-weight:700; background:var(--turquoise); color:#06211F; border:none; cursor:pointer; }
+  .cartx .cart-add svg{ width:14px; height:14px; }
+  .cartx .cart-save{ padding:10px 16px; border-radius:11px; font-size:13.5px; font-weight:600; color:var(--text-muted); border:1px solid var(--line); background:var(--surface-2); cursor:pointer; }
+  .cartx form.inl{ margin:0; display:flex; gap:6px; align-items:center; }
+  .cartx .girih-rule{ height:10px; width:100%; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='10' viewBox='0 0 40 10'%3E%3Cpath d='M0 5 L5 0 L10 5 L5 10 Z M10 5 L15 0 L20 5 L15 10 Z M20 5 L25 0 L30 5 L25 10 Z M30 5 L35 0 L40 5 L35 10 Z' fill='none' stroke='%23232E47' stroke-width='1'/%3E%3C/svg%3E"); background-repeat:repeat-x; opacity:.9; margin:22px 0 0; }
+  .cartx .section-tabs{ display:flex; gap:6px; margin:22px 0; padding:5px; background:var(--surface-2); border:1px solid var(--line); border-radius:14px; width:fit-content; }
+  .cartx .section-tab{ display:flex; align-items:center; gap:9px; padding:11px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; color:var(--text-muted); }
+  .cartx .section-tab svg{ width:16px; height:16px; opacity:.75; }
+  .cartx .section-tab .count{ font-size:11px; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--surface-3); color:var(--text-dim); }
+  .cartx .section-tab[data-color="violet"].active{ background:var(--violet-soft); color:var(--violet); }
+  .cartx .section-tab[data-color="turquoise"].active{ background:var(--turquoise-soft); color:var(--turquoise); }
+  .cartx .section-tab[data-color="terracotta"].active{ background:var(--terracotta-soft); color:var(--terracotta); }
+  .cartx .section-tab.active svg{ opacity:1; }
+  .cartx .section-tab.active .count{ background:rgba(255,255,255,.12); color:inherit; }
+  @media (max-width:640px){ .cartx .section-tabs{ flex-direction:column; width:100%; } }
+  .cartx .section-view{ display:none; }
+  .cartx .section-view.active{ display:block; animation:cxfade .2s ease; }
+  @keyframes cxfade{ from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none} }
+  .cartx .layout{ display:grid; grid-template-columns:1fr 340px; gap:22px; align-items:start; }
+  @media (max-width:900px){ .cartx .layout{ grid-template-columns:1fr; } }
+  .cartx .left{ display:flex; flex-direction:column; gap:14px; }
+  .cartx .empty-box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; color:var(--text-dim); font-size:13.5px; }
+  .cartx .store-group{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .cartx .store-group-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; cursor:pointer; user-select:none; }
+  .cartx .store-group-head:hover{ background:var(--surface-2); }
+  .cartx .store-name-wrap{ display:flex; align-items:center; gap:10px; }
+  .cartx .store-dot{ width:8px; height:8px; border-radius:2px; transform:rotate(45deg); flex-shrink:0; }
+  .cartx .store-name{ font-weight:700; font-size:14.5px; color:var(--text); }
+  .cartx .store-count{ font-size:12px; color:var(--text-dim); background:var(--surface-3); padding:2px 8px; border-radius:999px; margin-left:6px; }
+  .cartx .store-sub{ display:flex; align-items:center; gap:12px; }
+  .cartx .store-total{ font-weight:700; font-size:14.5px; }
+  .cartx .chevron{ width:16px; height:16px; color:var(--text-dim); transition:transform .18s ease; }
+  .cartx .store-group.collapsed .chevron{ transform:rotate(-90deg); }
+  .cartx .store-items{ border-top:1px solid var(--line); max-height:340px; overflow-y:auto; }
+  .cartx .store-group.collapsed .store-items{ display:none; }
+  .cartx .item-row{ display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid var(--line); }
+  .cartx .item-row:last-child{ border-bottom:none; }
+  .cartx .thumb{ width:42px; height:42px; border-radius:9px; background:var(--surface-2); border:1px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .cartx .thumb img{ width:100%; height:100%; object-fit:cover; }
+  .cartx .thumb svg{ width:17px; height:17px; color:var(--text-dim); }
+  .cartx .item-info{ flex:1; min-width:0; }
+  .cartx .item-info .name{ font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+  .cartx .item-info .price-each{ font-size:12px; color:var(--text-dim); }
+  .cartx .stepper{ display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; flex-shrink:0; }
+  .cartx .stepper form{ margin:0; display:flex; }
+  .cartx .stepper button{ width:26px; height:26px; border:none; background:transparent; color:var(--text-muted); font-size:15px; cursor:pointer; }
+  .cartx .stepper button:hover{ color:var(--turquoise); }
+  .cartx .stepper .qty{ min-width:22px; padding:0 2px; text-align:center; font-size:13px; font-weight:700; }
+  .cartx .item-price{ width:96px; text-align:right; font-weight:700; font-size:13.5px; flex-shrink:0; }
+  .cartx .item-remove{ width:24px; height:24px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .cartx .item-remove:hover{ color:var(--terracotta); border-color:var(--terracotta); }
+  .cartx .item-remove svg{ width:11px; height:11px; }
+  .cartx .item-remove form{ margin:0; display:flex; }
+  .cartx .item-remove button{ all:unset; cursor:pointer; display:flex; }
+  .cartx .listing-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .cartx .listing-row{ display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .cartx .listing-row:last-child{ border-bottom:none; }
+  .cartx .listing-info{ flex:1; min-width:0; }
+  .cartx .listing-info .name{ font-weight:600; font-size:13.5px; color:var(--text); }
+  .cartx .listing-info .seller{ font-size:12px; color:var(--turquoise); }
+  .cartx .listing-price{ font-weight:700; font-size:13.5px; }
+  .cartx .summary{ position:sticky; top:24px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:14px; }
+  .cartx .summary h3{ margin:0; font-family:'Unbounded'; font-weight:600; font-size:16px; display:flex; align-items:center; gap:8px; }
+  .cartx .summary h3 .dot{ width:9px; height:9px; border-radius:2px; transform:rotate(45deg); }
+  .cartx .sum-row{ display:flex; justify-content:space-between; font-size:13.5px; color:var(--text-muted); }
+  .cartx .sum-row b{ color:var(--text); font-weight:600; }
+  .cartx .sum-div{ height:1px; background:var(--line); margin:2px 0; }
+  .cartx .sum-total{ display:flex; justify-content:space-between; align-items:baseline; }
+  .cartx .sum-total .label{ font-weight:700; font-size:14.5px; }
+  .cartx .sum-total .value{ font-family:'Unbounded'; font-weight:600; font-size:20px; }
+  .cartx .btn-primary{ display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:12px; font-weight:700; font-size:14.5px; border:none; cursor:pointer; }
+  .cartx .btn-primary svg{ width:15px; height:15px; }
+  .cartx .btn-secondary{ display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:12px; background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-weight:600; font-size:14px; cursor:pointer; }
+  .cartx .sum-note{ font-size:11.5px; color:var(--text-dim); line-height:1.5; text-align:center; }
+  .cartx .flash{ background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--turquoise); border-radius:10px; padding:12px 16px; margin-bottom:12px; font-size:13.5px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="cartx">
 
-  <div class="breadcrumb" style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text2);margin-bottom:1.25rem;flex-wrap:wrap;">
-    <a href="{% url 'home' %}">Bosh sahifa</a><span>›</span>
-    <a href="{% url 'delivery:store_list' %}">Do'konlar</a><span>›</span>
-    <span style="color:var(--text);font-weight:600;">Savat</span>
+  {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+
+  <div class="crumb"><a href="{% url 'home' %}" style="color:inherit;">Bosh sahifa</a> <span class="sep">›</span> <a href="{% url 'delivery:store_list' %}" style="color:inherit;">Do'konlar</a> <span class="sep">›</span> <b>Savat</b></div>
+
+  <div class="header-row">
+    <div class="cart-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg></div>
+    <h1>Savat <span>— {{ cart.name }}</span></h1>
   </div>
 
-  <div class="page-header"><h1><svg class="ic ic-lg" style="color:var(--accent);vertical-align:-4px;"><use href="#i-cart"/></svg> Mening savatim</h1></div>
+  <!-- Saqlangan savatlar -->
+  <div class="cart-tabs">
+    {% for sc in saved_carts %}
+      {% if sc.is_active %}
+      <div class="cart-tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>{{ sc.name }}</div>
+      {% else %}
+      <div class="cart-tab"><form method="post" action="{% url 'delivery:cart_activate' sc.pk %}" class="inl">{% csrf_token %}<button type="submit">{{ sc.name }} · {{ sc.get_total_quantity }}</button></form></div>
+      {% endif %}
+    {% endfor %}
+    <form method="post" action="{% url 'delivery:cart_create' %}" class="inl">{% csrf_token %}<input class="cart-input" name="name" placeholder="Yangi savat nomi"><button class="cart-add" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Yangi savat</button></form>
+    <form method="post" action="{% url 'delivery:cart_rename' cart.pk %}" class="inl">{% csrf_token %}<input class="cart-input" name="name" value="{{ cart.name }}" style="border-style:solid;"><button class="cart-save" type="submit">Nomni saqlash</button></form>
+    {% if saved_carts.count > 1 %}
+    <form method="post" action="{% url 'delivery:cart_delete' cart.pk %}" class="inl" onsubmit="return confirm('Bu savatni o‘chirasizmi?');">{% csrf_token %}<button class="cart-save" style="color:var(--terracotta);" type="submit">🗑 O'chirish</button></form>
+    {% endif %}
+  </div>
 
-  {% if cart and cart.items.all %}
-  <div class="detail-grid">
-    <div>
-      <div class="card">
-        {% for item in cart.items.all %}
-        <div class="cart-item">
-          <div class="cart-thumb">
-            {% with img=item.product.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="{{ item.product.name }}">{% else %}<svg class="ic"><use href="#i-cart"/></svg>{% endif %}{% endwith %}
+  <div class="girih-rule"></div>
+
+  <!-- 3 ta mustaqil bo'lim -->
+  <div class="section-tabs" id="sectionTabs">
+    <div class="section-tab active" data-color="violet" data-section="elonlar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8M18 5a8 8 0 010 14"/></svg>
+      E'lonlar <span class="count">{{ ad_items|length }}</span>
+    </div>
+    <div class="section-tab" data-color="turquoise" data-section="yetkazib">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Yetkazib berish do'konlari <span class="count">{{ delivery_qty }}</span>
+    </div>
+    <div class="section-tab" data-color="terracotta" data-section="mahalla">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l1-4h16l1 4M4 7h16v13H4z"/><path d="M9 21v-6h6v6"/></svg>
+      Mahalla do'konlari <span class="count">{{ mahalla_qty }}</span>
+    </div>
+  </div>
+
+  <!-- ═══ 1. E'LONLAR ═══ -->
+  <div class="section-view active" id="view-elonlar">
+    <div class="layout">
+      <div class="left">
+        {% if ad_items %}
+        <div class="listing-card">
+          {% for ci in ad_items %}
+          <div class="listing-row">
+            <div class="thumb">{% with img=ci.ad.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8"/></svg>{% endif %}{% endwith %}</div>
+            <a class="listing-info" href="{% url 'ad_detail' ci.ad.pk %}"><div class="name">{{ ci.ad.title }}</div><div class="seller">{{ ci.ad.user.name|default:ci.ad.user.phone }} tomonidan</div></a>
+            <div class="listing-price">{% if ci.ad.price %}{{ ci.ad.price|floatformat:0 }} so'm{% else %}Kelishilgan{% endif %}</div>
+            <div class="item-remove"><form method="post" action="{% url 'delivery:cart_ad_remove' ci.ad.pk %}">{% csrf_token %}<button type="submit" title="O'chirish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button></form></div>
           </div>
-          <div>
-            <a href="{% url 'delivery:product_detail' item.product.store.pk item.product.pk %}" style="font-weight:700;color:var(--text);font-size:.96rem;">{{ item.product.name }}</a>
-            <div style="font-size:.8rem;margin-top:.2rem;"><a href="{% url 'delivery:store_detail' item.product.store.pk %}" style="color:var(--accent);">{{ item.product.store.name }}</a></div>
-            <div style="color:var(--text3);font-size:.82rem;margin-top:.3rem;">{{ item.product.price|floatformat:0 }} so'm</div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box">Saqlangan e'lon yo'q. E'lon sahifasidagi yurakcha (Savatga saqlash) tugmasini bosing — e'lon shu yerga tushadi.</div>
+        {% endif %}
+      </div>
+      <div class="summary">
+        <h3><span class="dot" style="background:var(--violet)"></span>E'lonlar</h3>
+        <div class="sum-row"><span>Saqlangan e'lonlar</span><b>{{ ad_items|length }} ta</b></div>
+        <div class="sum-div"></div>
+        <div class="sum-total"><span class="label">Taxminiy qiymati</span><span class="value" style="color:var(--violet)">{{ ad_estimated|floatformat:0 }} so'm</span></div>
+        <a class="btn-secondary" href="{% url 'saved_ads' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Saqlanganlar sahifasi</a>
+        <div class="sum-note">Bu bo'lim to'lovga kirmaydi — narxlar faqat ma'lumot uchun, kelishuv sotuvchi bilan to'g'ridan-to'g'ri bo'ladi.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 2. YETKAZIB BERISH ═══ -->
+  <div class="section-view" id="view-yetkazib">
+    <div class="layout">
+      <div class="left">
+        {% for g in delivery_groups %}
+        <div class="store-group" data-group>
+          <div class="store-group-head" data-toggle>
+            <div class="store-name-wrap"><span class="store-dot" style="background:var(--turquoise)"></span><span class="store-name">{{ g.store.name }}</span><span class="store-count">{{ g.qty }} mahsulot</span></div>
+            <div class="store-sub"><span class="store-total">{{ g.total|floatformat:0 }} so'm</span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></div>
           </div>
-          <div class="cart-right">
-            <div class="qty-controls">
-              <form method="post" action="{% url 'delivery:cart_decrease' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn" title="Kamaytirish">−</button></form>
-              <span class="qty-value">{{ item.quantity }}</span>
-              <form method="post" action="{% url 'delivery:cart_increase' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn" title="Ko'paytirish">+</button></form>
-            </div>
-            <div style="display:flex;align-items:center;gap:.6rem;">
-              <span style="font-family:'Plus Jakarta Sans';font-weight:800;color:var(--text);white-space:nowrap;">{{ item.get_line_total|floatformat:0 }} so'm</span>
-              <form method="post" action="{% url 'delivery:cart_remove' item.product.pk %}">{% csrf_token %}<button type="submit" class="qty-btn danger" style="color:var(--red);" title="O'chirish"><svg class="ic" style="width:15px;height:15px;"><use href="#i-x"/></svg></button></form>
-            </div>
+          <div class="store-items">
+            {% for item in g.items %}{% include 'delivery/_cart_item_row.html' %}{% endfor %}
           </div>
         </div>
+        {% empty %}
+        <div class="empty-box">Yetkazib berish do'konidan mahsulot yo'q. <a href="{% url 'delivery:store_list' %}" style="color:var(--turquoise);">Do'konlarga o'tish →</a></div>
         {% endfor %}
       </div>
-      <a href="{% url 'delivery:store_list' %}" class="btn btn-ghost" style="margin-top:1rem;">← Xarid davom ettirish</a>
-    </div>
-
-    <aside>
-      <div class="card card-pad sticky-card">
-        <h3 style="font-size:1.05rem;margin-bottom:.5rem;">Buyurtma xulosasi</h3>
-        <div class="summary-line"><span>Mahsulotlar soni</span><span>{{ cart.get_total_quantity }} dona</span></div>
-        <div class="summary-line"><span>Turlar soni</span><span>{{ cart.get_total_items }} xil</span></div>
-        <div class="summary-line total"><span>Umumiy summa</span><span>{{ cart.get_subtotal|floatformat:0 }} so'm</span></div>
-        <a href="{% url 'delivery:checkout' %}" class="btn btn-accent btn-block btn-lg" style="margin-top:1.1rem;"><svg class="ic"><use href="#i-check"/></svg> Buyurtma berish</a>
-        <a href="{% url 'delivery:my_orders' %}" class="btn btn-ghost btn-block" style="margin-top:.5rem;"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalarim</a>
+      <div class="summary">
+        <h3><span class="dot" style="background:var(--turquoise)"></span>Yetkazib berish</h3>
+        <div class="sum-row"><span>Mahsulotlar soni</span><b>{{ delivery_qty }} dona</b></div>
+        <div class="sum-row"><span>{{ delivery_store_count }} ta do'kondan</span><b>{{ delivery_subtotal|floatformat:0 }} so'm</b></div>
+        <div class="sum-row"><span>Yetkazish narxi</span><b>{% if delivery_fee %}{{ delivery_fee|floatformat:0 }} so'm{% else %}Bepul{% endif %}</b></div>
+        <div class="sum-div"></div>
+        <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--turquoise)">{{ delivery_subtotal|add:delivery_fee|floatformat:0 }} so'm</span></div>
+        {% if has_delivery %}
+        <a class="btn-primary" href="{% url 'delivery:checkout' %}?section=delivery" style="background:var(--turquoise); color:#06211F;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Hammasiga birdan to'lash</a>
+        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text-dim);" disabled>Mahsulot yo'q</button>{% endif %}
+        <div class="sum-note">Har bir do'kondan buyurtma alohida yig'iladi va manzilingizga yetkaziladi.</div>
       </div>
-    </aside>
+    </div>
   </div>
 
-  {% else %}
-  <div class="empty-state">
-    <div class="icon"><svg class="ic"><use href="#i-cart"/></svg></div>
-    <h3>Savatingiz bo'sh</h3>
-    <p>Mahsulotlarni ko'rish va savatga qo'shish uchun do'konlarga o'ting</p>
-    <a href="{% url 'delivery:store_list' %}" class="btn btn-accent" style="margin-top:1rem;"><svg class="ic"><use href="#i-building"/></svg> Do'konlarga o'tish</a>
+  <!-- ═══ 3. MAHALLA ═══ -->
+  <div class="section-view" id="view-mahalla">
+    <div class="layout">
+      <div class="left">
+        {% for g in mahalla_groups %}
+        <div class="store-group" data-group>
+          <div class="store-group-head" data-toggle>
+            <div class="store-name-wrap"><span class="store-dot" style="background:var(--terracotta)"></span><span class="store-name">{{ g.store.name }}</span><span class="store-count">{{ g.qty }} mahsulot</span></div>
+            <div class="store-sub"><span class="store-total">{{ g.total|floatformat:0 }} so'm</span><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></div>
+          </div>
+          <div class="store-items">
+            {% for item in g.items %}{% include 'delivery/_cart_item_row.html' %}{% endfor %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-box">Mahalla do'konidan mahsulot yo'q. Mahalladagi do'konlar ro'yxatidan mahsulot qo'shing — ular shu yerda, alohida ko'rinadi.</div>
+        {% endfor %}
+      </div>
+      <div class="summary">
+        <h3><span class="dot" style="background:var(--terracotta)"></span>Mahalla do'konlari</h3>
+        <div class="sum-row"><span>Mahsulotlar soni</span><b>{{ mahalla_qty }} dona</b></div>
+        <div class="sum-div"></div>
+        <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--terracotta)">{{ mahalla_subtotal|floatformat:0 }} so'm</span></div>
+        {% if has_mahalla %}
+        <a class="btn-primary" href="{% url 'delivery:checkout' %}?section=mahalla" style="background:var(--terracotta); color:#2A160A;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buyurtma berish</a>
+        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text-dim);" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buyurtma berish</button>{% endif %}
+        <div class="sum-note">Mahalla do'konlaridan olingan mahsulotlar yetkazib berilmaydi — do'kondan o'zingiz olib ketasiz.</div>
+      </div>
+    </div>
   </div>
-  {% endif %}
 
 </div>
+
+<script>
+(function(){
+  var st = document.getElementById('sectionTabs');
+  st.addEventListener('click', function(e){
+    var tab = e.target.closest('.section-tab'); if(!tab) return;
+    document.querySelectorAll('.cartx .section-tab').forEach(function(t){ t.classList.remove('active'); });
+    tab.classList.add('active');
+    document.querySelectorAll('.cartx .section-view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById('view-' + tab.dataset.section).classList.add('active');
+  });
+  document.querySelectorAll('.cartx [data-toggle]').forEach(function(head){
+    head.addEventListener('click', function(){ head.closest('[data-group]').classList.toggle('collapsed'); });
+  });
+})();
+</script>
 {% endblock %}

@@ -317,11 +317,15 @@ class StoreRequest(models.Model):
 # ── CART ──────────────────────────────────────────────────────────────────────
 
 class Cart(models.Model):
-    user = models.OneToOneField(
+    """Foydalanuvchi savati. Bir foydalanuvchida bir nechta nomli savat bo'lishi
+    mumkin (saqlangan savatlar), lekin faqat bittasi `is_active`."""
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='delivery_cart',
+        related_name='carts',
     )
+    name = models.CharField(max_length=80, default='Asosiy savat', verbose_name='Savat nomi')
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name='Faol savat')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -329,9 +333,10 @@ class Cart(models.Model):
         db_table = 'delivery_carts'
         verbose_name = 'Savat'
         verbose_name_plural = 'Savatlar'
+        ordering = ['-is_active', 'created_at']
 
     def __str__(self):
-        return f"Savat — {self.user}"
+        return f"{self.name} — {self.user}"
 
     def get_total_items(self):
         """Number of distinct product lines in the cart."""
@@ -355,6 +360,39 @@ class Cart(models.Model):
             'total_quantity': self.get_total_quantity(),
             'subtotal_price': self.get_subtotal(),
         }
+
+
+class CartAd(models.Model):
+    """Savatning e'lonlar bo'limi — foydalanuvchi saqlab qo'ygan e'lonlar
+    (sotib olinmaydi, keyin ko'rish uchun)."""
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='ad_items')
+    ad = models.ForeignKey('main.Ad', on_delete=models.CASCADE, related_name='cart_saves')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'delivery_cart_ads'
+        verbose_name = 'Savatdagi e\'lon'
+        verbose_name_plural = 'Savatdagi e\'lonlar'
+        unique_together = ('cart', 'ad')
+        ordering = ['-added_at']
+
+    def __str__(self):
+        return f"{self.ad_id} → {self.cart_id}"
+
+
+def get_active_cart(user):
+    """Foydalanuvchining faol savatini qaytaradi (bo'lmasa yaratadi)."""
+    cart = Cart.objects.filter(user=user, is_active=True).order_by('-updated_at').first()
+    if cart is not None:
+        return cart
+    cart = Cart.objects.filter(user=user).order_by('-updated_at').first()
+    if cart is not None:
+        Cart.objects.filter(user=user).exclude(pk=cart.pk).update(is_active=False)
+        if not cart.is_active:
+            cart.is_active = True
+            cart.save(update_fields=['is_active'])
+        return cart
+    return Cart.objects.create(user=user, is_active=True)
 
 
 class CartItem(models.Model):
@@ -386,6 +424,32 @@ class CartItem(models.Model):
 
 # ── ORDER (buyurtma — checkout natijasi) ────────────────────────────────────────
 
+class CheckoutGroup(models.Model):
+    """Bitta checkout'da hosil bo'lgan buyurtmalar guruhi — barchasiga BITTA
+    birlashgan to'lov qilinadi (do'kon bo'yicha bo'lingan bo'lsa ham)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='checkout_groups',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'delivery_checkout_groups'
+        verbose_name = 'Checkout guruhi'
+        verbose_name_plural = 'Checkout guruhlari'
+        ordering = ['-created_at']
+
+    def total_amount(self):
+        return int(self.orders.aggregate(s=models.Sum('total'))['s'] or 0)
+
+    def is_paid(self):
+        orders = list(self.orders.all())
+        return bool(orders) and all(o.payment_status == 'paid' for o in orders)
+
+    def __str__(self):
+        return f"Checkout {str(self.id)[:8]}"
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Kutilmoqda'),
@@ -404,6 +468,12 @@ class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='delivery_orders',
+    )
+    # Bitta checkout'dagi (bir nechta do'kon) buyurtmalarni birlashtiruvchi guruh —
+    # hammasiga bitta to'lov qilinadi. Eski buyurtmalarda null bo'lishi mumkin.
+    group = models.ForeignKey(
+        'delivery.CheckoutGroup', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='orders',
     )
     full_name = models.CharField(max_length=120, verbose_name='Qabul qiluvchi')
     phone = models.CharField(max_length=30, verbose_name='Telefon')

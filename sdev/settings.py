@@ -257,6 +257,10 @@ elif _s3_bucket:
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
     AWS_S3_SIGNATURE_VERSION = 's3v4'
+    # Supabase (va boshqa S3-mos endpointlar) faqat PATH-style manzillashni
+    # qo'llab-quvvatlaydi. Standart 'virtual' bucket nomini subdomenga qo'yadi
+    # (media.<host>) — bu Supabase'da upload'ni buzadi. Env orqali bekor qilinadi.
+    AWS_S3_ADDRESSING_STYLE = os.environ.get('AWS_S3_ADDRESSING_STYLE', 'path')
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
     STORAGES['default'] = {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'}
     # Supabase public URL format

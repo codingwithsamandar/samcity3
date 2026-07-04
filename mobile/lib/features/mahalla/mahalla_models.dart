@@ -8,6 +8,7 @@ class Neighborhood {
   final String headName;
   final String headPhone;
   final String color;
+  final List<double>? centroid;
 
   Neighborhood({
     required this.id,
@@ -17,6 +18,7 @@ class Neighborhood {
     this.headName = '',
     this.headPhone = '',
     this.color = '#3551d1',
+    this.centroid,
   });
 
   factory Neighborhood.fromJson(Map<String, dynamic> j) => Neighborhood(
@@ -27,6 +29,9 @@ class Neighborhood {
         headName: j['head_name'] ?? '',
         headPhone: j['head_phone'] ?? '',
         color: j['color'] ?? '#3551d1',
+        centroid: (j['centroid'] is List && (j['centroid'] as List).length == 2)
+            ? [(j['centroid'][0] as num).toDouble(), (j['centroid'][1] as num).toDouble()]
+            : null,
       );
 }
 
@@ -51,36 +56,51 @@ class Announcement {
 class MahallaPlace {
   final String id;
   final String name;
+  final String category;
   final String categoryLabel;
   final String icon;
   final String address;
   final String url;
+  final double? lat;
+  final double? lng;
 
   MahallaPlace({
     required this.id,
     required this.name,
+    this.category = '',
     required this.categoryLabel,
     required this.icon,
     required this.address,
     required this.url,
+    this.lat,
+    this.lng,
   });
+
+  static double? _d(dynamic v) => v is num ? v.toDouble() : null;
 
   factory MahallaPlace.fromJson(Map<String, dynamic> j) => MahallaPlace(
         id: j['id'].toString(),
         name: j['name'] ?? '',
+        category: j['category'] ?? '',
         categoryLabel: j['category_label'] ?? '',
         icon: j['icon'] ?? '📍',
         address: j['address'] ?? '',
         url: j['url'] ?? '',
+        lat: _d(j['lat']),
+        lng: _d(j['lng']),
       );
 }
 
 class PlaceGroup {
+  final String key;
   final String label;
   final List<MahallaPlace> items;
-  PlaceGroup({required this.label, required this.items});
+  PlaceGroup({required this.key, required this.label, required this.items});
+
+  String get icon => items.isNotEmpty ? items.first.icon : '📍';
 
   factory PlaceGroup.fromJson(Map<String, dynamic> j) => PlaceGroup(
+        key: j['key'] ?? '',
         label: j['label'] ?? '',
         items: ((j['items'] as List?) ?? []).map((e) => MahallaPlace.fromJson(e)).toList(),
       );

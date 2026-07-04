@@ -91,7 +91,7 @@
         <!-- Marketplace actions -->
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
           {% if user.is_authenticated and user.pk != ad.user_id %}
-          <button id="favBtn" class="btn {% if is_favorite %}btn-accent{% else %}btn-outline{% endif %} btn-sm" onclick="toggleFav()"><svg class="ic"><use href="#i-heart"/></svg> <span id="favLbl">{% if is_favorite %}Saqlangan{% else %}Saqlash{% endif %}</span></button>
+          <button id="favBtn" class="btn {% if is_favorite %}btn-accent{% else %}btn-outline{% endif %} btn-sm" onclick="toggleFav()" title="Saqlanganlar savatning e'lonlar bo'limida ko'rinadi"><svg class="ic"><use href="#i-heart"/></svg> <span id="favLbl">{% if is_favorite %}Savatda saqlangan{% else %}Savatga saqlash{% endif %}</span></button>
           {% endif %}
           <button class="btn btn-outline btn-sm" onclick="shareAd()"><svg class="ic"><use href="#i-arrow-right"/></svg> Ulashish</button>
           {% if user.is_authenticated and user.pk != ad.user_id %}
@@ -238,8 +238,8 @@ function toggleFav(){
     .then(function(r){return r.json();}).then(function(d){
       var b=document.getElementById('favBtn'), l=document.getElementById('favLbl');
       if(!b) return;
-      if(d.favorite){ b.classList.add('btn-accent'); b.classList.remove('btn-outline'); l.textContent='Saqlangan'; }
-      else { b.classList.remove('btn-accent'); b.classList.add('btn-outline'); l.textContent='Saqlash'; }
+      if(d.favorite){ b.classList.add('btn-accent'); b.classList.remove('btn-outline'); l.textContent='Savatda saqlangan'; }
+      else { b.classList.remove('btn-accent'); b.classList.add('btn-outline'); l.textContent='Savatga saqlash'; }
     }).catch(function(){});
 }
 function shareAd(){

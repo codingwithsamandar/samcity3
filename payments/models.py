@@ -4,13 +4,15 @@ from django.conf import settings
 
 
 CATEGORY_CHOICES = [
-    ('kommunal', "⚡ Kommunal xizmat"),
+    ('bogcha_davlat', "🏛️ Davlat bog'chasi"),
+    ('bogcha_shaxsiy', "🧸 Shaxsiy bog'cha"),
     ('kurs', "📚 O'quv kurslari"),
-    ('bogcha', "🧸 Bog'cha"),
     ('maktab', "🏫 Maktab / litsey"),
-    ('internet', "🌐 Internet / Aloqa"),
-    ('boshqa', "📋 Boshqa"),
 ]
+
+# Online to'lov (ism-familiya + karta) qabul qiladigan kategoriyalar.
+# Davlat bog'chasi bu ro'yxatda yo'q — u faqat ma'lumot uchun ko'rsatiladi.
+PAYABLE_CATEGORIES = {'bogcha_shaxsiy', 'kurs', 'maktab'}
 
 
 class Provider(models.Model):
@@ -46,6 +48,11 @@ class Provider(models.Model):
     def has_fixed_amount(self):
         return self.amount and self.amount > 0
 
+    @property
+    def is_payable(self):
+        """Online to'lov qabul qiladimi? Davlat bog'chasi — yo'q (faqat ma'lumot)."""
+        return self.category in PAYABLE_CATEGORIES
+
 
 class ServicePayment(models.Model):
     """To'lov yozuvi (demo). DIQQAT: to'liq karta raqami va CVV SAQLANMAYDI —
@@ -64,9 +71,11 @@ class ServicePayment(models.Model):
     )
     provider_name = models.CharField(max_length=200, verbose_name='Muassasa nomi')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
+    first_name = models.CharField(max_length=80, blank=True, verbose_name='Ism')
+    last_name = models.CharField(max_length=80, blank=True, verbose_name='Familiya')
     payer_name = models.CharField(
-        max_length=150, blank=True, verbose_name="To'lovchi / abonent",
-        help_text="Kim uchun (bola ismi, abonent kodi, shartnoma raqami)",
+        max_length=150, blank=True, verbose_name="To'lovchi (ism-familiya)",
+        help_text="Bola / o'quvchi ism-familiyasi (ism va familiyadan avtomatik tuziladi)",
     )
     period = models.CharField(max_length=20, blank=True, verbose_name='Davr (YYYY-MM)')
     amount = models.BigIntegerField(verbose_name="Summa (so'm)")

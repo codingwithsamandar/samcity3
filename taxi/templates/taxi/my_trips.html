@@ -4,7 +4,8 @@
 
 {% block extra_css %}
 <style>
-  .yx { --yel:#ffdb4d; --card:#17171c; --card2:#1f1f27; --line:#2a2a33; --muted:#8b8b99; }
+  /* Rang tokenlari base mavzudan — light/dark ikkalasida to'g'ri ishlaydi. */
+  .yx { --yel:#e0a52e; --card:var(--surface); --card2:var(--surface2); --line:var(--border); --muted:var(--text2); }
   .tr { display:flex; align-items:center; gap:1rem; background:var(--card); border:1px solid var(--line);
     border-radius:16px; padding:1rem 1.2rem; margin-bottom:.7rem; transition:border-color .15s; }
   .tr:hover { border-color:var(--yel); }

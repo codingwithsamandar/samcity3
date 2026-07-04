@@ -46,9 +46,15 @@
   <form method="post" id="payForm">
     {% csrf_token %}
 
-    <div class="form-group">
-      <label class="form-label">To'lovchi / abonent (kim uchun)</label>
-      <input type="text" name="payer_name" class="form-control" placeholder="Bola ismi, abonent kodi yoki shartnoma raqami">
+    <div style="display:flex;gap:.8rem;">
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Ism <span style="color:var(--danger,#e5484d);">*</span></label>
+        <input type="text" name="first_name" class="form-control" placeholder="Ism" required autocomplete="off">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label class="form-label">Familiya <span style="color:var(--danger,#e5484d);">*</span></label>
+        <input type="text" name="last_name" class="form-control" placeholder="Familiya" required autocomplete="off">
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Davr (ixtiyoriy)</label>
