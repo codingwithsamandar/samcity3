@@ -64,6 +64,8 @@ SESSION_SAVE_EVERY_REQUEST = False
 
 INSTALLED_APPS = [
     'daphne',
+    # Jazzmin admin.py'dan OLDIN turishi SHART (admin shablonini almashtiradi)
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -475,3 +477,125 @@ if SENTRY_DSN:
     except Exception:
         # Sentry o'rnatilmagan bo'lsa — jim o'tkazib yuboramiz
         pass
+
+# ─── ADMIN PANEL: Jazzmin (bo'limlarga ajratilgan, yig'iladigan menyu) ────────
+# Maqsad: modellar app'lar bo'yicha mantiqiy bo'limlarga guruhlanadi, chap
+# tomonda yig'iladigan (collapsible) menyu, ikonkalar va qidiruv paydo bo'ladi.
+# Ortiqcha "texnik" modellar (through-jadvallar, ovoz/rasm yozuvlari) yon
+# menyudan yashiriladi — ular baribir asosiy model ichida tahrirlanadi.
+JAZZMIN_SETTINGS = {
+    'site_title': 'SamCity Admin',
+    'site_header': 'SamCity',
+    'site_brand': 'SamCity',
+    'welcome_sign': 'SamCity boshqaruv paneliga xush kelibsiz',
+    'copyright': 'SamCity',
+    'search_model': ['main.User', 'main.Ad', 'delivery.Store', 'delivery.Order'],
+
+    # ── Bo'limlar tartibi: chapdagi menyuda app'lar shu tartibda chiqadi ──
+    'order_with_respect_to': [
+        'main',          # Asosiy — Mahalla, E'lonlar, Foydalanuvchilar
+        'delivery',      # Yetkazib berish (do'konlar, buyurtmalar)
+        'taxi',          # Taksi
+        'booking',       # Joylar va bronlar
+        'places',        # Xarita va joylar
+        'payments',      # To'lovlar
+        'notifications', # Bildirishnomalar
+        'telegrambot',   # Telegram bot (OTP)
+        'auth',
+    ],
+
+    # ── Yon menyuni soddalashtirish: texnik/ichki modellarni yashirish ──
+    'hide_models': [
+        'main.OTPCode', 'main.SearchQuery', 'main.AdFavorite', 'main.AdInquiry',
+        'main.MessageReaction', 'main.PollVote', 'main.PollComment',
+        'main.HelpVolunteer', 'main.ChatMessage', 'main.ChatMember',
+        'delivery.CartItem', 'delivery.OrderItem', 'delivery.ProductImage',
+        'delivery.StoreImage', 'delivery.StoreChatThread',
+        'delivery.StoreChatMessage', 'delivery.StoreUpdate',
+        'places.PlaceImage', 'places.PlaceFavorite',
+        'taxi.ServiceReview', 'taxi.TaxistReview',
+    ],
+
+    # ── Model/bo'lim ikonkalari (Font Awesome 5 free) ──
+    'icons': {
+        'auth': 'fas fa-users-cog',
+        'auth.Group': 'fas fa-users',
+
+        'main': 'fas fa-city',
+        'main.User': 'fas fa-user',
+        'main.Ad': 'fas fa-bullhorn',
+        'main.AdReport': 'fas fa-flag',
+        'main.Booking': 'fas fa-calendar-check',
+        'main.Neighborhood': 'fas fa-map-marked-alt',
+        'main.NeighborhoodAnnouncement': 'fas fa-comment-dots',
+        'main.CitizenRequest': 'fas fa-file-signature',
+        'main.JobAd': 'fas fa-briefcase',
+        'main.ResumeAd': 'fas fa-id-badge',
+        'main.UtilityPayment': 'fas fa-file-invoice-dollar',
+        'main.BoostPayment': 'fas fa-rocket',
+        'main.Poll': 'fas fa-poll',
+        'main.HelpRequest': 'fas fa-hands-helping',
+        'main.ChatRoom': 'fas fa-comments',
+        'main.ChatAdmin': 'fas fa-user-shield',
+
+        'delivery': 'fas fa-truck',
+        'delivery.DeliveryCategory': 'fas fa-tags',
+        'delivery.Store': 'fas fa-store',
+        'delivery.Product': 'fas fa-box',
+        'delivery.Cart': 'fas fa-shopping-cart',
+        'delivery.Order': 'fas fa-receipt',
+        'delivery.DeliveryDriver': 'fas fa-motorcycle',
+        'delivery.StoreSubscription': 'fas fa-star',
+        'delivery.StoreRequest': 'fas fa-clipboard-check',
+
+        'taxi': 'fas fa-taxi',
+        'taxi.TaxiService': 'fas fa-building',
+        'taxi.Taxist': 'fas fa-user-tie',
+        'taxi.Route': 'fas fa-route',
+        'taxi.Car': 'fas fa-car',
+        'taxi.Trip': 'fas fa-road',
+        'taxi.Payment': 'fas fa-money-bill-wave',
+
+        'booking': 'fas fa-calendar-alt',
+        'booking.Venue': 'fas fa-map-pin',
+        'booking.VenueService': 'fas fa-concierge-bell',
+        'booking.VenueStaff': 'fas fa-user-friends',
+        'booking.VenueBooking': 'fas fa-bookmark',
+
+        'places': 'fas fa-map',
+        'places.Place': 'fas fa-map-marker-alt',
+        'places.PlaceReview': 'fas fa-star-half-alt',
+
+        'payments': 'fas fa-credit-card',
+        'payments.Provider': 'fas fa-building',
+        'payments.ServicePayment': 'fas fa-hand-holding-usd',
+        'payments.Transaction': 'fas fa-exchange-alt',
+
+        'notifications': 'fas fa-bell',
+        'notifications.Notification': 'fas fa-bell',
+
+        'telegrambot': 'fab fa-telegram',
+        'telegrambot.TelegramLink': 'fas fa-link',
+    },
+    'default_icon_parents': 'fas fa-chevron-circle-right',
+    'default_icon_children': 'fas fa-circle',
+
+    # UX: yon menyu, foydalanuvchi menyusi
+    'show_sidebar': True,
+    'navigation_expanded': False,   # bo'limlar yig'ilgan holda ochiladi
+    'related_modal_active': True,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    'navbar_small_text': False,
+    'sidebar': 'sidebar-dark-primary',
+    'sidebar_nav_compact_style': True,
+    'sidebar_nav_flat_style': False,
+    'theme': 'flatly',
+    'default_theme_mode': 'light',
+    'button_classes': {
+        'primary': 'btn-primary',
+        'success': 'btn-success',
+        'danger': 'btn-danger',
+    },
+}
