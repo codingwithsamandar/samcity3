@@ -871,6 +871,7 @@ def neighborhood_chat_room(request, room_id):
         'is_approved': is_approved,
         'is_banned': is_banned,
         'pending_count': pending_count,
+        'embed': request.GET.get('embed') == '1',
     })
 
 

@@ -81,6 +81,9 @@
   .mhx .opt .bar{ height:8px; border-radius:100px; background:var(--surface-3); overflow:hidden; margin-top:3px; }
   .mhx .opt .bar > span{ display:block; height:100%; background:var(--turquoise); }
   .mhx .req-badge{ font-size:11px; padding:2px 8px; border-radius:100px; font-weight:700; background:var(--violet-soft); color:var(--violet); }
+  .mhx #mhmap-mini{ height:150px; z-index:1; }
+  .mhx .chat-embed{ border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface); }
+  .mhx .chat-embed iframe{ width:100%; height:72vh; min-height:460px; border:0; display:block; }
 </style>
 {% endblock %}
 
@@ -135,7 +138,7 @@
           <div class="widget-title"><span class="ic" style="background:var(--terracotta-soft);color:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Joylar</div>
           <span class="see-all" data-goto="joylar">Xaritada <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>
         </div>
-        <div class="map-box" data-goto="joylar"><div class="pin" style="top:40px;left:60px;"></div><div class="pin" style="top:80px;left:130px;"></div><div class="pin" style="top:55px;left:200px;"></div></div>
+        <div id="mhmap-mini" class="map-box" data-goto="joylar"></div>
       </div>
 
       <!-- Umumiy chat -->
@@ -267,9 +270,14 @@
   <!-- ═══ CHAT ═══ -->
   {% if chat_room %}
   <div class="view" id="view-chat">
-    <div class="card-simple" style="text-align:center;">
-      <p style="margin-bottom:14px;">💬 Mahalla a'zolari bilan real vaqt suhbati.</p>
-      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" class="mx-btn" style="display:inline-flex;">Mahalla chatiga kirish</a>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="font-size:13.5px;color:var(--text-muted);">💬 Mahalla a'zolari bilan real vaqt suhbati.</div>
+      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" target="_blank" class="mx-btn ghost" style="display:inline-flex;">To'liq ekran ↗</a>
+    </div>
+    <div class="chat-embed">
+      <iframe id="chatFrame" title="Mahalla chati"
+              src="{% url 'neighborhood_chat_room' chat_room.pk %}?embed=1"
+              loading="lazy"></iframe>
     </div>
   </div>
   {% endif %}
@@ -367,12 +375,30 @@
 <script>
 (function () {
   var titles = { home:"Mening mahallam", dokonlar:"Do'konlar", joylar:"Joylar", elonlar:"E'lonlar", chat:"Umumiy chat", ishtirok:"Ishtirok" };
-  var mapInited = false;
+  var BOUNDARY = {{ boundary_json|safe }};
+  var CENTER = {{ centroid_json|safe }};
+  var COLOR = "{{ neighborhood.color|default:'#3551d1' }}";
+  var mapInited = false, fullMap = null, miniMap = null;
+
+  // Leaflet konteyner yashirin/0px kenglikda ochilsa "kulrang" bo'lib qoladi.
+  // ResizeObserver + bir necha invalidateSize bilan har doim to'g'ri chizamiz.
+  function keepFresh(map, el){
+    function fix(){ try{ map.invalidateSize(); }catch(e){} }
+    [60,250,600,1200].forEach(function(ms){ setTimeout(fix, ms); });
+    if (window.ResizeObserver){
+      var ro = new ResizeObserver(function(){ fix(); });
+      ro.observe(el);
+    }
+  }
+
   function goTo(name){
     document.querySelectorAll('.mhx .tab').forEach(function(t){ t.classList.toggle('active', t.dataset.view === name); });
     document.querySelectorAll('.mhx .view').forEach(function(v){ v.classList.toggle('active', v.id === 'view-' + name); });
     var pt = document.getElementById('pageTitle'); if (titles[name]) pt.textContent = titles[name];
-    if (name === 'joylar' && !mapInited) { mapInited = true; initMap(); }
+    if (name === 'joylar'){
+      if (!mapInited) { mapInited = true; initMap(); }
+      else if (fullMap) { setTimeout(function(){ try{ fullMap.invalidateSize(); }catch(e){} }, 60); }
+    }
   }
   document.getElementById('tabs').addEventListener('click', function(e){
     var tab = e.target.closest('.tab'); if (tab) goTo(tab.dataset.view);
@@ -389,28 +415,49 @@
     });
   });
 
-  function initMap(){
-    if (typeof SamMap === 'undefined' || !document.getElementById('mhmap')) return;
-    var boundary = {{ boundary_json|safe }};
-    var center = {{ centroid_json|safe }};
-    var map = SamMap.init('mhmap', { zoomLevel: 14, center: center || SamMap.CENTER });
-    var color = "{{ neighborhood.color|default:'#3551d1' }}";
-    if (boundary && boundary.length) {
-      var poly = L.polygon(boundary, { color: color, weight: 3, fillColor: color, fillOpacity: .08 }).addTo(map);
-      try { map.fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 16 }); } catch (e) {}
-    } else if (center) {
-      map.setView(center, 14);
-      L.marker(center).addTo(map).bindPopup("{{ neighborhood.name }}");
+  function drawBoundary(map){
+    if (BOUNDARY && BOUNDARY.length) {
+      var poly = L.polygon(BOUNDARY, { color: COLOR, weight: 3, fillColor: COLOR, fillOpacity: .08 }).addTo(map);
+      try { map.fitBounds(poly.getBounds(), { padding: [24, 24], maxZoom: 16 }); } catch (e) {}
+    } else if (CENTER) {
+      map.setView(CENTER, 14);
+      L.marker(CENTER).addTo(map).bindPopup("{{ neighborhood.name }}");
     } else {
-      // Chegara ham, markaz ham belgilanmagan — umumiy hudud xaritasi ko'rsatiladi.
       map.setView(SamMap.CENTER, 13);
     }
-    var cluster = SamMap.cluster(map);
+  }
+
+  function initMap(){
+    var el = document.getElementById('mhmap');
+    if (typeof SamMap === 'undefined' || !el) return;
+    fullMap = SamMap.init('mhmap', { zoomLevel: 14, center: CENTER || SamMap.CENTER });
+    drawBoundary(fullMap);
+    var cluster = SamMap.cluster(fullMap);
     fetch("{% url 'places:neighborhood_places_geojson' neighborhood.pk %}")
       .then(function (r) { return r.json(); })
-      .then(function (d) { (d.places || []).forEach(function (p) { SamMap.placeMarker(p).addTo(cluster); }); });
-    setTimeout(function () { map.invalidateSize(); }, 100);
+      .then(function (d) { (d.places || []).forEach(function (p) { SamMap.placeMarker(p).addTo(cluster); }); })
+      .catch(function(){});
+    keepFresh(fullMap, el);
   }
+
+  // Bosh sahifadagi kichik xarita — mahalla ochilishi bilan darhol ko'rinadi.
+  function initMiniMap(){
+    var el = document.getElementById('mhmap-mini');
+    if (typeof SamMap === 'undefined' || !el || !window.L) return;
+    miniMap = SamMap.init('mhmap-mini', {
+      zoomLevel: 14, center: CENTER || SamMap.CENTER,
+      zoom: false, fullscreen: false,
+    });
+    // Ko'rinish uchun — interaktiv emas, bosilganda "Joylar" tabiga o'tadi.
+    miniMap.dragging.disable(); miniMap.scrollWheelZoom.disable();
+    miniMap.doubleClickZoom.disable(); miniMap.boxZoom.disable();
+    miniMap.keyboard.disable(); if (miniMap.tap) miniMap.tap.disable();
+    drawBoundary(miniMap);
+    keepFresh(miniMap, el);
+  }
+
+  if (document.readyState !== 'loading') initMiniMap();
+  else document.addEventListener('DOMContentLoaded', initMiniMap);
 })();
 </script>
 {% endblock %}

@@ -2,10 +2,17 @@
 {% load static %}
 {% block title %}{{ room.neighborhood.name }} — Mahalla chat{% endblock %}
 
+{% block body_class %}{% if embed %}chat-embed-mode{% endif %}{% endblock %}
 {% block extra_css %}
 <style>
   body { padding-bottom: 0 !important; }
   .chat-shell { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 66px); }
+  /* Mahalla sahifasi ichida iframe orqali ochilganda — nav/footer yashiriladi. */
+  body.chat-embed-mode { animation: none !important; opacity: 1 !important; }
+  body.chat-embed-mode .nav, body.chat-embed-mode .site-footer,
+  body.chat-embed-mode .mobile-tabbar, body.chat-embed-mode .aurora-bg { display: none !important; }
+  body.chat-embed-mode .chat-shell { height: 100vh; max-width: 100%; }
+  body.chat-embed-mode .chat-head .back { display: none; }
 
   .chat-head { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 5; }
   .chat-head .back { color: var(--text2); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; }
