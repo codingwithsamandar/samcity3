@@ -7,22 +7,30 @@
 <style>
   .cm-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
   #cmap { height: 78vh; min-height: 480px; z-index: 1; }
-  .cm-filters { position: absolute; top: 14px; left: 14px; z-index: 500; display: flex; gap: .4rem; flex-wrap: wrap; max-width: calc(100% - 28px); }
-  .cm-chip { background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 100px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: .35rem; }
-  .cm-chip.off { opacity: .45; }
-  .cm-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .cm-filters { position: absolute; top: 14px; left: 14px; z-index: 500; display: flex; gap: .45rem; flex-wrap: wrap; max-width: calc(100% - 28px); }
+  .cm-chip { background: var(--glass-bg); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--glass-brd);
+    border-radius: 100px; padding: .45rem .9rem .45rem .7rem; font-size: .82rem; font-weight: 650; cursor: pointer; box-shadow: var(--shadow-sm);
+    display: inline-flex; align-items: center; gap: .45rem; transition: transform .15s, opacity .15s, box-shadow .15s; color: var(--text); }
+  .cm-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .cm-chip.off { opacity: .4; }
+  .cm-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; box-shadow: 0 0 0 3px currentColor; }
   /* "Mening mahallam" nishoni */
-  .cm-mine-tag { position: absolute; top: 14px; right: 14px; z-index: 500; background: var(--accent); color: #fff;
-    border-radius: 100px; padding: .45rem .95rem; font-size: .85rem; font-weight: 700; box-shadow: var(--shadow);
+  .cm-mine-tag { position: absolute; top: 14px; right: 14px; z-index: 500; background: linear-gradient(135deg, var(--accent), var(--accent-d)); color: #fff;
+    border-radius: 100px; padding: .5rem 1rem; font-size: .85rem; font-weight: 700; box-shadow: var(--shadow-brand);
     display: inline-flex; align-items: center; gap: .4rem; }
-  .cm-label span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; background: rgba(255,255,255,.92);
-    border:1px solid rgba(0,0,0,.12); padding:2px 9px; border-radius:8px; font-size:12.5px; font-weight:800; color:#1b2433; box-shadow:0 1px 5px rgba(0,0,0,.2); }
+  .cm-label span { display:inline-block; transform:translate(-50%,-50%); white-space:nowrap; background: rgba(255,255,255,.94);
+    border:1px solid rgba(0,0,0,.12); padding:3px 10px; border-radius:9px; font-size:12.5px; font-weight:800; color:#1b2433; box-shadow:0 2px 8px rgba(0,0,0,.22); }
   /* Mahalla tanlanmagan banner */
-  .cm-empty { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; justify-content:space-between;
+  .cm-empty { display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap; justify-content:space-between;
     background: linear-gradient(120deg, var(--accent-l), transparent 70%); border:1px solid var(--border);
-    border-radius: var(--radius); padding: 1.25rem 1.5rem; }
-  .cm-empty .t { font-weight:800; font-size:1.05rem; }
-  .cm-empty .s { color: var(--text2); font-size:.9rem; margin-top:.2rem; }
+    border-radius: var(--radius-xl); padding: 1.75rem 2rem; position: relative; overflow: hidden; }
+  .cm-empty::before { content:""; position:absolute; width:220px; height:220px; border-radius:50%; background:var(--accent);
+    opacity:.14; filter:blur(50px); top:-100px; right:-40px; }
+  .cm-empty .eic { width:52px; height:52px; border-radius:14px; background:linear-gradient(140deg,var(--accent),var(--accent-d));
+    display:grid; place-items:center; color:#fff; box-shadow:var(--shadow-brand); flex:none; }
+  .cm-empty .eic .ic { width:26px; height:26px; }
+  .cm-empty .t { font-weight:800; font-size:1.1rem; }
+  .cm-empty .s { color: var(--text2); font-size:.92rem; margin-top:.25rem; max-width: 440px; }
 </style>
 {% endblock %}
 
@@ -35,20 +43,26 @@
   </div>
 
   {% if not has_my_neighborhood %}
-  <div class="cm-empty">
-    <div>
-      <div class="t">📍 Mahallangiz hali belgilanmagan</div>
-      <div class="s">Xaritada o'z mahallangizni ko'rish uchun avval uni belgilang.</div>
+  <div class="cm-empty reveal">
+    <div style="display:flex;gap:1.1rem;align-items:center;">
+      <div class="eic"><svg class="ic"><use href="#i-pin"/></svg></div>
+      <div>
+        <div class="t">Mahallangiz hali belgilanmagan</div>
+        <div class="s">Xaritada o'z mahallangizni ko'rish uchun avval uni belgilang — bu bir necha soniya vaqt oladi.</div>
+      </div>
     </div>
-    <a href="{% url 'neighborhood_chat' %}" class="btn btn-accent">Mahallani belgilash</a>
+    <a href="{% url 'neighborhood_chat' %}" class="btn btn-accent btn-lg">
+      <svg class="ic"><use href="#i-arrow-right"/></svg> Mahallani belgilash
+    </a>
   </div>
   {% else %}
-  <div class="cm-shell">
+  <div class="cm-shell reveal">
     <div class="cm-filters">
-      <span class="cm-chip" data-layer="place"><span class="cm-dot" style="background:#3551d1;"></span> Joylar</span>
-      <span class="cm-chip" data-layer="help"><span class="cm-dot" style="background:#3551d1;"></span> Yordam</span>
-      <span class="cm-chip" data-layer="emergency"><span class="cm-dot" style="background:#e5484d;"></span> Favqulodda</span>
+      <span class="cm-chip" data-layer="place"><span class="cm-dot" style="color:#3551d1;"></span> Joylar</span>
+      <span class="cm-chip" data-layer="help"><span class="cm-dot" style="color:#3551d1;"></span> Yordam</span>
+      <span class="cm-chip" data-layer="emergency"><span class="cm-dot" style="color:#e5484d;"></span> Favqulodda</span>
     </div>
+    <span class="cm-mine-tag"><svg class="ic" style="width:1em;height:1em;"><use href="#i-pin"/></svg> Mening mahallam</span>
     <div id="cmap"></div>
   </div>
   {% endif %}
