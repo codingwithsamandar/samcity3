@@ -1,30 +1,59 @@
-// This is a basic Flutter widget test.
+// SamCity — asosiy birlik testlari.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// To'liq ilovani (SamCityApp) test qilish flutter_secure_storage kabi
+// platforma plaginlarini talab qiladi, shuning uchun bu yerda plaginsiz,
+// sof-Dart mantiq (narx formatlash, model parsing) tekshiriladi.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:samcity/main.dart';
+import 'package:samcity/features/delivery/delivery_models.dart';
+import 'package:samcity/features/ads/ad_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('money() formatlash', () {
+    test('minglarni bo\'sh joy bilan ajratadi', () {
+      expect(money(1000), '1 000');
+      expect(money(1234567), '1 234 567');
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('kichik sonlar o\'zgarmaydi', () {
+      expect(money(0), '0');
+      expect(money(999), '999');
+    });
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  group('AdListItem.fromJson', () {
+    test('to\'liq JSON to\'g\'ri o\'qiladi', () {
+      final ad = AdListItem.fromJson({
+        'id': 42,
+        'title': 'Velosiped',
+        'price': 500000,
+        'price_type': 'fixed',
+        'category': 'transport',
+        'category_display': 'Transport',
+        'location': 'Samarqand',
+        'is_boosted': true,
+        'views': 12,
+      });
+      expect(ad.id, '42');
+      expect(ad.title, 'Velosiped');
+      expect(ad.price, 500000);
+      expect(ad.isBoosted, true);
+      expect(ad.priceLabel, "500 000 so'm");
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('yetishmayotgan maydonlar xavfsiz standart qiymat oladi', () {
+      final ad = AdListItem.fromJson({'id': 1});
+      expect(ad.title, '');
+      expect(ad.price, isNull);
+      expect(ad.priceType, 'fixed');
+      expect(ad.isBoosted, false);
+      expect(ad.views, 0);
+    });
+
+    test('bepul e\'lon narxi to\'g\'ri belgilanadi', () {
+      final ad = AdListItem.fromJson({'id': 1, 'price_type': 'free'});
+      expect(ad.priceLabel, 'Bepul');
+    });
   });
 }

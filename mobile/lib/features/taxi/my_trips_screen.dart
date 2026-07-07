@@ -86,7 +86,7 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _statusColor(t.status).withOpacity(0.15),
+                          color: _statusColor(t.status).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(t.statusDisplay,

@@ -10,7 +10,7 @@ from datetime import date as _date, datetime as _datetime, timedelta
 from booking.models import Venue, VenueBooking
 from .booking_serializers import (
     VenueListSerializer, VenueDetailSerializer,
-    VenueBookingSerializer, BookingCreateSerializer,
+    VenueBookingSerializer, BookingCreateSerializer, VenueStaffSerializer,
 )
 
 WHOLE_DAY_TYPES = ('wedding', 'other')

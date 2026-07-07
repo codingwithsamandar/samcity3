@@ -16,7 +16,7 @@ class PlacesMapScreen extends ConsumerStatefulWidget {
 }
 
 class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
-  static final _center = LatLng(40.1156, 64.5036); // Shofirkon
+  static const _center = LatLng(40.1156, 64.5036); // Shofirkon
   final _mapController = MapController();
   final _searchController = TextEditingController();
   Future<PlacesData>? _future;
@@ -163,7 +163,7 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
               Expanded(
                 child: FlutterMap(
                   mapController: _mapController,
-                  options: MapOptions(initialCenter: _center, initialZoom: 13),
+                  options: const MapOptions(initialCenter: _center, initialZoom: 13),
                   children: [
                     TileLayer(
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

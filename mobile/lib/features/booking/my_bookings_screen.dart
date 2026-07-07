@@ -107,7 +107,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: _statusColor(b.status).withOpacity(0.15),
+                                color: _statusColor(b.status).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(b.statusDisplay,

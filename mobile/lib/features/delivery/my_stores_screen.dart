@@ -51,7 +51,7 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
               const SizedBox(height: 10),
               if (cats.isNotEmpty)
                 DropdownButtonFormField<Object?>(
-                  value: catId,
+                  initialValue: catId,
                   decoration: const InputDecoration(labelText: 'Kategoriya'),
                   items: cats.map((c) => DropdownMenuItem(
                       value: c['id'], child: Text('${c['name']}'))).toList(),

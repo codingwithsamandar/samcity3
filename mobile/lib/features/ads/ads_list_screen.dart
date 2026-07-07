@@ -311,7 +311,7 @@ class _AdCardState extends ConsumerState<_AdCard> {
                   top: 6,
                   right: 6,
                   child: Material(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withValues(alpha: 0.92),
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),

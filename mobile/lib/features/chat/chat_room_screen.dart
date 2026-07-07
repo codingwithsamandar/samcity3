@@ -240,7 +240,7 @@ class _Bubble extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 2, bottom: 4),
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                   border: const Border(
                       left: BorderSide(color: Color(0xFF34D399), width: 3)),
