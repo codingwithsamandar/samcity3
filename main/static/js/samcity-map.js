@@ -21,6 +21,11 @@
 
   var TILE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   var ATTR = '© OpenStreetMap';
+  // Zaxira plitka serveri: ba'zi mobil tarmoqlarda tile.openstreetmap.org
+  // bloklanadi/sekinlashadi → xarita "oq/bo'sh" bo'lib qoladi. Plitkalar
+  // yuklanmasa Carto'ning bepul bazasiga avtomatik o'tamiz (subdomenli, tez).
+  var TILE_FALLBACK = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  var ATTR_FALLBACK = '© OpenStreetMap © CARTO';
 
   // Shofirkon tumani + chegarasidan ~3km margin. Xarita shu chegaradan
   // tashqariga surilmaydi va juda uzoqlashtirib bo'lmaydi (minZoom).
@@ -36,7 +41,18 @@
       maxBoundsViscosity: bounds ? 1.0 : 0,
       minZoom: opts.minZoom || (bounds ? 12 : undefined)
     }).setView(opts.center || CENTER, opts.zoomLevel || 13);
-    L.tileLayer(TILE, { maxZoom: 19, attribution: ATTR }).addTo(map);
+    var tiles = L.tileLayer(TILE, { maxZoom: 19, attribution: ATTR }).addTo(map);
+    // Plitkalar yuklanmasa (tarmoq/bloklash) — bir necha xatodan so'ng zaxira
+    // serverga bir marta o'tamiz, shunda xarita oq bo'lib qolmaydi.
+    var tileErrs = 0, tilesSwitched = false;
+    tiles.on('tileerror', function () {
+      if (tilesSwitched) return;
+      if (++tileErrs >= 3) {
+        tilesSwitched = true;
+        try { map.removeLayer(tiles); } catch (e) {}
+        L.tileLayer(TILE_FALLBACK, { maxZoom: 19, attribution: ATTR_FALLBACK, subdomains: 'abcd' }).addTo(map);
+      }
+    });
     if (opts.fullscreen !== false) addFullscreen(map, elId);
     // Tile/layout race: recalc size after the container settles.
     setTimeout(function () { map.invalidateSize(); }, 400);

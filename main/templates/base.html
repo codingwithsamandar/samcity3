@@ -26,7 +26,11 @@
   body {
     background: transparent;
     color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.55;
+    /* 100vh iOS'da dinamik brauzer paneli tufayli ko'rinadigan ekrandan baland bo'lib,
+       pastda ortiqcha bo'sh scroll hosil qiladi. 100svh buni bartaraf etadi; qo'llab-
+       quvvatlamaydigan brauzerlar uchun 100vh zaxira sifatida oldinda qoladi. */
+    min-height: 100vh; min-height: 100svh;
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
     font-feature-settings: "cv11","ss01"; letter-spacing: -0.005em;
     /* Gorizontal scrollni to'sadi; 'clip' sticky navbarni buzmaydi (hidden'dan farqli) */
     overflow-x: clip;
@@ -414,7 +418,7 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 .avatar { border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
 .rating-stars { display: inline-flex; gap: .2rem; font-size: 1.5rem; color: var(--gold); }
 @media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; gap: 2rem; } .hero-visual { min-height: 280px; order: -1; } .detail-grid { grid-template-columns: 1fr; } .sticky-card { position: static; } .stat-row { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { #map, #tmap, #trackMap, #venueMap { min-height: 280px !important; height: 50vh !important; } }
+@media (max-width: 480px) { #map, #tmap, #trackMap, #venueMap { min-height: 280px !important; height: 50vh !important; height: 50dvh !important; } }
 @media (max-width: 720px) { .aurora-bg .a3, .aurora-bg .a4 { display: none; } }
 @media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr !important; } }
 /* map-page: full-bleed map, no bottom padding needed from bottom-nav */
