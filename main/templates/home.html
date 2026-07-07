@@ -16,6 +16,8 @@
   .toolbar .chip-row { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
   .toolbar .chip-row::-webkit-scrollbar { display: none; }
   .ad-ph { font-size: 2.8rem; }
+  /* Testimonial kartalari matn-og'ir — tor 2 ustunda siqilib overflow bermasin */
+  @media (max-width: 560px) { .testi-grid { grid-template-columns: 1fr !important; } }
   /* map preview */
   .map-preview { position: relative; border-radius: var(--radius-xl); overflow: hidden; min-height: 360px;
     background: linear-gradient(150deg, var(--surface2), var(--surface)); border: 1px solid var(--glass-brd); box-shadow: var(--shadow-lg); }
@@ -333,7 +335,7 @@
       <span class="eyebrow">Fikrlar</span>
       <h2>Minglab odamlar ishonadi</h2>
     </div>
-    <div class="grid-3">
+    <div class="grid-3 testi-grid">
       <div class="tcard reveal"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Taksi va yetkazib berishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi."</p><div class="who"><div class="av">S</div><div><div class="nm">Sardor A.</div><div class="rl">Doimiy foydalanuvchi</div></div></div></div>
       <div class="tcard reveal" data-reveal-delay="80"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Do'konimni ochdim va birinchi haftadayoq buyurtmalar kela boshladi. Ajoyib platforma."</p><div class="who"><div class="av">M</div><div><div class="nm">Malika Y.</div><div class="rl">Tadbirkor</div></div></div></div>
       <div class="tcard reveal" data-reveal-delay="160"><div class="stars">★★★★★</div><p class="quote" style="margin-top:.6rem;">"Kommunal to'lovlarni navbatga turmasdan to'layman. Hammasi bir necha soniyada."</p><div class="who"><div class="av">B</div><div><div class="nm">Bobur K.</div><div class="rl">Foydalanuvchi</div></div></div></div>

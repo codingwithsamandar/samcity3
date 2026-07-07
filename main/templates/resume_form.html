@@ -10,20 +10,20 @@
 
   /* Experience choice cards */
   .exp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem; }
-  .exp-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .exp-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
   .exp-btn:hover { border-color: var(--accent); }
-  .exp-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .exp-btn.active { border-color: var(--accent); background: var(--accent-l); }
   .exp-btn .exp-ico { font-size: 1.5rem; }
   .exp-btn .exp-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
-  .exp-btn.active .exp-lbl { color: var(--accent); }
+  .exp-btn.active .exp-lbl { color: var(--accent-d); }
   .exp-btn .exp-dot-row { display: flex; gap: 3px; margin-top: 0.3rem; }
-  .edot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .edot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); }
   .edot.on { background: var(--accent); }
 
   /* Skills tag input */
-  .skills-input-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; min-height: 46px; cursor: text; transition: border-color 0.15s; }
+  .skills-input-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; min-height: 46px; cursor: text; transition: border-color 0.15s; }
   .skills-input-wrap:focus-within { border-color: var(--accent); }
-  .skill-tag { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem 0.2rem 0.75rem; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 100px; font-size: 0.78rem; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .skill-tag { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem 0.2rem 0.75rem; background: var(--accent-l); border: 1px solid transparent; border-radius: 100px; font-size: 0.78rem; font-weight: 600; color: var(--accent-d); white-space: nowrap; }
   .skill-tag-remove { cursor: pointer; opacity: 0.6; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
   .skill-tag-remove:hover { opacity: 1; }
   .skills-input-wrap input { background: none; border: none; outline: none; color: var(--text); font-size: 1rem; flex: 1; min-width: 120px; padding: 0.2rem 0; }

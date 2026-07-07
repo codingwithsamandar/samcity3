@@ -4,67 +4,114 @@
 
 {% block extra_css %}
 <style>
-  .pm-card { display:flex; align-items:center; gap:1rem; background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); padding:1.1rem 1.2rem; transition:transform .16s, box-shadow .16s, border-color .16s; box-shadow:var(--shadow-xs); }
-  .pm-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:#cfd8ee; }
-  .pm-ico { width:54px; height:54px; border-radius:15px; display:grid; place-items:center; font-size:1.6rem; flex-shrink:0;
-    background:var(--accent-l); color:var(--accent); }
-  .pm-card .nm { font-weight:700; font-size:1.05rem; }
-  .pm-card .meta { color:var(--text2); font-size:.84rem; margin-top:.15rem; }
-  .pm-card .amt { margin-left:auto; text-align:right; }
-  .pm-card .amt .v { font-weight:800; color:var(--text); font-family:'Plus Jakarta Sans'; }
-  .pm-card .amt .free { color:var(--text3); font-size:.82rem; }
+  /* ── Hero ── */
+  .pay-hero { position:relative; overflow:hidden; border-radius:var(--radius-xl); padding:2.2rem 1.9rem;
+    margin-bottom:1.6rem; color:#fff;
+    background:linear-gradient(150deg, var(--accent), var(--accent2) 78%, var(--teal-d));
+    box-shadow:var(--shadow-xl); }
+  .pay-hero::after { content:""; position:absolute; right:-70px; top:-70px; width:260px; height:260px;
+    border-radius:50%; background:rgba(255,255,255,.12); }
+  .pay-hero::before { content:""; position:absolute; right:60px; bottom:-90px; width:200px; height:200px;
+    border-radius:50%; background:rgba(255,255,255,.08); }
+  .pay-hero > * { position:relative; z-index:1; }
+  .pay-hero h1 { color:#fff; font-size:clamp(1.7rem,3.6vw,2.4rem); margin-top:.7rem; }
+  .pay-hero p { color:rgba(255,255,255,.9); margin-top:.45rem; max-width:540px; }
+  .pay-hero .eyebrow { background:rgba(255,255,255,.2); color:#fff; }
+  .demo-pill { display:inline-flex; align-items:center; gap:.45rem; margin-top:.95rem;
+    padding:.5rem .85rem; border-radius:10px; background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.3); font-size:.83rem; font-weight:600; }
+  .pay-hero .hero-search { margin-top:1.3rem; }
+  .hist-link { display:inline-flex; align-items:center; gap:.4rem; margin-top:1.05rem;
+    color:#fff; font-weight:650; font-size:.9rem; opacity:.95; }
+  .hist-link:hover { opacity:1; }
+
+  /* ── Category chips with icons ── */
+  .chip .emo { font-size:1em; }
+
+  /* ── Provider cards ── */
+  .pm-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:1.1rem; }
+  .pm-card { display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:1.3rem; box-shadow:var(--shadow-xs);
+    transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .18s; }
+  .pm-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:#c9d3ea; }
+  .pm-top { display:flex; align-items:center; gap:.9rem; }
+  .pm-ico { width:56px; height:56px; border-radius:17px; display:grid; place-items:center; font-size:1.7rem;
+    flex-shrink:0; background:var(--accent-l); box-shadow:inset 0 0 0 1px rgba(14,163,113,.12); }
+  .pm-ico img { width:100%; height:100%; object-fit:cover; border-radius:17px; }
+  .pm-card .nm { font-weight:750; font-size:1.06rem; line-height:1.25; }
+  .pm-card .cat { color:var(--text2); font-size:.82rem; margin-top:.2rem; display:flex; align-items:center; gap:.3rem; }
+  .pm-card .addr { color:var(--text3); font-size:.8rem; margin-top:.55rem; display:flex; align-items:flex-start; gap:.35rem; }
+  .pm-mid { margin-top:.9rem; padding-top:.9rem; border-top:1px dashed var(--border); }
+  .pm-price { display:flex; align-items:baseline; gap:.35rem; }
+  .pm-price .v { font-weight:800; font-size:1.2rem; color:var(--text); font-family:'Plus Jakarta Sans'; }
+  .pm-price .u { color:var(--text2); font-size:.82rem; }
+  .pm-price .free { color:var(--text2); font-size:.9rem; font-weight:600; }
+  .pm-price .info-tag { display:inline-flex; align-items:center; gap:.3rem; font-size:.85rem; font-weight:600; color:var(--text2); }
+  .pm-btn { margin-top:.95rem; width:100%; justify-content:center; }
+  .info-badge { display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700;
+    padding:.25rem .55rem; border-radius:100px; background:var(--surface3); color:var(--text2); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-  <div class="yx-order" style="position:relative;overflow:hidden;border-radius:var(--radius-xl);padding:1.9rem;margin-bottom:1.5rem;background:linear-gradient(150deg,var(--accent),var(--violet) 75%,var(--accent-d));color:#fff;box-shadow:var(--shadow-xl);">
-    <div style="position:relative;z-index:1;">
-      <span class="eyebrow" style="background:rgba(255,255,255,.18);color:#fff;"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</span>
-      <h1 style="color:#fff;font-size:clamp(1.6rem,3.4vw,2.2rem);margin-top:.7rem;">Barcha to'lovlar bir joyda</h1>
-      <p style="color:rgba(255,255,255,.88);margin-top:.4rem;max-width:520px;">Bog'cha, o'quv kurslari va maktab to'lovlarini xavfsiz amalga oshiring.</p>
-      <form method="get" class="hero-search" style="margin-top:1.25rem;max-width:520px;">
-        <svg class="ic"><use href="#i-search"/></svg>
-        <input type="text" name="q" value="{{ q }}" placeholder="Muassasa yoki xizmat nomi...">
-        {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
-        <button type="submit" class="btn btn-gold">Qidirish</button>
-      </form>
-      {% if user.is_authenticated %}
-      <a href="{% url 'payments:my_payments' %}" style="display:inline-flex;align-items:center;gap:.3rem;margin-top:1rem;color:#fff;font-weight:600;font-size:.9rem;"><svg class="ic"><use href="#i-doc"/></svg> To'lovlar tarixim</a>
-      {% endif %}
-    </div>
+  <div class="pay-hero">
+    <span class="eyebrow"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</span>
+    <h1>Barcha to'lovlar bir joyda</h1>
+    <p>Bog'cha, o'quv kurslari va maktab to'lovlarini tez va xavfsiz amalga oshiring.</p>
+    <div class="demo-pill">ℹ️ Demo rejim — Payme/Click hali ulanmagan, to'lovlar sinov tarzida qayd etiladi.</div>
+    <form method="get" class="hero-search">
+      <svg class="ic"><use href="#i-search"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="Muassasa yoki xizmat nomi...">
+      {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+      <button type="submit" class="btn btn-gold">Qidirish</button>
+    </form>
+    {% if user.is_authenticated %}
+    <a href="{% url 'payments:my_payments' %}" class="hist-link"><svg class="ic"><use href="#i-doc"/></svg> To'lovlar tarixim</a>
+    {% endif %}
   </div>
 
   <div class="chip-row" style="margin-bottom:1.5rem;">
-    <a href="{% url 'payments:home' %}" class="chip {% if not cat %}active{% endif %}">Barchasi</a>
+    <a href="{% url 'payments:home' %}" class="chip {% if not cat %}active{% endif %}"><svg class="ic"><use href="#i-grid"/></svg> Barchasi</a>
     {% for key, label in categories %}
-    <a href="?cat={{ key }}" class="chip {% if cat == key %}active{% endif %}">{{ label }}</a>
+    <a href="?cat={{ key }}{% if q %}&q={{ q }}{% endif %}" class="chip {% if cat == key %}active{% endif %}"><span class="emo">{{ label|slice:":1" }}</span> {{ label|slice:"2:" }}</a>
     {% endfor %}
   </div>
 
   {% if providers %}
-  <div class="grid-2">
+  <div class="pm-grid">
     {% for p in providers %}
     <div class="pm-card">
-      <div class="pm-ico">{{ p.get_category_display|slice:":1" }}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="nm">{{ p.name }}</div>
-        <div class="meta">{{ p.get_category_display }}{% if p.address %} · {{ p.address }}{% endif %}</div>
-        {% if p.is_payable %}
-        <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent btn-sm" style="margin-top:.5rem;">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></a>
-        {% else %}
-        <a href="{% url 'payments:detail' p.pk %}" class="btn btn-ghost btn-sm" style="margin-top:.5rem;">Ma'lumot <svg class="ic"><use href="#i-arrow-right"/></svg></a>
-        {% endif %}
+      <div class="pm-top">
+        <div class="pm-ico">{% if p.logo %}<img src="{{ p.logo.url }}" alt="{{ p.name }}">{% else %}{{ p.get_category_display|slice:":1" }}{% endif %}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="nm">{{ p.name }}</div>
+          <div class="cat">{{ p.get_category_display|slice:"2:" }}{% if not p.is_payable %} <span class="info-badge">Ma'lumot</span>{% endif %}</div>
+        </div>
       </div>
-      <div class="amt">
-        {% if not p.is_payable %}<div class="free">Ma'lumot</div>{% elif p.has_fixed_amount %}<div class="v">{{ p.amount|som }} so'm</div>{% else %}<div class="free">Erkin summa</div>{% endif %}
+      {% if p.address %}<div class="addr"><svg class="ic"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
+
+      <div class="pm-mid">
+        <div class="pm-price">
+          {% if not p.is_payable %}
+            <span class="info-tag"><svg class="ic"><use href="#i-doc"/></svg> Faqat ma'lumot</span>
+          {% elif p.has_fixed_amount %}
+            <span class="v">{{ p.amount|som }}</span><span class="u">so'm / oy</span>
+          {% else %}
+            <span class="free">Erkin summa</span>
+          {% endif %}
+        </div>
+        {% if p.is_payable %}
+        <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent pm-btn">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        {% else %}
+        <a href="{% url 'payments:detail' p.pk %}" class="btn btn-ghost pm-btn">Batafsil ma'lumot <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-card"/></svg></div><h3>Muassasa topilmadi</h3><p>Boshqa kategoriyani tanlang.</p></div>
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-card"/></svg></div><h3>Muassasa topilmadi</h3><p>Boshqa kategoriyani tanlang yoki qidiruvni o'zgartiring.</p></div>
   {% endif %}
 </div>
 {% endblock %}

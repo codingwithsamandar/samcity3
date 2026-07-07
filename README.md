@@ -75,6 +75,7 @@ Barcha sozlamalar env orqali (`.env.example` ga qarang). Asosiylari:
 | `REDIS_URL` | Channels + cache (yo'q bo'lsa in-memory) |
 | `CORS_ALLOWED_ORIGINS` | Mobil/web klient domeni |
 | `PAYME_*`, `CLICK_*` | To'lov shlyuzi kalitlari |
+| `FIREBASE_CREDENTIALS_FILE` | FCM push (ixtiyoriy — FCM_SETUP.md) |
 | `SENTRY_DSN` | Xato kuzatuvi (ixtiyoriy) |
 
 ---

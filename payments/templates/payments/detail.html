@@ -4,42 +4,83 @@
 
 {% block extra_css %}
 <style>
-  .pd-wrap { max-width:480px; margin:0 auto; }
-  .pd-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:1.4rem; }
-  .pd-head { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
-  .pd-ico { width:54px;height:54px;border-radius:15px;display:grid;place-items:center;font-size:1.6rem;
-    background:var(--accent-l);color:var(--accent);flex-shrink:0; }
-  .pd-head .nm { font-size:1.2rem; font-weight:800; }
-  .pd-head .cat { color:var(--text2); font-size:.85rem; margin-top:.15rem; }
-  .pd-row { display:flex; gap:.6rem; padding:.7rem 0; border-top:1px solid var(--border); font-size:.92rem; }
-  .pd-row .k { color:var(--text2); min-width:90px; }
-  .pd-row .v { font-weight:600; }
-  .pd-note { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.28); color:#93c5fd;
-    border-radius:12px; padding:.8rem 1rem; font-size:.85rem; margin-top:1.2rem; }
+  .pd-wrap { max-width:520px; margin:0 auto; }
+  .pd-back { display:inline-flex; align-items:center; gap:.35rem; color:var(--text2); font-size:.9rem; font-weight:600; }
+  .pd-back:hover { color:var(--accent); }
+  .pd-back svg { transform:rotate(180deg); }
+
+  .pd-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:1.6rem; box-shadow:var(--shadow-xs); }
+  .pd-head { display:flex; align-items:center; gap:1rem; margin-bottom:.4rem; }
+  .pd-ico { width:60px; height:60px; border-radius:18px; display:grid; place-items:center; font-size:1.8rem;
+    flex-shrink:0; background:var(--accent-l); }
+  .pd-ico img { width:100%; height:100%; object-fit:cover; border-radius:18px; }
+  .pd-head .nm { font-size:1.3rem; font-weight:800; line-height:1.2; }
+  .pd-head .cat { color:var(--text2); font-size:.88rem; margin-top:.25rem; }
+
+  .pd-desc { color:var(--text2); font-size:.95rem; line-height:1.55; margin:1rem 0 1.2rem; }
+
+  .pd-row { display:flex; gap:.9rem; align-items:center; padding:.85rem 0; border-top:1px solid var(--border); }
+  .pd-row .ri { width:38px; height:38px; border-radius:11px; background:var(--surface2); display:grid;
+    place-items:center; color:var(--accent); flex-shrink:0; }
+  .pd-row .rk { color:var(--text3); font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+  .pd-row .rv { font-weight:650; font-size:.95rem; margin-top:.1rem; }
+
+  .pd-actions { display:flex; gap:.7rem; margin-top:1.4rem; }
+  .pd-actions .btn { flex:1; justify-content:center; }
+
+  .pd-note { display:flex; gap:.6rem; background:var(--accent-l); border:1px solid rgba(14,163,113,.22);
+    color:var(--accent-d); border-radius:14px; padding:.95rem 1.1rem; font-size:.87rem; line-height:1.5; margin-top:1.3rem; }
+  .pd-note svg { flex-shrink:0; margin-top:.1rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
 <div class="pd-wrap">
-  <a href="{% url 'payments:home' %}" style="color:var(--text2);font-size:.88rem;">← To'lovlar</a>
-  <h1 style="font-size:1.5rem;margin:.6rem 0 1.2rem;">Ma'lumot</h1>
+  <a href="{% url 'payments:home' %}" class="pd-back"><svg class="ic"><use href="#i-arrow-right"/></svg> To'lovlarga qaytish</a>
+  <h1 style="font-size:1.5rem;margin:.7rem 0 1.1rem;">Muassasa ma'lumoti</h1>
 
   <div class="pd-card">
     <div class="pd-head">
-      <div class="pd-ico">{{ provider.get_category_display|slice:":1" }}</div>
+      <div class="pd-ico">{% if provider.logo %}<img src="{{ provider.logo.url }}" alt="{{ provider.name }}">{% else %}{{ provider.get_category_display|slice:":1" }}{% endif %}</div>
       <div>
         <div class="nm">{{ provider.name }}</div>
         <div class="cat">{{ provider.get_category_display }}</div>
       </div>
     </div>
 
-    {% if provider.description %}<div class="pd-row"><span class="k">Tavsif</span><span class="v">{{ provider.description }}</span></div>{% endif %}
-    {% if provider.address %}<div class="pd-row"><span class="k">Manzil</span><span class="v">📍 {{ provider.address }}</span></div>{% endif %}
-    {% if provider.phone %}<div class="pd-row"><span class="k">Telefon</span><span class="v">📞 {{ provider.phone }}</span></div>{% endif %}
-    {% if provider.region %}<div class="pd-row"><span class="k">Hudud</span><span class="v">{{ provider.region }}</span></div>{% endif %}
+    {% if provider.description %}<div class="pd-desc">{{ provider.description }}</div>{% endif %}
 
-    <div class="pd-note">ℹ️ Davlat bog'chasi to'lovlari online qabul qilinmaydi. Iltimos, to'lov bo'yicha muassasaga to'g'ridan-to'g'ri murojaat qiling.</div>
+    {% if provider.address %}
+    <div class="pd-row">
+      <div class="ri"><svg class="ic"><use href="#i-pin"/></svg></div>
+      <div><div class="rk">Manzil</div><div class="rv">{{ provider.address }}</div></div>
+    </div>
+    {% endif %}
+    {% if provider.phone %}
+    <div class="pd-row">
+      <div class="ri"><svg class="ic"><use href="#i-phone"/></svg></div>
+      <div><div class="rk">Telefon</div><div class="rv">{{ provider.phone }}</div></div>
+    </div>
+    {% endif %}
+    {% if provider.region %}
+    <div class="pd-row">
+      <div class="ri"><svg class="ic"><use href="#i-map"/></svg></div>
+      <div><div class="rk">Hudud</div><div class="rv">{{ provider.region }}</div></div>
+    </div>
+    {% endif %}
+
+    {% if provider.phone %}
+    <div class="pd-actions">
+      <a href="tel:{{ provider.phone }}" class="btn btn-accent"><svg class="ic"><use href="#i-phone"/></svg> Qo'ng'iroq qilish</a>
+    </div>
+    {% endif %}
+
+    <div class="pd-note">
+      <svg class="ic"><use href="#i-shield"/></svg>
+      <span>Davlat bog'chasi to'lovlari online qabul qilinmaydi. Iltimos, to'lov bo'yicha muassasaga to'g'ridan-to'g'ri murojaat qiling.</span>
+    </div>
   </div>
 </div>
 </div>

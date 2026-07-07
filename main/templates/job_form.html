@@ -3,47 +3,50 @@
 
 {% block extra_css %}
 <style>
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
-  .form-card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .ic { width: 1em; height: 1em; stroke: currentColor; stroke-width: 1.75; fill: none;
+        stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; vertical-align: -0.15em; }
+
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.1rem; }
+  .form-card-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 1.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .form-card-title .ic { font-size: 1.05rem; color: var(--accent); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
 
-  .job-type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
-  .jt-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .jt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
+  .jt-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: var(--text2); }
   .jt-btn:hover { border-color: var(--accent); }
-  .jt-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
-  .jt-btn .jt-ico { font-size: 1.4rem; }
-  .jt-btn .jt-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
-  .jt-btn.active .jt-lbl { color: var(--accent); }
+  .jt-btn.active { border-color: var(--accent); background: var(--accent-l); color: var(--accent-d); }
+  .jt-btn .ic { font-size: 1.4rem; }
+  .jt-btn .jt-lbl { font-size: 0.78rem; font-weight: 600; }
 
   .salary-row { display: flex; align-items: center; gap: 0.75rem; }
   .salary-row .form-control { flex: 1; }
-  .salary-sep { color: var(--text2); font-size: 0.9rem; white-space: nowrap; }
+  .salary-sep { color: var(--text3); }
 
-  .char-counter { text-align: right; font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+  .char-counter { text-align: right; font-size: 0.75rem; color: var(--text3); margin-top: 0.25rem; }
   .form-hint { font-size: 0.78rem; color: var(--text2); margin-top: 0.3rem; }
   .required-star { color: var(--red); margin-left: 2px; }
+
+  .form-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; position: sticky; bottom: 0; background: var(--bg); padding: 0.85rem 0; margin-top: 0.5rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 760px;">
-  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; color:var(--text2); margin-bottom:1.25rem; flex-wrap:wrap;">
-    <a href="{% url 'home' %}">Bosh sahifa</a> <span>›</span>
-    <a href="{% url 'job_list' %}">Ish e'lonlari</a> <span>›</span>
+  <div style="display:flex; gap:0.5rem; align-items:center; font-size:0.83rem; color:var(--text2); margin-bottom:1.1rem; flex-wrap:wrap;">
+    <a href="{% url 'home' %}" style="color:var(--text2); text-decoration:none;">Bosh sahifa</a> <span style="color:var(--border2);">›</span>
+    <a href="{% url 'job_list' %}" style="color:var(--text2); text-decoration:none;">Ish e'lonlari</a> <span style="color:var(--border2);">›</span>
     <span style="color:var(--text);">{% if job %}Tahrirlash{% else %}Yangi e'lon{% endif %}</span>
   </div>
 
   <div class="page-header">
-    <h1>{% if job %}✏️ Ish e'lonini tahrirlash{% else %}💼 Ish e'loni berish{% endif %}</h1>
-    <p>{% if job %}E'lon ma'lumotlarini yangilang{% else %}Vakansiya haqida to'liq ma'lumot kiriting{% endif %}</p>
+    <h1>{% if job %}Ish e'lonini tahrirlash{% else %}Ish e'loni berish{% endif %}</h1>
+    <p>{% if job %}E'lon ma'lumotlarini yangilang{% else %}Vakansiya haqida to'liq ma'lumot kiriting — sifatli e'lon ko'proq nomzod jalb qiladi{% endif %}</p>
   </div>
 
-  {% if messages %}
-  {% for msg in messages %}
+  {% if messages %}{% for msg in messages %}
   <div class="flash flash-{% if 'error' in msg.tags %}error{% elif 'warning' in msg.tags %}warning{% elif 'info' in msg.tags %}info{% else %}success{% endif %}">{{ msg }}</div>
-  {% endfor %}
-  {% endif %}
+  {% endfor %}{% endif %}
 
   <form method="post">
     {% csrf_token %}
@@ -52,22 +55,22 @@
 
     <!-- 1. Ish turi -->
     <div class="form-card">
-      <div class="form-card-title">🏷️ Ish turi</div>
-      <div class="job-type-grid">
+      <div class="form-card-title"><svg class="ic" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>Ish turi</div>
+      <div class="jt-grid">
         <div class="jt-btn {% if jt == 'full_time' or not jt %}active{% endif %}" onclick="selectJobType('full_time', this)">
-          <span class="jt-ico">🕐</span><span class="jt-lbl">To'liq stavka</span>
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="jt-lbl">To'liq stavka</span>
         </div>
         <div class="jt-btn {% if jt == 'part_time' %}active{% endif %}" onclick="selectJobType('part_time', this)">
-          <span class="jt-ico">⏰</span><span class="jt-lbl">Yarim stavka</span>
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6h6"/></svg><span class="jt-lbl">Yarim stavka</span>
         </div>
         <div class="jt-btn {% if jt == 'remote' %}active{% endif %}" onclick="selectJobType('remote', this)">
-          <span class="jt-ico">🌐</span><span class="jt-lbl">Masofaviy</span>
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20Z"/></svg><span class="jt-lbl">Masofaviy</span>
         </div>
         <div class="jt-btn {% if jt == 'contract' %}active{% endif %}" onclick="selectJobType('contract', this)">
-          <span class="jt-ico">📄</span><span class="jt-lbl">Shartnoma</span>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span class="jt-lbl">Shartnoma</span>
         </div>
         <div class="jt-btn {% if jt == 'temporary' %}active{% endif %}" onclick="selectJobType('temporary', this)">
-          <span class="jt-ico">🔄</span><span class="jt-lbl">Vaqtinchalik</span>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span class="jt-lbl">Vaqtinchalik</span>
         </div>
       </div>
     </div>
@@ -75,7 +78,7 @@
 
     <!-- 2. Asosiy ma'lumotlar -->
     <div class="form-card">
-      <div class="form-card-title">📝 Asosiy ma'lumotlar</div>
+      <div class="form-card-title"><svg class="ic" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>Asosiy ma'lumotlar</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Lavozim nomi<span class="required-star">*</span></label>
@@ -102,13 +105,13 @@
       </div>
       <div class="form-group">
         <label class="form-label">Joylashuv / Manzil</label>
-        <input class="form-control" type="text" name="location" placeholder="Masalan: Samarqand, Mirzo Ulugbek ko'chasi" value="{{ job.location|default:'' }}" maxlength="200">
+        <input class="form-control" type="text" name="location" placeholder="Masalan: Samarqand, Mirzo Ulug'bek ko'chasi" value="{{ job.location|default:'' }}" maxlength="200">
       </div>
     </div>
 
     <!-- 3. Maosh -->
     <div class="form-card">
-      <div class="form-card-title">💰 Maosh diapazoni</div>
+      <div class="form-card-title"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Maosh diapazoni</div>
       <div class="form-group">
         <label class="form-label">Oylik maosh (so'm)</label>
         <div class="salary-row">
@@ -122,7 +125,7 @@
 
     <!-- 4. Tavsif -->
     <div class="form-card">
-      <div class="form-card-title">📋 Vakansiya tavsifi</div>
+      <div class="form-card-title"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Vakansiya tavsifi</div>
       <div class="form-group">
         <label class="form-label">Tavsif<span class="required-star">*</span></label>
         <textarea class="form-control" name="description" rows="6" placeholder="Ish haqida batafsil ma'lumot, mas'uliyatlar, ish sharoitlari..." required id="descField" oninput="countChars('descField','descCount')">{{ job.description|default:'' }}</textarea>
@@ -130,15 +133,15 @@
       </div>
       <div class="form-group">
         <label class="form-label">Talablar</label>
-        <textarea class="form-control" name="requirements" rows="5" placeholder="Har bir talabni yangi qatorga yozing:&#10;- Kamida 2 yil tajriba&#10;- Python/Django bilimi&#10;- Ingliz tili B2" id="reqField" oninput="countChars('reqField','reqCount')">{{ job.requirements|default:'' }}</textarea>
+        <textarea class="form-control" name="requirements" rows="5" placeholder="Har bir talabni yangi qatorga yozing:&#10;Kamida 2 yil tajriba&#10;Python/Django bilimi&#10;Ingliz tili B2" id="reqField" oninput="countChars('reqField','reqCount')">{{ job.requirements|default:'' }}</textarea>
         <div class="char-counter"><span id="reqCount">0</span> belgi</div>
         <div class="form-hint">Har bir talabni alohida qatorga yozing</div>
       </div>
     </div>
 
-    <!-- 5. Deadline + kontakt -->
+    <!-- 5. Muddat + kontakt -->
     <div class="form-card">
-      <div class="form-card-title">📅 Muddat va bog'lanish</div>
+      <div class="form-card-title"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Muddat va bog'lanish</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Ariza topshirish muddati</label>
@@ -146,25 +149,23 @@
           <div class="form-hint">Ixtiyoriy — ko'rsatilmasa "ochiq" hisoblanadi</div>
         </div>
         <div class="form-group">
-          <label class="form-label">📞 Telefon raqam</label>
+          <label class="form-label">Telefon raqam</label>
           <input class="form-control" type="tel" name="contact_phone" placeholder="+998901234567" value="{{ job.contact_phone|default:user.phone }}">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">✈️ Telegram username</label>
+        <label class="form-label">Telegram username</label>
         <input class="form-control" type="text" name="contact_telegram" placeholder="username (@ belgisisiz)" value="{{ job.contact_telegram|default:'' }}">
       </div>
     </div>
 
     <!-- Footer -->
-    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+    <div class="form-actions">
       <button type="submit" class="btn btn-accent" style="padding:0.7rem 2rem; font-size:1rem;">
         {% if job %}✅ Yangilash{% else %}📢 E'lon berish{% endif %}
       </button>
-      <a href="{% if job %}/jobs/{{ job.pk }}/{% else %}/jobs/{% endif %}" class="btn btn-ghost">Bekor qilish</a>
-      {% if job %}
-      <a href="{% url 'job_delete' job.pk  %}" class="btn btn-red" style="margin-left:auto;">🗑 O'chirish</a>
-      {% endif %}
+      <a href="{% if job %}{% url 'job_detail' job.pk %}{% else %}{% url 'job_list' %}{% endif %}" class="btn btn-ghost">Bekor qilish</a>
+      {% if job %}<a href="{% url 'job_delete' job.pk %}" class="btn btn-red" style="margin-left:auto;">🗑 O'chirish</a>{% endif %}
     </div>
   </form>
 </div>
@@ -177,12 +178,10 @@ function selectJobType(val, el) {
   document.querySelectorAll('.jt-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
 }
-
 function countChars(fieldId, counterId) {
-  const len = document.getElementById(fieldId).value.length;
-  document.getElementById(counterId).textContent = len.toLocaleString();
+  document.getElementById(counterId).textContent =
+    document.getElementById(fieldId).value.length.toLocaleString();
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   countChars('descField', 'descCount');
   countChars('reqField', 'reqCount');

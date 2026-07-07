@@ -68,3 +68,37 @@ class TripTests(TaxiSetup):
         self.assertEqual(resp.status_code, 200)
         # other'da trip yo'q
         self.assertEqual(resp.data.get('count', 0), 0)
+
+
+class TaxiServiceModelTests(TestCase):
+    """Dispetcher xizmati — narx kalkulyatori va sharh/baho mantiqlari."""
+
+    def setUp(self):
+        from taxi.models import TaxiService
+        self.u1 = make_user('+998932000010')
+        self.u2 = make_user('+998932000011')
+        self.service = TaxiService.objects.create(
+            name='Shofirkon Taxi', short_number='1265',
+            base_price=5000, price_per_km=2000,
+        )
+
+    def test_example_price(self):
+        # 5 km: 5000 + 2000*5 = 15000
+        self.assertEqual(self.service.example_price(5), 15000)
+        self.assertEqual(self.service.example_5km, 15000)
+        self.assertEqual(self.service.example_price(0), 5000)
+
+    def test_avg_rating_and_count(self):
+        from taxi.models import ServiceReview
+        self.assertEqual(self.service.avg_rating, 0)
+        ServiceReview.objects.create(service=self.service, user=self.u1, rating=5)
+        ServiceReview.objects.create(service=self.service, user=self.u2, rating=4)
+        self.assertEqual(self.service.avg_rating, 4.5)
+        self.assertEqual(self.service.review_count, 2)
+
+    def test_one_review_per_user(self):
+        from django.db import IntegrityError
+        from taxi.models import ServiceReview
+        ServiceReview.objects.create(service=self.service, user=self.u1, rating=5)
+        with self.assertRaises(IntegrityError):
+            ServiceReview.objects.create(service=self.service, user=self.u1, rating=1)

@@ -18,6 +18,7 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('orders/', views.my_orders, name='my_orders'),
     path('order/<uuid:order_id>/', views.order_detail, name='order_detail'),
+    path('order/<uuid:order_id>/rate-driver/', views.order_rate_driver, name='order_rate_driver'),
 
     # ── Real-time tracking ──────────────────────────────────────────────────────
     path('order/<uuid:order_id>/track/', views.order_track, name='order_track'),

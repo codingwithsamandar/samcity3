@@ -3,7 +3,7 @@
 
 {% block extra_css %}
 <style>
-  .dash-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px,1fr)); gap:1.15rem; }
+  .dash-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(330px,100%),1fr)); gap:1.15rem; }
   .onboard-banner { background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(16,185,129,.1)); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.5rem; }
   .onboard-steps { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:.75rem; margin-top:1rem; }
   .onboard-step { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem; text-decoration:none; color:inherit; transition:border-color .15s; }

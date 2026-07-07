@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
@@ -12,7 +14,7 @@ from django.views.decorators.http import require_POST
 from main.utils import validate_file_type
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
-    DeliveryDriver, DriverLocation, StoreUpdate, StoreSubscription,
+    DeliveryDriver, DriverLocation, DriverReview, StoreUpdate, StoreSubscription,
     StoreChatThread, StoreChatMessage, StoreRequest, can_transition,
     CheckoutGroup, get_active_cart,
 )
@@ -354,9 +356,42 @@ def checkout(request):
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(
-        Order.objects.prefetch_related('items'), pk=order_id, user=request.user,
+        Order.objects.select_related('driver').prefetch_related('items'),
+        pk=order_id, user=request.user,
     )
-    return render(request, 'delivery/order_detail.html', {'order': order})
+    # Kuryerni baholash mumkinmi: yetkazilgan + kuryer bor + hali baholanmagan.
+    can_rate_driver = (
+        order.status == 'delivered' and order.driver_id
+        and not DriverReview.objects.filter(order=order).exists()
+    )
+    return render(request, 'delivery/order_detail.html', {
+        'order': order, 'can_rate_driver': can_rate_driver,
+    })
+
+
+@login_required
+@require_POST
+def order_rate_driver(request, order_id):
+    """Mijoz yetkazilgan buyurtma kuryeriga baho qo'yadi (bir marta)."""
+    order = get_object_or_404(Order, pk=order_id, user=request.user)
+    if order.status != 'delivered' or not order.driver_id:
+        messages.error(request, "Faqat yetkazilgan buyurtma kuryerini baholash mumkin.")
+        return redirect('delivery:order_detail', order_id=order.id)
+    if DriverReview.objects.filter(order=order).exists():
+        messages.info(request, "Bu buyurtma uchun baho allaqachon qo'yilgan.")
+        return redirect('delivery:order_detail', order_id=order.id)
+    try:
+        rating = int(request.POST.get('rating', 5))
+    except (TypeError, ValueError):
+        rating = 5
+    rating = min(max(rating, 1), 5)
+    comment = (request.POST.get('comment') or '').strip()[:300]
+    DriverReview.objects.create(
+        order=order, driver=order.driver, user=request.user,
+        rating=rating, comment=comment,
+    )
+    messages.success(request, "Bahoyingiz uchun rahmat! ⭐")
+    return redirect('delivery:order_detail', order_id=order.id)
 
 
 @login_required
@@ -967,7 +1002,8 @@ def order_confirm_pickup(request, order_id):
         return redirect('delivery:order_detail', order_id=order.id)
     order.status = 'delivered'
     order.customer_confirmed_at = timezone.now()
-    order.save(update_fields=['status', 'customer_confirmed_at'])
+    order.delivered_at = order.customer_confirmed_at
+    order.save(update_fields=['status', 'customer_confirmed_at', 'delivered_at'])
     push_order_status(order)
     messages.success(request, "Buyurtmani qabul qilganingiz tasdiqlandi. Rahmat! ✅")
     return redirect('delivery:order_detail', order_id=order.id)
@@ -1063,9 +1099,21 @@ def driver_dashboard(request):
     my_active = base.filter(driver=driver, status__in=['assigned', 'on_the_way'])
     history = base.filter(driver=driver, status='delivered')
     earnings = history.aggregate(s=Sum('delivery_fee'))['s'] or 0
+
+    # ── Davriy daromad (bugun / 7 kun / 30 kun) — delivered_at bo'yicha.
+    # Eski yozuvlarda delivered_at bo'sh — ular faqat umumiy summada hisoblanadi.
+    now = timezone.localtime()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    dated = history.filter(delivered_at__isnull=False)
+    earnings_today = dated.filter(delivered_at__gte=today_start).aggregate(s=Sum('delivery_fee'))['s'] or 0
+    earnings_week = dated.filter(delivered_at__gte=now - timedelta(days=7)).aggregate(s=Sum('delivery_fee'))['s'] or 0
+    earnings_month = dated.filter(delivered_at__gte=now - timedelta(days=30)).aggregate(s=Sum('delivery_fee'))['s'] or 0
+
     return render(request, 'delivery/driver_dashboard.html', {
         'driver': driver, 'available': available, 'my_active': my_active,
         'history': history[:20], 'earnings': earnings, 'delivered_count': history.count(),
+        'earnings_today': earnings_today, 'earnings_week': earnings_week,
+        'earnings_month': earnings_month,
     })
 
 
@@ -1121,7 +1169,11 @@ def driver_order_status(request, order_id):
         new_status = request.POST.get('status', '')
         if new_status in {'picked_up', 'on_the_way', 'delivered'} and can_transition(order.status, new_status):
             order.status = new_status
-            order.save(update_fields=['status'])
+            update_fields = ['status']
+            if new_status == 'delivered':
+                order.delivered_at = timezone.now()
+                update_fields.append('delivered_at')
+            order.save(update_fields=update_fields)
             push_order_status(order)
             messages.success(request, "Holat yangilandi.")
         else:

@@ -4,40 +4,80 @@
 
 {% block extra_css %}
 <style>
-  .rcpt { max-width:420px; margin:0 auto; background:var(--surface); border:1px solid var(--border);
-    border-radius:18px; padding:1.6rem; }
-  .rcpt .ok { text-align:center; margin-bottom:1rem; }
-  .rcpt .ok .ic { font-size:3rem; }
-  .rcpt .ok h2 { font-size:1.2rem; margin-top:.4rem; color:var(--accent2); }
-  .rcpt .amt { text-align:center; font-size:2rem; font-weight:800; color:var(--accent); margin:.5rem 0 1.2rem; }
-  .row { display:flex; justify-content:space-between; padding:.6rem 0; border-top:1px solid var(--border); font-size:.9rem; }
-  .row .k { color:var(--text2); }
-  .row .v { font-weight:600; }
-  .actions { display:flex; gap:.6rem; margin-top:1.3rem; }
-  .actions a { flex:1; text-align:center; }
+  .rcpt-wrap { max-width:440px; margin:0 auto; }
+  .rcpt { position:relative; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); overflow:hidden; }
+
+  .rcpt-top { text-align:center; padding:2rem 1.6rem 1.4rem;
+    background:linear-gradient(160deg, var(--accent-l), transparent); }
+  .ok-ring { width:78px; height:78px; margin:0 auto .8rem; border-radius:50%;
+    display:grid; place-items:center; background:var(--accent); color:#fff;
+    box-shadow:0 0 0 8px var(--accent-l); animation:pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+  .ok-ring svg { width:38px; height:38px; }
+  @keyframes pop { 0%{transform:scale(0);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+  .rcpt-top h2 { font-size:1.25rem; color:var(--accent-d); }
+  .rcpt-top .sub { color:var(--text2); font-size:.86rem; margin-top:.25rem; }
+  .rcpt-amt { text-align:center; font-size:2.4rem; font-weight:800; color:var(--text);
+    font-family:'Plus Jakarta Sans'; padding:1rem 0 .3rem; }
+  .rcpt-amt .u { font-size:1.1rem; color:var(--text2); font-weight:600; }
+
+  /* perforated divider */
+  .perf { position:relative; height:26px; }
+  .perf::before, .perf::after { content:""; position:absolute; top:50%; transform:translateY(-50%);
+    width:26px; height:26px; border-radius:50%; background:var(--bg); border:1px solid var(--border); }
+  .perf::before { left:-14px; } .perf::after { right:-14px; }
+  .perf .dash { position:absolute; top:50%; left:14px; right:14px; border-top:2px dashed var(--border); }
+
+  .rcpt-body { padding:1.3rem 1.6rem 1.6rem; }
+  .row { display:flex; justify-content:space-between; gap:1rem; padding:.65rem 0; font-size:.9rem; }
+  .row + .row { border-top:1px solid var(--border); }
+  .row .k { color:var(--text2); flex-shrink:0; }
+  .row .v { font-weight:650; text-align:right; word-break:break-word; }
+  .status-ok { display:inline-flex; align-items:center; gap:.3rem; color:var(--accent-d);
+    background:var(--accent-l); padding:.2rem .6rem; border-radius:100px; font-size:.82rem; font-weight:700; }
+
+  .actions { display:flex; gap:.7rem; margin-top:1.4rem; }
+  .actions .btn { flex:1; justify-content:center; }
+  .print-link { display:inline-flex; align-items:center; gap:.35rem; justify-content:center; width:100%;
+    margin-top:.85rem; color:var(--text2); font-size:.85rem; font-weight:600; cursor:pointer; background:none; border:none; font-family:inherit; }
+  .print-link:hover { color:var(--accent); }
+
+  @media print {
+    .nav-wrap, .site-footer, .actions, .print-link, .mobile-tab { display:none !important; }
+    body { background:#fff; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-<div class="rcpt">
-  <div class="ok">
-    <div class="ic">✅</div>
-    <h2>To'lov muvaffaqiyatli!</h2>
-  </div>
-  <div class="amt">{{ payment.amount|som }} so'm</div>
+<div class="rcpt-wrap">
+  <div class="rcpt" id="receipt">
+    <div class="rcpt-top">
+      <div class="ok-ring"><svg><use href="#i-check"/></svg></div>
+      <h2>To'lov muvaffaqiyatli!</h2>
+      <div class="sub">To'lovingiz qabul qilindi va qayd etildi</div>
+      <div class="rcpt-amt">{{ payment.amount|som }} <span class="u">so'm</span></div>
+    </div>
 
-  <div class="row"><span class="k">Muassasa</span><span class="v">{{ payment.provider_name }}</span></div>
-  <div class="row"><span class="k">Turi</span><span class="v">{{ payment.get_category_display }}</span></div>
-  {% if payment.payer_name %}<div class="row"><span class="k">To'lovchi</span><span class="v">{{ payment.payer_name }}</span></div>{% endif %}
-  {% if payment.period %}<div class="row"><span class="k">Davr</span><span class="v">{{ payment.period }}</span></div>{% endif %}
-  {% if payment.card_last4 %}<div class="row"><span class="k">Karta</span><span class="v">{{ payment.card_brand }} •••• {{ payment.card_last4 }}</span></div>{% endif %}
-  <div class="row"><span class="k">Holat</span><span class="v" style="color:var(--accent2);">✓ {{ payment.get_status_display }}</span></div>
-  <div class="row"><span class="k">Sana</span><span class="v">{{ payment.paid_at|date:"d.m.Y H:i" }}</span></div>
+    <div class="perf"><span class="dash"></span></div>
 
-  <div class="actions">
-    <a href="{% url 'payments:home' %}" class="btn btn-ghost">To'lovlar</a>
-    <a href="{% url 'payments:my_payments' %}" class="btn btn-accent">Tarixim</a>
+    <div class="rcpt-body">
+      <div class="row"><span class="k">Muassasa</span><span class="v">{{ payment.provider_name }}</span></div>
+      <div class="row"><span class="k">Turi</span><span class="v">{{ payment.get_category_display|slice:"2:" }}</span></div>
+      {% if payment.payer_name %}<div class="row"><span class="k">To'lovchi</span><span class="v">{{ payment.payer_name }}</span></div>{% endif %}
+      {% if payment.period %}<div class="row"><span class="k">Davr</span><span class="v">{{ payment.period }}</span></div>{% endif %}
+      {% if payment.card_last4 %}<div class="row"><span class="k">Karta</span><span class="v">{{ payment.card_brand }} •••• {{ payment.card_last4 }}</span></div>{% endif %}
+      <div class="row"><span class="k">Sana</span><span class="v">{{ payment.paid_at|date:"d.m.Y, H:i" }}</span></div>
+      <div class="row"><span class="k">Tranzaksiya ID</span><span class="v" style="font-family:monospace;font-size:.8rem;">{{ payment.id|slice:":8"|upper }}</span></div>
+      <div class="row"><span class="k">Holat</span><span class="v"><span class="status-ok"><svg class="ic"><use href="#i-check"/></svg> To'langan</span></span></div>
+
+      <div class="actions">
+        <a href="{% url 'payments:home' %}" class="btn btn-ghost">To'lovlar</a>
+        <a href="{% url 'payments:my_payments' %}" class="btn btn-accent">Tarixim <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <button type="button" class="print-link" onclick="window.print()"><svg class="ic"><use href="#i-doc"/></svg> Chekni chop etish / saqlash</button>
+    </div>
   </div>
 </div>
 </div>

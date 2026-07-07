@@ -54,14 +54,14 @@ Compress-Archive -Path * -DestinationPath samcity.zip -Force
 | # | Jihat | Verdikt | Izoh |
 |---|-------|---------|------|
 | 1 | **SQL Injection** | ✅ Xavfsiz | `.raw()`, `.extra()`, `cursor.execute`, RawSQL — **umuman yo'q**. Hammasi Django ORM (parametrlangan). |
-| 2 | **XSS** | ✅ Xavfsiz | `mark_safe` / `|safe` — **hech qayerda ishlatilmagan**. Django auto-escape yoqilgan. JS'da `escapejs`. |
+| 2 | **XSS** | ✅ Xavfsiz (kuchaytirildi) | Django auto-escape yoqilgan. Xarita `boundary/centroid` JSON'lari `|safe` bilan chiqadi → endi `safe_json()` orqali `<`,`>`,`&`,U+2028/9 escape qilinadi (`</script>` breakout imkonsiz). |
 | 3 | **CSRF** | ✅ To'g'ri | `CsrfViewMiddleware` faol; formalarда token; webhook'lar (`csrf_exempt`) imzo/Basic-auth bilan himoyalangan. |
 | 4 | **JWT** | ✅ Yaxshi | `ROTATE_REFRESH_TOKENS=True`, access 60min, refresh 30kun, `UPDATE_LAST_LOGIN`. Maxfiy kalitga bog'liq — kalit serverda. |
 | 5 | **Password hashing** | ✅ To'g'ri | Django default PBKDF2; `AUTH_PASSWORD_VALIDATORS` (uzunlik, umumiy parol, raqamli) yoqilgan. |
 | 6 | **Rate limiting** | ✅ Kuchli | DRF throttling (anon 60/min, user 300/min, OTP 5/min, login 10/min, checkout 20/min) + cache-asosli `ratelimit` dekorator. |
 | 7 | **Permission tekshiruvi** | ✅ Asosan to'g'ri | Egalik tekshiruvlari view'larda bor (do'kon/joy/venue/order); analitika `@staff_member_required`; DRF `IsAuthenticatedOrReadOnly` + custom permissions. |
 | 8 | **IDOR** | 🟠 1 ta topildi → **tuzatildi** | Chat `forward_message` istalgan xonadan xabar uzata olardi → endi faqat a'zo bo'lgan xonadan. Boshqa joylarda `get_object_or_404(..., user=request.user)` ishlatilgan. |
-| 9 | **File upload** | 🟢 Yaxshi (kichik tavsiya) | Kengaytma + hajm (5MB) tekshiriladi; `ImageField`+Pillow haqiqiy rasmni validatsiya qiladi; media nginx'dan statik beriladi (kod bajarilmaydi). Tavsiya: Pillow `verify()` qo'shsa yanada mustahkam. |
+| 9 | **File upload** | ✅ Yaxshi (kuchaytirildi) | Kengaytma + hajm (5MB) + endi **Pillow `verify()`** bilan fayl mazmuni haqiqiy rasm ekani tekshiriladi (polyglot/soxta `.jpg` bloklanadi); media statik beriladi (kod bajarilmaydi). |
 | 10 | **API autentifikatsiya** | ✅ To'g'ri | JWT + Session; default permission `IsAuthenticatedOrReadOnly`; throttling yoqilgan. |
 | 11 | **CORS** | ✅ To'g'ri | `CORS_ALLOW_ALL_ORIGINS` faqat DEBUG'da; production'da `CORS_ALLOWED_ORIGINS` aniq domenlar bilan. |
 | 12 | **SSRF** | ✅ Xavfsiz | Tashqi so'rovlar (Nominatim/OSRM geocoding, SMS) — **host qat'iy belgilangan** (env'dan), foydalanuvchi faqat `lat/lon` (float) beradi. URL inyeksiya yo'q. |
@@ -83,6 +83,15 @@ Compress-Archive -Path * -DestinationPath samcity.zip -Force
 4. ✅ Click webhook (`click.py`) — xuddi shunday qator qulfi.
 5. ✅ `nginx.conf` — gzip; HTTPS redirect-loop oldini olish (`SECURE_SSL_REDIRECT` env orqali).
 6. ✅ `.env.production` + `DEPLOY.md` — to'liq production shablon va qo'llanma.
+
+### C.2 — 2026-07-07 sessiyasi (qo'shimcha mustahkamlash)
+7. ✅ Payme Basic-auth (`payme.py`) va Click imzo (`click.py`) taqqoslashlari
+   `hmac.compare_digest` ga o'tkazildi — **timing-attack** himoyasi (sir kalitlar).
+8. ✅ Xarita JSON kontekstlari (`boundary/centroid/my_neighborhood`) `safe_json()`
+   yordamchisi orqali HTML-escape qilinadi — `|safe` orqali **XSS breakout** yopildi
+   (`main/utils.py`, `places/views.py`, `main/community_views.py`).
+9. ✅ Fayl yuklashda Pillow `verify()` — mazmun bo'yicha haqiqiy rasm tekshiruvi
+   (soxta/polyglot fayllar bloklanadi) (`main/utils.py: validate_file_type`).
 
 ---
 

@@ -35,7 +35,29 @@
     {% if order.driver %}
     <div class="card card-pad" style="background:var(--accent-l);border-color:#cdd6f7;display:flex;align-items:center;gap:.8rem;">
       <div class="svc-ic g-indigo" style="width:44px;height:44px;border-radius:12px;"><svg class="ic"><use href="#i-car"/></svg></div>
-      <div style="font-size:.9rem;">Haydovchi: <b>{{ order.driver.full_name }}</b> · {{ order.driver.get_vehicle_type_display }}{% if order.driver.phone %} · <a href="tel:{{ order.driver.phone }}" style="color:var(--accent);">{{ order.driver.phone }}</a>{% endif %}</div>
+      <div style="font-size:.9rem;">Haydovchi: <b>{{ order.driver.full_name }}</b> · {{ order.driver.get_vehicle_type_display }}{% if order.driver.avg_rating %} · ⭐ {{ order.driver.avg_rating }}{% endif %}{% if order.driver.phone %} · <a href="tel:{{ order.driver.phone }}" style="color:var(--accent);">{{ order.driver.phone }}</a>{% endif %}</div>
+    </div>
+    {% endif %}
+
+    {% if can_rate_driver %}
+    <div class="card card-pad" style="margin-top:1rem;">
+      <div style="font-weight:700;margin-bottom:.6rem;">Kuryerni baholang</div>
+      <form method="post" action="{% url 'delivery:order_rate_driver' order.id %}" style="margin:0;display:flex;flex-direction:column;gap:.6rem;">
+        {% csrf_token %}
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          {% for v in "12345" %}
+          <label style="cursor:pointer;">
+            <input type="radio" name="rating" value="{{ v }}" {% if v == "5" %}checked{% endif %} style="accent-color:var(--accent);"> {{ v }}★
+          </label>
+          {% endfor %}
+        </div>
+        <input type="text" name="comment" maxlength="300" placeholder="Izoh (ixtiyoriy)" style="padding:.55rem .8rem;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);">
+        <button type="submit" class="btn btn-accent">Baho qo'yish</button>
+      </form>
+    </div>
+    {% elif order.driver_review %}
+    <div class="card card-pad" style="margin-top:1rem;font-size:.9rem;color:var(--text2);">
+      Sizning bahoyingiz: <b>{{ order.driver_review.rating }}★</b>{% if order.driver_review.comment %} — {{ order.driver_review.comment }}{% endif %}
     </div>
     {% endif %}
 

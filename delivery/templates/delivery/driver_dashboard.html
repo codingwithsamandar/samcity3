@@ -33,7 +33,10 @@
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-check"/></svg></div></div><div class="kpi-num">{{ delivered_count }}</div><div class="kpi-lbl">Yetkazilgan</div></div>
     <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-bike"/></svg></div></div><div class="kpi-num">{{ my_active|length }}</div><div class="kpi-lbl">Faol buyurtma</div></div>
-    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings }}</div><div class="kpi-lbl">Daromad (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_today }}</div><div class="kpi-lbl">Bugun (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_week }}</div><div class="kpi-lbl">7 kun (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings }}</div><div class="kpi-lbl">Jami daromad (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-star"/></svg></div></div><div class="kpi-num">{% if driver.avg_rating %}{{ driver.avg_rating }}{% else %}—{% endif %}</div><div class="kpi-lbl">Reyting ({{ driver.review_count }} baho)</div></div>
   </div>
 
   <div class="sec-t"><svg class="ic"><use href="#i-car"/></svg> Mening faol buyurtmalarim</div>

@@ -274,6 +274,11 @@ class VenueBooking(models.Model):
     refund_amount = models.BigIntegerField(default=0, verbose_name='Qaytariladigan summa')
     cancelled_at = models.DateTimeField(null=True, blank=True)
 
+    # ── Eslatma (send_booking_reminders buyrug'i to'ldiradi) ─────────────────
+    reminder_sent_at = models.DateTimeField(
+        null=True, blank=True, verbose_name='Eslatma yuborilgan vaqt',
+    )
+
     # ── To'yxona (wedding) ───────────────────────────────────────────────────
     event_type = models.CharField(
         max_length=20, choices=EVENT_TYPE_CHOICES, blank=True, verbose_name='Tadbir turi',

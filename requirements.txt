@@ -30,6 +30,10 @@ gunicorn>=21.2
 # ── Monitoring (ixtiyoriy — faqat SENTRY_DSN o'rnatilganda ishlaydi) ──
 sentry-sdk>=2.0
 
+# ── Push (ixtiyoriy — faqat FIREBASE_CREDENTIALS_FILE o'rnatilganda ishlaydi) ──
+# FCM push-bildirishnomalar. Sozlash: FCM_SETUP.md
+firebase-admin>=6.5
+
 # ── Media storage (Render free plan — disk saqlanmaydi) ──
 # Cloudinary: CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET
 django-cloudinary-storage>=0.3.0

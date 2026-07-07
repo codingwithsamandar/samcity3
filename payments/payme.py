@@ -10,6 +10,7 @@ PerformTransaction, CancelTransaction, CheckTransaction, GetStatement.
 Summalar Payme tomonidan **tiyin**da yuboriladi (1 so'm = 100 tiyin).
 """
 import base64
+import hmac
 import json
 import logging
 
@@ -126,7 +127,8 @@ class PaymeMerchantView(View):
             return False
         # Format: "Paycom:<merchant_key>"
         _, _, provided = decoded.partition(':')
-        return provided == key
+        # Timing-safe taqqoslash — merchant kalitini timing-attack'dan himoya qiladi.
+        return hmac.compare_digest(provided, key)
 
     def _error(self, rpc_id, code, message, data=None):
         err = {'code': code, 'message': message}

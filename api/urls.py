@@ -31,6 +31,7 @@ from .mahalla_views import (
 from .booking_views import VenueViewSet, VenueBookingViewSet
 from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
+    DeviceTokenView,
 )
 from .payment_views import InitiatePaymentView
 from .health import HealthView, ReadyView, SeedStatusView
@@ -108,6 +109,7 @@ urlpatterns = [
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/unread-count/', NotificationUnreadCountView.as_view(), name='notifications-unread-count'),
     path('notifications/read/', NotificationMarkReadView.as_view(), name='notifications-read'),
+    path('notifications/device/', DeviceTokenView.as_view(), name='notifications-device'),
     path('payments/initiate/', InitiatePaymentView.as_view(), name='payments-initiate'),
     path('health/', HealthView.as_view(), name='health'),
     path('ready/', ReadyView.as_view(), name='ready'),

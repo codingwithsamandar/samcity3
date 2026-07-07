@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 
 from .models import Place, PlaceImage, PlaceReview, PlaceFavorite, CATEGORY_CHOICES
-from main.utils import validate_file_type
+from main.utils import validate_file_type, safe_json
 
 # Single source of truth for the map center (Shofirkon shahri markazi).
 CENTER = (40.1156, 64.5036)
@@ -82,8 +82,8 @@ def neighborhood_detail(request, pk):
     return render(request, 'places/neighborhood_detail.html', {
         'neighborhood': neighborhood,
         'categories': CATEGORY_CHOICES,
-        'boundary_json': json.dumps(neighborhood.boundary or []),
-        'centroid_json': json.dumps(neighborhood.centroid()),
+        'boundary_json': safe_json(neighborhood.boundary or []),
+        'centroid_json': safe_json(neighborhood.centroid()),
     })
 
 

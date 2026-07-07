@@ -10,6 +10,7 @@ Sozlamalar (env): CLICK_SERVICE_ID, CLICK_MERCHANT_ID, CLICK_SECRET_KEY,
 CLICK_MERCHANT_USER_ID.
 """
 import hashlib
+import hmac
 import logging
 
 from django.conf import settings
@@ -59,14 +60,16 @@ def _verify_prepare_sign(p):
     raw = (str(p.get('click_trans_id', '')) + str(p.get('service_id', '')) + _secret()
            + str(p.get('merchant_trans_id', '')) + str(p.get('amount', ''))
            + str(p.get('action', '')) + str(p.get('sign_time', '')))
-    return hashlib.md5(raw.encode()).hexdigest() == p.get('sign_string', '')
+    return hmac.compare_digest(hashlib.md5(raw.encode()).hexdigest(),
+                               str(p.get('sign_string', '')))
 
 
 def _verify_complete_sign(p):
     raw = (str(p.get('click_trans_id', '')) + str(p.get('service_id', '')) + _secret()
            + str(p.get('merchant_trans_id', '')) + str(p.get('merchant_prepare_id', ''))
            + str(p.get('amount', '')) + str(p.get('action', '')) + str(p.get('sign_time', '')))
-    return hashlib.md5(raw.encode()).hexdigest() == p.get('sign_string', '')
+    return hmac.compare_digest(hashlib.md5(raw.encode()).hexdigest(),
+                               str(p.get('sign_string', '')))
 
 
 def _amount_matches(obj, ops, amount_str):

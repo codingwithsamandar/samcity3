@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 
-from .utils import validate_file_type
+from .utils import validate_file_type, safe_json
 from .models import (
     Poll, PollOption, PollVote, PollComment,
     HelpRequest, HelpVolunteer, Neighborhood, ChatMember, ChatAdmin,
@@ -276,7 +276,7 @@ def community_map(request):
                 'description': n.description,
             }
     return render(request, 'community/mahalla_map.html', {
-        'my_neighborhood_json': json.dumps(my),
+        'my_neighborhood_json': safe_json(my),
         'has_my_neighborhood': my is not None,
     })
 
@@ -466,8 +466,8 @@ def mahalla_detail(request, pk):
         # Xarita: chegara CHIZILMAGAN bo'lsa ham, markaz koordinatasi bo'lsa
         # xarita ko'rsatiladi (mahalla tanlangach xarita chiqishi uchun).
         'has_map': bool(neighborhood.centroid()),
-        'boundary_json': json.dumps(neighborhood.boundary or []),
-        'centroid_json': json.dumps(neighborhood.centroid()),
+        'boundary_json': safe_json(neighborhood.boundary or []),
+        'centroid_json': safe_json(neighborhood.centroid()),
     })
 
 

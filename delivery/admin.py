@@ -3,9 +3,17 @@ from django.contrib import admin, messages
 from main.admin_widgets import LatLngPickerWidget
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, CartItem,
-    Order, OrderItem, DeliveryDriver, StoreUpdate, StoreSubscription,
+    Order, OrderItem, DeliveryDriver, DriverReview, StoreUpdate, StoreSubscription,
     StoreChatThread, StoreChatMessage, StoreRequest,
 )
+
+
+@admin.register(DriverReview)
+class DriverReviewAdmin(admin.ModelAdmin):
+    list_display = ('driver', 'rating', 'user', 'created_at')
+    list_filter = ('rating',)
+    search_fields = ('driver__full_name', 'user__phone', 'comment')
+    readonly_fields = ('created_at',)
 
 
 # ── DELIVERY CATEGORY ─────────────────────────────────────────────────────────

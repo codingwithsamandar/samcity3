@@ -136,6 +136,8 @@ def taxi_track(request, trip_id):
 def taxi_home(request):
     q = request.GET.get('q', '').strip()
 
+    only_online = request.GET.get('online') == '1'
+
     services = (
         TaxiService.objects.filter(is_active=True)
         .annotate(_avg=Avg('reviews__rating'))
@@ -145,7 +147,7 @@ def taxi_home(request):
         Taxist.objects.filter(is_active=True)
         .select_related('car')
         .prefetch_related('routes')
-        .order_by('-trips_count', 'full_name')
+        .order_by('-is_online', '-trips_count', 'full_name')
     )
 
     if q:
@@ -157,10 +159,22 @@ def taxi_home(request):
             Q(routes__point_b__icontains=q) | Q(car_model__icontains=q)
         ).distinct()
 
+    if only_online:
+        taxists = taxists.filter(is_online=True)
+
+    taxists = list(taxists)
+
+    # Ishonch statistikasi (hero uchun)
+    online_count = sum(1 for t in taxists if t.is_online)
+    routes_count = sum(t.routes.count() for t in taxists)
+
     return render(request, 'taxi/taxi_home.html', {
         'services': services,
         'taxists': taxists,
         'q': q,
+        'only_online': only_online,
+        'online_count': online_count,
+        'routes_count': routes_count,
     })
 
 

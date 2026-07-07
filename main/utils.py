@@ -1,21 +1,57 @@
 import os
+import json
 import functools
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse
+from django.utils.safestring import mark_safe
 
 # Allowed image extensions and MIME-style headers
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 MAX_FILE_SIZE_MB = 5
 
 
+def safe_json(value):
+    """HTML `<script>` ichiga qo'yish uchun xavfsiz JSON.
+
+    `json.dumps` `<`, `>`, `&`, U+2028/U+2029 belgilarni escape qilmaydi —
+    ma'lumot ichida `</script>` bo'lsa, XSS chiqib ketishi mumkin. Bu yordamchi
+    Django'ning `json_script` bilan bir xil qoidada ularni \\u ko'rinishiga
+    o'tkazadi va `mark_safe` bilan qaytaradi (template'da `|safe` bilan ishlaydi).
+    """
+    dumped = json.dumps(value)
+    # Django json_script bilan bir xil belgilar: < > & U+2028 U+2029
+    for _cp in (0x3c, 0x3e, 0x26, 0x2028, 0x2029):
+        dumped = dumped.replace(chr(_cp), '\\u%04x' % _cp)
+    return mark_safe(dumped)
+
+
 def validate_file_type(file):
-    """Validates that an uploaded file is a real image and within size limits."""
+    """Validates that an uploaded file is a real image and within size limits.
+
+    Kengaytma va hajmdan tashqari fayl MAZMUNI ham tekshiriladi: Pillow bilan
+    haqiqiy rasm ekanligi tasdiqlanadi. Bu `.jpg` deb nomlangan lekin ichida
+    HTML/skript bo'lgan yoki buzuq fayllarni bloklaydi (polyglot/upload XSS).
+    """
     ext = os.path.splitext(file.name)[1].lower()
     if ext not in ALLOWED_IMAGE_EXTENSIONS:
         raise ValidationError(f"Noma'lum fayl formati: '{ext}'. Faqat rasm yuklang.")
     if file.size > MAX_FILE_SIZE_MB * 1024 * 1024:
         raise ValidationError(f"Fayl hajmi juda katta. Maksimal hajm: {MAX_FILE_SIZE_MB}MB.")
+    # Mazmun tekshiruvi: fayl chindan ham rasm ekanini Pillow tasdiqlaydi.
+    try:
+        from PIL import Image
+        pos = file.tell() if hasattr(file, 'tell') else None
+        try:
+            Image.open(file).verify()
+        finally:
+            if pos is not None and hasattr(file, 'seek'):
+                file.seek(pos)
+    except ImportError:
+        # Pillow yo'q bo'lsa — kengaytma+hajm tekshiruvi bilan cheklaymiz.
+        pass
+    except Exception:
+        raise ValidationError("Fayl haqiqiy rasm emas yoki buzilgan.")
     return True
 
 

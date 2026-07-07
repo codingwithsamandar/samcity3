@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070a10" id="themeColorMeta">
 <title>{% block title %}SamCity{% endblock %}</title>
-{% load static %}
+{% load static i18n %}
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230ea371'/%3E%3Cpath d='M16 7a6 6 0 0 0-6 6c0 4.5 6 11 6 11s6-6.5 6-11a6 6 0 0 0-6-6z' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='16' cy='13' r='2.3' fill='white'/%3E%3C/svg%3E">
 <link rel="manifest" href="{% static 'manifest.json' %}">
 <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
   /* NOTE: The colour palette (:root tokens) is defined ONCE in the
      consolidated "SINGLE consolidated LIGHT palette" block further down,
      together with the [data-theme="dark"] block. Do not redefine tokens here. */
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; background: var(--bg); }
   body {
     background: transparent;
@@ -32,6 +32,10 @@
     overflow-x: clip;
   }
   a { color: inherit; text-decoration: none; }
+  /* Klaviatura foydalanuvchilari uchun ko'rinadigan fokus halqasi (sichqoncha bosishida chiqmaydi) */
+  :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  a:focus-visible, .btn:focus-visible, button:focus-visible, .chip:focus-visible,
+  [role="button"]:focus-visible, summary:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
   h1,h2,h3,h4 { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; letter-spacing: -0.025em; line-height: 1.14; color: var(--text); font-weight: 800; }
   ::selection { background: rgba(79,70,229,.18); color: var(--accent-d); }
   ::-webkit-scrollbar { width: 11px; height: 11px; }
@@ -214,9 +218,9 @@
     .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
       background: rgba(255,255,255,.94); backdrop-filter: blur(16px); border-top: 1px solid var(--border);
       padding: .4rem .3rem calc(.4rem + env(safe-area-inset-bottom)); justify-content: space-around; box-shadow: 0 -4px 24px rgba(16,24,40,.06); }
-    .bottom-nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-      color: var(--text3); font-size: .66rem; font-weight: 650; padding: .35rem 0; border-radius: 12px;
-      min-height: 52px; /* generous tap target */ }
+    .bottom-nav a { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      color: var(--text3); font-size: clamp(.56rem, 2.7vw, .66rem); font-weight: 650; padding: .35rem 0; border-radius: 12px;
+      min-height: 52px; /* generous tap target */ white-space: nowrap; text-align: center; }
     .bottom-nav a .ic { width: 23px; height: 23px; }
     .bottom-nav a.active { color: var(--accent); }
   }
@@ -228,6 +232,13 @@
     .hero-grid { grid-template-columns: 1fr !important; }
     .hero h1 { font-size: clamp(1.9rem, 8vw, 2.6rem); }
     .hero p.lead { font-size: 1rem; }
+    /* Tor telefonlarda navbar boshqaruvlarini ixchamlash — barcha ikonkalar
+       (qidiruv, savat, mavzu, bell, burger) 375px'ga bemalol sig'sin */
+    .nav-inner { gap: .4rem; padding: 0 .7rem; }
+    .nav-auth { gap: .35rem; }
+    .nav-cart, .nav-burger, .theme-toggle,
+    .nav-auth .btn-ghost, .notif-bell summary { width: 40px; height: 40px; min-height: 40px; padding: 0; }
+    .nav-auth .btn-ghost { border-radius: 12px; }
   }
   @media (max-width: 400px) { .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; } }
 </style>
@@ -464,6 +475,20 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 .theme-toggle .icon-moon { display: block; }
 [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+/* Til almashtirgich (uz / ru / en) */
+.lang-switch { position: relative; margin: 0; display: inline-flex; }
+.lang-switch select {
+  appearance: none; -webkit-appearance: none;
+  height: 38px; padding: 0 1.7rem 0 .7rem; border-radius: 100px;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  font-family: inherit; font-size: .8rem; font-weight: 700; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2356607a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .55rem center;
+}
+.lang-switch select:hover { background-color: var(--surface3); color: var(--text); border-color: var(--border2); }
+[data-theme="dark"] .lang-switch select { background-color: var(--surface2); border-color: var(--border); color: var(--text2); }
 </style>
 
 <style>
@@ -843,27 +868,37 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <div class="nav-inner">
     <a href="{% url 'home' %}" class="nav-logo"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<b>City</b></a>
     <div class="nav-links">
-      <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>Bosh</a>
-      <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>E'lonlar</a>
-      <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>Ish</a>
-      <a href="{% url 'taxi:home' %}" {% if '/taxi' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-car"/></svg>Taksi</a>
-      <a href="{% url 'payments:home' %}" {% if '/payments' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-card"/></svg>To'lovlar</a>
-      <a href="{% url 'venue_list' %}" {% if '/booking' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>Joylar</a>
-      <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>Xarita</a>
-      <a href="{% url 'delivery:store_list' %}" {% if request.path == '/delivery/' %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>Yetkazish</a>
-      <a href="{% url 'mahalla_home' %}" {% if '/mahalla' in request.path or 'chat' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>Mahalla</a>
+      <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
+      <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
+      <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
+      <a href="{% url 'taxi:home' %}" {% if '/taxi' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-car"/></svg>{% trans "Taksi" %}</a>
+      <a href="{% url 'payments:home' %}" {% if '/payments' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-card"/></svg>{% trans "To'lovlar" %}</a>
+      <a href="{% url 'venue_list' %}" {% if '/booking' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>{% trans "Joylar" %}</a>
+      <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
+      <a href="{% url 'delivery:store_list' %}" {% if request.path == '/delivery/' %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>{% trans "Yetkazish" %}</a>
+      <a href="{% url 'mahalla_home' %}" {% if '/mahalla' in request.path or 'chat' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>{% trans "Mahalla" %}</a>
     </div>
     <div class="nav-auth">
-      <a href="{% url 'global_search' %}" class="btn btn-ghost" title="Qidiruv" aria-label="Qidiruv"><svg class="ic"><use href="#i-search"/></svg></a>
+      <a href="{% url 'global_search' %}" class="btn btn-ghost" title="{% trans 'Qidiruv' %}" aria-label="{% trans 'Qidiruv' %}"><svg class="ic"><use href="#i-search"/></svg></a>
       {% if user.is_authenticated %}
-      <a href="{% url 'delivery:cart' %}" id="navCartLink" class="nav-cart" title="Savat" aria-label="Savat">
+      <a href="{% url 'delivery:cart' %}" id="navCartLink" class="nav-cart" title="{% trans 'Savat' %}" aria-label="{% trans 'Savat' %}">
         <svg class="ic"><use href="#i-cart"/></svg>
         {% with qty=user.delivery_cart.get_total_quantity|default:0 %}
           <span id="navCartBadge" class="nav-cart-badge" {% if not qty %}style="display:none;"{% endif %}>{{ qty }}</span>
         {% endwith %}
       </a>
       {% endif %}
-      <button class="theme-toggle" id="themeToggle" title="Mavzu o'zgartirish" aria-label="Dark/Light mode">
+      {% get_current_language as CUR_LANG %}
+      <form action="{% url 'set_language' %}" method="post" class="lang-switch hide-sm">{% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <select name="language" onchange="this.form.submit()" aria-label="Til / Язык / Language" title="Til / Язык / Language">
+          {% get_available_languages as LANGS %}
+          {% for code, name in LANGS %}
+          <option value="{{ code }}" {% if code == CUR_LANG %}selected{% endif %}>{{ code|upper }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <button class="theme-toggle" id="themeToggle" title="{% trans "Mavzu o'zgartirish" %}" aria-label="Dark/Light mode">
         <span class="icon-sun">☀️</span>
         <span class="icon-moon">🌙</span>
       </button>
@@ -879,21 +914,21 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
             <div class="account-head">
               <span class="avatar">{% if user.name %}{{ user.name|first|upper }}{% else %}<svg class="ic"><use href="#i-user"/></svg>{% endif %}</span>
               <div class="meta">
-                <div class="nm">{{ user.name|default:"Foydalanuvchi" }}</div>
+                <div class="nm">{{ user.name|default:_("Foydalanuvchi") }}</div>
                 <div class="sub">{{ user.phone }}</div>
               </div>
             </div>
-            <a href="{% url 'dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
-            <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
-            <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> Bildirishnomalar</a>
-            {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> Analitika</a>{% endif %}
+            <a href="{% url 'dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Boshqaruv paneli" %}</a>
+            <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
+            <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
+            {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
             <div class="am-divider"></div>
-            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="danger" role="menuitem"><svg class="ic"><use href="#i-logout"/></svg> Chiqish</button></form>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="danger" role="menuitem"><svg class="ic"><use href="#i-logout"/></svg> {% trans "Chiqish" %}</button></form>
           </div>
         </div>
       {% else %}
-        <a href="{% url 'login' %}" class="btn btn-outline">Kirish</a>
-        <a href="{% url 'register' %}" class="btn btn-accent">Ro'yxat</a>
+        <a href="{% url 'login' %}" class="btn btn-outline hide-sm">{% trans "Kirish" %}</a>
+        <a href="{% url 'register' %}" class="btn btn-accent hide-sm">{% trans "Ro'yxat" %}</a>
       {% endif %}
       <button class="nav-burger" aria-label="Menyu" onclick="var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block')"><svg class="ic ic-lg"><use href="#i-menu"/></svg></button>
     </div>
@@ -907,38 +942,50 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     <div class="mm-user">
       <span class="avatar">{% if user.name %}{{ user.name|first|upper }}{% else %}<svg class="ic"><use href="#i-user"/></svg>{% endif %}</span>
       <div style="min-width:0;">
-        <div class="nm">{{ user.name|default:"Foydalanuvchi" }}</div>
+        <div class="nm">{{ user.name|default:_("Foydalanuvchi") }}</div>
         <div class="sub">{{ user.phone }}</div>
       </div>
     </div>
     {% else %}
     <a href="{% url 'home' %}" class="nav-logo" style="font-size:1.15rem;"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<b>City</b></a>
     {% endif %}
-    <button type="button" class="mm-close" aria-label="Yopish" onclick="document.getElementById('mobileMenu').style.display='none'"><svg class="ic"><use href="#i-x"/></svg></button>
+    <button type="button" class="mm-close" aria-label="{% trans 'Yopish' %}" onclick="document.getElementById('mobileMenu').style.display='none'"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
 
-  <div class="mm-label">Bo'limlar</div>
-  <a href="{% url 'home' %}"><svg class="ic"><use href="#i-home"/></svg> Bosh sahifa</a>
-  <a href="{% url 'all_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> E'lonlar</a>
-  <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> Ish</a>
-  <a href="{% url 'taxi:home' %}"><svg class="ic"><use href="#i-car"/></svg> Taksi</a>
-  <a href="{% url 'delivery:store_list' %}"><svg class="ic"><use href="#i-bike"/></svg> Yetkazish</a>
-  <a href="{% url 'venue_list' %}"><svg class="ic"><use href="#i-building"/></svg> Joylar</a>
-  <a href="{% url 'places:map' %}"><svg class="ic"><use href="#i-map"/></svg> Xarita</a>
-  <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>
-  <a href="{% url 'mahalla_home' %}"><svg class="ic"><use href="#i-building"/></svg> Mahalla</a>
+  <div class="mm-label">{% trans "Til / Язык / Language" %}</div>
+  <form action="{% url 'set_language' %}" method="post" class="lang-switch" style="width:100%;padding:.4rem 0;">{% csrf_token %}
+    <input name="next" type="hidden" value="{{ request.get_full_path }}">
+    <select name="language" onchange="this.form.submit()" style="width:100%;height:44px;font-size:.95rem;">
+      {% get_available_languages as LANGS %}
+      {% for code, name in LANGS %}
+      <option value="{{ code }}" {% if code == CUR_LANG %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  <div class="mm-divider"></div>
+
+  <div class="mm-label">{% trans "Bo'limlar" %}</div>
+  <a href="{% url 'home' %}"><svg class="ic"><use href="#i-home"/></svg> {% trans "Bosh sahifa" %}</a>
+  <a href="{% url 'all_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> {% trans "E'lonlar" %}</a>
+  <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> {% trans "Ish" %}</a>
+  <a href="{% url 'taxi:home' %}"><svg class="ic"><use href="#i-car"/></svg> {% trans "Taksi" %}</a>
+  <a href="{% url 'delivery:store_list' %}"><svg class="ic"><use href="#i-bike"/></svg> {% trans "Yetkazish" %}</a>
+  <a href="{% url 'venue_list' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Joylar" %}</a>
+  <a href="{% url 'places:map' %}"><svg class="ic"><use href="#i-map"/></svg> {% trans "Xarita" %}</a>
+  <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> {% trans "To'lovlar" %}</a>
+  <a href="{% url 'mahalla_home' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Mahalla" %}</a>
   <div class="mm-divider"></div>
   {% if user.is_authenticated %}
-    <div class="mm-label">Hisob</div>
-    <a href="{% url 'delivery:cart' %}"><svg class="ic"><use href="#i-cart"/></svg> Savat</a>
-    <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
-    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}"><svg class="ic"><use href="#i-chart"/></svg> Analitika</a>{% endif %}
-    <a href="{% url 'profile' %}"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
-    <a href="{% url 'notification_list' %}"><svg class="ic"><use href="#i-bell"/></svg> Bildirishnomalar</a>
-    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><svg class="ic"><use href="#i-logout"/></svg> Chiqish</button></form>
+    <div class="mm-label">{% trans "Hisob" %}</div>
+    <a href="{% url 'delivery:cart' %}"><svg class="ic"><use href="#i-cart"/></svg> {% trans "Savat" %}</a>
+    <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Boshqaruv paneli" %}</a>
+    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
+    <a href="{% url 'profile' %}"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
+    <a href="{% url 'notification_list' %}"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><svg class="ic"><use href="#i-logout"/></svg> {% trans "Chiqish" %}</button></form>
   {% else %}
-    <a href="{% url 'login' %}"><svg class="ic"><use href="#i-user"/></svg> Kirish</a>
-    <a href="{% url 'register' %}"><svg class="ic"><use href="#i-sparkle"/></svg> Ro'yxatdan o'tish</a>
+    <a href="{% url 'login' %}"><svg class="ic"><use href="#i-user"/></svg> {% trans "Kirish" %}</a>
+    <a href="{% url 'register' %}"><svg class="ic"><use href="#i-sparkle"/></svg> {% trans "Ro'yxatdan o'tish" %}</a>
   {% endif %}
 </div></div>
 
@@ -964,41 +1011,41 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
 <footer class="site-footer"><div class="foot-in">
   <div>
     <div class="brand"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<span style="color:var(--accent)">City</span></div>
-    <div style="color:var(--text3);font-size:.85rem;margin-top:.55rem;max-width:320px;">Shahar uchun yagona raqamli super-ilova — e'lonlar, taksi, yetkazish, joylar va to'lovlar bir joyda.</div>
+    <div style="color:var(--text3);font-size:.85rem;margin-top:.55rem;max-width:320px;">{% trans "Shahar uchun yagona raqamli super-ilova — e'lonlar, taksi, yetkazish, joylar va to'lovlar bir joyda." %}</div>
     <div style="color:var(--text3);font-size:.8rem;margin-top:.8rem;">© 2026 SamCity</div>
   </div>
   <div class="foot-links">
-    <a href="{% url 'all_ads' %}">E'lonlar</a>
-    <a href="{% url 'taxi:home' %}">Taksi</a>
-    <a href="{% url 'delivery:store_list' %}">Yetkazish</a>
-    <a href="{% url 'venue_list' %}">Joylar</a>
-    <a href="{% url 'places:map' %}">Xarita</a>
-    <a href="{% url 'payments:home' %}">To'lovlar</a>
-    <a href="{% url 'app_download' %}" style="color:var(--accent);font-weight:700;">📱 Ilovani yuklab olish</a>
+    <a href="{% url 'all_ads' %}">{% trans "E'lonlar" %}</a>
+    <a href="{% url 'taxi:home' %}">{% trans "Taksi" %}</a>
+    <a href="{% url 'delivery:store_list' %}">{% trans "Yetkazish" %}</a>
+    <a href="{% url 'venue_list' %}">{% trans "Joylar" %}</a>
+    <a href="{% url 'places:map' %}">{% trans "Xarita" %}</a>
+    <a href="{% url 'payments:home' %}">{% trans "To'lovlar" %}</a>
+    <a href="{% url 'app_download' %}" style="color:var(--accent);font-weight:700;">📱 {% trans "Ilovani yuklab olish" %}</a>
   </div>
 </div></footer>
 
 <!-- Mobile bottom navigation -->
 <nav class="bottom-nav">
-  <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>Bosh</a>
-  <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>E'lonlar</a>
-  <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>Ish</a>
-  <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>Xarita</a>
-  <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>Ko'proq</a>
+  <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
+  <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
+  <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
+  <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
+  <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>{% trans "Ko'proq" %}</a>
 </nav>
 
-<button id="toTop" aria-label="Tepaga" title="Tepaga"><svg class="ic" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<button id="toTop" aria-label="{% trans 'Tepaga' %}" title="{% trans 'Tepaga' %}"><svg class="ic" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 <!-- ── PWA Install Banner ──────────────────────────────────────── -->
 <div id="pwaInstallBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9990;width:calc(100% - 2rem);max-width:420px;">
   <div style="background:var(--surface);border:1px solid var(--accent);border-radius:18px;padding:1rem 1.25rem;box-shadow:var(--shadow-xl);display:flex;align-items:center;gap:1rem;">
     <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(140deg,var(--accent),var(--teal));display:grid;place-items:center;color:#fff;flex:none;font-size:1.5rem;">📱</div>
     <div style="flex:1;min-width:0;">
-      <div style="font-weight:700;font-size:.95rem;color:var(--text);">SamCity ilovasini o'rnating</div>
-      <div style="color:var(--text2);font-size:.8rem;margin-top:2px;">Tezroq, qulay va offline ishlaydi</div>
+      <div style="font-weight:700;font-size:.95rem;color:var(--text);">{% trans "SamCity ilovasini o'rnating" %}</div>
+      <div style="color:var(--text2);font-size:.8rem;margin-top:2px;">{% trans "Tezroq, qulay va offline ishlaydi" %}</div>
     </div>
     <div style="display:flex;gap:.5rem;flex:none;">
-      <button onclick="installPWAFromBanner()" class="btn btn-accent btn-sm">O'rnatish</button>
+      <button onclick="installPWAFromBanner()" class="btn btn-accent btn-sm">{% trans "O'rnatish" %}</button>
       <button onclick="dismissInstallBanner()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.3rem;padding:.2rem;">✕</button>
     </div>
   </div>

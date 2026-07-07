@@ -5,6 +5,8 @@ from django.contrib import admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Til almashtirish (set_language) — cookie o'rnatadi, oldingi sahifaga qaytaradi.
+    path('i18n/', include('django.conf.urls.i18n')),
     path('', include('main.urls')),
     path('delivery/', include('delivery.urls', namespace='delivery')),
     path('taxi/', include('taxi.urls', namespace='taxi')),

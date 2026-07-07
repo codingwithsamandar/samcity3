@@ -494,12 +494,10 @@ class Order(models.Model):
     assigned_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # ── TODO (3.2-bosqich skeleti): "paketga solish" + pickup jarayoni ──────────
-    # Keyingi bosqichda: checkout paytida fulfillment_type tanlash (hozircha
-    # standart 'delivery'), do'kon xodimi 'ready' bo'lganda ready_for_pickup_at
-    # to'ldiriladi, mijoz o'zi "qabul qildim" deb bosgach customer_confirmed_at
-    # to'ldirilib buyurtma shundagina yakunlangan hisoblanadi. Hozircha faqat
-    # model maydonlari tayyorlangan — UI/ish oqimi ulanmagan.
+    # ── Pickup jarayoni (ISHLAYDI — views.store_order_status / order_confirm_pickup):
+    # do'kon egasi 'ready' qilganda ready_for_pickup_at to'ldiriladi va mijozga
+    # bildirishnoma ketadi; mijoz "qabul qildim" bosgach customer_confirmed_at
+    # to'ldirilib buyurtma 'delivered' bo'ladi. Pickup to'lovi oldindan majburiy.
     FULFILLMENT_CHOICES = [('delivery', 'Yetkazib berish'), ('pickup', "O'zi olib ketish")]
     fulfillment_type = models.CharField(
         max_length=10, choices=FULFILLMENT_CHOICES, default='delivery', verbose_name='Yetkazish turi',
@@ -508,6 +506,9 @@ class Order(models.Model):
     pickup_at = models.DateTimeField(null=True, blank=True, verbose_name='Olib ketish vaqti (mijoz tanlagan)')
     ready_for_pickup_at = models.DateTimeField(null=True, blank=True, verbose_name='Olib ketishga tayyor bo\'lgan vaqt')
     customer_confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name='Mijoz tomonidan tasdiqlangan vaqt')
+    # Yetkazilgan vaqt — kuryer daromad hisoboti (kunlik/haftalik) shu maydonga
+    # tayanadi. Status 'delivered' bo'lganda view'larda to'ldiriladi.
+    delivered_at = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name='Yetkazilgan vaqt')
 
     class Meta:
         db_table = 'delivery_orders'
@@ -596,6 +597,16 @@ class DeliveryDriver(models.Model):
     def __str__(self):
         return f'{self.full_name} ({self.get_vehicle_type_display()})'
 
+    @property
+    def avg_rating(self):
+        from django.db.models import Avg
+        r = self.reviews.aggregate(a=Avg('rating'))['a']
+        return round(r, 1) if r else 0
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
 
 # ── DRIVER LOCATION (real-time tracking) ────────────────────────────────────────
 
@@ -619,10 +630,41 @@ class DriverLocation(models.Model):
         return f'{self.driver.full_name}: {self.latitude:.5f}, {self.longitude:.5f}'
 
 
-# ── TODO (3.1-bosqich skeleti): do'kon xodimi bilan chat ────────────────────────
-# Faqat backend infratuzilmasi tayyorlangan — to'liq real-time UI keyingi
-# bosqichda qo'shiladi (hozircha oddiy API skeleton: thread yaratish + xabar
-# yozish/o'qish, WebSocket push ulanmagan).
+# ── DRIVER REVIEW (kuryer reytingi) ─────────────────────────────────────────────
+
+class DriverReview(models.Model):
+    """Mijozning yetkazilgan buyurtma bo'yicha kuryerga bahosi (1 buyurtma = 1 baho)."""
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE, related_name='driver_review',
+    )
+    driver = models.ForeignKey(
+        DeliveryDriver, on_delete=models.CASCADE, related_name='reviews',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='driver_reviews',
+    )
+    rating = models.PositiveSmallIntegerField(
+        default=5, choices=[(i, str(i)) for i in range(1, 6)],
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name='Baho (1-5)',
+    )
+    comment = models.CharField(max_length=300, blank=True, verbose_name='Izoh')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'delivery_driver_reviews'
+        verbose_name = 'Kuryer bahosi'
+        verbose_name_plural = 'Kuryer baholari'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.driver.full_name} — {self.rating}★'
+
+
+# ── Do'kon chati (ISHLAYDI — real-time): WebSocket consumer
+# (delivery/consumers.py StoreChatConsumer, ws/delivery/chat/<thread_id>/) +
+# REST (api/chat_store_views.py) + mobil (store_chat_socket.dart) ulangan.
+# Xabar saqlanadi, guruhga broadcast qilinadi, qarshi tomonga bildirishnoma boradi.
 # TODO (keyingi bosqich): ko'p xodimli do'kon. Hozircha do'kon tomonidan faqat
 # Store.owner javob beradi. Kelajakda StoreStaff (store + user + rol) modeli
 # qo'shilib, bir nechta xodim bitta thread'ga javob bera oladigan bo'ladi.

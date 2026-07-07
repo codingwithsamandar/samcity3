@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from django.utils import timezone
 
 from .models import Provider, ServicePayment, CATEGORY_CHOICES
@@ -98,4 +98,11 @@ def receipt(request, payment_id):
 @login_required
 def my_payments(request):
     payments = ServicePayment.objects.filter(user=request.user)
-    return render(request, 'payments/my_payments.html', {'payments': payments})
+    stats = payments.filter(status='paid').aggregate(
+        total=Sum('amount'), count=Count('id'),
+    )
+    return render(request, 'payments/my_payments.html', {
+        'payments': payments,
+        'total_paid': stats['total'] or 0,
+        'paid_count': stats['count'] or 0,
+    })

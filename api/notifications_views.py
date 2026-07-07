@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from notifications.models import Notification
+from notifications.models import Notification, DeviceToken
 from .notifications_serializers import NotificationSerializer, MarkReadSerializer
 
 
@@ -75,3 +75,39 @@ class NotificationMarkReadView(APIView):
             'updated': updated,
             'unread': _unread_count(request.user),
         }, status=status.HTTP_200_OK)
+
+
+class DeviceTokenView(APIView):
+    """FCM qurilma tokenini ro'yxatga olish / o'chirish (mobil push uchun).
+
+    POST   {"token": "...", "platform": "android|ios|web"} — saqlaydi/yangilaydi.
+    DELETE {"token": "..."} — logout'da tokenni deaktivatsiya qiladi.
+
+    Token boshqa foydalanuvchidan shu foydalanuvchiga o'tsa (bitta telefonda
+    akkaunt almashsa) — egasi yangilanadi.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = (request.data.get('token') or '').strip()
+        platform = (request.data.get('platform') or 'android').strip().lower()
+        if not token or len(token) > 255:
+            return Response({'detail': 'token majburiy (≤255 belgi).'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if platform not in ('android', 'ios', 'web'):
+            platform = 'android'
+        obj, _created = DeviceToken.objects.update_or_create(
+            token=token,
+            defaults={'user': request.user, 'platform': platform, 'is_active': True},
+        )
+        return Response({'ok': True, 'id': obj.id}, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        token = (request.data.get('token') or '').strip()
+        if not token:
+            return Response({'detail': 'token majburiy.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        updated = DeviceToken.objects.filter(
+            token=token, user=request.user,
+        ).update(is_active=False)
+        return Response({'ok': True, 'deactivated': updated}, status=status.HTTP_200_OK)

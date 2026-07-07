@@ -98,6 +98,9 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS — mobil/web klient uchun (eng yuqorida)
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # i18n: tilni cookie/session/Accept-Language orqali aniqlaydi.
+    # SessionMiddleware'dan keyin, CommonMiddleware'dan oldin turishi SHART.
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -212,6 +215,15 @@ LANGUAGE_CODE = 'uz'
 TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
+
+# Sayt 3 tilda: o'zbek (asosiy), rus, ingliz.
+from django.utils.translation import gettext_lazy as _
+LANGUAGES = [
+    ('uz', _('Oʻzbekcha')),
+    ('ru', _('Русский')),
+    ('en', _('English')),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # Leading slash is required so {% static %} resolves correctly on every URL path.
 STATIC_URL = '/static/'

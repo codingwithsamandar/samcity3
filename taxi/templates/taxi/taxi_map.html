@@ -4,21 +4,6 @@
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
-<style>
-  .tm-shell { position: relative; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
-  #tmap { height: 64vh; min-height: 420px; z-index: 1; }
-  .tm-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 1.1rem; margin-top: 1rem; }
-  .tm-field { display: flex; align-items: center; gap: .7rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
-  .tm-field:last-of-type { border-bottom: none; }
-  .tm-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
-  .tm-dot.a { background: var(--green); } .tm-dot.b { background: var(--red); border-radius: 3px; }
-  .tm-field .v { flex: 1; font-size: .92rem; color: var(--text); }
-  .tm-field .v.empty { color: var(--text3); }
-  .tm-est { display: flex; gap: 1.25rem; flex-wrap: wrap; margin: .9rem 0; }
-  .tm-est .e .n { font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 1.2rem; color: var(--text); }
-  .tm-est .e .l { color: var(--text3); font-size: .76rem; }
-  .map-fab { position: absolute; z-index: 500; }
-</style>
 {% endblock %}
 
 {% block content %}
