@@ -207,6 +207,22 @@ class DistrictAnnouncementAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'recipients_count')
     autocomplete_fields = ['district', 'created_by']
 
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+        # Admin orqali YANGI tuman e'loni ham butun tuman aholisiga borsin.
+        if not change:
+            from django.urls import reverse
+            from .community_views import _notify_district
+            sent = _notify_district(
+                obj.district, f"🏛️ Tuman e'loni: {obj.title[:60]}",
+                reverse('hokim_panel'), exclude_user=request.user)
+            obj.recipients_count = sent
+            obj.save(update_fields=['recipients_count'])
+            self.message_user(request, f"{sent} ta aholiga bildirishnoma yuborildi.",
+                              level=admin_messages.SUCCESS)
+
 
 # ── REKLAMA KAMPANIYASI ──────────────────────────────────────────────────────
 @admin.register(AdCampaign)
@@ -330,6 +346,22 @@ class NeighborhoodAnnouncementAdmin(admin.ModelAdmin):
     search_fields = ('title', 'text', 'neighborhood__name')
     readonly_fields = ('created_at',)
     autocomplete_fields = ['neighborhood', 'created_by']
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+        # Admin orqali YANGI e'lon ham mahalla aholisiga bildirishnoma bo'lib borsin
+        # (web/API yo'llari o'zi yuboradi; bu faqat admin-yaratish uchun).
+        if not change:
+            from django.urls import reverse
+            from .community_views import _notify_mahalla
+            sent = _notify_mahalla(
+                obj.neighborhood, f"📢 Mahalla e'loni: {obj.title[:60]}",
+                reverse('mahalla_detail', args=[obj.neighborhood_id]),
+                exclude_user=request.user)
+            self.message_user(request, f"{sent} ta aholiga bildirishnoma yuborildi.",
+                              level=admin_messages.SUCCESS)
 
 
 @admin.register(CitizenRequest)

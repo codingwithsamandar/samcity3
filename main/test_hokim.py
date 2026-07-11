@@ -132,6 +132,50 @@ class HokimPanelTest(TestCase):
         self.assertEqual(DistrictAnnouncement.objects.count(), 0)
 
 
+class AdminCreatedAnnouncementTest(TestCase):
+    """Django admin orqali yaratilgan e'lon ham aholiga bildirishnoma yuborsin."""
+
+    def setUp(self):
+        self.d = District.objects.create(name='Admin tuman')
+        self.nb = Neighborhood.objects.create(name='Admin mahalla', district=self.d)
+        self.res = User.objects.create_user(phone='+998944440001', password='x',
+                                            neighborhood=self.nb)
+        self.superuser = User.objects.create_user(phone='+998944449999', password='x',
+                                                  is_staff=True)
+        self.superuser.is_superuser = True
+        self.superuser.save()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def test_admin_neighborhood_announcement_notifies(self):
+        resp = self.client.post('/admin/main/neighborhoodannouncement/add/', {
+            'neighborhood': self.nb.pk, 'title': 'Admin orqali', 'text': 'Matn',
+        }, HTTP_HOST='127.0.0.1')
+        self.assertEqual(resp.status_code, 302)  # saqlandi
+        self.assertTrue(NeighborhoodAnnouncement.objects.filter(title='Admin orqali').exists())
+        self.assertEqual(Notification.objects.filter(recipient=self.res).count(), 1)
+
+    def test_admin_district_announcement_notifies(self):
+        resp = self.client.post('/admin/main/districtannouncement/add/', {
+            'district': self.d.pk, 'title': 'Tuman admin', 'text': 'Matn',
+        }, HTTP_HOST='127.0.0.1')
+        self.assertEqual(resp.status_code, 302)
+        ann = DistrictAnnouncement.objects.get(title='Tuman admin')
+        self.assertEqual(ann.recipients_count, 1)
+        self.assertEqual(Notification.objects.filter(recipient=self.res).count(), 1)
+
+    def test_admin_edit_does_not_resend(self):
+        # Tahrirlashda qayta yuborilmasin (faqat yangi yaratishda).
+        self.client.post('/admin/main/neighborhoodannouncement/add/', {
+            'neighborhood': self.nb.pk, 'title': 'Bir marta', 'text': 'Matn',
+        }, HTTP_HOST='127.0.0.1')
+        ann = NeighborhoodAnnouncement.objects.get(title='Bir marta')
+        self.client.post(f'/admin/main/neighborhoodannouncement/{ann.pk}/change/', {
+            'neighborhood': self.nb.pk, 'title': 'Bir marta (tahrir)', 'text': 'Matn2',
+        }, HTTP_HOST='127.0.0.1')
+        self.assertEqual(Notification.objects.filter(recipient=self.res).count(), 1)
+
+
 class MahallaAnnouncementRecipientsTest(TestCase):
     """Mahalla e'loni AYNAN residents'ga boradi (chat a'zoligiga bog'liq emas)."""
 
