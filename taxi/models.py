@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Avg
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +58,11 @@ class TaxiService(models.Model):
     @property
     def review_count(self):
         return self.reviews.count()
+
+    @property
+    def localized_region(self):
+        from .toponyms import localize_place
+        return localize_place(self.region)
 
     def example_price(self, km=5):
         """Namuna: km uchun taxminiy narx."""
@@ -151,6 +157,11 @@ class Taxist(models.Model):
     def review_count(self):
         return self.reviews.count()
 
+    @property
+    def localized_region(self):
+        from .toponyms import localize_place
+        return localize_place(self.region)
+
 
 class Route(models.Model):
     """AB punkt: taksist A punktdan B punktga narx va dostavka narxini belgilaydi."""
@@ -180,6 +191,16 @@ class Route(models.Model):
 
     def __str__(self):
         return f'{self.point_a} → {self.point_b}'
+
+    @property
+    def localized_point_a(self):
+        from .toponyms import localize_place
+        return localize_place(self.point_a)
+
+    @property
+    def localized_point_b(self):
+        from .toponyms import localize_place
+        return localize_place(self.point_b)
 
 
 class TaxistReview(models.Model):
@@ -225,11 +246,11 @@ class TaxistReview(models.Model):
 # ─────────────────────────────────────────────────────────────────────────────
 class Car(models.Model):
     CLASS_CHOICES = [
-        ('econom', 'Ekonom'),
-        ('comfort', 'Komfort'),
-        ('comfort_plus', 'Komfort+'),
-        ('business', 'Biznes'),
-        ('minivan', 'Miniven'),
+        ('econom', _('Ekonom')),
+        ('comfort', _('Komfort')),
+        ('comfort_plus', _('Komfort+')),
+        ('business', _('Biznes')),
+        ('minivan', _('Miniven')),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     taxist = models.OneToOneField(
@@ -261,6 +282,19 @@ class Car(models.Model):
     @property
     def full_name(self):
         return f'{self.brand} {self.model}'.strip()
+
+    # Rang erkin matn (CharField) — ma'lum ranglar gettext katalogi orqali
+    # tarjima qilinadi, notanish qiymat o'zgarishsiz qaytadi.
+    COMMON_COLORS = [
+        _('Oq'), _('Qora'), _('Kulrang'), _('Kumush'), _("Ko'k"),
+        _('Qizil'), _('Yashil'), _('Sariq'), _('Jigarrang'), _('Havorang'),
+        _('Bejeviy'), _('Binafsha'), _("To'q ko'k"), _('Pushti'), _("Oq marvarid"),
+    ]
+
+    @property
+    def localized_color(self):
+        from django.utils.translation import gettext
+        return gettext(self.color) if self.color else self.color
 
 
 # ─────────────────────────────────────────────────────────────────────────────

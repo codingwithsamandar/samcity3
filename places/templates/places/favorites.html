@@ -14,11 +14,11 @@
     {% for f in favorites %}
     <a href="{% url 'places:place_detail' f.place.pk %}" class="lcard reveal">
       <div class="lc-media">
-        {% if f.place.image %}<img src="{{ f.place.image.url }}" alt="{{ f.place.name }}">{% else %}<div class="media-ph" style="font-size:2.8rem;">{{ f.place.icon }}</div>{% endif %}
+        {% if f.place.image %}<img src="{{ f.place.image.url }}" alt="{{ f.place.localized_name }}">{% else %}<div class="media-ph" style="font-size:2.8rem;">{{ f.place.icon }}</div>{% endif %}
         <div class="lc-badges"><span class="badge badge-gray">{{ f.place.icon }} {{ f.place.get_category_display }}</span></div>
       </div>
       <div class="lc-body">
-        <div class="lc-title">{{ f.place.name }}</div>
+        <div class="lc-title">{{ f.place.localized_name }}</div>
         {% if f.place.address %}<div class="lc-sub"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg> {{ f.place.address }}</div>{% endif %}
       </div>
     </a>

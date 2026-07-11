@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load taxi_extras %}
-{% block title %}{{ taxist.full_name }} — Taksist{% endblock %}
+{% load i18n %}
+{% block title %}{{ taxist.full_name }} — {% trans "Taksist" %}{% endblock %}
 
 {% block extra_css %}
 {% endblock %}
@@ -11,88 +12,89 @@
   <div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>
   {% endfor %}
 
-  <a href="{% url 'taxi:home' %}" class="yx-back">← Taksi bo'limi</a>
+  <a href="{% url 'taxi:home' %}" class="yx-back">← {% trans "Taksi bo'limi" %}</a>
 
   <div class="yx-hero">
     <div class="hero-top">
       {% if taxist.photo %}<img src="{{ taxist.photo.url }}" class="hero-av" alt="">{% else %}<div class="hero-av">{{ taxist.full_name|first }}</div>{% endif %}
       <div>
         <h1 style="font-size:1.5rem;">{{ taxist.full_name }}</h1>
-        <div style="color:var(--muted);font-size:0.85rem;margin-top:0.2rem;">📍 {{ taxist.region }}{% if taxist.service %} · {{ taxist.service.name }}{% endif %}</div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:0.2rem;">📍 {{ taxist.localized_region }}{% if taxist.service %} · {{ taxist.service.name }}{% endif %}</div>
       </div>
       <div class="hero-rate">
         <div class="num">{{ taxist.avg_rating }}</div>
         <div class="st">{{ taxist.avg_rating|stars }}</div>
-        <div class="cnt">{{ taxist.review_count }} ta baho</div>
+        <div class="cnt">{{ taxist.review_count }} {% trans "ta baho" %}</div>
       </div>
     </div>
 
     <div class="info-grid">
-      <div class="info-box"><div class="lbl">Tashilgan yo'lovchilar</div><div class="val y">🧍 {{ taxist.trips_count }}</div></div>
-      <div class="info-box"><div class="lbl">Marshrutlar</div><div class="val">{{ routes.count }} ta</div></div>
-      <div class="info-box"><div class="lbl">Telefon</div><a href="tel:{{ taxist.phone }}" class="val y" style="display:block;text-decoration:none;font-size:1.05rem;">{{ taxist.phone }}</a></div>
+      <div class="info-box"><div class="lbl">{% trans "Tashilgan yo'lovchilar" %}</div><div class="val y">🧍 {{ taxist.trips_count }}</div></div>
+      <div class="info-box"><div class="lbl">{% trans "Marshrutlar" %}</div><div class="val">{% blocktrans with n=routes.count %}{{ n }} ta{% endblocktrans %}</div></div>
+      <div class="info-box"><div class="lbl">{% trans "Telefon" %}</div><a href="tel:{{ taxist.phone }}" class="val y" style="display:block;text-decoration:none;font-size:1.05rem;">{{ taxist.phone }}</a></div>
     </div>
   </div>
 
   <!-- ── MASHINA ──────────────────────────────────────────────────── -->
-  <div class="sec-title">🚗 Mashina ma'lumotlari</div>
+  <div class="sec-title">🚗 {% trans "Mashina ma'lumotlari" %}</div>
   {% if car %}
   <div class="car-card">
     <div class="car-icon">🚗</div>
     <div style="flex:1;min-width:0;">
-      <div class="car-name">{{ car.brand }} {{ car.model }}{% if car.color %} · {{ car.color }}{% endif %}</div>
-      <div class="car-sub">{% if car.year %}{{ car.year }}-yil · {% endif %}{{ car.seats }} o'rindiq</div>
+      <div class="car-name">{{ car.brand }} {{ car.model }}{% if car.color %} · {{ car.localized_color }}{% endif %}</div>
+      <div class="car-sub">{% if car.year %}{{ car.year }}-{% trans "yil" %} · {% endif %}{{ car.seats }} {% trans "o'rindiq" %}</div>
       {% if car.plate_number %}<div class="car-plate">{{ car.plate_number }}</div>{% endif %}
       <div class="feat">
-        {% if car.has_conditioner %}<span>❄️ Konditsioner</span>{% endif %}
-        {% if car.has_baby_seat %}<span>👶 Bolalar o'rindig'i</span>{% endif %}
-        {% if car.allows_pets %}<span>🐾 Hayvonlar bilan</span>{% endif %}
+        {% if car.has_conditioner %}<span>❄️ {% trans "Konditsioner" %}</span>{% endif %}
+        {% if car.has_baby_seat %}<span>👶 {% trans "Bolalar o'rindig'i" %}</span>{% endif %}
+        {% if car.allows_pets %}<span>🐾 {% trans "Hayvonlar bilan" %}</span>{% endif %}
       </div>
     </div>
     <span class="class-tag">{{ car.get_car_class_display }}</span>
   </div>
   {% else %}
-  <div class="lock-note">Mashina ma'lumoti kiritilmagan.</div>
+  <div class="lock-note">{% trans "Mashina ma'lumoti kiritilmagan." %}</div>
   {% endif %}
 
   <!-- ── MARSHRUTLAR + BUYURTMA ───────────────────────────────────── -->
-  <div class="sec-title">📍 Marshrutlar — buyurtma berish</div>
+  <div class="sec-title">📍 {% trans "Marshrutlar — buyurtma berish" %}</div>
   {% for route in routes %}
   <div class="rc">
-    <div class="pth">{{ route.point_a }}<span class="ar">→</span>{{ route.point_b }}</div>
+    <div class="pth">{{ route.localized_point_a }}<span class="ar">→</span>{{ route.localized_point_b }}</div>
     {% if route.note %}<div class="note">{{ route.note }}</div>{% endif %}
     <div class="rc-actions">
       <form method="post" action="{% url 'taxi:order_create' taxist.pk %}" style="display:inline;">
         {% csrf_token %}
         <input type="hidden" name="route_id" value="{{ route.id }}">
-        <button type="submit" class="order-btn p">🧍 Yo'lovchi — {{ route.passenger_price|som }} so'm</button>
+        <button type="submit" class="order-btn p">🧍 {% trans "Yo'lovchi" %} — {{ route.passenger_price|som }} {% trans "so'm" %}</button>
       </form>
       {% if route.delivery_price %}
       <form method="post" action="{% url 'taxi:order_create' taxist.pk %}" style="display:inline;">
         {% csrf_token %}
         <input type="hidden" name="route_id" value="{{ route.id }}">
         <input type="hidden" name="is_delivery" value="1">
-        <button type="submit" class="order-btn d">📦 Dostavka — {{ route.delivery_price|som }} so'm</button>
+        <button type="submit" class="order-btn d">📦 {% trans "Dostavka" %} — {{ route.delivery_price|som }} {% trans "so'm" %}</button>
       </form>
       {% endif %}
     </div>
   </div>
   {% empty %}
-  <div class="lock-note">Marshrut kiritilmagan.</div>
+  <div class="lock-note">{% trans "Marshrut kiritilmagan." %}</div>
   {% endfor %}
 
   <!-- ── BAHO (faqat sayohat qilganlar) ───────────────────────────── -->
-  <div class="sec-title">⭐ Baho berish</div>
+  <div class="sec-title">⭐ {% trans "Baho berish" %}</div>
   {% if can_review %}
     {% include 'taxi/_review_form.html' %}
   {% elif user.is_authenticated %}
-    <div class="lock-note">🔒 Baho berish uchun avval shu taksist bilan sayohat qilib, to'lovni yakunlang.</div>
+    <div class="lock-note">🔒 {% trans "Baho berish uchun avval shu taksist bilan sayohat qilib, to'lovni yakunlang." %}</div>
   {% else %}
-    <div class="lock-note">⭐ Baho berish uchun <a href="{% url 'login' %}" style="color:var(--yel);font-weight:600;">tizimga kiring</a> va sayohat qiling.</div>
+    {% url 'login' as login_url %}
+    <div class="lock-note">⭐ {% blocktrans %}Baho berish uchun <a href="{{ login_url }}" style="color:var(--yel);font-weight:600;">tizimga kiring</a> va sayohat qiling.{% endblocktrans %}</div>
   {% endif %}
 
   <!-- ── SHARHLAR ─────────────────────────────────────────────────── -->
-  <div class="sec-title">💬 Sharhlar <small>({{ taxist.review_count }})</small></div>
+  <div class="sec-title">💬 {% trans "Sharhlar" %} <small>({{ taxist.review_count }})</small></div>
   {% for r in reviews %}
   <div class="rev">
     <div class="h">
@@ -106,7 +108,7 @@
     <div style="color:var(--muted);font-size:0.72rem;margin-top:0.5rem;">{{ r.created_at|date:"d.m.Y H:i" }}</div>
   </div>
   {% empty %}
-  <div class="empty-state"><div class="icon">💬</div><h3>Hali sharh yo'q</h3></div>
+  <div class="empty-state"><div class="icon">💬</div><h3>{% trans "Hali sharh yo'q" %}</h3></div>
   {% endfor %}
 </div>
 {% endblock %}

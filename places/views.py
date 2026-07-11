@@ -103,10 +103,10 @@ def neighborhood_places_geojson(request, pk):
             if not _point_in_polygon(p.latitude, p.longitude, ring):
                 continue
             items.append({
-                'id': p.pk, 'name': p.name, 'category': p.category,
+                'id': p.pk, 'name': p.localized_name, 'category': p.category,
                 'cat': p.get_category_display(), 'icon': p.icon, 'color': p.color,
                 'lat': p.latitude, 'lng': p.longitude, 'address': p.address,
-                'phone': p.phone, 'hours': p.working_hours, 'desc': p.description,
+                'phone': p.phone, 'hours': p.working_hours, 'desc': p.localized_description,
                 'url': reverse('places:place_detail', args=[p.pk]),
             })
 
@@ -176,12 +176,12 @@ def places_geojson(request):
     if category:
         qs = qs.filter(category=category)
     data = [{
-        'id': p.id, 'name': p.name, 'category': p.category,
+        'id': p.id, 'name': p.localized_name, 'category': p.category,
         'cat': p.get_category_display(), 'icon': p.icon, 'color': p.color,
         'lat': p.latitude, 'lng': p.longitude, 'address': p.address,
         'phone': p.phone, 'hours': p.working_hours,
         'image': (p.image.url if p.image else ''),
-        'desc': (p.description[:140] if p.description else ''),
+        'desc': (p.localized_description[:140] if p.localized_description else ''),
         'url': reverse('places:place_detail', args=[p.id]),
     } for p in qs]
 

@@ -1,13 +1,14 @@
 {% load taxi_extras %}
+{% load i18n %}
 {% if user.is_authenticated %}
 <div class="card" style="padding:1.4rem;border-radius:14px;">
   <h3 style="font-size:1.05rem;margin-bottom:0.9rem;">
-    {% if user_review %}✏️ Bahoyingizni yangilang{% else %}⭐ Baho va sharh qoldiring{% endif %}
+    {% if user_review %}✏️ {% trans "Bahoyingizni yangilang" %}{% else %}⭐ {% trans "Baho va sharh qoldiring" %}{% endif %}
   </h3>
   <form method="post">
     {% csrf_token %}
     <div class="form-group">
-      <label class="form-label">Bahoyingiz</label>
+      <label class="form-label">{% trans "Bahoyingiz" %}</label>
       <div class="star-input">
         {% for i in "54321" %}
         <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}"
@@ -17,10 +18,10 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Izoh (ixtiyoriy)</label>
-      <textarea name="comment" class="form-control" placeholder="Tajribangizni yozing...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+      <label class="form-label">{% trans "Izoh (ixtiyoriy)" %}</label>
+      <textarea name="comment" class="form-control" placeholder="{% trans "Tajribangizni yozing..." %}">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
     </div>
-    <button type="submit" class="btn btn-accent">{% if user_review %}Yangilash{% else %}Yuborish{% endif %}</button>
+    <button type="submit" class="btn btn-accent">{% if user_review %}{% trans "Yangilash" %}{% else %}{% trans "Yuborish" %}{% endif %}</button>
   </form>
 </div>
 
@@ -34,7 +35,8 @@
   .star-input input:checked ~ label { color: #ffdb4d; }
 </style>
 {% else %}
+{% url 'login' as login_url %}
 <div class="card" style="padding:1.4rem;text-align:center;color:var(--text2);border-radius:14px;">
-  ⭐ Baho qoldirish uchun <a href="{% url 'login' %}" style="color:var(--accent);font-weight:600;">tizimga kiring</a>.
+  ⭐ {% blocktrans %}Baho qoldirish uchun <a href="{{ login_url }}" style="color:var(--accent);font-weight:600;">tizimga kiring</a>.{% endblocktrans %}
 </div>
 {% endif %}

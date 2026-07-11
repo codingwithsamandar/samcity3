@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load l10n %}
-{% block title %}Shahar xaritasi — Shofirkon{% endblock %}
+{% load l10n i18n %}
+{% block title %}{% trans "Shahar xaritasi" %} — Shofirkon{% endblock %}
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
@@ -68,14 +68,14 @@
 <div class="container" style="max-width:1240px;">
   <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
     <div>
-      <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> Interaktiv xarita</span>
-      <h1 style="margin-top:.6rem;">Shahar xaritasi</h1>
-      <p>Do'konlar, muassasalar va diqqatga sazovor joylarni toping</p>
+      <span class="eyebrow"><svg class="ic"><use href="#i-map"/></svg> {% trans "Interaktiv xarita" %}</span>
+      <h1 style="margin-top:.6rem;">{% trans "Shahar xaritasi" %}</h1>
+      <p>{% trans "Do'konlar, muassasalar va diqqatga sazovor joylarni toping" %}</p>
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-      <a href="{% url 'places:nearby' %}" class="btn btn-outline"><svg class="ic"><use href="#i-pin"/></svg> Yaqinimda</a>
-      <a href="{% url 'places:place_list' %}" class="btn btn-outline"><svg class="ic"><use href="#i-grid"/></svg> Ro'yxat</a>
-      <a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Joy qo'shish</a>
+      <a href="{% url 'places:nearby' %}" class="btn btn-outline"><svg class="ic"><use href="#i-pin"/></svg> {% trans "Yaqinimda" %}</a>
+      <a href="{% url 'places:place_list' %}" class="btn btn-outline"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Ro'yxat" context "joylar ro'yxati" %}</a>
+      <a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> {% trans "Joy qo'shish" %}</a>
     </div>
   </div>
 
@@ -83,27 +83,27 @@
     <div class="map-side">
       <div class="map-search">
         <svg class="ic"><use href="#i-search"/></svg>
-        <input type="text" id="placeSearch" placeholder="Joy nomini qidiring...">
+        <input type="text" id="placeSearch" placeholder="{% trans "Joy nomini qidiring..." %}">
       </div>
-      <h3>Toifalar</h3>
-      <button class="cat-btn on" data-cat="" onclick="filterCat(this)"><span class="dot" style="background:var(--gold)"></span> Barchasi</button>
+      <h3>{% trans "Toifalar" %}</h3>
+      <button class="cat-btn on" data-cat="" onclick="filterCat(this)"><span class="dot" style="background:var(--gold)"></span> {% trans "Barchasi" %}</button>
       {% for key, label in categories %}
       <button class="cat-btn" data-cat="{{ key }}" onclick="filterCat(this)"><span class="dot" data-c="{{ key }}"></span> {{ label }}</button>
       {% endfor %}
-      <button class="cat-btn" data-cat="driver" onclick="filterCat(this)"><span class="dot" data-c="driver"></span> 🚗 Taksistlar (onlayn)</button>
+      <button class="cat-btn" data-cat="driver" onclick="filterCat(this)"><span class="dot" data-c="driver"></span> 🚗 {% trans "Taksistlar (onlayn)" %}</button>
 
-      <h3 style="margin-top:1rem;">Mahallalar</h3>
-      <button class="cat-btn mahalla-side-btn" id="mahallaToggleSide" onclick="toggleMahallas()" title="Shaharni mahallalarga ajratib, chegaralarini ko'rsatadi">
-        <span class="dot" style="background:var(--accent)"></span> 🗺️ Mahalalarga ajratish
+      <h3 style="margin-top:1rem;">{% trans "Mahallalar" context "xarita bo'limi" %}</h3>
+      <button class="cat-btn mahalla-side-btn" id="mahallaToggleSide" onclick="toggleMahallas()" title="{% trans "Shaharni mahallalarga ajratib, chegaralarini ko'rsatadi" %}">
+        <span class="dot" style="background:var(--accent)"></span> 🗺️ {% trans "Mahalalarga ajratish" %}
       </button>
     </div>
 
     <div class="map-controls">
-    <button class="btn btn-ghost" onclick="locateMe()" title="Mening joylashuvim" style="white-space:nowrap;">
-      <svg class="ic"><use href="#i-pin"/></svg> <span>Joylashuvim</span>
+    <button class="btn btn-ghost" onclick="locateMe()" title="{% trans "Mening joylashuvim" %}" style="white-space:nowrap;">
+      <svg class="ic"><use href="#i-pin"/></svg> <span>{% trans "Joylashuvim" %}</span>
     </button>
-    <button class="btn btn-ghost" id="mahallaToggle" onclick="toggleMahallas()" title="Mahalalarga ajratish" style="white-space:nowrap;">
-      <svg class="ic"><use href="#i-map"/></svg> <span>Mahalalarga ajratish</span>
+    <button class="btn btn-ghost" id="mahallaToggle" onclick="toggleMahallas()" title="{% trans "Mahalalarga ajratish" %}" style="white-space:nowrap;">
+      <svg class="ic"><use href="#i-map"/></svg> <span>{% trans "Mahalalarga ajratish" %}</span>
     </button>
     </div>
 
@@ -145,7 +145,7 @@ function locateMe(){
   if(!map) return;
   SamMap.locate().then(function(loc){
     const ll=[loc.lat,loc.lng];
-    if(meMarker){meMarker.setLatLng(ll);}else{meMarker=L.marker(ll).addTo(map).bindPopup("📍 Siz shu yerdasiz");}
+    if(meMarker){meMarker.setLatLng(ll);}else{meMarker=L.marker(ll).addTo(map).bindPopup("📍 {% filter escapejs %}{% trans "Siz shu yerdasiz" %}{% endfilter %}");}
     meMarker.openPopup(); map.setView(ll,15);
   }).catch(function(e){ alert(e.message); });
 }
@@ -185,8 +185,8 @@ function buildMahallaLayer(d){
     var detailUrl = _nbDetailUrlTpl.replace('/0/', '/'+n.id+'/');
     var html = '<div style="min-width:170px"><b>'+n.name+'</b>'
       + (n.description ? ('<br><span style="color:#5b6678;font-size:.85em">'+n.description+'</span>') : '')
-      + '<br><a href="'+detailUrl+'" style="display:inline-block;margin-top:.55rem;font-weight:700;color:'+n.color+'">🏘️ Bu mahallani ko\'rish →</a>'
-      + (n.room_url ? ('<br><a href="'+n.room_url+'" style="display:inline-block;margin-top:.35rem;font-weight:700;color:'+n.color+'">💬 Mahalla chatiga kirish →</a>') : '')
+      + '<br><a href="'+detailUrl+'" style="display:inline-block;margin-top:.55rem;font-weight:700;color:'+n.color+'">🏘️ {% filter escapejs %}{% trans "Bu mahallani ko'rish" %}{% endfilter %} →</a>'
+      + (n.room_url ? ('<br><a href="'+n.room_url+'" style="display:inline-block;margin-top:.35rem;font-weight:700;color:'+n.color+'">💬 {% filter escapejs %}{% trans "Mahalla chatiga kirish" %}{% endfilter %} →</a>') : '')
       + '</div>';
     poly.bindPopup(html);
     poly.on('mouseover', function(){ this.setStyle({fillOpacity:.30}); });
@@ -204,7 +204,7 @@ function syncMahallaButtons(){
   var top  = document.getElementById('mahallaToggle');
   if(side) side.classList.toggle('on', mahallaShown);
   if(top)  top.classList.toggle('on', mahallaShown);
-  if(top){ var s = top.querySelector('span'); if(s) s.textContent = mahallaShown ? 'Mahallalar yoqilgan' : 'Mahalalarga ajratish'; }
+  if(top){ var s = top.querySelector('span'); if(s) s.textContent = mahallaShown ? '{% filter escapejs %}{% trans "Mahallalar yoqilgan" %}{% endfilter %}' : '{% filter escapejs %}{% trans "Mahalalarga ajratish" %}{% endfilter %}'; }
 }
 // Tugma bosilganda: birinchi marta yuklaydi, keyin ko'rsatadi/yashiradi.
 function toggleMahallas(){

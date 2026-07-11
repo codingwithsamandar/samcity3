@@ -30,7 +30,7 @@ class PlaceAdmin(admin.ModelAdmin):
     form = PlaceAdminForm
     list_display = ('name', 'category', 'address', 'phone', 'is_active', 'created_at')
     list_filter = ('category', 'is_active')
-    search_fields = ('name', 'address', 'description')
+    search_fields = ('name', 'name_ru', 'name_en', 'address', 'description')
     list_editable = ('is_active',)
     inlines = [PlaceImageInline]
 

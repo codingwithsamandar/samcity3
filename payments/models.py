@@ -1,14 +1,26 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
 CATEGORY_CHOICES = [
-    ('bogcha_davlat', "🏛️ Davlat bog'chasi"),
-    ('bogcha_shaxsiy', "🧸 Shaxsiy bog'cha"),
-    ('kurs', "📚 O'quv kurslari"),
-    ('maktab', "🏫 Maktab / litsey"),
+    ('bogcha_davlat', _("🏛️ Davlat bog'chasi")),
+    ('bogcha_shaxsiy', _("🧸 Shaxsiy bog'cha")),
+    ('kurs', _("📚 O'quv kurslari")),
+    ('maktab', _("🏫 Maktab / litsey")),
 ]
+
+# Bazadagi eski yozuvlarda uchraydigan kategoriyalar — chip'larda ko'rsatilmaydi,
+# lekin get_category_display to'g'ri nom qaytarishi uchun choices'ga kiradi.
+LEGACY_CATEGORY_CHOICES = [
+    ('bogcha', _("🧒 Bog'cha")),
+    ('boshqa', _("📦 Boshqa")),
+    ('internet', _("🌐 Internet")),
+    ('kommunal', _("💡 Kommunal")),
+]
+
+ALL_CATEGORY_CHOICES = CATEGORY_CHOICES + LEGACY_CATEGORY_CHOICES
 
 # Online to'lov (ism-familiya + karta) qabul qiladigan kategoriyalar.
 # Davlat bog'chasi bu ro'yxatda yo'q — u faqat ma'lumot uchun ko'rsatiladi.
@@ -22,7 +34,7 @@ class Provider(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, verbose_name='Nomi')
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True, verbose_name='Turi')
+    category = models.CharField(max_length=20, choices=ALL_CATEGORY_CHOICES, db_index=True, verbose_name='Turi')
     description = models.TextField(blank=True, verbose_name='Tavsif')
     address = models.CharField(max_length=300, blank=True, verbose_name='Manzil')
     phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
@@ -70,7 +82,7 @@ class ServicePayment(models.Model):
         Provider, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments',
     )
     provider_name = models.CharField(max_length=200, verbose_name='Muassasa nomi')
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
+    category = models.CharField(max_length=20, choices=ALL_CATEGORY_CHOICES, db_index=True)
     first_name = models.CharField(max_length=80, blank=True, verbose_name='Ism')
     last_name = models.CharField(max_length=80, blank=True, verbose_name='Familiya')
     payer_name = models.CharField(

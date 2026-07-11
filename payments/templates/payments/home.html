@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load taxi_extras %}
-{% block title %}To'lovlar — SamCity{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "To'lovlar" %} — SamCity{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -56,23 +57,23 @@
 {% block content %}
 <div class="container">
   <div class="pay-hero">
-    <span class="eyebrow"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</span>
-    <h1>Barcha to'lovlar bir joyda</h1>
-    <p>Bog'cha, o'quv kurslari va maktab to'lovlarini tez va xavfsiz amalga oshiring.</p>
-    <div class="demo-pill">ℹ️ Demo rejim — Payme/Click hali ulanmagan, to'lovlar sinov tarzida qayd etiladi.</div>
+    <span class="eyebrow"><svg class="ic"><use href="#i-card"/></svg> {% trans "To'lovlar" %}</span>
+    <h1>{% trans "Barcha to'lovlar bir joyda" %}</h1>
+    <p>{% trans "Bog'cha, o'quv kurslari va maktab to'lovlarini tez va xavfsiz amalga oshiring." %}</p>
+    <div class="demo-pill">ℹ️ {% trans "Demo rejim — Payme/Click hali ulanmagan, to'lovlar sinov tarzida qayd etiladi." %}</div>
     <form method="get" class="hero-search">
       <svg class="ic"><use href="#i-search"/></svg>
-      <input type="text" name="q" value="{{ q }}" placeholder="Muassasa yoki xizmat nomi...">
+      <input type="text" name="q" value="{{ q }}" placeholder="{% trans "Muassasa yoki xizmat nomi..." %}">
       {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
-      <button type="submit" class="btn btn-gold">Qidirish</button>
+      <button type="submit" class="btn btn-gold">{% trans "Qidirish" %}</button>
     </form>
     {% if user.is_authenticated %}
-    <a href="{% url 'payments:my_payments' %}" class="hist-link"><svg class="ic"><use href="#i-doc"/></svg> To'lovlar tarixim</a>
+    <a href="{% url 'payments:my_payments' %}" class="hist-link"><svg class="ic"><use href="#i-doc"/></svg> {% trans "To'lovlar tarixim" %}</a>
     {% endif %}
   </div>
 
   <div class="chip-row" style="margin-bottom:1.5rem;">
-    <a href="{% url 'payments:home' %}" class="chip {% if not cat %}active{% endif %}"><svg class="ic"><use href="#i-grid"/></svg> Barchasi</a>
+    <a href="{% url 'payments:home' %}" class="chip {% if not cat %}active{% endif %}"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Barchasi" %}</a>
     {% for key, label in categories %}
     <a href="?cat={{ key }}{% if q %}&q={{ q }}{% endif %}" class="chip {% if cat == key %}active{% endif %}"><span class="emo">{{ label|slice:":1" }}</span> {{ label|slice:"2:" }}</a>
     {% endfor %}
@@ -86,7 +87,7 @@
         <div class="pm-ico">{% if p.logo %}<img src="{{ p.logo.url }}" alt="{{ p.name }}">{% else %}{{ p.get_category_display|slice:":1" }}{% endif %}</div>
         <div style="flex:1;min-width:0;">
           <div class="nm">{{ p.name }}</div>
-          <div class="cat">{{ p.get_category_display|slice:"2:" }}{% if not p.is_payable %} <span class="info-badge">Ma'lumot</span>{% endif %}</div>
+          <div class="cat">{{ p.get_category_display|slice:"2:" }}{% if not p.is_payable %} <span class="info-badge">{% trans "Ma'lumot" %}</span>{% endif %}</div>
         </div>
       </div>
       {% if p.address %}<div class="addr"><svg class="ic"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
@@ -94,24 +95,24 @@
       <div class="pm-mid">
         <div class="pm-price">
           {% if not p.is_payable %}
-            <span class="info-tag"><svg class="ic"><use href="#i-doc"/></svg> Faqat ma'lumot</span>
+            <span class="info-tag"><svg class="ic"><use href="#i-doc"/></svg> {% trans "Faqat ma'lumot" %}</span>
           {% elif p.has_fixed_amount %}
-            <span class="v">{{ p.amount|som }}</span><span class="u">so'm / oy</span>
+            <span class="v">{{ p.amount|som }}</span><span class="u">{% trans "so'm / oy" %}</span>
           {% else %}
-            <span class="free">Erkin summa</span>
+            <span class="free">{% trans "Erkin summa" %}</span>
           {% endif %}
         </div>
         {% if p.is_payable %}
-        <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent pm-btn">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        <a href="{% url 'payments:pay' p.pk %}" class="btn btn-accent pm-btn">{% trans "To'lash" %} <svg class="ic"><use href="#i-arrow-right"/></svg></a>
         {% else %}
-        <a href="{% url 'payments:detail' p.pk %}" class="btn btn-ghost pm-btn">Batafsil ma'lumot <svg class="ic"><use href="#i-arrow-right"/></svg></a>
+        <a href="{% url 'payments:detail' p.pk %}" class="btn btn-ghost pm-btn">{% trans "Batafsil ma'lumot" %} <svg class="ic"><use href="#i-arrow-right"/></svg></a>
         {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-card"/></svg></div><h3>Muassasa topilmadi</h3><p>Boshqa kategoriyani tanlang yoki qidiruvni o'zgartiring.</p></div>
+  <div class="empty-state"><div class="icon"><svg class="ic"><use href="#i-card"/></svg></div><h3>{% trans "Muassasa topilmadi" %}</h3><p>{% trans "Boshqa kategoriyani tanlang yoki qidiruvni o'zgartiring." %}</p></div>
   {% endif %}
 </div>
 {% endblock %}

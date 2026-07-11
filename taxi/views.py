@@ -6,6 +6,7 @@ from django.db.models import Q, Avg, Count
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from main.utils import validate_file_type
 from .models import (
@@ -42,7 +43,7 @@ def taxi_map(request):
     ko'rishi mumkin; oddiy foydalanuvchi taksi bosh sahifasiga qaytariladi.
     """
     if not request.user.is_staff:
-        messages.info(request, "Xaritadan chaqirish tez orada ishga tushadi. 🚧")
+        messages.info(request, _("Xaritadan chaqirish tez orada ishga tushadi. 🚧"))
         return redirect('taxi:home')
     return render(request, 'taxi/taxi_map.html', {})
 
@@ -125,7 +126,7 @@ def taxi_track(request, trip_id):
     trip = get_object_or_404(Trip.objects.select_related('taxist'), pk=trip_id)
     is_taxist = trip.taxist and trip.taxist.user_id == request.user.id
     if trip.passenger_id != request.user.id and not is_taxist and not request.user.is_staff:
-        messages.error(request, "Bu sayohatni kuzatish huquqingiz yo'q.")
+        messages.error(request, _("Bu sayohatni kuzatish huquqingiz yo'q."))
         return redirect('taxi:my_trips')
     return render(request, 'taxi/trip_track.html', {'trip': trip})
 
@@ -186,17 +187,17 @@ def service_detail(request, pk):
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            messages.error(request, "Baho berish uchun avval tizimga kiring.")
+            messages.error(request, _("Baho berish uchun avval tizimga kiring."))
             return redirect('login')
         rating, comment = _parse_review(request)
         if rating is None:
-            messages.error(request, "Baho 1 dan 5 gacha bo'lishi kerak.")
+            messages.error(request, _("Baho 1 dan 5 gacha bo'lishi kerak."))
         else:
             ServiceReview.objects.update_or_create(
                 service=service, user=request.user,
                 defaults={'rating': rating, 'comment': comment},
             )
-            messages.success(request, "Sharhingiz saqlandi! ✅")
+            messages.success(request, _("Sharhingiz saqlandi! ✅"))
         return redirect('taxi:service_detail', pk=pk)
 
     reviews = service.reviews.select_related('user')
@@ -221,20 +222,20 @@ def taxist_detail(request, pk):
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            messages.error(request, "Baho berish uchun avval tizimga kiring.")
+            messages.error(request, _("Baho berish uchun avval tizimga kiring."))
             return redirect('login')
         if not can_review:
-            messages.error(request, "Baho berish uchun avval shu taksist bilan sayohat qiling.")
+            messages.error(request, _("Baho berish uchun avval shu taksist bilan sayohat qiling."))
             return redirect('taxi:taxist_detail', pk=pk)
         rating, comment = _parse_review(request)
         if rating is None:
-            messages.error(request, "Baho 1 dan 5 gacha bo'lishi kerak.")
+            messages.error(request, _("Baho 1 dan 5 gacha bo'lishi kerak."))
         else:
             TaxistReview.objects.update_or_create(
                 taxist=taxist, user=request.user,
                 defaults={'rating': rating, 'comment': comment},
             )
-            messages.success(request, "Sharhingiz saqlandi! ✅")
+            messages.success(request, _("Sharhingiz saqlandi! ✅"))
         return redirect('taxi:taxist_detail', pk=pk)
 
     routes = taxist.routes.filter(is_active=True)
@@ -274,7 +275,7 @@ def order_create(request, taxist_pk):
         is_delivery=is_delivery, price=price,
         status='accepted', payment_method='card', payment_status='unpaid',
     )
-    messages.success(request, "Buyurtma qabul qilindi! Endi to'lovni amalga oshiring.")
+    messages.success(request, _("Buyurtma qabul qilindi! Endi to'lovni amalga oshiring."))
     return redirect('taxi:trip_payment', trip_id=trip.id)
 
 
@@ -286,7 +287,7 @@ def trip_payment(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, passenger=request.user)
 
     if trip.is_paid:
-        messages.info(request, "Bu sayohat allaqachon to'langan.")
+        messages.info(request, _("Bu sayohat allaqachon to'langan."))
         return redirect('taxi:trip_detail', trip_id=trip.id)
 
     if request.method == 'POST':
@@ -303,7 +304,7 @@ def trip_payment(request, trip_id):
             taxist = trip.taxist
             taxist.trips_count = (taxist.trips_count or 0) + 1
             taxist.save(update_fields=['trips_count'])
-            messages.success(request, "Buyurtma yakunlandi! Naqd to'lov haydovchiga beriladi. ✅")
+            messages.success(request, _("Buyurtma yakunlandi! Naqd to'lov haydovchiga beriladi. ✅"))
             return redirect('taxi:trip_detail', trip_id=trip.id)
 
         # ── Karta to'lovi (simulyatsiya) ─────────────────────────────────────
@@ -315,7 +316,7 @@ def trip_payment(request, trip_id):
         digits = ''.join(c for c in card_number if c.isdigit())
         # Oddiy tekshiruv (haqiqiy validatsiya emas — demo)
         if len(digits) < 16 or len(cvv) < 3 or not expiry:
-            messages.error(request, "Karta ma'lumotlari to'liq emas. Tekshirib qaytadan kiriting.")
+            messages.error(request, _("Karta ma'lumotlari to'liq emas. Tekshirib qaytadan kiriting."))
             return render(request, 'taxi/payment.html', {'trip': trip})
 
         # DIQQAT: to'liq karta raqami va CVV SAQLANMAYDI — faqat oxirgi 4 raqam.
@@ -342,7 +343,7 @@ def trip_payment(request, trip_id):
         taxist.trips_count = (taxist.trips_count or 0) + 1
         taxist.save(update_fields=['trips_count'])
 
-        messages.success(request, "To'lov muvaffaqiyatli amalga oshirildi! ✅")
+        messages.success(request, _("To'lov muvaffaqiyatli amalga oshirildi! ✅"))
         return redirect('taxi:trip_detail', trip_id=trip.id)
 
     return render(request, 'taxi/payment.html', {'trip': trip})
@@ -361,13 +362,13 @@ def trip_detail(request, trip_id):
     if request.method == 'POST' and trip.can_be_reviewed:
         rating, comment = _parse_review(request)
         if rating is None:
-            messages.error(request, "Baho 1 dan 5 gacha bo'lishi kerak.")
+            messages.error(request, _("Baho 1 dan 5 gacha bo'lishi kerak."))
         else:
             TaxistReview.objects.update_or_create(
                 taxist=trip.taxist, user=request.user,
                 defaults={'rating': rating, 'comment': comment},
             )
-            messages.success(request, "Bahoyingiz uchun rahmat! ✅")
+            messages.success(request, _("Bahoyingiz uchun rahmat! ✅"))
         return redirect('taxi:trip_detail', trip_id=trip.id)
 
     payment = getattr(trip, 'payment', None)
@@ -471,7 +472,7 @@ def taxist_register(request):
 
     if request.method == 'POST':
         if not request.POST.get('full_name', '').strip() or not request.POST.get('phone', '').strip():
-            messages.error(request, "Ism va telefon majburiy.")
+            messages.error(request, _("Ism va telefon majburiy."))
         else:
             try:
                 taxist = Taxist(user=request.user, is_active=True)
@@ -479,7 +480,7 @@ def taxist_register(request):
             except Exception as e:
                 messages.error(request, f"Taksist profili yaratishda xatolik: {e}")
             else:
-                messages.success(request, "Taksist profili yaratildi! Endi marshrut qo'shing. ✅")
+                messages.success(request, _("Taksist profili yaratildi! Endi marshrut qo'shing. ✅"))
                 return redirect('taxi:taxist_manage')
 
     _ensure_taxi_service()
@@ -498,10 +499,10 @@ def taxist_edit(request):
 
     if request.method == 'POST':
         if not request.POST.get('full_name', '').strip() or not request.POST.get('phone', '').strip():
-            messages.error(request, "Ism va telefon majburiy.")
+            messages.error(request, _("Ism va telefon majburiy."))
         else:
             _save_taxist_from_post(request, taxist)
-            messages.success(request, "Profil yangilandi. ✅")
+            messages.success(request, _("Profil yangilandi. ✅"))
             return redirect('taxi:taxist_manage')
 
     return render(request, 'taxi/taxist_form.html', {
@@ -530,14 +531,14 @@ def route_add(request):
         b = request.POST.get('point_b', '').strip()
         price = _int(request.POST.get('passenger_price'))
         if not a or not b or price is None:
-            messages.error(request, "A punkt, B punkt va yo'lovchi narxi majburiy.")
+            messages.error(request, _("A punkt, B punkt va yo'lovchi narxi majburiy."))
         else:
             Route.objects.create(
                 taxist=taxist, point_a=a, point_b=b, passenger_price=price,
                 delivery_price=_int(request.POST.get('delivery_price')),
                 note=request.POST.get('note', '').strip(), is_active=True,
             )
-            messages.success(request, "Marshrut qo'shildi. ✅")
+            messages.success(request, _("Marshrut qo'shildi. ✅"))
     return redirect('taxi:taxist_manage')
 
 
@@ -546,5 +547,5 @@ def route_delete(request, route_id):
     route = get_object_or_404(Route, pk=route_id, taxist__user=request.user)
     if request.method == 'POST':
         route.delete()
-        messages.success(request, "Marshrut o'chirildi.")
+        messages.success(request, _("Marshrut o'chirildi."))
     return redirect('taxi:taxist_manage')

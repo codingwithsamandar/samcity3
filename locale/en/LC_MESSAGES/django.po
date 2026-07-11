@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 09:59+0500\n"
+"POT-Creation-Date: 2026-07-10 11:14+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,146 +17,390 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-#: .\main\templates\base.html:860 .\main\templates\base.html:1019
+
+#: .\main\templates\base.html:877 .\main\templates\base.html:1036
 msgid "Bosh"
 msgstr "Home"
 
-#: .\main\templates\base.html:861 .\main\templates\base.html:958
-#: .\main\templates\base.html:1007 .\main\templates\base.html:1020
+#: .\main\templates\base.html:878 .\main\templates\base.html:975
+#: .\main\templates\base.html:1024 .\main\templates\base.html:1037
 msgid "E'lonlar"
 msgstr "Listings"
 
-#: .\main\templates\base.html:862 .\main\templates\base.html:959
-#: .\main\templates\base.html:1021
+#: .\main\templates\base.html:879 .\main\templates\base.html:976
+#: .\main\templates\base.html:1038
 msgid "Ish"
 msgstr "Jobs"
 
-#: .\main\templates\base.html:863 .\main\templates\base.html:960
-#: .\main\templates\base.html:1008
+#: .\main\templates\base.html:880 .\main\templates\base.html:977
+#: .\main\templates\base.html:1025 .\taxi\templates\taxi\taxi_home.html:4
 msgid "Taksi"
 msgstr "Taxi"
 
-#: .\main\templates\base.html:864 .\main\templates\base.html:964
-#: .\main\templates\base.html:1012
+#: .\main\templates\base.html:881 .\main\templates\base.html:981
+#: .\main\templates\base.html:1029 .\payments\templates\payments\home.html:4
+#: .\payments\templates\payments\home.html:60
 msgid "To'lovlar"
 msgstr "Payments"
 
-#: .\main\templates\base.html:865 .\main\templates\base.html:962
-#: .\main\templates\base.html:1010
+#: .\main\templates\base.html:882 .\main\templates\base.html:979
+#: .\main\templates\base.html:1027
 msgid "Joylar"
 msgstr "Venues"
 
-#: .\main\templates\base.html:866 .\main\templates\base.html:963
-#: .\main\templates\base.html:1011 .\main\templates\base.html:1022
+#: .\main\templates\base.html:883 .\main\templates\base.html:980
+#: .\main\templates\base.html:1028 .\main\templates\base.html:1039
 msgid "Xarita"
 msgstr "Map"
 
-#: .\main\templates\base.html:867 .\main\templates\base.html:961
-#: .\main\templates\base.html:1009
+#: .\main\templates\base.html:884 .\main\templates\base.html:978
+#: .\main\templates\base.html:1026
 msgid "Yetkazish"
 msgstr "Delivery"
 
-#: .\main\templates\base.html:868 .\main\templates\base.html:965
+#: .\main\templates\base.html:885 .\main\templates\base.html:982
 msgid "Mahalla"
 msgstr "Mahalla"
 
-#: .\main\templates\base.html:871
+#: .\main\templates\base.html:888
 msgid "Qidiruv"
 msgstr "Search"
 
-#: .\main\templates\base.html:873 .\main\templates\base.html:969
+#: .\main\templates\base.html:890 .\main\templates\base.html:986
 msgid "Savat"
 msgstr "Cart"
 
-#: .\main\templates\base.html:890
+#: .\main\templates\base.html:907
 msgid "Mavzu o'zgartirish"
 msgstr "Toggle theme"
 
-#: .\main\templates\base.html:906 .\main\templates\base.html:934
+#: .\main\templates\base.html:923 .\main\templates\base.html:951
 msgid "Foydalanuvchi"
 msgstr "User"
 
-#: .\main\templates\base.html:910 .\main\templates\base.html:970
+#: .\main\templates\base.html:927 .\main\templates\base.html:987
 msgid "Boshqaruv paneli"
 msgstr "Dashboard"
 
-#: .\main\templates\base.html:911 .\main\templates\base.html:972
+#: .\main\templates\base.html:928 .\main\templates\base.html:989
 msgid "Profil"
 msgstr "Profile"
 
-#: .\main\templates\base.html:912 .\main\templates\base.html:973
+#: .\main\templates\base.html:929 .\main\templates\base.html:990
 msgid "Bildirishnomalar"
 msgstr "Notifications"
 
-#: .\main\templates\base.html:913 .\main\templates\base.html:971
+#: .\main\templates\base.html:930 .\main\templates\base.html:988
 msgid "Analitika"
 msgstr "Analytics"
 
-#: .\main\templates\base.html:915 .\main\templates\base.html:974
+#: .\main\templates\base.html:932 .\main\templates\base.html:991
 msgid "Chiqish"
 msgstr "Log out"
 
-#: .\main\templates\base.html:919 .\main\templates\base.html:976
+#: .\main\templates\base.html:936 .\main\templates\base.html:993
 msgid "Kirish"
 msgstr "Log in"
 
-#: .\main\templates\base.html:920
+#: .\main\templates\base.html:937
 msgid "Ro'yxat"
 msgstr "Sign up"
 
-#: .\main\templates\base.html:941
+#: .\main\templates\base.html:958
 msgid "Yopish"
 msgstr "Close"
 
-#: .\main\templates\base.html:944
+#: .\main\templates\base.html:961
 msgid "Til / Язык / Language"
 msgstr "Language"
 
-#: .\main\templates\base.html:956
+#: .\main\templates\base.html:973
 msgid "Bo'limlar"
 msgstr "Sections"
 
-#: .\main\templates\base.html:957
+#: .\main\templates\base.html:974
 msgid "Bosh sahifa"
 msgstr "Home"
 
-#: .\main\templates\base.html:968
+#: .\main\templates\base.html:985
 msgid "Hisob"
 msgstr "Account"
 
-#: .\main\templates\base.html:977
+#: .\main\templates\base.html:994
 msgid "Ro'yxatdan o'tish"
 msgstr "Sign up"
 
-#: .\main\templates\base.html:1003
+#: .\main\templates\base.html:1020
 msgid ""
 "Shahar uchun yagona raqamli super-ilova — e'lonlar, taksi, yetkazish, joylar "
 "va to'lovlar bir joyda."
-msgstr "The city's all-in-one digital super-app — listings, taxi, delivery, venues and payments in one place."
+msgstr ""
+"The city's all-in-one digital super-app — listings, taxi, delivery, venues "
+"and payments in one place."
 
-#: .\main\templates\base.html:1013
+#: .\main\templates\base.html:1030
 msgid "Ilovani yuklab olish"
 msgstr "Download the app"
 
-#: .\main\templates\base.html:1023
+#: .\main\templates\base.html:1040
 msgid "Ko'proq"
 msgstr "More"
 
-#: .\main\templates\base.html:1026
+#: .\main\templates\base.html:1043
 msgid "Tepaga"
 msgstr "To top"
 
-#: .\main\templates\base.html:1033
+#: .\main\templates\base.html:1050
 msgid "SamCity ilovasini o'rnating"
 msgstr "Install the SamCity app"
 
-#: .\main\templates\base.html:1034
+#: .\main\templates\base.html:1051
 msgid "Tezroq, qulay va offline ishlaydi"
 msgstr "Faster, more convenient, works offline"
 
-#: .\main\templates\base.html:1037
+#: .\main\templates\base.html:1054
 msgid "O'rnatish"
 msgstr "Install"
+
+#: .\payments\models.py:8
+msgid "🏛️ Davlat bog'chasi"
+msgstr "🏛️ State kindergarten"
+
+#: .\payments\models.py:9
+msgid "🧸 Shaxsiy bog'cha"
+msgstr "🧸 Private kindergarten"
+
+#: .\payments\models.py:10
+msgid "📚 O'quv kurslari"
+msgstr "📚 Courses"
+
+#: .\payments\models.py:11
+msgid "🏫 Maktab / litsey"
+msgstr "🏫 School / lyceum"
+
+#: .\payments\models.py:17
+msgid "🧒 Bog'cha"
+msgstr "🧒 Kindergarten"
+
+#: .\payments\models.py:18
+msgid "📦 Boshqa"
+msgstr "📦 Other"
+
+#: .\payments\models.py:19
+msgid "🌐 Internet"
+msgstr "🌐 Internet"
+
+#: .\payments\models.py:20
+msgid "💡 Kommunal"
+msgstr "💡 Utilities"
+
+#: .\payments\templates\payments\home.html:61
+msgid "Barcha to'lovlar bir joyda"
+msgstr "All payments in one place"
+
+#: .\payments\templates\payments\home.html:62
+msgid ""
+"Bog'cha, o'quv kurslari va maktab to'lovlarini tez va xavfsiz amalga "
+"oshiring."
+msgstr "Pay for kindergarten, courses and school quickly and securely."
+
+#: .\payments\templates\payments\home.html:63
+msgid ""
+"Demo rejim — Payme/Click hali ulanmagan, to'lovlar sinov tarzida qayd "
+"etiladi."
+msgstr "Demo mode — Payme/Click are not connected yet, payments are recorded as test transactions."
+
+#: .\payments\templates\payments\home.html:66
+msgid "Muassasa yoki xizmat nomi..."
+msgstr "Institution or service name..."
+
+#: .\payments\templates\payments\home.html:68
+#: .\taxi\templates\taxi\taxi_home.html:24
+msgid "Qidirish"
+msgstr "Search"
+
+#: .\payments\templates\payments\home.html:71
+msgid "To'lovlar tarixim"
+msgstr "My payment history"
+
+#: .\payments\templates\payments\home.html:76
+#: .\places\templates\places\map.html:89
+msgid "Barchasi"
+msgstr "All"
+
+#: .\payments\templates\payments\home.html:90
+msgid "Ma'lumot"
+msgstr "Info"
+
+#: .\payments\templates\payments\home.html:98
+msgid "Faqat ma'lumot"
+msgstr "Info only"
+
+#: .\payments\templates\payments\home.html:100
+msgid "so'm / oy"
+msgstr "UZS / month"
+
+#: .\payments\templates\payments\home.html:102
+msgid "Erkin summa"
+msgstr "Custom amount"
+
+#: .\payments\templates\payments\home.html:106
+msgid "To'lash"
+msgstr "Pay"
+
+#: .\payments\templates\payments\home.html:108
+msgid "Batafsil ma'lumot"
+msgstr "More details"
+
+#: .\payments\templates\payments\home.html:115
+msgid "Muassasa topilmadi"
+msgstr "No institutions found"
+
+#: .\payments\templates\payments\home.html:115
+msgid "Boshqa kategoriyani tanlang yoki qidiruvni o'zgartiring."
+msgstr "Choose another category or change your search."
+
+#: .\places\models.py:9
+msgid "Mebel do'konlari"
+msgstr "Furniture stores"
+
+#: .\places\models.py:10
+msgid "Elektronika do'konlari"
+msgstr "Electronics stores"
+
+#: .\places\models.py:11
+msgid "Diqqatga sazovor joylar"
+msgstr "Attractions"
+
+#: .\places\models.py:12
+msgid "Davlat binolari"
+msgstr "Government buildings"
+
+#: .\places\models.py:13
+msgid "Tashkilot ofislari"
+msgstr "Organization offices"
+
+#: .\places\models.py:14
+msgctxt "joy toifasi"
+msgid "Pochta bo'limlari"
+msgstr "Post offices"
+
+#: .\places\models.py:15
+msgid "Banklar"
+msgstr "Banks"
+
+#: .\places\models.py:16
+msgid "Dorixonalar"
+msgstr "Pharmacies"
+
+#: .\places\models.py:17
+msgid "Shifoxonalar"
+msgstr "Hospitals"
+
+#: .\places\models.py:18
+msgid "Mehmonxonalar"
+msgstr "Hotels"
+
+#: .\places\models.py:19
+msgid "To'yxonalar"
+msgstr "Wedding halls"
+
+#: .\places\models.py:20
+msgid "Restoranlar"
+msgstr "Restaurants"
+
+#: .\places\models.py:21
+msgctxt "joy toifasi"
+msgid "Do'konlar"
+msgstr "Shops"
+
+#: .\places\models.py:22
+msgid "Maktablar"
+msgstr "Schools"
+
+#: .\places\models.py:23
+msgid "Bog'chalar"
+msgstr "Kindergartens"
+
+#: .\places\models.py:24
+msgid "Sartaroshxonalar"
+msgstr "Barbershops"
+
+#: .\places\templates\places\map.html:3 .\places\templates\places\map.html:72
+msgid "Shahar xaritasi"
+msgstr "City Map"
+
+#: .\places\templates\places\map.html:71
+msgid "Interaktiv xarita"
+msgstr "Interactive map"
+
+#: .\places\templates\places\map.html:73
+msgid "Do'konlar, muassasalar va diqqatga sazovor joylarni toping"
+msgstr "Find shops, institutions and attractions"
+
+#: .\places\templates\places\map.html:76
+msgid "Yaqinimda"
+msgstr "Near me"
+
+#: .\places\templates\places\map.html:77
+msgctxt "joylar ro'yxati"
+msgid "Ro'yxat"
+msgstr "List"
+
+#: .\places\templates\places\map.html:78
+msgid "Joy qo'shish"
+msgstr "Add place"
+
+#: .\places\templates\places\map.html:86
+msgid "Joy nomini qidiring..."
+msgstr "Search place name..."
+
+#: .\places\templates\places\map.html:88
+msgid "Toifalar"
+msgstr "Categories"
+
+#: .\places\templates\places\map.html:93
+msgid "Taksistlar (onlayn)"
+msgstr "Taxi drivers (online)"
+
+#: .\places\templates\places\map.html:95
+msgctxt "xarita bo'limi"
+msgid "Mahallalar"
+msgstr "Neighborhoods"
+
+#: .\places\templates\places\map.html:96
+msgid "Shaharni mahallalarga ajratib, chegaralarini ko'rsatadi"
+msgstr "Splits the city into neighborhoods and shows their borders"
+
+#: .\places\templates\places\map.html:97 .\places\templates\places\map.html:105
+#: .\places\templates\places\map.html:106
+#: .\places\templates\places\map.html:207
+msgid "Mahalalarga ajratish"
+msgstr "Show neighborhoods"
+
+#: .\places\templates\places\map.html:102
+msgid "Mening joylashuvim"
+msgstr "My location"
+
+#: .\places\templates\places\map.html:103
+msgid "Joylashuvim"
+msgstr "My location"
+
+#: .\places\templates\places\map.html:148
+msgid "Siz shu yerdasiz"
+msgstr "You are here"
+
+#: .\places\templates\places\map.html:188
+msgid "Bu mahallani ko'rish"
+msgstr "View this neighborhood"
+
+#: .\places\templates\places\map.html:189
+msgid "Mahalla chatiga kirish"
+msgstr "Join neighborhood chat"
+
+#: .\places\templates\places\map.html:207
+msgid "Mahallalar yoqilgan"
+msgstr "Neighborhoods on"
 
 #: .\sdev\settings.py:222
 msgid "Oʻzbekcha"
@@ -169,3 +413,479 @@ msgstr "Русский"
 #: .\sdev\settings.py:224
 msgid "English"
 msgstr "English"
+
+#: .\taxi\models.py:249
+msgid "Ekonom"
+msgstr "Economy"
+
+#: .\taxi\models.py:250
+msgid "Komfort"
+msgstr "Comfort"
+
+#: .\taxi\models.py:251
+msgid "Komfort+"
+msgstr "Comfort+"
+
+#: .\taxi\models.py:252
+msgid "Biznes"
+msgstr "Business"
+
+#: .\taxi\models.py:253
+msgid "Miniven"
+msgstr "Minivan"
+
+#: .\taxi\models.py:289
+msgid "Oq"
+msgstr "White"
+
+#: .\taxi\models.py:289
+msgid "Qora"
+msgstr "Black"
+
+#: .\taxi\models.py:289
+msgid "Kulrang"
+msgstr "Gray"
+
+#: .\taxi\models.py:289
+msgid "Kumush"
+msgstr "Silver"
+
+#: .\taxi\models.py:289
+msgid "Ko'k"
+msgstr "Blue"
+
+#: .\taxi\models.py:290
+msgid "Qizil"
+msgstr "Red"
+
+#: .\taxi\models.py:290
+msgid "Yashil"
+msgstr "Green"
+
+#: .\taxi\models.py:290
+msgid "Sariq"
+msgstr "Yellow"
+
+#: .\taxi\models.py:290
+msgid "Jigarrang"
+msgstr "Brown"
+
+#: .\taxi\models.py:290
+msgid "Havorang"
+msgstr "Light blue"
+
+#: .\taxi\models.py:291
+msgid "Bejeviy"
+msgstr "Beige"
+
+#: .\taxi\models.py:291
+msgid "Binafsha"
+msgstr "Purple"
+
+#: .\taxi\models.py:291
+msgid "To'q ko'k"
+msgstr "Dark blue"
+
+#: .\taxi\models.py:291
+msgid "Pushti"
+msgstr "Pink"
+
+#: .\taxi\models.py:291
+msgid "Oq marvarid"
+msgstr "Pearl white"
+
+#: .\taxi\templates\taxi\_review_form.html:6
+msgid "Bahoyingizni yangilang"
+msgstr "Update your rating"
+
+#: .\taxi\templates\taxi\_review_form.html:6
+msgid "Baho va sharh qoldiring"
+msgstr "Leave a rating and review"
+
+#: .\taxi\templates\taxi\_review_form.html:11
+msgid "Bahoyingiz"
+msgstr "Your rating"
+
+#: .\taxi\templates\taxi\_review_form.html:21
+msgid "Izoh (ixtiyoriy)"
+msgstr "Comment (optional)"
+
+#: .\taxi\templates\taxi\_review_form.html:22
+msgid "Tajribangizni yozing..."
+msgstr "Describe your experience..."
+
+#: .\taxi\templates\taxi\_review_form.html:24
+msgid "Yangilash"
+msgstr "Update"
+
+#: .\taxi\templates\taxi\_review_form.html:24
+msgid "Yuborish"
+msgstr "Submit"
+
+#: .\taxi\templates\taxi\_review_form.html:40
+#, python-format
+msgid ""
+"Baho qoldirish uchun <a href=\"%(login_url)s\" style=\"color:var(--accent);"
+"font-weight:600;\">tizimga kiring</a>."
+msgstr ""
+"To leave a rating, <a href=\"%(login_url)s\" style=\"color:var(--accent);"
+"font-weight:600;\">log in</a>."
+
+#: .\taxi\templates\taxi\taxi_home.html:13
+msgid "SamCity Taksi"
+msgstr "SamCity Taxi"
+
+#: .\taxi\templates\taxi\taxi_home.html:14
+msgid "Qayerga borasiz?"
+msgstr "Where are you going?"
+
+#: .\taxi\templates\taxi\taxi_home.html:15
+msgid ""
+"Shahar bo'ylab ishonchli haydovchilar va taksi xizmatlari — narx, reyting va "
+"sharhlar bilan."
+msgstr ""
+"Reliable drivers and taxi services across the city — with prices, ratings "
+"and reviews."
+
+#: .\taxi\templates\taxi\taxi_home.html:20
+msgid "Joriy joylashuv"
+msgstr "Current location"
+
+#: .\taxi\templates\taxi\taxi_home.html:21
+msgid "Manzil, xizmat raqami (1265) yoki marshrut"
+msgstr "Address, service number (1265) or route"
+
+#: .\taxi\templates\taxi\taxi_home.html:24
+msgid "Taksi topish"
+msgstr "Find a taxi"
+
+#: .\taxi\templates\taxi\taxi_home.html:25
+msgid "Faqat onlayn"
+msgstr "Online only"
+
+#: .\taxi\templates\taxi\taxi_home.html:30
+msgid "onlayn haydovchi"
+msgstr "drivers online"
+
+#: .\taxi\templates\taxi\taxi_home.html:31
+msgid "jami haydovchi"
+msgstr "total drivers"
+
+#: .\taxi\templates\taxi\taxi_home.html:32
+msgid "marshrut"
+msgstr "routes"
+
+#: .\taxi\templates\taxi\taxi_home.html:37
+msgid "Mening sayohatlarim"
+msgstr "My trips"
+
+#: .\taxi\templates\taxi\taxi_home.html:38
+msgid "Haydovchi bo'lish"
+msgstr "Become a driver"
+
+#: .\taxi\templates\taxi\taxi_home.html:44
+msgid "Haydovchilar"
+msgstr "Drivers"
+
+#: .\taxi\templates\taxi\taxi_home.html:45
+msgctxt "taxi"
+msgid "Xizmatlar"
+msgstr "Services"
+
+#: .\taxi\templates\taxi\taxi_home.html:57
+#: .\taxi\templates\taxi\taxi_home.html:102
+#: .\taxi\templates\taxi\taxist_detail.html:69
+#: .\taxi\templates\taxi\taxist_detail.html:76
+msgid "so'm"
+msgstr "UZS"
+
+#: .\taxi\templates\taxi\taxi_home.html:57
+msgid "dan"
+msgstr "from"
+
+#: .\taxi\templates\taxi\taxi_home.html:57
+msgid "so'm/km"
+msgstr "UZS/km"
+
+#: .\taxi\templates\taxi\taxi_home.html:65
+msgid "Xizmat topilmadi"
+msgstr "No services found"
+
+#: .\taxi\templates\taxi\taxi_home.html:77
+msgid "Onlayn"
+msgstr "Online"
+
+#: .\taxi\templates\taxi\taxi_home.html:77
+msgid "Offlayn"
+msgstr "Offline"
+
+#: .\taxi\templates\taxi\taxi_home.html:80
+msgid "onlayn"
+msgstr "online"
+
+#: .\taxi\templates\taxi\taxi_home.html:81
+msgid "Mashina ma'lumoti yo'q"
+msgstr "No car information"
+
+#: .\taxi\templates\taxi\taxi_home.html:84
+msgid "yo'lovchi"
+msgstr "passengers"
+
+#: .\taxi\templates\taxi\taxi_home.html:90
+msgid "o'rin"
+msgstr "seats"
+
+#: .\taxi\templates\taxi\taxi_home.html:92
+#: .\taxi\templates\taxi\taxist_detail.html:48
+msgid "Konditsioner"
+msgstr "Air conditioning"
+
+#: .\taxi\templates\taxi\taxi_home.html:93
+msgid "Bola o'rindig'i"
+msgstr "Baby seat"
+
+#: .\taxi\templates\taxi\taxi_home.html:94
+msgid "Hayvon"
+msgstr "Pets"
+
+#: .\taxi\templates\taxi\taxi_home.html:105
+#, python-format
+msgid "yana %(n)s ta marshrut"
+msgstr "%(n)s more routes"
+
+#: .\taxi\templates\taxi\taxi_home.html:109
+msgid "baho"
+msgstr "ratings"
+
+#: .\taxi\templates\taxi\taxi_home.html:116
+msgid "Haydovchi topilmadi"
+msgstr "No drivers found"
+
+#: .\taxi\templates\taxi\taxi_home.html:117
+msgid "Hozircha onlayn haydovchi yo'q. Filterni o'chirib ko'ring."
+msgstr "No drivers online right now. Try turning off the filter."
+
+#: .\taxi\templates\taxi\taxist_detail.html:4
+msgid "Taksist"
+msgstr "Taxi driver"
+
+#: .\taxi\templates\taxi\taxist_detail.html:15
+msgid "Taksi bo'limi"
+msgstr "Taxi section"
+
+#: .\taxi\templates\taxi\taxist_detail.html:27
+msgid "ta baho"
+msgstr "ratings"
+
+#: .\taxi\templates\taxi\taxist_detail.html:32
+msgid "Tashilgan yo'lovchilar"
+msgstr "Passengers carried"
+
+#: .\taxi\templates\taxi\taxist_detail.html:33
+msgid "Marshrutlar"
+msgstr "Routes"
+
+#: .\taxi\templates\taxi\taxist_detail.html:33
+#, python-format
+msgid "%(n)s ta"
+msgstr "%(n)s"
+
+#: .\taxi\templates\taxi\taxist_detail.html:34
+msgid "Telefon"
+msgstr "Phone"
+
+#: .\taxi\templates\taxi\taxist_detail.html:39
+msgid "Mashina ma'lumotlari"
+msgstr "Car details"
+
+#: .\taxi\templates\taxi\taxist_detail.html:45
+msgid "yil"
+msgstr "year"
+
+#: .\taxi\templates\taxi\taxist_detail.html:45
+msgid "o'rindiq"
+msgstr "seats"
+
+#: .\taxi\templates\taxi\taxist_detail.html:49
+msgid "Bolalar o'rindig'i"
+msgstr "Baby seat"
+
+#: .\taxi\templates\taxi\taxist_detail.html:50
+msgid "Hayvonlar bilan"
+msgstr "Pets allowed"
+
+#: .\taxi\templates\taxi\taxist_detail.html:56
+msgid "Mashina ma'lumoti kiritilmagan."
+msgstr "No car details provided."
+
+#: .\taxi\templates\taxi\taxist_detail.html:60
+msgid "Marshrutlar — buyurtma berish"
+msgstr "Routes — place an order"
+
+#: .\taxi\templates\taxi\taxist_detail.html:69
+msgid "Yo'lovchi"
+msgstr "Passenger"
+
+#: .\taxi\templates\taxi\taxist_detail.html:76
+msgid "Dostavka"
+msgstr "Delivery"
+
+#: .\taxi\templates\taxi\taxist_detail.html:82
+msgid "Marshrut kiritilmagan."
+msgstr "No routes added."
+
+#: .\taxi\templates\taxi\taxist_detail.html:86
+msgid "Baho berish"
+msgstr "Leave a rating"
+
+#: .\taxi\templates\taxi\taxist_detail.html:90
+msgid ""
+"Baho berish uchun avval shu taksist bilan sayohat qilib, to'lovni yakunlang."
+msgstr ""
+"To leave a rating, first take a trip with this driver and complete the "
+"payment."
+
+#: .\taxi\templates\taxi\taxist_detail.html:93
+#, python-format
+msgid ""
+"Baho berish uchun <a href=\"%(login_url)s\" style=\"color:var(--yel);font-"
+"weight:600;\">tizimga kiring</a> va sayohat qiling."
+msgstr ""
+"To leave a rating, <a href=\"%(login_url)s\" style=\"color:var(--yel);font-"
+"weight:600;\">log in</a> and take a trip."
+
+#: .\taxi\templates\taxi\taxist_detail.html:97
+msgid "Sharhlar"
+msgstr "Reviews"
+
+#: .\taxi\templates\taxi\taxist_detail.html:111
+msgid "Hali sharh yo'q"
+msgstr "No reviews yet"
+
+#: .\taxi\toponyms.py:11
+msgid "Buxoro"
+msgstr "Bukhara"
+
+#: .\taxi\toponyms.py:11
+msgid "Buxoro shahri"
+msgstr "Bukhara city"
+
+#: .\taxi\toponyms.py:11
+msgid "G'ijduvon"
+msgstr "Gijduvan"
+
+#: .\taxi\toponyms.py:11
+msgid "Gijduvon"
+msgstr "Gijduvan"
+
+#: .\taxi\toponyms.py:12
+msgid "Gazli"
+msgstr "Gazli"
+
+#: .\taxi\toponyms.py:12
+msgid "Kogon"
+msgstr "Kogon"
+
+#: .\taxi\toponyms.py:12
+msgid "Markaziy bozor"
+msgstr "Central market"
+
+#: .\taxi\toponyms.py:12
+msgid "Romitan"
+msgstr "Romitan"
+
+#: .\taxi\toponyms.py:13
+msgid "Samarqand"
+msgstr "Samarkand"
+
+#: .\taxi\toponyms.py:13
+msgid "Shofirkon"
+msgstr "Shofirkon"
+
+#: .\taxi\toponyms.py:13
+msgid "Shofirkon markazi"
+msgstr "Shofirkon center"
+
+#: .\taxi\toponyms.py:14
+msgid "Temir yo'l bekati"
+msgstr "Railway station"
+
+#: .\taxi\toponyms.py:14
+msgid "Vobkent"
+msgstr "Vobkent"
+
+#: .\taxi\toponyms.py:14
+msgid "Yangibozor"
+msgstr "Yangibozor"
+
+#: .\taxi\views.py:46
+msgid "Xaritadan chaqirish tez orada ishga tushadi. 🚧"
+msgstr "Calling from the map will be available soon. 🚧"
+
+#: .\taxi\views.py:129
+msgid "Bu sayohatni kuzatish huquqingiz yo'q."
+msgstr "You don't have permission to track this trip."
+
+#: .\taxi\views.py:190 .\taxi\views.py:225
+msgid "Baho berish uchun avval tizimga kiring."
+msgstr "To leave a rating, log in first."
+
+#: .\taxi\views.py:194 .\taxi\views.py:232 .\taxi\views.py:365
+msgid "Baho 1 dan 5 gacha bo'lishi kerak."
+msgstr "Rating must be between 1 and 5."
+
+#: .\taxi\views.py:200 .\taxi\views.py:238
+msgid "Sharhingiz saqlandi! ✅"
+msgstr "Your review has been saved! ✅"
+
+#: .\taxi\views.py:228
+msgid "Baho berish uchun avval shu taksist bilan sayohat qiling."
+msgstr "To leave a rating, first take a trip with this driver."
+
+#: .\taxi\views.py:278
+msgid "Buyurtma qabul qilindi! Endi to'lovni amalga oshiring."
+msgstr "Order accepted! Now complete the payment."
+
+#: .\taxi\views.py:290
+msgid "Bu sayohat allaqachon to'langan."
+msgstr "This trip has already been paid."
+
+#: .\taxi\views.py:307
+msgid "Buyurtma yakunlandi! Naqd to'lov haydovchiga beriladi. ✅"
+msgstr "Order completed! Cash payment goes to the driver. ✅"
+
+#: .\taxi\views.py:319
+msgid "Karta ma'lumotlari to'liq emas. Tekshirib qaytadan kiriting."
+msgstr "Card details are incomplete. Check and enter again."
+
+#: .\taxi\views.py:346
+msgid "To'lov muvaffaqiyatli amalga oshirildi! ✅"
+msgstr "Payment completed successfully! ✅"
+
+#: .\taxi\views.py:371
+msgid "Bahoyingiz uchun rahmat! ✅"
+msgstr "Thank you for your rating! ✅"
+
+#: .\taxi\views.py:475 .\taxi\views.py:502
+msgid "Ism va telefon majburiy."
+msgstr "Name and phone are required."
+
+#: .\taxi\views.py:483
+msgid "Taksist profili yaratildi! Endi marshrut qo'shing. ✅"
+msgstr "Driver profile created! Now add a route. ✅"
+
+#: .\taxi\views.py:505
+msgid "Profil yangilandi. ✅"
+msgstr "Profile updated. ✅"
+
+#: .\taxi\views.py:534
+msgid "A punkt, B punkt va yo'lovchi narxi majburiy."
+msgstr "Point A, point B and passenger price are required."
+
+#: .\taxi\views.py:541
+msgid "Marshrut qo'shildi. ✅"
+msgstr "Route added. ✅"
+
+#: .\taxi\views.py:550
+msgid "Marshrut o'chirildi."
+msgstr "Route deleted."

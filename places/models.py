@@ -1,26 +1,27 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from main.utils import validate_file_type
 
 
 CATEGORY_CHOICES = [
-    ('furniture', 'Mebel do\'konlari'),
-    ('electronics', 'Elektronika do\'konlari'),
-    ('tourist', 'Diqqatga sazovor joylar'),
-    ('government', 'Davlat binolari'),
-    ('organization', 'Tashkilot ofislari'),
-    ('post', 'Pochta bo\'limlari'),
-    ('bank', 'Banklar'),
-    ('pharmacy', 'Dorixonalar'),
-    ('hospital', 'Shifoxonalar'),
-    ('hotel', 'Mehmonxonalar'),
-    ('wedding', 'To\'yxonalar'),
-    ('restaurant', 'Restoranlar'),
-    ('delivery_store', 'Do\'konlar'),
-    ('school', 'Maktablar'),
-    ('kindergarten', 'Bog\'chalar'),
-    ('barber', 'Sartaroshxonalar'),
+    ('furniture', _('Mebel do\'konlari')),
+    ('electronics', _('Elektronika do\'konlari')),
+    ('tourist', _('Diqqatga sazovor joylar')),
+    ('government', _('Davlat binolari')),
+    ('organization', _('Tashkilot ofislari')),
+    ('post', pgettext_lazy('joy toifasi', 'Pochta bo\'limlari')),
+    ('bank', _('Banklar')),
+    ('pharmacy', _('Dorixonalar')),
+    ('hospital', _('Shifoxonalar')),
+    ('hotel', _('Mehmonxonalar')),
+    ('wedding', _('To\'yxonalar')),
+    ('restaurant', _('Restoranlar')),
+    ('delivery_store', pgettext_lazy('joy toifasi', 'Do\'konlar')),
+    ('school', _('Maktablar')),
+    ('kindergarten', _('Bog\'chalar')),
+    ('barber', _('Sartaroshxonalar')),
 ]
 
 CATEGORY_ICON = {
@@ -46,8 +47,12 @@ class Place(models.Model):
         related_name='places',
     )
     name = models.CharField(max_length=200, verbose_name='Nomi')
+    name_ru = models.CharField(max_length=200, blank=True, verbose_name='Nomi (ruscha)')
+    name_en = models.CharField(max_length=200, blank=True, verbose_name='Nomi (inglizcha)')
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, db_index=True, verbose_name='Toifa')
     description = models.TextField(blank=True, verbose_name='Tavsif')
+    description_ru = models.TextField(blank=True, verbose_name='Tavsif (ruscha)')
+    description_en = models.TextField(blank=True, verbose_name='Tavsif (inglizcha)')
     latitude = models.FloatField(verbose_name='Kenglik (latitude)',
                                  validators=[MinValueValidator(-90), MaxValueValidator(90)])
     longitude = models.FloatField(verbose_name='Uzunlik (longitude)',
@@ -73,6 +78,22 @@ class Place(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.get_category_display()})'
+
+    def _localized(self, base):
+        """Joriy tilga mos maydon qiymati (bo'sh bo'lsa — o'zbekcha asl matn)."""
+        from django.utils.translation import get_language
+        lang = (get_language() or 'uz')[:2]
+        if lang in ('ru', 'en'):
+            return getattr(self, f'{base}_{lang}') or getattr(self, base)
+        return getattr(self, base)
+
+    @property
+    def localized_name(self):
+        return self._localized('name')
+
+    @property
+    def localized_description(self):
+        return self._localized('description')
 
     @property
     def icon(self):

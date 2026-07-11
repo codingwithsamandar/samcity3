@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load l10n %}
-{% block title %}{{ place.name }} — Shofirkon{% endblock %}
+{% block title %}{{ place.localized_name }} — Shofirkon{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -16,7 +16,7 @@
   <div class="detail-grid">
     <div>
       <div class="gallery-main" style="aspect-ratio:16/9;">
-        {% if place.image %}<img src="{{ place.image.url }}" alt="{{ place.name }}">{% else %}<div class="media-ph" style="font-size:4rem;">{{ place.icon }}</div>{% endif %}
+        {% if place.image %}<img src="{{ place.image.url }}" alt="{{ place.localized_name }}">{% else %}<div class="media-ph" style="font-size:4rem;">{{ place.icon }}</div>{% endif %}
       </div>
       {% if images %}
       <div class="gallery-thumbs">
@@ -26,7 +26,7 @@
 
       <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-top:1.5rem;">
         <div>
-          <h1 style="font-size:1.7rem;">{{ place.name }}</h1>
+          <h1 style="font-size:1.7rem;">{{ place.localized_name }}</h1>
           <div style="display:flex;align-items:center;gap:.6rem;margin-top:.5rem;flex-wrap:wrap;">
             <span class="badge badge-indigo">{{ place.icon }} {{ place.get_category_display }}</span>
             {% if review_count %}<span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> {{ avg_rating }} · {{ review_count }} sharh</span>{% endif %}
@@ -44,7 +44,7 @@
           {% endif %}
         </div>
       </div>
-      {% if place.description %}<p style="color:var(--text2);margin:1.1rem 0;line-height:1.65;">{{ place.description }}</p>{% endif %}
+      {% if place.description %}<p style="color:var(--text2);margin:1.1rem 0;line-height:1.65;">{{ place.localized_description }}</p>{% endif %}
 
       <h2 style="font-size:1.15rem;margin:1.75rem 0 .8rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Joylashuv</h2>
       <div id="pmap"></div>
@@ -54,7 +54,7 @@
       <div class="grid-3">
         {% for p in nearby %}
         <a href="{% url 'places:place_detail' p.pk %}" class="card card-pad" style="display:block;color:inherit;">
-          <div style="font-weight:700;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">{{ p.icon }}</span> {{ p.name }}</div>
+          <div style="font-weight:700;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">{{ p.icon }}</span> {{ p.localized_name }}</div>
           {% if p.address %}<div class="lc-sub" style="margin-top:.4rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3);"><use href="#i-pin"/></svg> {{ p.address }}</div>{% endif %}
         </a>
         {% endfor %}
@@ -105,7 +105,7 @@
 <script>
 const pm=L.map('pmap').setView([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}], 16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pm);
-L.circleMarker([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}],{radius:11,color:'#fff',weight:2,fillColor:'{{ place.color }}',fillOpacity:.95}).addTo(pm).bindPopup("{{ place.name|escapejs }}").openPopup();
+L.circleMarker([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}],{radius:11,color:'#fff',weight:2,fillColor:'{{ place.color }}',fillOpacity:.95}).addTo(pm).bindPopup("{{ place.localized_name|escapejs }}").openPopup();
 
 function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
 window.toggleFav = function(){
@@ -118,7 +118,7 @@ window.toggleFav = function(){
 };
 window.sharePlace = function(){
   var url = location.href;
-  if (navigator.share) navigator.share({title:"{{ place.name|escapejs }}", url:url});
+  if (navigator.share) navigator.share({title:"{{ place.localized_name|escapejs }}", url:url});
   else { navigator.clipboard.writeText(url); alert("Havola nusxalandi!"); }
 };
 (function(){

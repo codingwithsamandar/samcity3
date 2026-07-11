@@ -40,7 +40,7 @@
   <div class="sec-t"><svg class="ic"><use href="#i-pin"/></svg> Eng yaqin 10 ta</div>
   {% for p, d in groups.all %}
   <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
-    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span>
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span>
     <span class="km">{{ d }} km</span>
   </a>
   {% endfor %}
@@ -48,19 +48,19 @@
   <div class="sec-t"><svg class="ic"><use href="#i-cart"/></svg> Yaqin do'konlar</div>
   {% for p, d in groups.stores %}
   <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
-    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }}</span><span class="km">{{ d }} km</span></a>
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }}</span><span class="km">{{ d }} km</span></a>
   {% empty %}<p style="color:var(--text2);">Yaqinda do'kon topilmadi.</p>{% endfor %}
 
   <div class="sec-t"><svg class="ic"><use href="#i-star"/></svg> Yaqin diqqatga sazovor joylar</div>
   {% for p, d in groups.tourist %}
   <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
-    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }}</span><span class="km">{{ d }} km</span></a>
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }}</span><span class="km">{{ d }} km</span></a>
   {% empty %}<p style="color:var(--text2);">Yaqinda topilmadi.</p>{% endfor %}
 
   <div class="sec-t"><svg class="ic"><use href="#i-shield"/></svg> Yaqin xizmatlar</div>
   {% for p, d in groups.services %}
   <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
-    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span><span class="km">{{ d }} km</span></a>
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span><span class="km">{{ d }} km</span></a>
   {% empty %}<p style="color:var(--text2);">Yaqinda xizmat topilmadi.</p>{% endfor %}
 
   <div style="margin-top:1.4rem;"><a href="{% url 'places:nearby' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-clock"/></svg> Qayta aniqlash</a></div>
@@ -85,7 +85,7 @@ const nm=L.map('nmap').setView([{{ lat|unlocalize }}, {{ lng|unlocalize }}], 14)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(nm);
 L.marker([{{ lat|unlocalize }}, {{ lng|unlocalize }}]).addTo(nm).bindPopup("📍 Siz shu yerdasiz").openPopup();
 const COLORS={furniture:'#b45309',electronics:'#2563eb',tourist:'#9333ea',government:'#475569',organization:'#0891b2',post:'#ea580c',bank:'#15803d',pharmacy:'#dc2626',hospital:'#e11d48',hotel:'#7c3aed',wedding:'#db2777',restaurant:'#d97706',delivery_store:'#059669'};
-const NP=[{% for p, d in groups.all %}{lat:{{ p.latitude|unlocalize }},lng:{{ p.longitude|unlocalize }},c:'{{ p.category }}',n:"{{ p.name|escapejs }}"},{% endfor %}];
+const NP=[{% for p, d in groups.all %}{lat:{{ p.latitude|unlocalize }},lng:{{ p.longitude|unlocalize }},c:'{{ p.category }}',n:"{{ p.localized_name|escapejs }}"},{% endfor %}];
 NP.forEach(function(p){L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:2,fillColor:COLORS[p.c]||'#f5b942',fillOpacity:.95}).addTo(nm).bindPopup(p.n);});
 </script>
 {% endif %}
