@@ -21,6 +21,7 @@ import '../features/profile/profile_edit_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/places/places_map_screen.dart';
 import '../features/community/community_screen.dart';
+import '../features/hokim/hokim_panel_screen.dart';
 import '../features/jobs/jobs_screen.dart';
 import '../features/services/services_screen.dart';
 import '../features/shell/home_shell.dart';
@@ -76,6 +77,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       GoRoute(path: '/map', builder: (_, __) => const PlacesMapScreen()),
       GoRoute(path: '/community', builder: (_, __) => const CommunityScreen()),
+      GoRoute(path: '/hokim', builder: (_, __) => const HokimPanelScreen()),
       GoRoute(path: '/jobs', builder: (_, __) => const JobsScreen()),
       GoRoute(path: '/service-payments', builder: (_, __) => const ServicesScreen()),
       GoRoute(path: '/profile-edit', builder: (_, __) => const ProfileEditScreen()),

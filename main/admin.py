@@ -12,7 +12,10 @@ from .models import (
     HelpRequest, HelpVolunteer,
     AdFavorite, AdReport, AdInquiry, SearchQuery,
     NeighborhoodAnnouncement, CitizenRequest,
+    District, DistrictAdmin, DistrictAnnouncement,
+    AdCampaign, AdCampaignDelivery,
 )
+from django.contrib import messages as admin_messages
 
 
 @admin.register(AdReport)
@@ -72,13 +75,14 @@ class UserAdmin(BaseUserAdmin):
     # Custom-user forms so admin add/change pages work with phone-based User
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
-    list_display = ('phone', 'name', 'role', 'is_active', 'is_staff', 'created_at')
-    list_filter = ('role', 'is_active', 'is_staff')
+    list_display = ('phone', 'name', 'role', 'gender', 'birth_date', 'is_active', 'is_staff', 'created_at')
+    list_filter = ('role', 'gender', 'is_active', 'is_staff')
     search_fields = ('phone', 'name', 'email')
     ordering = ('-created_at',)
     fieldsets = (
         (None, {'fields': ('phone', 'password')}),
-        ('Shaxsiy', {'fields': ('name', 'username', 'email', 'bio', 'avatar', 'avatar_url')}),
+        ('Shaxsiy', {'fields': ('name', 'username', 'email', 'bio', 'avatar', 'avatar_url',
+                                'gender', 'birth_date')}),
         ('Ruxsatlar', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ("Qo'shimcha", {'fields': ('rating',)}),
     )
@@ -169,6 +173,97 @@ class PolygonEditorWidget(forms.Textarea):
         )
 
 
+# ── TUMAN (District) + hokim ─────────────────────────────────────────────────
+class DistrictAdminInline(admin.TabularInline):
+    model = DistrictAdmin
+    extra = 1
+    autocomplete_fields = ['user']
+
+
+@admin.register(District)
+class DistrictAdminModel(admin.ModelAdmin):
+    list_display = ('name', 'head_name', 'head_phone', 'mahalla_count', 'created_at')
+    search_fields = ('name', 'head_name', 'head_phone')
+    inlines = [DistrictAdminInline]
+
+    @admin.display(description='Mahallalar')
+    def mahalla_count(self, obj):
+        return obj.neighborhoods.count()
+
+
+@admin.register(DistrictAdmin)
+class DistrictAdminAdmin(admin.ModelAdmin):
+    list_display = ('district', 'user', 'appointed_at')
+    list_filter = ('district',)
+    search_fields = ('user__phone', 'user__name', 'district__name')
+    autocomplete_fields = ['user', 'district']
+
+
+@admin.register(DistrictAnnouncement)
+class DistrictAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'district', 'created_by', 'recipients_count', 'created_at')
+    list_filter = ('district',)
+    search_fields = ('title', 'text', 'district__name')
+    readonly_fields = ('created_at', 'recipients_count')
+    autocomplete_fields = ['district', 'created_by']
+
+
+# ── REKLAMA KAMPANIYASI ──────────────────────────────────────────────────────
+@admin.register(AdCampaign)
+class AdCampaignAdmin(admin.ModelAdmin):
+    list_display = ('title', 'status', 'gender', 'age_range', 'neighborhood', 'district',
+                    'role', 'target_count', 'audience_preview', 'sent_count', 'created_at')
+    list_filter = ('status', 'gender', 'role', 'district', 'neighborhood')
+    search_fields = ('title', 'text')
+    autocomplete_fields = ['neighborhood', 'district']
+    readonly_fields = ('status', 'sent_count', 'sent_at', 'created_by', 'created_at',
+                       'audience_preview')
+    actions = ['send_campaigns']
+    fieldsets = (
+        ("E'lon mazmuni", {'fields': ('title', 'text', 'url', 'image')}),
+        ('Auditoriya', {'fields': (('gender', 'role'), ('age_min', 'age_max'),
+                                   ('neighborhood', 'district'), 'audience_preview')}),
+        ('Yuborish', {'fields': ('target_count', 'status', 'sent_count', 'sent_at')}),
+    )
+
+    @admin.display(description='Yosh')
+    def age_range(self, obj):
+        if obj.age_min is None and obj.age_max is None:
+            return '—'
+        return f'{obj.age_min or 0}–{obj.age_max or "∞"}'
+
+    @admin.display(description='Mos auditoriya')
+    def audience_preview(self, obj):
+        if not obj.pk:
+            return '— (avval saqlang)'
+        return f'{obj.audience_size()} kishi'
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    @admin.action(description="🚀 Tanlangan kampaniyalarni yuborish (random N ga)")
+    def send_campaigns(self, request, queryset):
+        total = 0
+        for camp in queryset:
+            sent = camp.send()
+            total += sent
+            self.message_user(
+                request, f"«{camp.title}» → {sent} kishiga yuborildi.",
+                level=admin_messages.SUCCESS if sent else admin_messages.WARNING)
+        if not queryset:
+            self.message_user(request, "Hech narsa tanlanmadi.", level=admin_messages.WARNING)
+
+
+@admin.register(AdCampaignDelivery)
+class AdCampaignDeliveryAdmin(admin.ModelAdmin):
+    list_display = ('campaign', 'user', 'sent_at')
+    list_filter = ('campaign',)
+    search_fields = ('user__phone', 'user__name', 'campaign__title')
+    readonly_fields = ('campaign', 'user', 'sent_at')
+
+
 class NeighborhoodAdminForm(forms.ModelForm):
     class Meta:
         model = Neighborhood
@@ -179,9 +274,11 @@ class NeighborhoodAdminForm(forms.ModelForm):
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(admin.ModelAdmin):
     form = NeighborhoodAdminForm
-    list_display = ('name', 'population', 'head_name', 'head_phone', 'color_swatch', 'has_boundary', 'created_at')
+    list_display = ('name', 'district', 'population', 'head_name', 'head_phone', 'color_swatch', 'has_boundary', 'created_at')
+    list_filter = ('district',)
     search_fields = ('name', 'head_name', 'head_phone')
-    fields = ('name', 'description', 'population', 'head_name', 'head_phone',
+    autocomplete_fields = ['district']
+    fields = ('name', 'district', 'description', 'population', 'head_name', 'head_phone',
               'color', 'center_lat', 'center_lng', 'boundary')
 
     @admin.display(description='Rang')

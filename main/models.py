@@ -34,6 +34,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('driver', 'Haydovchi'),
         ('admin', 'Admin'),
     ]
+    GENDER_CHOICES = [
+        ('male', 'Erkak'),
+        ('female', 'Ayol'),
+    ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=15, unique=True, validators=[phone_validator])
     name = models.CharField(max_length=100, blank=True)
@@ -42,6 +46,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to='avatars/%Y/%m/', blank=True, null=True, validators=[validate_file_type])
     avatar_url = models.TextField(blank=True)
+    # Reklama auditoriyasini ajratish uchun (ixtiyoriy — profilda to'ldiriladi).
+    gender = models.CharField('Jins', max_length=10, choices=GENDER_CHOICES, blank=True)
+    birth_date = models.DateField("Tug'ilgan sana", null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     # Foydalanuvchi tanlagan "o'z mahallasi" — chatda tepada pin/ajratib ko'rsatiladi.
     neighborhood = models.ForeignKey(
@@ -79,6 +86,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         return self.name or ''
+
+    @property
+    def age(self):
+        """Tug'ilgan sanadan yoshni hisoblaydi (yo'q bo'lsa None)."""
+        if not self.birth_date:
+            return None
+        from datetime import date
+        today = date.today()
+        return today.year - self.birth_date.year - (
+            (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
 
     def save(self, *args, **kwargs):
         # role='admin' bo'lsa is_staff ham yoqilsin — aks holda admin/Analitika
@@ -176,9 +193,51 @@ class AdImage(models.Model):
         ordering = ['order']
 
 
+class District(models.Model):
+    """Tuman (masalan «Shofirkon tumani») — mahallalarni birlashtiradi.
+
+    Tuman hokimi shu tuman doirasidagi BARCHA mahalla aholisiga (o'z mahallasi
+    sifatida shu tumandagi biror mahallani tanlagan foydalanuvchilarga) rasmiy
+    e'lon/bildirishnoma yubora oladi."""
+    name = models.CharField('Tuman nomi', max_length=120)
+    description = models.TextField('Tavsif', blank=True)
+    head_name = models.CharField('Hokim (F.I.O.)', max_length=120, blank=True)
+    head_phone = models.CharField('Hokim telefoni', max_length=30, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'districts'
+        verbose_name = 'Tuman'
+        verbose_name_plural = 'Tumanlar'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def is_admin(self, user):
+        """Foydalanuvchi shu tuman hokimimi (e'lon boshqaruvi uchun).
+
+        Staff yoki shu tumanning DistrictAdmin'i (hokimi) admin hisoblanadi."""
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        return self.admins.filter(user=user).exists()
+
+    def residents(self):
+        """Shu tumandagi biror mahallani «o'z mahallam» qilib tanlagan aholi (QS)."""
+        return User.objects.filter(
+            neighborhood__district=self, is_active=True,
+        ).distinct()
+
+
 class Neighborhood(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    district = models.ForeignKey(
+        District, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='neighborhoods', verbose_name='Tuman',
+    )
     # ── Xaritadagi joylashuv va chegara ──────────────────────────────────────
     center_lat = models.FloatField('Markaz (kenglik)', null=True, blank=True)
     center_lng = models.FloatField('Markaz (uzunlik)', null=True, blank=True)
@@ -240,6 +299,10 @@ class Neighborhood(models.Model):
         if user.is_staff:
             return True
         return self.admins.filter(user=user).exists()
+
+    # Eslatma: shu mahallani «o'z mahallam» qilib tanlagan aholi — `self.residents`
+    # reverse manager orqali (User.neighborhood related_name='residents').
+    # Rasmiy e'lon aynan shularga boradi (chat a'zoligiga bog'liq emas).
 
 
 class ChatRoom(models.Model):
@@ -364,6 +427,50 @@ class NeighborhoodAnnouncement(models.Model):
 
     def __str__(self):
         return f'{self.neighborhood.name}: {self.title}'
+
+
+class DistrictAdmin(models.Model):
+    """Tuman hokimi — tuman bo'yicha tayinlanadi (ChatAdmin bilan bir xil naqsh)."""
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='admins')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='district_admin_roles')
+    appointed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'district_admins'
+        verbose_name = 'Tuman hokimi'
+        verbose_name_plural = 'Tuman hokimlari'
+        unique_together = [('district', 'user')]
+
+    def __str__(self):
+        return f'{self.district.name} — Hokim ({self.user})'
+
+
+class DistrictAnnouncement(models.Model):
+    """Tuman hokimi tomonidan joylanadigan rasmiy e'lon (butun tuman aholisiga)."""
+    district = models.ForeignKey(
+        District, on_delete=models.CASCADE, related_name='announcements',
+        verbose_name='Tuman',
+    )
+    title = models.CharField('Sarlavha', max_length=200)
+    text = models.TextField('Matn')
+    image = models.ImageField(upload_to='tuman/announcements/%Y/%m/', blank=True, null=True,
+                              validators=[validate_file_type])
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='district_announcements',
+    )
+    # Bildirishnoma yuborilgan aholi soni (audit uchun).
+    recipients_count = models.PositiveIntegerField('Yuborilganlar soni', default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'district_announcements'
+        ordering = ['-created_at']
+        verbose_name = "Tuman e'loni"
+        verbose_name_plural = "Tuman e'lonlari"
+        indexes = [models.Index(fields=['district', '-created_at'], name='dist_ann_created_idx')]
+
+    def __str__(self):
+        return f'{self.district.name}: {self.title}'
 
 
 class CitizenRequest(models.Model):
@@ -824,3 +931,135 @@ class SearchQuery(models.Model):
 
     def __str__(self):
         return f'{self.term} ({self.count})'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  REKLAMA KAMPANIYASI — auditoriyani ajratib, random N kishiga bildirishnoma
+# ════════════════════════════════════════════════════════════════════════════
+
+class AdCampaign(models.Model):
+    """Reklama kampaniyasi (admin panelidan).
+
+    Auditoriya jins/yosh/mahalla/tuman/rol bo'yicha ajratiladi; shu auditoriyadan
+    tasodifiy `target_count` kishiga bildirishnoma (+ push) yuboriladi. Bir
+    foydalanuvchi kuniga eng ko'pi bilan 1 ta reklama oladi (AdCampaignDelivery)."""
+    GENDER_CHOICES = [('', 'Farqi yo\'q'), ('male', 'Erkak'), ('female', 'Ayol')]
+    ROLE_CHOICES = [('', 'Farqi yo\'q'), ('user', 'Foydalanuvchi'),
+                    ('business', 'Biznes'), ('driver', 'Haydovchi')]
+    STATUS_CHOICES = [('draft', 'Qoralama'), ('sent', 'Yuborilgan')]
+
+    title = models.CharField('Sarlavha', max_length=200)
+    text = models.TextField('Matn')
+    url = models.CharField('Havola (ixtiyoriy)', max_length=300, blank=True)
+    image = models.ImageField('Rasm', upload_to='ads/campaigns/%Y/%m/', blank=True, null=True,
+                              validators=[validate_file_type])
+
+    # ── Auditoriya filtrlari ──
+    gender = models.CharField('Jins', max_length=10, choices=GENDER_CHOICES, blank=True)
+    age_min = models.PositiveIntegerField('Yosh (dan)', null=True, blank=True)
+    age_max = models.PositiveIntegerField('Yosh (gacha)', null=True, blank=True)
+    neighborhood = models.ForeignKey(
+        Neighborhood, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ad_campaigns', verbose_name='Mahalla (ixtiyoriy)')
+    district = models.ForeignKey(
+        District, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ad_campaigns', verbose_name='Tuman (ixtiyoriy)')
+    role = models.CharField('Rol', max_length=20, choices=ROLE_CHOICES, blank=True)
+
+    # ── Yuborish parametrlari ──
+    target_count = models.PositiveIntegerField('Nechta kishiga (random)', default=50)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', db_index=True)
+    sent_count = models.PositiveIntegerField('Yuborildi (fakt)', default=0)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ad_campaigns')
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'ad_campaigns'
+        ordering = ['-created_at']
+        verbose_name = 'Reklama kampaniyasi'
+        verbose_name_plural = 'Reklama kampaniyalari'
+
+    def __str__(self):
+        return self.title
+
+    def audience_queryset(self, exclude_recent=True):
+        """Filtrlarga mos, faol foydalanuvchilar (yuborish uchun nomzodlar).
+
+        `exclude_recent=True` bo'lsa — oxirgi 24 soatda ALLAQACHON biror reklama
+        olgan foydalanuvchilar chiqarib tashlanadi (kuniga 1 ta cheklovi)."""
+        from datetime import date, timedelta
+        from django.utils import timezone
+        qs = User.objects.filter(is_active=True)
+        if self.gender:
+            qs = qs.filter(gender=self.gender)
+        if self.role:
+            qs = qs.filter(role=self.role)
+        if self.neighborhood_id:
+            qs = qs.filter(neighborhood_id=self.neighborhood_id)
+        if self.district_id:
+            qs = qs.filter(neighborhood__district_id=self.district_id)
+        # Yosh → tug'ilgan sana oralig'iga aylantiriladi (birth_date bor bo'lsa).
+        today = date.today()
+        if self.age_min is not None:
+            latest_birth = today.replace(year=today.year - self.age_min)
+            qs = qs.filter(birth_date__isnull=False, birth_date__lte=latest_birth)
+        if self.age_max is not None:
+            earliest_birth = today.replace(year=today.year - self.age_max - 1)
+            qs = qs.filter(birth_date__isnull=False, birth_date__gt=earliest_birth)
+        if exclude_recent:
+            cutoff = timezone.now() - timedelta(hours=24)
+            recent = AdCampaignDelivery.objects.filter(
+                sent_at__gte=cutoff).values_list('user_id', flat=True)
+            qs = qs.exclude(id__in=recent)
+        return qs
+
+    def audience_size(self):
+        """Kuniga-1 cheklovisiz mos auditoriya hajmi (admin preview uchun)."""
+        return self.audience_queryset(exclude_recent=False).count()
+
+    def send(self):
+        """Auditoriyadan random `target_count` kishiga bildirishnoma yuboradi.
+
+        Yuborilgan haqiqiy sonni qaytaradi. Idempotent emas — qayta chaqirilsa
+        yana yuboradi (lekin kuniga-1 cheklovi ko'pini to'sadi)."""
+        from django.utils import timezone
+        from notifications.models import notify
+        candidates = list(self.audience_queryset(exclude_recent=True)
+                          .values_list('id', flat=True))
+        import random
+        random.shuffle(candidates)
+        chosen_ids = candidates[:self.target_count]
+        sent = 0
+        for uid in chosen_ids:
+            user = User.objects.filter(pk=uid).first()
+            if not user:
+                continue
+            try:
+                notify(user, f"📣 {self.title}", self.url or '', 'ads')
+                AdCampaignDelivery.objects.create(campaign=self, user=user)
+                sent += 1
+            except Exception:
+                pass
+        self.sent_count = sent
+        self.status = 'sent'
+        self.sent_at = timezone.now()
+        self.save(update_fields=['sent_count', 'status', 'sent_at'])
+        return sent
+
+
+class AdCampaignDelivery(models.Model):
+    """Reklama kimga, qachon yuborilganini yozadi (kuniga-1 cheklovi + audit)."""
+    campaign = models.ForeignKey(AdCampaign, on_delete=models.CASCADE, related_name='deliveries')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ad_deliveries')
+    sent_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'ad_campaign_deliveries'
+        indexes = [
+            models.Index(fields=['user', '-sent_at'], name='adcamp_user_sent_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.campaign.title} → {self.user}'

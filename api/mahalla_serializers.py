@@ -1,7 +1,10 @@
 """Mahalla bo'limi — mobil API serializerlari."""
 from rest_framework import serializers
 
-from main.models import Neighborhood, NeighborhoodAnnouncement, CitizenRequest
+from main.models import (
+    Neighborhood, NeighborhoodAnnouncement, CitizenRequest,
+    District, DistrictAnnouncement,
+)
 
 
 def _abs(request, field):
@@ -49,6 +52,34 @@ class CitizenRequestSerializer(serializers.ModelSerializer):
 
     def get_author(self, obj):
         return obj.user.name or obj.user.phone
+
+
+class DistrictAnnouncementSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DistrictAnnouncement
+        fields = ('id', 'title', 'text', 'image', 'recipients_count', 'created_at')
+
+    def get_image(self, obj):
+        return _abs(self.context.get('request'), obj.image)
+
+
+class DistrictSerializer(serializers.ModelSerializer):
+    """Tuman + hokim paneli statistikasi (aholi/mahalla soni)."""
+    residents_count = serializers.SerializerMethodField()
+    mahallas_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = District
+        fields = ('id', 'name', 'description', 'head_name', 'head_phone',
+                  'residents_count', 'mahallas_count')
+
+    def get_residents_count(self, obj):
+        return obj.residents().count()
+
+    def get_mahallas_count(self, obj):
+        return obj.neighborhoods.count()
 
 
 class MahallaPlaceMiniSerializer(serializers.Serializer):

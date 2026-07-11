@@ -57,9 +57,13 @@ class AuthRepository {
     required String name,
     List<int>? avatarBytes,
     String? avatarName,
+    String? gender,
+    String? birthDate,
   }) async {
     final form = FormData.fromMap({
       'name': name,
+      if (gender != null) 'gender': gender,
+      if (birthDate != null) 'birth_date': birthDate,
       if (avatarBytes != null)
         'avatar_upload': MultipartFile.fromBytes(avatarBytes,
             filename: avatarName ?? 'avatar.jpg'),

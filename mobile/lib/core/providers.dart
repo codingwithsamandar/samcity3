@@ -12,6 +12,7 @@ import '../features/taxi/taxi_repository.dart';
 import '../features/chat/chat_repository.dart';
 import '../features/store_chat/store_chat_repository.dart';
 import '../features/mahalla/mahalla_repository.dart';
+import '../features/hokim/hokim_repository.dart';
 import '../features/booking/booking_repository.dart';
 import '../features/notifications/notifications_repository.dart';
 import '../features/payments/payment_repository.dart';
@@ -48,6 +49,8 @@ final storeChatRepositoryProvider =
     Provider((ref) => StoreChatRepository(ref.read(apiClientProvider)));
 final mahallaRepositoryProvider =
     Provider((ref) => MahallaRepository(ref.read(apiClientProvider)));
+final hokimRepositoryProvider =
+    Provider((ref) => HokimRepository(ref.read(apiClientProvider)));
 final bookingRepositoryProvider =
     Provider((ref) => BookingRepository(ref.read(apiClientProvider)));
 final notificationsRepositoryProvider =

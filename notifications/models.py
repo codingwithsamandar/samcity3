@@ -9,11 +9,12 @@ class Notification(models.Model):
         ('taxi', 'Taksi'),
         ('chat', 'Chat'),
         ('business', 'Biznes'),
+        ('ads', 'Reklama'),
         ('system', 'Tizim'),
     ]
     ICONS = {
         'order': '🧾', 'booking': '📅', 'taxi': '🚕',
-        'chat': '💬', 'business': '🏪', 'system': '🔔',
+        'chat': '💬', 'business': '🏪', 'ads': '📣', 'system': '🔔',
     }
 
     recipient = models.ForeignKey(

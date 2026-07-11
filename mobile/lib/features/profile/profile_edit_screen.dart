@@ -20,12 +20,18 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   XFile? _avatar;
   Uint8List? _avatarBytes;
   bool _saving = false;
+  String _gender = '';
+  DateTime? _birthDate;
 
   @override
   void initState() {
     super.initState();
     final user = ref.read(authControllerProvider).user;
     _name = TextEditingController(text: user?.name ?? '');
+    _gender = user?.gender ?? '';
+    if (user?.birthDate != null && user!.birthDate!.isNotEmpty) {
+      _birthDate = DateTime.tryParse(user.birthDate!);
+    }
   }
 
   @override
@@ -53,6 +59,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             name: _name.text.trim(),
             avatarBytes: _avatarBytes,
             avatarName: _avatar?.name,
+            gender: _gender,
+            birthDate: _birthDate == null
+                ? ''
+                : '${_birthDate!.year.toString().padLeft(4, '0')}-'
+                    '${_birthDate!.month.toString().padLeft(2, '0')}-'
+                    '${_birthDate!.day.toString().padLeft(2, '0')}',
           );
       ref.read(authControllerProvider.notifier).setUser(updated);
       if (mounted) {
@@ -120,6 +132,37 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           TextField(
             controller: _name,
             decoration: const InputDecoration(labelText: 'Ism'),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: _gender.isEmpty ? '' : _gender,
+            decoration: const InputDecoration(labelText: 'Jins'),
+            items: const [
+              DropdownMenuItem(value: '', child: Text("Ko'rsatilmagan")),
+              DropdownMenuItem(value: 'male', child: Text('Erkak')),
+              DropdownMenuItem(value: 'female', child: Text('Ayol')),
+            ],
+            onChanged: (v) => setState(() => _gender = v ?? ''),
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _birthDate ?? DateTime(now.year - 20),
+                firstDate: DateTime(now.year - 100),
+                lastDate: now,
+              );
+              if (picked != null) setState(() => _birthDate = picked);
+            },
+            child: InputDecorator(
+              decoration: const InputDecoration(labelText: "Tug'ilgan sana"),
+              child: Text(_birthDate == null
+                  ? "Tanlanmagan"
+                  : '${_birthDate!.day.toString().padLeft(2, '0')}.'
+                      '${_birthDate!.month.toString().padLeft(2, '0')}.${_birthDate!.year}'),
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton(

@@ -366,6 +366,14 @@ def profile_edit(request):
         bio = request.POST.get('bio', '')
         user.bio = bio
 
+        # Jins va tug'ilgan sana (reklama auditoriyasi uchun — ixtiyoriy).
+        gender = request.POST.get('gender', '')
+        if gender in ('', 'male', 'female'):
+            user.gender = gender
+        birth_date = request.POST.get('birth_date', '').strip()
+        if 'birth_date' in request.POST:
+            user.birth_date = birth_date or None
+
         if password:
             user.set_password(password)
 

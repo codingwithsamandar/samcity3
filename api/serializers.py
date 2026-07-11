@@ -21,12 +21,18 @@ def normalize_phone(raw: str) -> str:
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     avatar_upload = serializers.ImageField(write_only=True, required=False)
+    is_hokim = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'phone', 'name', 'username', 'bio', 'avatar',
-                  'avatar_upload', 'role', 'rating', 'created_at')
-        read_only_fields = ('id', 'phone', 'role', 'rating', 'created_at')
+                  'avatar_upload', 'role', 'rating', 'gender', 'birth_date',
+                  'is_staff', 'is_hokim', 'created_at')
+        read_only_fields = ('id', 'phone', 'role', 'rating', 'is_staff', 'is_hokim', 'created_at')
+
+    def get_is_hokim(self, obj):
+        # Tuman hokimi (yoki staff) — mobil ilovada "Hokim paneli" kirish nuqtasi uchun.
+        return bool(obj.is_staff) or obj.district_admin_roles.exists()
 
     def get_avatar(self, obj):
         request = self.context.get('request')

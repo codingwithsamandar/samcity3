@@ -67,6 +67,22 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // ── Hokim paneli (faqat tuman hokimi/staff uchun) ──
+                if (user.isHokim) ...[
+                  Card(
+                    color: const Color(0xFF1A2233),
+                    child: ListTile(
+                      leading: const Icon(Icons.account_balance,
+                          color: Color(0xFFCAA23A)),
+                      title: const Text('🏛️ Hokim paneli',
+                          style: TextStyle(fontWeight: FontWeight.w800)),
+                      subtitle: const Text('Butun tumanga rasmiy e\'lon yuborish'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/hokim'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Card(
                   child: Column(
                     children: [

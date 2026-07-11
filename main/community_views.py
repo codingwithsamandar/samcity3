@@ -12,25 +12,110 @@ from .models import (
     Poll, PollOption, PollVote, PollComment,
     HelpRequest, HelpVolunteer, Neighborhood, ChatMember, ChatAdmin,
     NeighborhoodAnnouncement, CitizenRequest, CITIZEN_REQUEST_TRANSITIONS,
+    District, DistrictAnnouncement,
 )
 
 
 def _notify_mahalla(neighborhood, text, url, exclude_user=None):
-    """Notify approved members of a mahalla's chat room (best-effort)."""
+    """Notify every RESIDENT of a mahalla (users whose «my mahalla» = this one).
+
+    Rasmiy e'lon aynan shu mahallani tanlagan aholiga boradi (chat a'zoligiga
+    bog'liq emas). Har bir foydalanuvchi uchun best-effort; yuborilganlar sonini
+    qaytaradi."""
     if not neighborhood:
-        return
-    try:
-        from notifications.models import notify
-        room = getattr(neighborhood, 'chat_room', None)
-        if not room:
-            return
-        members = ChatMember.objects.filter(room=room, is_approved=True, is_banned=False).select_related('user')
-        if exclude_user:
-            members = members.exclude(user=exclude_user)
-        for m in members:
-            notify(m.user, text, url, 'system')
-    except Exception:
-        pass
+        return 0
+    from notifications.models import notify
+    residents = neighborhood.residents.filter(is_active=True)
+    if exclude_user is not None:
+        residents = residents.exclude(pk=exclude_user.pk)
+    count = 0
+    for u in residents.iterator():
+        try:
+            notify(u, text, url, 'system')
+            count += 1
+        except Exception:
+            pass
+    return count
+
+
+def _notify_district(district, text, url, exclude_user=None):
+    """Notify every resident of a district (users whose «my mahalla» is in it).
+
+    Returns the number of residents notified. Best-effort per-user."""
+    if not district:
+        return 0
+    from notifications.models import notify
+    residents = district.residents()
+    if exclude_user is not None:
+        residents = residents.exclude(pk=exclude_user.pk)
+    count = 0
+    for u in residents.iterator():
+        try:
+            notify(u, text, url, 'system')
+            count += 1
+        except Exception:
+            # Bitta foydalanuvchi push'i uzilsa ham qolganlariga yuborishda davom etamiz.
+            pass
+    return count
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  HOKIM PANELI — tuman hokimi butun tuman aholisiga rasmiy e'lon yuboradi
+# ════════════════════════════════════════════════════════════════════════════
+
+@login_required
+def hokim_panel(request):
+    """Hokim paneli — foydalanuvchi hokim bo'lgan tuman(lar) va e'lon joylash."""
+    if request.user.is_staff:
+        districts = list(District.objects.all())
+    else:
+        districts = list(
+            District.objects.filter(admins__user=request.user).distinct())
+    if not districts:
+        messages.error(request, "Sizda hokim paneliga ruxsat yo'q.")
+        return redirect('mahalla_home')
+
+    data = []
+    for d in districts:
+        data.append({
+            'district': d,
+            'residents': d.residents().count(),
+            'mahallas': d.neighborhoods.count(),
+            'announcements': d.announcements.select_related('created_by')[:20],
+        })
+    return render(request, 'community/hokim_panel.html', {'districts': data})
+
+
+@login_required
+def district_announce(request, pk):
+    """Tuman hokimi rasmiy e'lon joylaydi (+ butun tuman aholisiga bildirishnoma)."""
+    district = get_object_or_404(District, pk=pk)
+    if not district.is_admin(request.user):
+        messages.error(request, "E'lon joylash faqat tuman hokimi uchun.")
+        return redirect('hokim_panel')
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        text = request.POST.get('text', '').strip()
+        if not title or not text:
+            messages.error(request, "Sarlavha va matn majburiy.")
+            return redirect('hokim_panel')
+        ann = DistrictAnnouncement(
+            district=district, title=title, text=text, created_by=request.user)
+        img = request.FILES.get('image')
+        if img:
+            try:
+                validate_file_type(img)
+                ann.image = img
+            except Exception as e:
+                messages.warning(request, f"Rasm: {str(e)}")
+        ann.save()
+        sent = _notify_district(
+            district, f"🏛️ Tuman e'loni: {title[:60]}",
+            reverse('hokim_panel'), exclude_user=request.user)
+        ann.recipients_count = sent
+        ann.save(update_fields=['recipients_count'])
+        messages.success(request, f"E'lon joylandi! {sent} ta aholiga yuborildi ✅")
+    return redirect('hokim_panel')
 
 
 # ════════════════════════════════════════════════════════════════════════════

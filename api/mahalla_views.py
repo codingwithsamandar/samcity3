@@ -11,11 +11,12 @@ from rest_framework.views import APIView
 
 from main.models import (
     Neighborhood, NeighborhoodAnnouncement, CitizenRequest,
-    CITIZEN_REQUEST_TRANSITIONS,
+    CITIZEN_REQUEST_TRANSITIONS, District, DistrictAnnouncement,
 )
 from main.community_views import _stores_in, _places_in_grouped
 from .mahalla_serializers import (
     NeighborhoodSerializer, AnnouncementSerializer, CitizenRequestSerializer,
+    DistrictSerializer, DistrictAnnouncementSerializer,
 )
 
 
@@ -97,6 +98,58 @@ class AnnouncementCreateView(APIView):
             pass
         return Response(AnnouncementSerializer(ann, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
+
+
+class HokimPanelView(APIView):
+    """GET — foydalanuvchi hokim bo'lgan tuman(lar) + e'lonlar (mobil hokim paneli)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.is_staff:
+            districts = District.objects.all()
+        else:
+            districts = District.objects.filter(
+                admins__user=request.user).distinct()
+        results = []
+        for d in districts:
+            results.append({
+                'district': DistrictSerializer(d, context={'request': request}).data,
+                'announcements': DistrictAnnouncementSerializer(
+                    d.announcements.all()[:30], many=True,
+                    context={'request': request}).data,
+            })
+        return Response({'is_hokim': bool(results), 'results': results})
+
+
+class DistrictAnnounceView(APIView):
+    """POST — tuman hokimi rasmiy e'lon joylaydi (+ butun tuman aholisiga push)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        district = get_object_or_404(District, pk=pk)
+        if not district.is_admin(request.user):
+            return Response({'detail': "Faqat tuman hokimi."},
+                            status=status.HTTP_403_FORBIDDEN)
+        title = (request.data.get('title') or '').strip()
+        text = (request.data.get('text') or '').strip()
+        if not title or not text:
+            return Response({'detail': "Sarlavha va matn majburiy."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        ann = DistrictAnnouncement.objects.create(
+            district=district, title=title, text=text, created_by=request.user,
+            image=request.FILES.get('image'))
+        try:
+            from main.community_views import _notify_district
+            sent = _notify_district(
+                district, f"🏛️ Tuman e'loni: {title[:60]}",
+                reverse('hokim_panel'), exclude_user=request.user)
+            ann.recipients_count = sent
+            ann.save(update_fields=['recipients_count'])
+        except Exception:
+            pass
+        return Response(
+            DistrictAnnouncementSerializer(ann, context={'request': request}).data,
+            status=status.HTTP_201_CREATED)
 
 
 class ComplaintListCreateView(APIView):

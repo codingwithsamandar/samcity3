@@ -6,6 +6,9 @@ class AppUser {
   final String? avatar;
   final String role;
   final double rating;
+  final bool isHokim; // tuman hokimi (yoki staff) — "Hokim paneli" kirish nuqtasi uchun
+  final String gender; // '', 'male', 'female'
+  final String? birthDate; // 'YYYY-MM-DD'
 
   AppUser({
     required this.id,
@@ -14,6 +17,9 @@ class AppUser {
     this.avatar,
     required this.role,
     required this.rating,
+    this.isHokim = false,
+    this.gender = '',
+    this.birthDate,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -25,6 +31,9 @@ class AppUser {
         rating: (json['rating'] is num)
             ? (json['rating'] as num).toDouble()
             : double.tryParse('${json['rating']}') ?? 5.0,
+        isHokim: json['is_hokim'] == true || json['is_staff'] == true,
+        gender: json['gender'] ?? '',
+        birthDate: json['birth_date'],
       );
 
   String get displayName => name.isNotEmpty ? name : phone;

@@ -27,6 +27,7 @@ from .chat_store_views import (
 from .mahalla_views import (
     MahallaListView, MahallaDetailView, AnnouncementCreateView,
     ComplaintListCreateView, ComplaintStatusView,
+    HokimPanelView, DistrictAnnounceView,
 )
 from .booking_views import VenueViewSet, VenueBookingViewSet
 from .notifications_views import (
@@ -105,6 +106,10 @@ urlpatterns = [
     path('mahalla/<int:pk>/announce/', AnnouncementCreateView.as_view(), name='mahalla-announce'),
     path('mahalla/<int:pk>/complaints/', ComplaintListCreateView.as_view(), name='mahalla-complaints'),
     path('mahalla/complaints/<uuid:req_id>/status/', ComplaintStatusView.as_view(), name='mahalla-complaint-status'),
+
+    # ── Hokim paneli (tuman e'loni) ──
+    path('hokim/', HokimPanelView.as_view(), name='hokim-panel'),
+    path('hokim/<int:pk>/announce/', DistrictAnnounceView.as_view(), name='hokim-announce'),
     path('chat/rooms/<int:room_id>/messages/', ChatMessagesView.as_view(), name='chat-messages'),
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/unread-count/', NotificationUnreadCountView.as_view(), name='notifications-unread-count'),

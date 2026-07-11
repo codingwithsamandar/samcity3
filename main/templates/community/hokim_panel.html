@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Hokim paneli — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hk-wrap { max-width: 920px; margin: 0 auto; padding: 1rem; }
+  .hk-hero { border-radius: var(--radius-xl, 18px); padding: 1.8rem;
+    background: linear-gradient(150deg, var(--surface2, #f2f3f7), var(--surface, #fff));
+    border: 1px solid var(--border, #e3e5ec); margin-bottom: 1.4rem; }
+  .hk-hero h1 { margin: 0 0 .3rem; font-size: 1.5rem; }
+  .hk-hero p { margin: 0; color: var(--muted, #6b7280); }
+  .hk-card { border: 1px solid var(--border, #e3e5ec); border-radius: var(--radius-lg, 14px);
+    background: var(--surface, #fff); padding: 1.4rem; margin-bottom: 1.4rem; }
+  .hk-stats { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: .6rem 0 1rem; }
+  .hk-stat { background: var(--surface2, #f5f6fa); border-radius: 10px; padding: .6rem 1rem; }
+  .hk-stat b { display: block; font-size: 1.3rem; }
+  .hk-stat span { font-size: .82rem; color: var(--muted, #6b7280); }
+  .hk-form label { display: block; font-weight: 600; margin: .7rem 0 .3rem; }
+  .hk-form input[type=text], .hk-form textarea { width: 100%; padding: .6rem .8rem;
+    border: 1px solid var(--border, #d5d8e0); border-radius: 10px; background: var(--surface, #fff);
+    color: inherit; font: inherit; box-sizing: border-box; }
+  .hk-form textarea { min-height: 100px; resize: vertical; }
+  .hk-btn { margin-top: 1rem; background: var(--accent, #3551d1); color: #fff; border: 0;
+    padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .hk-ann { border-top: 1px solid var(--border, #eee); padding: .8rem 0; }
+  .hk-ann h4 { margin: 0 0 .2rem; }
+  .hk-ann p { margin: .2rem 0; color: var(--muted, #6b7280); }
+  .hk-ann small { color: var(--muted, #9aa0ac); }
+  .hk-empty { color: var(--muted, #9aa0ac); padding: .6rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hk-wrap">
+  <div class="hk-hero">
+    <h1>🏛️ Hokim paneli</h1>
+    <p>Tuman doirasidagi barcha mahalla aholisiga rasmiy e'lon yuboring.</p>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="hk-card" style="border-left:4px solid var(--accent,#3551d1);">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% for d in districts %}
+  <div class="hk-card">
+    <h2 style="margin:0 0 .2rem;">{{ d.district.name }}</h2>
+    <div class="hk-stats">
+      <div class="hk-stat"><b>{{ d.residents }}</b><span>Aholi (obunachi)</span></div>
+      <div class="hk-stat"><b>{{ d.mahallas }}</b><span>Mahalla</span></div>
+      <div class="hk-stat"><b>{{ d.announcements|length }}</b><span>E'lonlar</span></div>
+    </div>
+
+    <form class="hk-form" method="post" action="{% url 'district_announce' d.district.pk %}"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      <label>Sarlavha</label>
+      <input type="text" name="title" maxlength="200" required placeholder="E'lon sarlavhasi">
+      <label>Matn</label>
+      <textarea name="text" required placeholder="E'lon matni..."></textarea>
+      <label>Rasm (ixtiyoriy)</label>
+      <input type="file" name="image" accept="image/*">
+      <button class="hk-btn" type="submit">📢 Butun tumanga yuborish</button>
+    </form>
+
+    <h3 style="margin:1.4rem 0 .4rem;">So'nggi e'lonlar</h3>
+    {% for a in d.announcements %}
+      <div class="hk-ann">
+        <h4>{{ a.title }}</h4>
+        <p>{{ a.text|truncatechars:160 }}</p>
+        <small>{{ a.created_at|date:"d.m.Y H:i" }} · {{ a.recipients_count }} ta aholiga yuborildi</small>
+      </div>
+    {% empty %}
+      <div class="hk-empty">Hali e'lon joylanmagan.</div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

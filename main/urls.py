@@ -95,6 +95,10 @@ urlpatterns = [
     path('mahalla/<int:pk>/complaint/', community_views.citizen_request_create, name='mahalla_complaint'),
     path('mahalla/complaint/<uuid:req_id>/status/', community_views.citizen_request_status, name='mahalla_complaint_status'),
 
+    # ─── HOKIM PANELI (tuman hokimi — butun tumanga e'lon) ────────────────────
+    path('hokim/', community_views.hokim_panel, name='hokim_panel'),
+    path('hokim/<int:pk>/announce/', community_views.district_announce, name='district_announce'),
+
     # ─── COMMUNITY: HELP CENTER ─────────────────────────────────────────────
     path('community/help/', community_views.help_list, name='help_list'),
     path('community/help/create/', community_views.help_create, name='help_create'),
