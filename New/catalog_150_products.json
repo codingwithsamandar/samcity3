@@ -1,0 +1,1562 @@
+{
+  "categories": [
+    {
+      "name": "Beverages",
+      "slug": "beverages",
+      "subcategories": [
+        {
+          "name": "Soft Drinks",
+          "slug": "soft-drinks"
+        },
+        {
+          "name": "Water",
+          "slug": "water"
+        },
+        {
+          "name": "Juices & Nectars",
+          "slug": "juices-and-nectars"
+        },
+        {
+          "name": "Tea & Coffee",
+          "slug": "tea-and-coffee"
+        },
+        {
+          "name": "Energy Drinks",
+          "slug": "energy-drinks"
+        }
+      ]
+    },
+    {
+      "name": "Dairy & Eggs",
+      "slug": "dairy-and-eggs",
+      "subcategories": [
+        {
+          "name": "Milk",
+          "slug": "milk"
+        },
+        {
+          "name": "Fermented Dairy",
+          "slug": "fermented-dairy"
+        },
+        {
+          "name": "Yogurt",
+          "slug": "yogurt"
+        },
+        {
+          "name": "Cheese & Butter",
+          "slug": "cheese-and-butter"
+        },
+        {
+          "name": "Eggs",
+          "slug": "eggs"
+        }
+      ]
+    },
+    {
+      "name": "Bakery & Grains",
+      "slug": "bakery-and-grains",
+      "subcategories": [
+        {
+          "name": "Bread & Non",
+          "slug": "bread-and-non"
+        },
+        {
+          "name": "Flour & Baking",
+          "slug": "flour-and-baking"
+        },
+        {
+          "name": "Pasta & Noodles",
+          "slug": "pasta-and-noodles"
+        },
+        {
+          "name": "Rice & Grains",
+          "slug": "rice-and-grains"
+        }
+      ]
+    },
+    {
+      "name": "Meat & Fish",
+      "slug": "meat-and-fish",
+      "subcategories": [
+        {
+          "name": "Beef & Lamb",
+          "slug": "beef-and-lamb"
+        },
+        {
+          "name": "Poultry",
+          "slug": "poultry"
+        },
+        {
+          "name": "Sausages & Deli",
+          "slug": "sausages-and-deli"
+        },
+        {
+          "name": "Fish",
+          "slug": "fish"
+        }
+      ]
+    },
+    {
+      "name": "Fruits & Vegetables",
+      "slug": "fruits-and-vegetables",
+      "subcategories": [
+        {
+          "name": "Fresh Fruits",
+          "slug": "fresh-fruits"
+        },
+        {
+          "name": "Fresh Vegetables",
+          "slug": "fresh-vegetables"
+        },
+        {
+          "name": "Fresh Herbs",
+          "slug": "fresh-herbs"
+        },
+        {
+          "name": "Dried Fruits & Nuts",
+          "slug": "dried-fruits-and-nuts"
+        }
+      ]
+    },
+    {
+      "name": "Pantry & Groceries",
+      "slug": "pantry-and-groceries",
+      "subcategories": [
+        {
+          "name": "Oils",
+          "slug": "oils"
+        },
+        {
+          "name": "Sugar, Salt & Spices",
+          "slug": "sugar-salt-and-spices"
+        },
+        {
+          "name": "Canned & Preserved",
+          "slug": "canned-and-preserved"
+        },
+        {
+          "name": "Sauces & Condiments",
+          "slug": "sauces-and-condiments"
+        }
+      ]
+    },
+    {
+      "name": "Snacks & Confectionery",
+      "slug": "snacks-and-confectionery",
+      "subcategories": [
+        {
+          "name": "Chocolate & Candy",
+          "slug": "chocolate-and-candy"
+        },
+        {
+          "name": "Cookies & Wafers",
+          "slug": "cookies-and-wafers"
+        },
+        {
+          "name": "Chips & Salty Snacks",
+          "slug": "chips-and-salty-snacks"
+        },
+        {
+          "name": "Ice Cream",
+          "slug": "ice-cream"
+        }
+      ]
+    },
+    {
+      "name": "Household",
+      "slug": "household",
+      "subcategories": [
+        {
+          "name": "Cleaning",
+          "slug": "cleaning"
+        },
+        {
+          "name": "Laundry",
+          "slug": "laundry"
+        },
+        {
+          "name": "Paper Goods",
+          "slug": "paper-goods"
+        },
+        {
+          "name": "Kitchen Supplies",
+          "slug": "kitchen-supplies"
+        }
+      ]
+    },
+    {
+      "name": "Personal Care",
+      "slug": "personal-care",
+      "subcategories": [
+        {
+          "name": "Hair Care",
+          "slug": "hair-care"
+        },
+        {
+          "name": "Oral Care",
+          "slug": "oral-care"
+        },
+        {
+          "name": "Body & Skin",
+          "slug": "body-and-skin"
+        },
+        {
+          "name": "Baby Care",
+          "slug": "baby-care"
+        }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "name": "Coca-Cola 1L",
+      "brand": "Coca-Cola",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Classic carbonated cola drink in a 1 litre PET bottle.",
+      "image_path": "catalog/coca-cola-1l.webp"
+    },
+    {
+      "name": "Coca-Cola Zero 0.5L",
+      "brand": "Coca-Cola",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Zero-sugar cola with the classic Coca-Cola taste.",
+      "image_path": "catalog/coca-cola-zero-0-5l.webp"
+    },
+    {
+      "name": "Fanta Orange 1L",
+      "brand": "Fanta",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Carbonated orange-flavoured soft drink.",
+      "image_path": "catalog/fanta-orange-1l.webp"
+    },
+    {
+      "name": "Sprite 1L",
+      "brand": "Sprite",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Carbonated lemon-lime soft drink.",
+      "image_path": "catalog/sprite-1l.webp"
+    },
+    {
+      "name": "Pepsi 1.5L",
+      "brand": "Pepsi",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Carbonated cola drink in a family-size 1.5 litre bottle.",
+      "image_path": "catalog/pepsi-1-5l.webp"
+    },
+    {
+      "name": "Mirinda Orange 1L",
+      "brand": "Mirinda",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Sparkling orange soft drink.",
+      "image_path": "catalog/mirinda-orange-1l.webp"
+    },
+    {
+      "name": "7UP 1L",
+      "brand": "7UP",
+      "category": "Beverages",
+      "subcategory": "Soft Drinks",
+      "unit": "bottle",
+      "description": "Caffeine-free lemon-lime carbonated drink.",
+      "image_path": "catalog/7up-1l.webp"
+    },
+    {
+      "name": "Hydrolife Still Water 1.5L",
+      "brand": "Hydrolife",
+      "category": "Beverages",
+      "subcategory": "Water",
+      "unit": "bottle",
+      "description": "Still drinking water in a 1.5 litre bottle.",
+      "image_path": "catalog/hydrolife-still-water-1-5l.webp"
+    },
+    {
+      "name": "Chortoq Mineral Water 1L",
+      "brand": "Chortoq",
+      "category": "Beverages",
+      "subcategory": "Water",
+      "unit": "bottle",
+      "description": "Natural mineral water from the Chortoq spring.",
+      "image_path": "catalog/chortoq-mineral-water-1l.webp"
+    },
+    {
+      "name": "Nestle Pure Life Water 5L",
+      "brand": "Nestle Pure Life",
+      "category": "Beverages",
+      "subcategory": "Water",
+      "unit": "bottle",
+      "description": "Purified still drinking water in a 5 litre canister.",
+      "image_path": "catalog/nestle-pure-life-water-5l.webp"
+    },
+    {
+      "name": "Piko Apple Juice 1L",
+      "brand": "Piko",
+      "category": "Beverages",
+      "subcategory": "Juices & Nectars",
+      "unit": "box",
+      "description": "Apple juice in a 1 litre carton pack.",
+      "image_path": "catalog/piko-apple-juice-1l.webp"
+    },
+    {
+      "name": "Piko Peach Nectar 1L",
+      "brand": "Piko",
+      "category": "Beverages",
+      "subcategory": "Juices & Nectars",
+      "unit": "box",
+      "description": "Peach nectar with fruit pulp in a carton pack.",
+      "image_path": "catalog/piko-peach-nectar-1l.webp"
+    },
+    {
+      "name": "Piko Tomato Juice 1L",
+      "brand": "Piko",
+      "category": "Beverages",
+      "subcategory": "Juices & Nectars",
+      "unit": "box",
+      "description": "Tomato juice with a pinch of salt.",
+      "image_path": "catalog/piko-tomato-juice-1l.webp"
+    },
+    {
+      "name": "Rich Orange Juice 1L",
+      "brand": "Rich",
+      "category": "Beverages",
+      "subcategory": "Juices & Nectars",
+      "unit": "box",
+      "description": "100% orange juice in a 1 litre carton.",
+      "image_path": "catalog/rich-orange-juice-1l.webp"
+    },
+    {
+      "name": "Lipton Yellow Label Tea 100 Bags",
+      "brand": "Lipton",
+      "category": "Beverages",
+      "subcategory": "Tea & Coffee",
+      "unit": "pack",
+      "description": "Black tea in 100 single-serve tea bags.",
+      "image_path": "catalog/lipton-yellow-label-tea-100-bags.webp"
+    },
+    {
+      "name": "Ahmad Tea Green Tea 100g",
+      "brand": "Ahmad Tea",
+      "category": "Beverages",
+      "subcategory": "Tea & Coffee",
+      "unit": "pack",
+      "description": "Loose-leaf green tea, 100 g pack.",
+      "image_path": "catalog/ahmad-tea-green-tea-100g.webp"
+    },
+    {
+      "name": "Nescafe Classic Instant Coffee 190g",
+      "brand": "Nescafe",
+      "category": "Beverages",
+      "subcategory": "Tea & Coffee",
+      "unit": "jar",
+      "description": "Instant coffee granules in a 190 g glass jar.",
+      "image_path": "catalog/nescafe-classic-instant-coffee-190g.webp"
+    },
+    {
+      "name": "Jacobs Monarch Ground Coffee 250g",
+      "brand": "Jacobs",
+      "category": "Beverages",
+      "subcategory": "Tea & Coffee",
+      "unit": "pack",
+      "description": "Roasted and ground coffee, 250 g vacuum pack.",
+      "image_path": "catalog/jacobs-monarch-ground-coffee-250g.webp"
+    },
+    {
+      "name": "Red Bull Energy Drink 250ml",
+      "brand": "Red Bull",
+      "category": "Beverages",
+      "subcategory": "Energy Drinks",
+      "unit": "can",
+      "description": "Carbonated energy drink with caffeine and taurine.",
+      "image_path": "catalog/red-bull-energy-drink-250ml.webp"
+    },
+    {
+      "name": "Adrenaline Rush Energy Drink 0.5L",
+      "brand": "Adrenaline Rush",
+      "category": "Beverages",
+      "subcategory": "Energy Drinks",
+      "unit": "can",
+      "description": "Energy drink with guarana and B-group vitamins.",
+      "image_path": "catalog/adrenaline-rush-energy-drink-0-5l.webp"
+    },
+    {
+      "name": "Pasteurized Milk 2.5% 1L",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Milk",
+      "unit": "bottle",
+      "description": "Pasteurized cow milk, 2.5% fat, 1 litre bottle.",
+      "image_path": "catalog/pasteurized-milk-2-5-1l.webp"
+    },
+    {
+      "name": "UHT Milk 3.2% 1L",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Milk",
+      "unit": "box",
+      "description": "Ultra-pasteurized milk, 3.2% fat, long shelf life.",
+      "image_path": "catalog/uht-milk-3-2-1l.webp"
+    },
+    {
+      "name": "Nesquik Chocolate Milk 200ml",
+      "brand": "Nesquik",
+      "category": "Dairy & Eggs",
+      "subcategory": "Milk",
+      "unit": "box",
+      "description": "Chocolate-flavoured milk drink for children.",
+      "image_path": "catalog/nesquik-chocolate-milk-200ml.webp"
+    },
+    {
+      "name": "Kefir 2.5% 500ml",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Fermented Dairy",
+      "unit": "bottle",
+      "description": "Fermented milk drink with live cultures.",
+      "image_path": "catalog/kefir-2-5-500ml.webp"
+    },
+    {
+      "name": "Qatiq 3.2% 500g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Fermented Dairy",
+      "unit": "jar",
+      "description": "Traditional Uzbek fermented milk product.",
+      "image_path": "catalog/qatiq-3-2-500g.webp"
+    },
+    {
+      "name": "Ayran 0.5L",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Fermented Dairy",
+      "unit": "bottle",
+      "description": "Salted yogurt drink, served chilled.",
+      "image_path": "catalog/ayran-0-5l.webp"
+    },
+    {
+      "name": "Suzma 400g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Fermented Dairy",
+      "unit": "jar",
+      "description": "Strained qatiq with a thick, creamy texture.",
+      "image_path": "catalog/suzma-400g.webp"
+    },
+    {
+      "name": "Sour Cream 20% 400g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Fermented Dairy",
+      "unit": "jar",
+      "description": "Smetana sour cream, 20% fat.",
+      "image_path": "catalog/sour-cream-20-400g.webp"
+    },
+    {
+      "name": "Activia Natural Yogurt 290g",
+      "brand": "Activia",
+      "category": "Dairy & Eggs",
+      "subcategory": "Yogurt",
+      "unit": "jar",
+      "description": "Natural yogurt with probiotic cultures.",
+      "image_path": "catalog/activia-natural-yogurt-290g.webp"
+    },
+    {
+      "name": "Strawberry Yogurt 290g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Yogurt",
+      "unit": "jar",
+      "description": "Creamy yogurt with strawberry pieces.",
+      "image_path": "catalog/strawberry-yogurt-290g.webp"
+    },
+    {
+      "name": "Butter 82.5% 200g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Cheese & Butter",
+      "unit": "pack",
+      "description": "Sweet cream butter, 82.5% fat.",
+      "image_path": "catalog/butter-82-5-200g.webp"
+    },
+    {
+      "name": "Hochland Cream Cheese 180g",
+      "brand": "Hochland",
+      "category": "Dairy & Eggs",
+      "subcategory": "Cheese & Butter",
+      "unit": "pack",
+      "description": "Soft cream cheese spread for sandwiches.",
+      "image_path": "catalog/hochland-cream-cheese-180g.webp"
+    },
+    {
+      "name": "Suluguni Cheese 300g",
+      "brand": "SamCity",
+      "category": "Dairy & Eggs",
+      "subcategory": "Cheese & Butter",
+      "unit": "pack",
+      "description": "Semi-hard brined cheese with a mild salty taste.",
+      "image_path": "catalog/suluguni-cheese-300g.webp"
+    },
+    {
+      "name": "Chicken Eggs C1 10 pcs",
+      "brand": "Local Farm",
+      "category": "Dairy & Eggs",
+      "subcategory": "Eggs",
+      "unit": "tray",
+      "description": "Fresh grade C1 chicken eggs, tray of 10.",
+      "image_path": "catalog/chicken-eggs-c1-10-pcs.webp"
+    },
+    {
+      "name": "Chicken Eggs C0 30 pcs",
+      "brand": "Local Farm",
+      "category": "Dairy & Eggs",
+      "subcategory": "Eggs",
+      "unit": "tray",
+      "description": "Fresh grade C0 chicken eggs, tray of 30.",
+      "image_path": "catalog/chicken-eggs-c0-30-pcs.webp"
+    },
+    {
+      "name": "Obi Non Flatbread",
+      "brand": "Local Bakery",
+      "category": "Bakery & Grains",
+      "subcategory": "Bread & Non",
+      "unit": "piece",
+      "description": "Traditional Uzbek tandoor bread baked daily.",
+      "image_path": "catalog/obi-non-flatbread.webp"
+    },
+    {
+      "name": "Patyr Non Flatbread",
+      "brand": "Local Bakery",
+      "category": "Bakery & Grains",
+      "subcategory": "Bread & Non",
+      "unit": "piece",
+      "description": "Rich layered tandoor bread with a golden crust.",
+      "image_path": "catalog/patyr-non-flatbread.webp"
+    },
+    {
+      "name": "Sliced White Bread 500g",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Bread & Non",
+      "unit": "loaf",
+      "description": "Soft white sandwich loaf, pre-sliced.",
+      "image_path": "catalog/sliced-white-bread-500g.webp"
+    },
+    {
+      "name": "Rye Bread 400g",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Bread & Non",
+      "unit": "loaf",
+      "description": "Dark rye loaf with a dense crumb.",
+      "image_path": "catalog/rye-bread-400g.webp"
+    },
+    {
+      "name": "Lavash Thin Flatbread 200g",
+      "brand": "Local Bakery",
+      "category": "Bakery & Grains",
+      "subcategory": "Bread & Non",
+      "unit": "pack",
+      "description": "Thin unleavened flatbread for wraps.",
+      "image_path": "catalog/lavash-thin-flatbread-200g.webp"
+    },
+    {
+      "name": "Wheat Flour Premium 2kg",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Flour & Baking",
+      "unit": "bag",
+      "description": "Premium grade wheat flour for baking.",
+      "image_path": "catalog/wheat-flour-premium-2kg.webp"
+    },
+    {
+      "name": "Dr. Oetker Baking Powder 10g",
+      "brand": "Dr. Oetker",
+      "category": "Bakery & Grains",
+      "subcategory": "Flour & Baking",
+      "unit": "pack",
+      "description": "Baking powder sachet for cakes and pastries.",
+      "image_path": "catalog/dr-oetker-baking-powder-10g.webp"
+    },
+    {
+      "name": "Saf-Moment Dry Yeast 11g",
+      "brand": "Saf-Moment",
+      "category": "Bakery & Grains",
+      "subcategory": "Flour & Baking",
+      "unit": "pack",
+      "description": "Instant dry yeast for bread and dough.",
+      "image_path": "catalog/saf-moment-dry-yeast-11g.webp"
+    },
+    {
+      "name": "Makfa Spaghetti 450g",
+      "brand": "Makfa",
+      "category": "Bakery & Grains",
+      "subcategory": "Pasta & Noodles",
+      "unit": "pack",
+      "description": "Durum wheat spaghetti, 450 g pack.",
+      "image_path": "catalog/makfa-spaghetti-450g.webp"
+    },
+    {
+      "name": "Vermicelli 400g",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Pasta & Noodles",
+      "unit": "pack",
+      "description": "Thin wheat vermicelli for soups and side dishes.",
+      "image_path": "catalog/vermicelli-400g.webp"
+    },
+    {
+      "name": "Doshirak Instant Noodles Chicken 90g",
+      "brand": "Doshirak",
+      "category": "Bakery & Grains",
+      "subcategory": "Pasta & Noodles",
+      "unit": "pack",
+      "description": "Instant noodles with chicken flavour seasoning.",
+      "image_path": "catalog/doshirak-instant-noodles-chicken-90g.webp"
+    },
+    {
+      "name": "Devzira Rice 1kg",
+      "brand": "Local Farm",
+      "category": "Bakery & Grains",
+      "subcategory": "Rice & Grains",
+      "unit": "bag",
+      "description": "Traditional Devzira rice, ideal for plov.",
+      "image_path": "catalog/devzira-rice-1kg.webp"
+    },
+    {
+      "name": "Lazer Rice 1kg",
+      "brand": "Local Farm",
+      "category": "Bakery & Grains",
+      "subcategory": "Rice & Grains",
+      "unit": "bag",
+      "description": "Long-grain Lazer rice for everyday cooking.",
+      "image_path": "catalog/lazer-rice-1kg.webp"
+    },
+    {
+      "name": "Buckwheat Groats 800g",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Rice & Grains",
+      "unit": "bag",
+      "description": "Roasted buckwheat groats, 800 g pack.",
+      "image_path": "catalog/buckwheat-groats-800g.webp"
+    },
+    {
+      "name": "Oat Flakes 500g",
+      "brand": "SamCity",
+      "category": "Bakery & Grains",
+      "subcategory": "Rice & Grains",
+      "unit": "pack",
+      "description": "Rolled oat flakes for porridge and baking.",
+      "image_path": "catalog/oat-flakes-500g.webp"
+    },
+    {
+      "name": "Beef Tenderloin 1kg",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Beef & Lamb",
+      "unit": "kg",
+      "description": "Chilled beef tenderloin, sold by weight.",
+      "image_path": "catalog/beef-tenderloin-1kg.webp"
+    },
+    {
+      "name": "Ground Beef 500g",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Beef & Lamb",
+      "unit": "pack",
+      "description": "Freshly minced beef in a 500 g tray.",
+      "image_path": "catalog/ground-beef-500g.webp"
+    },
+    {
+      "name": "Lamb Ribs 1kg",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Beef & Lamb",
+      "unit": "kg",
+      "description": "Chilled lamb ribs for grilling and stews.",
+      "image_path": "catalog/lamb-ribs-1kg.webp"
+    },
+    {
+      "name": "Whole Chicken 1.5kg",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Poultry",
+      "unit": "piece",
+      "description": "Chilled whole broiler chicken, about 1.5 kg.",
+      "image_path": "catalog/whole-chicken-1-5kg.webp"
+    },
+    {
+      "name": "Chicken Fillet 1kg",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Poultry",
+      "unit": "kg",
+      "description": "Skinless chicken breast fillet, chilled.",
+      "image_path": "catalog/chicken-fillet-1kg.webp"
+    },
+    {
+      "name": "Chicken Drumsticks 1kg",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Poultry",
+      "unit": "kg",
+      "description": "Chilled chicken drumsticks, sold by weight.",
+      "image_path": "catalog/chicken-drumsticks-1kg.webp"
+    },
+    {
+      "name": "Doctor's Boiled Sausage 500g",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Sausages & Deli",
+      "unit": "pack",
+      "description": "Classic boiled sausage with a mild taste.",
+      "image_path": "catalog/doctors-boiled-sausage-500g.webp"
+    },
+    {
+      "name": "Beef Sausages 400g",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Sausages & Deli",
+      "unit": "pack",
+      "description": "Beef sausages ready to boil or fry.",
+      "image_path": "catalog/beef-sausages-400g.webp"
+    },
+    {
+      "name": "Kazi Horse Sausage 300g",
+      "brand": "Local Farm",
+      "category": "Meat & Fish",
+      "subcategory": "Sausages & Deli",
+      "unit": "pack",
+      "description": "Traditional horse meat sausage, a festive delicacy.",
+      "image_path": "catalog/kazi-horse-sausage-300g.webp"
+    },
+    {
+      "name": "Smoked Beef Salami 300g",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Sausages & Deli",
+      "unit": "pack",
+      "description": "Dry-cured smoked beef salami.",
+      "image_path": "catalog/smoked-beef-salami-300g.webp"
+    },
+    {
+      "name": "Frozen Mackerel 1kg",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Fish",
+      "unit": "kg",
+      "description": "Whole frozen mackerel, sold by weight.",
+      "image_path": "catalog/frozen-mackerel-1kg.webp"
+    },
+    {
+      "name": "Canned Tuna in Oil 185g",
+      "brand": "SamCity",
+      "category": "Meat & Fish",
+      "subcategory": "Fish",
+      "unit": "can",
+      "description": "Tuna chunks in sunflower oil.",
+      "image_path": "catalog/canned-tuna-in-oil-185g.webp"
+    },
+    {
+      "name": "Golden Apples 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Sweet Golden Delicious apples, sold by weight.",
+      "image_path": "catalog/golden-apples-1kg.webp"
+    },
+    {
+      "name": "Bananas 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Imported ripe bananas, sold by weight.",
+      "image_path": "catalog/bananas-1kg.webp"
+    },
+    {
+      "name": "Oranges 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Juicy sweet oranges, sold by weight.",
+      "image_path": "catalog/oranges-1kg.webp"
+    },
+    {
+      "name": "Husayni Grapes 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Long sweet Husayni table grapes.",
+      "image_path": "catalog/husayni-grapes-1kg.webp"
+    },
+    {
+      "name": "Watermelon",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "piece",
+      "description": "Whole seasonal watermelon.",
+      "image_path": "catalog/watermelon.webp"
+    },
+    {
+      "name": "Mirzachul Melon",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "piece",
+      "description": "Aromatic Mirzachul melon, a local favourite.",
+      "image_path": "catalog/mirzachul-melon.webp"
+    },
+    {
+      "name": "Pomegranate 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Ripe pomegranates with deep red seeds.",
+      "image_path": "catalog/pomegranate-1kg.webp"
+    },
+    {
+      "name": "Lemons 500g",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Fruits",
+      "unit": "kg",
+      "description": "Fresh lemons, sold in 500 g portions.",
+      "image_path": "catalog/lemons-500g.webp"
+    },
+    {
+      "name": "Potatoes 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Everyday potatoes for boiling and frying.",
+      "image_path": "catalog/potatoes-1kg.webp"
+    },
+    {
+      "name": "Onions 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Yellow cooking onions, sold by weight.",
+      "image_path": "catalog/onions-1kg.webp"
+    },
+    {
+      "name": "Carrots 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Fresh carrots, essential for plov.",
+      "image_path": "catalog/carrots-1kg.webp"
+    },
+    {
+      "name": "Tomatoes 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Ripe salad tomatoes, sold by weight.",
+      "image_path": "catalog/tomatoes-1kg.webp"
+    },
+    {
+      "name": "Cucumbers 1kg",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Crisp fresh cucumbers, sold by weight.",
+      "image_path": "catalog/cucumbers-1kg.webp"
+    },
+    {
+      "name": "Bell Peppers 500g",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "kg",
+      "description": "Sweet bell peppers in mixed colours.",
+      "image_path": "catalog/bell-peppers-500g.webp"
+    },
+    {
+      "name": "White Cabbage",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "piece",
+      "description": "Whole head of fresh white cabbage.",
+      "image_path": "catalog/white-cabbage.webp"
+    },
+    {
+      "name": "Garlic 200g",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Vegetables",
+      "unit": "pack",
+      "description": "Fresh garlic bulbs in a 200 g pack.",
+      "image_path": "catalog/garlic-200g.webp"
+    },
+    {
+      "name": "Fresh Dill",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Herbs",
+      "unit": "bunch",
+      "description": "Aromatic fresh dill, sold by the bunch.",
+      "image_path": "catalog/fresh-dill.webp"
+    },
+    {
+      "name": "Fresh Cilantro",
+      "brand": "Local Farm",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Fresh Herbs",
+      "unit": "bunch",
+      "description": "Fresh coriander leaves, sold by the bunch.",
+      "image_path": "catalog/fresh-cilantro.webp"
+    },
+    {
+      "name": "Raisins 500g",
+      "brand": "SamCity",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Dried Fruits & Nuts",
+      "unit": "pack",
+      "description": "Sun-dried seedless raisins.",
+      "image_path": "catalog/raisins-500g.webp"
+    },
+    {
+      "name": "Dried Apricots 500g",
+      "brand": "SamCity",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Dried Fruits & Nuts",
+      "unit": "pack",
+      "description": "Sweet dried apricots from local orchards.",
+      "image_path": "catalog/dried-apricots-500g.webp"
+    },
+    {
+      "name": "Walnut Kernels 300g",
+      "brand": "SamCity",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Dried Fruits & Nuts",
+      "unit": "pack",
+      "description": "Shelled walnut kernels, ready to eat.",
+      "image_path": "catalog/walnut-kernels-300g.webp"
+    },
+    {
+      "name": "Salted Peanuts 200g",
+      "brand": "SamCity",
+      "category": "Fruits & Vegetables",
+      "subcategory": "Dried Fruits & Nuts",
+      "unit": "pack",
+      "description": "Roasted and salted peanuts.",
+      "image_path": "catalog/salted-peanuts-200g.webp"
+    },
+    {
+      "name": "Oleina Sunflower Oil 1L",
+      "brand": "Oleina",
+      "category": "Pantry & Groceries",
+      "subcategory": "Oils",
+      "unit": "bottle",
+      "description": "Refined sunflower oil for frying and salads.",
+      "image_path": "catalog/oleina-sunflower-oil-1l.webp"
+    },
+    {
+      "name": "Sunflower Oil 5L",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Oils",
+      "unit": "bottle",
+      "description": "Refined sunflower oil in a 5 litre canister.",
+      "image_path": "catalog/sunflower-oil-5l.webp"
+    },
+    {
+      "name": "Cottonseed Oil 1L",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Oils",
+      "unit": "bottle",
+      "description": "Traditional cottonseed oil, widely used for plov.",
+      "image_path": "catalog/cottonseed-oil-1l.webp"
+    },
+    {
+      "name": "Borges Olive Oil 500ml",
+      "brand": "Borges",
+      "category": "Pantry & Groceries",
+      "subcategory": "Oils",
+      "unit": "bottle",
+      "description": "Extra virgin olive oil in a glass bottle.",
+      "image_path": "catalog/borges-olive-oil-500ml.webp"
+    },
+    {
+      "name": "Granulated Sugar 1kg",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sugar, Salt & Spices",
+      "unit": "bag",
+      "description": "White granulated sugar, 1 kg pack.",
+      "image_path": "catalog/granulated-sugar-1kg.webp"
+    },
+    {
+      "name": "Iodized Salt 1kg",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sugar, Salt & Spices",
+      "unit": "pack",
+      "description": "Fine iodized table salt.",
+      "image_path": "catalog/iodized-salt-1kg.webp"
+    },
+    {
+      "name": "Ground Black Pepper 50g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sugar, Salt & Spices",
+      "unit": "pack",
+      "description": "Finely ground black pepper.",
+      "image_path": "catalog/ground-black-pepper-50g.webp"
+    },
+    {
+      "name": "Cumin Seeds (Zira) 50g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sugar, Salt & Spices",
+      "unit": "pack",
+      "description": "Whole cumin seeds, essential for plov.",
+      "image_path": "catalog/cumin-seeds-zira-50g.webp"
+    },
+    {
+      "name": "Paprika Powder 50g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sugar, Salt & Spices",
+      "unit": "pack",
+      "description": "Mild ground sweet paprika.",
+      "image_path": "catalog/paprika-powder-50g.webp"
+    },
+    {
+      "name": "Canned Green Peas 400g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Canned & Preserved",
+      "unit": "can",
+      "description": "Tender green peas in brine.",
+      "image_path": "catalog/canned-green-peas-400g.webp"
+    },
+    {
+      "name": "Tomato Paste 500g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Canned & Preserved",
+      "unit": "jar",
+      "description": "Concentrated tomato paste in a glass jar.",
+      "image_path": "catalog/tomato-paste-500g.webp"
+    },
+    {
+      "name": "Pickled Cucumbers 900g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Canned & Preserved",
+      "unit": "jar",
+      "description": "Crunchy pickled cucumbers in brine.",
+      "image_path": "catalog/pickled-cucumbers-900g.webp"
+    },
+    {
+      "name": "Condensed Milk 380g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Canned & Preserved",
+      "unit": "can",
+      "description": "Sweetened condensed milk for desserts and coffee.",
+      "image_path": "catalog/condensed-milk-380g.webp"
+    },
+    {
+      "name": "Heinz Ketchup 350g",
+      "brand": "Heinz",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "bottle",
+      "description": "Classic tomato ketchup in a squeeze bottle.",
+      "image_path": "catalog/heinz-ketchup-350g.webp"
+    },
+    {
+      "name": "Mayonnaise 67% 400g",
+      "brand": "Mr. Ricco",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "jar",
+      "description": "Provencal-style mayonnaise, 67% fat.",
+      "image_path": "catalog/mayonnaise-67-400g.webp"
+    },
+    {
+      "name": "Soy Sauce 200ml",
+      "brand": "Sen Soy",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "bottle",
+      "description": "Naturally brewed soy sauce.",
+      "image_path": "catalog/soy-sauce-200ml.webp"
+    },
+    {
+      "name": "Table Vinegar 9% 500ml",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "bottle",
+      "description": "Table vinegar for marinades and salads.",
+      "image_path": "catalog/table-vinegar-9-500ml.webp"
+    },
+    {
+      "name": "Chili Adjika Sauce 300g",
+      "brand": "SamCity",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "jar",
+      "description": "Spicy adjika sauce with chili and garlic.",
+      "image_path": "catalog/chili-adjika-sauce-300g.webp"
+    },
+    {
+      "name": "Natural Honey 500g",
+      "brand": "Local Farm",
+      "category": "Pantry & Groceries",
+      "subcategory": "Sauces & Condiments",
+      "unit": "jar",
+      "description": "Natural flower honey in a glass jar.",
+      "image_path": "catalog/natural-honey-500g.webp"
+    },
+    {
+      "name": "Snickers Bar 50g",
+      "brand": "Snickers",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Chocolate bar with peanuts, caramel and nougat.",
+      "image_path": "catalog/snickers-bar-50g.webp"
+    },
+    {
+      "name": "Mars Bar 51g",
+      "brand": "Mars",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Chocolate bar with soft nougat and caramel.",
+      "image_path": "catalog/mars-bar-51g.webp"
+    },
+    {
+      "name": "Twix Bar 55g",
+      "brand": "Twix",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Twin biscuit fingers with caramel and chocolate.",
+      "image_path": "catalog/twix-bar-55g.webp"
+    },
+    {
+      "name": "Milka Alpine Milk Chocolate 90g",
+      "brand": "Milka",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Smooth alpine milk chocolate tablet.",
+      "image_path": "catalog/milka-alpine-milk-chocolate-90g.webp"
+    },
+    {
+      "name": "Alpen Gold Hazelnut Chocolate 85g",
+      "brand": "Alpen Gold",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Milk chocolate with hazelnut pieces.",
+      "image_path": "catalog/alpen-gold-hazelnut-chocolate-85g.webp"
+    },
+    {
+      "name": "KitKat 4 Fingers 41g",
+      "brand": "KitKat",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "bar",
+      "description": "Crispy wafer fingers covered in milk chocolate.",
+      "image_path": "catalog/kitkat-4-fingers-41g.webp"
+    },
+    {
+      "name": "Sunflower Halva 350g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chocolate & Candy",
+      "unit": "pack",
+      "description": "Traditional sunflower seed halva.",
+      "image_path": "catalog/sunflower-halva-350g.webp"
+    },
+    {
+      "name": "Oreo Cookies 95g",
+      "brand": "Oreo",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Cookies & Wafers",
+      "unit": "pack",
+      "description": "Cocoa sandwich cookies with vanilla cream.",
+      "image_path": "catalog/oreo-cookies-95g.webp"
+    },
+    {
+      "name": "Yubileynoye Cookies 112g",
+      "brand": "Yubileynoye",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Cookies & Wafers",
+      "unit": "pack",
+      "description": "Classic crispy tea biscuits.",
+      "image_path": "catalog/yubileynoye-cookies-112g.webp"
+    },
+    {
+      "name": "Barni Sponge Cake 30g",
+      "brand": "Barni",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Cookies & Wafers",
+      "unit": "piece",
+      "description": "Soft sponge cake with chocolate filling.",
+      "image_path": "catalog/barni-sponge-cake-30g.webp"
+    },
+    {
+      "name": "Chocolate Wafers 220g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Cookies & Wafers",
+      "unit": "pack",
+      "description": "Crispy wafers with chocolate cream layers.",
+      "image_path": "catalog/chocolate-wafers-220g.webp"
+    },
+    {
+      "name": "Salted Crackers 180g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Cookies & Wafers",
+      "unit": "pack",
+      "description": "Light salted crackers for snacking.",
+      "image_path": "catalog/salted-crackers-180g.webp"
+    },
+    {
+      "name": "Lay's Classic Chips 80g",
+      "brand": "Lay's",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chips & Salty Snacks",
+      "unit": "pack",
+      "description": "Salted potato chips in a 80 g bag.",
+      "image_path": "catalog/lays-classic-chips-80g.webp"
+    },
+    {
+      "name": "Lay's Sour Cream & Onion 80g",
+      "brand": "Lay's",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chips & Salty Snacks",
+      "unit": "pack",
+      "description": "Potato chips with sour cream and onion flavour.",
+      "image_path": "catalog/lays-sour-cream-and-onion-80g.webp"
+    },
+    {
+      "name": "Pringles Original 165g",
+      "brand": "Pringles",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chips & Salty Snacks",
+      "unit": "box",
+      "description": "Stackable salted potato crisps in a tube.",
+      "image_path": "catalog/pringles-original-165g.webp"
+    },
+    {
+      "name": "Salted Popcorn 100g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Chips & Salty Snacks",
+      "unit": "pack",
+      "description": "Ready-to-eat salted popcorn.",
+      "image_path": "catalog/salted-popcorn-100g.webp"
+    },
+    {
+      "name": "Vanilla Plombir Ice Cream 400g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Ice Cream",
+      "unit": "box",
+      "description": "Creamy vanilla plombir ice cream tub.",
+      "image_path": "catalog/vanilla-plombir-ice-cream-400g.webp"
+    },
+    {
+      "name": "Chocolate Ice Cream Cone 100g",
+      "brand": "SamCity",
+      "category": "Snacks & Confectionery",
+      "subcategory": "Ice Cream",
+      "unit": "piece",
+      "description": "Waffle cone with chocolate ice cream.",
+      "image_path": "catalog/chocolate-ice-cream-cone-100g.webp"
+    },
+    {
+      "name": "Fairy Dishwashing Liquid 900ml",
+      "brand": "Fairy",
+      "category": "Household",
+      "subcategory": "Cleaning",
+      "unit": "bottle",
+      "description": "Concentrated dishwashing liquid, cuts grease fast.",
+      "image_path": "catalog/fairy-dishwashing-liquid-900ml.webp"
+    },
+    {
+      "name": "Domestos Bleach 1L",
+      "brand": "Domestos",
+      "category": "Household",
+      "subcategory": "Cleaning",
+      "unit": "bottle",
+      "description": "Thick bleach for toilets and hard surfaces.",
+      "image_path": "catalog/domestos-bleach-1l.webp"
+    },
+    {
+      "name": "Glass Cleaner Spray 500ml",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Cleaning",
+      "unit": "bottle",
+      "description": "Streak-free spray for windows and mirrors.",
+      "image_path": "catalog/glass-cleaner-spray-500ml.webp"
+    },
+    {
+      "name": "Floor Cleaner 1L",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Cleaning",
+      "unit": "bottle",
+      "description": "Multi-surface floor cleaner with fresh scent.",
+      "image_path": "catalog/floor-cleaner-1l.webp"
+    },
+    {
+      "name": "Kitchen Sponges 5 pcs",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Cleaning",
+      "unit": "pack",
+      "description": "Two-layer washing-up sponges, pack of 5.",
+      "image_path": "catalog/kitchen-sponges-5-pcs.webp"
+    },
+    {
+      "name": "Ariel Washing Powder 3kg",
+      "brand": "Ariel",
+      "category": "Household",
+      "subcategory": "Laundry",
+      "unit": "pack",
+      "description": "Automatic washing powder for white and colour.",
+      "image_path": "catalog/ariel-washing-powder-3kg.webp"
+    },
+    {
+      "name": "Tide Washing Powder 3kg",
+      "brand": "Tide",
+      "category": "Household",
+      "subcategory": "Laundry",
+      "unit": "pack",
+      "description": "Automatic laundry powder with active enzymes.",
+      "image_path": "catalog/tide-washing-powder-3kg.webp"
+    },
+    {
+      "name": "Persil Liquid Detergent 1.3L",
+      "brand": "Persil",
+      "category": "Household",
+      "subcategory": "Laundry",
+      "unit": "bottle",
+      "description": "Liquid laundry detergent for machine washing.",
+      "image_path": "catalog/persil-liquid-detergent-1-3l.webp"
+    },
+    {
+      "name": "Lenor Fabric Softener 1L",
+      "brand": "Lenor",
+      "category": "Household",
+      "subcategory": "Laundry",
+      "unit": "bottle",
+      "description": "Fabric conditioner with a long-lasting fragrance.",
+      "image_path": "catalog/lenor-fabric-softener-1l.webp"
+    },
+    {
+      "name": "Toilet Paper 8 Rolls",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Paper Goods",
+      "unit": "pack",
+      "description": "Two-ply toilet paper, pack of 8 rolls.",
+      "image_path": "catalog/toilet-paper-8-rolls.webp"
+    },
+    {
+      "name": "Paper Towels 2 Rolls",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Paper Goods",
+      "unit": "pack",
+      "description": "Absorbent kitchen paper towels, 2 rolls.",
+      "image_path": "catalog/paper-towels-2-rolls.webp"
+    },
+    {
+      "name": "Paper Napkins 100 pcs",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Paper Goods",
+      "unit": "pack",
+      "description": "White table napkins, pack of 100.",
+      "image_path": "catalog/paper-napkins-100-pcs.webp"
+    },
+    {
+      "name": "Garbage Bags 30L 20 pcs",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Kitchen Supplies",
+      "unit": "roll",
+      "description": "Durable bin liners, 30 litre, roll of 20.",
+      "image_path": "catalog/garbage-bags-30l-20-pcs.webp"
+    },
+    {
+      "name": "Aluminium Foil 10m",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Kitchen Supplies",
+      "unit": "roll",
+      "description": "Food-grade aluminium foil for baking and storage.",
+      "image_path": "catalog/aluminium-foil-10m.webp"
+    },
+    {
+      "name": "Cling Film 30m",
+      "brand": "SamCity",
+      "category": "Household",
+      "subcategory": "Kitchen Supplies",
+      "unit": "roll",
+      "description": "Transparent cling film for food wrapping.",
+      "image_path": "catalog/cling-film-30m.webp"
+    },
+    {
+      "name": "Head & Shoulders Shampoo 400ml",
+      "brand": "Head & Shoulders",
+      "category": "Personal Care",
+      "subcategory": "Hair Care",
+      "unit": "bottle",
+      "description": "Anti-dandruff shampoo for daily use.",
+      "image_path": "catalog/head-and-shoulders-shampoo-400ml.webp"
+    },
+    {
+      "name": "Pantene Pro-V Shampoo 400ml",
+      "brand": "Pantene",
+      "category": "Personal Care",
+      "subcategory": "Hair Care",
+      "unit": "bottle",
+      "description": "Nourishing shampoo for damaged hair.",
+      "image_path": "catalog/pantene-pro-v-shampoo-400ml.webp"
+    },
+    {
+      "name": "Schauma Shampoo 400ml",
+      "brand": "Schauma",
+      "category": "Personal Care",
+      "subcategory": "Hair Care",
+      "unit": "bottle",
+      "description": "Shampoo with herbal extracts for daily care.",
+      "image_path": "catalog/schauma-shampoo-400ml.webp"
+    },
+    {
+      "name": "Colgate Toothpaste 100ml",
+      "brand": "Colgate",
+      "category": "Personal Care",
+      "subcategory": "Oral Care",
+      "unit": "tube",
+      "description": "Fluoride toothpaste for cavity protection.",
+      "image_path": "catalog/colgate-toothpaste-100ml.webp"
+    },
+    {
+      "name": "Sensodyne Toothpaste 75ml",
+      "brand": "Sensodyne",
+      "category": "Personal Care",
+      "subcategory": "Oral Care",
+      "unit": "tube",
+      "description": "Toothpaste for sensitive teeth.",
+      "image_path": "catalog/sensodyne-toothpaste-75ml.webp"
+    },
+    {
+      "name": "Toothbrush Medium",
+      "brand": "Colgate",
+      "category": "Personal Care",
+      "subcategory": "Oral Care",
+      "unit": "piece",
+      "description": "Medium-bristle toothbrush for everyday cleaning.",
+      "image_path": "catalog/toothbrush-medium.webp"
+    },
+    {
+      "name": "Dove Beauty Bar 100g",
+      "brand": "Dove",
+      "category": "Personal Care",
+      "subcategory": "Body & Skin",
+      "unit": "bar",
+      "description": "Moisturising beauty bar with cream.",
+      "image_path": "catalog/dove-beauty-bar-100g.webp"
+    },
+    {
+      "name": "Safeguard Soap 90g",
+      "brand": "Safeguard",
+      "category": "Personal Care",
+      "subcategory": "Body & Skin",
+      "unit": "bar",
+      "description": "Antibacterial soap bar for hand washing.",
+      "image_path": "catalog/safeguard-soap-90g.webp"
+    },
+    {
+      "name": "Nivea Soft Cream 75ml",
+      "brand": "Nivea",
+      "category": "Personal Care",
+      "subcategory": "Body & Skin",
+      "unit": "jar",
+      "description": "Moisturising cream for face, hands and body.",
+      "image_path": "catalog/nivea-soft-cream-75ml.webp"
+    },
+    {
+      "name": "Rexona Deodorant Spray 150ml",
+      "brand": "Rexona",
+      "category": "Personal Care",
+      "subcategory": "Body & Skin",
+      "unit": "can",
+      "description": "48-hour antiperspirant deodorant spray.",
+      "image_path": "catalog/rexona-deodorant-spray-150ml.webp"
+    },
+    {
+      "name": "Gillette Razor 3 Blades",
+      "brand": "Gillette",
+      "category": "Personal Care",
+      "subcategory": "Body & Skin",
+      "unit": "piece",
+      "description": "Disposable razor with a three-blade head.",
+      "image_path": "catalog/gillette-razor-3-blades.webp"
+    },
+    {
+      "name": "Pampers Diapers Size 4 58 pcs",
+      "brand": "Pampers",
+      "category": "Personal Care",
+      "subcategory": "Baby Care",
+      "unit": "pack",
+      "description": "Soft absorbent diapers for 9-14 kg babies.",
+      "image_path": "catalog/pampers-diapers-size-4-58-pcs.webp"
+    },
+    {
+      "name": "Baby Wet Wipes 72 pcs",
+      "brand": "Pampers",
+      "category": "Personal Care",
+      "subcategory": "Baby Care",
+      "unit": "pack",
+      "description": "Gentle fragrance-free baby wipes.",
+      "image_path": "catalog/baby-wet-wipes-72-pcs.webp"
+    },
+    {
+      "name": "Baby Shampoo 200ml",
+      "brand": "Johnson's",
+      "category": "Personal Care",
+      "subcategory": "Baby Care",
+      "unit": "bottle",
+      "description": "No-tears baby shampoo for delicate hair.",
+      "image_path": "catalog/baby-shampoo-200ml.webp"
+    }
+  ]
+}
