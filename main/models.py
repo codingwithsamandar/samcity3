@@ -967,6 +967,11 @@ class AdCampaign(models.Model):
     role = models.CharField('Rol', max_length=20, choices=ROLE_CHOICES, blank=True)
 
     # ── Yuborish parametrlari ──
+    send_to_all = models.BooleanField(
+        'Hammaga yuborish', default=False,
+        help_text="Yoqilsa — filtrlarga mos BARCHA faol foydalanuvchiga bir vaqtda "
+                  "yuboriladi (random N va kuniga-1 cheklovisiz). Filtrlar bo'sh "
+                  "bo'lsa — butun bazadagi hamma foydalanuvchiga.")
     target_count = models.PositiveIntegerField('Nechta kishiga (random)', default=50)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', db_index=True)
     sent_count = models.PositiveIntegerField('Yuborildi (fakt)', default=0)
@@ -1002,12 +1007,21 @@ class AdCampaign(models.Model):
             qs = qs.filter(neighborhood__district_id=self.district_id)
         # Yosh → tug'ilgan sana oralig'iga aylantiriladi (birth_date bor bo'lsa).
         today = date.today()
+
+        def _birth_cutoff(age):
+            # today - age yil. 29-fevralda (kabisa) xatolikni oldini olish uchun
+            # 28-fevralga tushiramiz.
+            try:
+                return today.replace(year=today.year - age)
+            except ValueError:
+                return today.replace(year=today.year - age, day=28)
+
         if self.age_min is not None:
-            latest_birth = today.replace(year=today.year - self.age_min)
-            qs = qs.filter(birth_date__isnull=False, birth_date__lte=latest_birth)
+            qs = qs.filter(birth_date__isnull=False,
+                           birth_date__lte=_birth_cutoff(self.age_min))
         if self.age_max is not None:
-            earliest_birth = today.replace(year=today.year - self.age_max - 1)
-            qs = qs.filter(birth_date__isnull=False, birth_date__gt=earliest_birth)
+            qs = qs.filter(birth_date__isnull=False,
+                           birth_date__gt=_birth_cutoff(self.age_max + 1))
         if exclude_recent:
             cutoff = timezone.now() - timedelta(hours=24)
             recent = AdCampaignDelivery.objects.filter(
@@ -1020,17 +1034,24 @@ class AdCampaign(models.Model):
         return self.audience_queryset(exclude_recent=False).count()
 
     def send(self):
-        """Auditoriyadan random `target_count` kishiga bildirishnoma yuboradi.
+        """Bildirishnoma yuboradi va yuborilgan haqiqiy sonni qaytaradi.
 
-        Yuborilgan haqiqiy sonni qaytaradi. Idempotent emas — qayta chaqirilsa
-        yana yuboradi (lekin kuniga-1 cheklovi ko'pini to'sadi)."""
+        `send_to_all=True` bo'lsa — filtrlarga mos BARCHA foydalanuvchiga (random
+        va kuniga-1 cheklovisiz). Aks holda auditoriyadan random `target_count`
+        kishiga. Idempotent emas — qayta chaqirilsa yana yuboradi (normal rejimda
+        kuniga-1 cheklovi ko'pini to'sadi)."""
         from django.utils import timezone
         from notifications.models import notify
-        candidates = list(self.audience_queryset(exclude_recent=True)
-                          .values_list('id', flat=True))
-        import random
-        random.shuffle(candidates)
-        chosen_ids = candidates[:self.target_count]
+        if self.send_to_all:
+            # Hammaga: 24-soatlik cheklovni ham chetlab, to'liq auditoriyaga.
+            chosen_ids = list(self.audience_queryset(exclude_recent=False)
+                              .values_list('id', flat=True))
+        else:
+            candidates = list(self.audience_queryset(exclude_recent=True)
+                              .values_list('id', flat=True))
+            import random
+            random.shuffle(candidates)
+            chosen_ids = candidates[:self.target_count]
         sent = 0
         for uid in chosen_ids:
             user = User.objects.filter(pk=uid).first()

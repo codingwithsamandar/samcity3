@@ -227,9 +227,10 @@ class DistrictAnnouncementAdmin(admin.ModelAdmin):
 # ── REKLAMA KAMPANIYASI ──────────────────────────────────────────────────────
 @admin.register(AdCampaign)
 class AdCampaignAdmin(admin.ModelAdmin):
-    list_display = ('title', 'status', 'gender', 'age_range', 'neighborhood', 'district',
-                    'role', 'target_count', 'audience_preview', 'sent_count', 'created_at')
-    list_filter = ('status', 'gender', 'role', 'district', 'neighborhood')
+    list_display = ('title', 'status', 'send_to_all', 'gender', 'age_range', 'neighborhood',
+                    'district', 'role', 'target_count', 'audience_preview', 'sent_count',
+                    'created_at')
+    list_filter = ('status', 'send_to_all', 'gender', 'role', 'district', 'neighborhood')
     search_fields = ('title', 'text')
     autocomplete_fields = ['neighborhood', 'district']
     readonly_fields = ('status', 'sent_count', 'sent_at', 'created_by', 'created_at',
@@ -239,7 +240,12 @@ class AdCampaignAdmin(admin.ModelAdmin):
         ("E'lon mazmuni", {'fields': ('title', 'text', 'url', 'image')}),
         ('Auditoriya', {'fields': (('gender', 'role'), ('age_min', 'age_max'),
                                    ('neighborhood', 'district'), 'audience_preview')}),
-        ('Yuborish', {'fields': ('target_count', 'status', 'sent_count', 'sent_at')}),
+        ('Yuborish', {
+            'fields': ('send_to_all', 'target_count', 'status', 'sent_count', 'sent_at'),
+            'description': "«Hammaga yuborish» yoqilsa — filtrlarga mos BARCHA foydalanuvchiga "
+                           "bir vaqtda yuboriladi (random N ishlatilmaydi). Filtrlar bo'sh "
+                           "bo'lsa — butun bazadagi hamma foydalanuvchiga.",
+        }),
     )
 
     @admin.display(description='Yosh')
@@ -287,9 +293,22 @@ class NeighborhoodAdminForm(forms.ModelForm):
         widgets = {'boundary': PolygonEditorWidget}
 
 
+class MahallaHokimInline(admin.TabularInline):
+    """Mahalla hokimi (raisi) — mahalla qo'shilgan/tahrirlangan payt shu yerda tanlanadi.
+
+    ChatAdmin = mahalla admini: umumiy chatda anonim boshqaradi va shu mahalla
+    aholisiga rasmiy e'lon yubora oladi (main.community_views.announcement_create)."""
+    model = ChatAdmin
+    extra = 1
+    autocomplete_fields = ['user']
+    verbose_name = 'Mahalla hokimi'
+    verbose_name_plural = 'Mahalla hokimlari'
+
+
 @admin.register(Neighborhood)
 class NeighborhoodAdmin(admin.ModelAdmin):
     form = NeighborhoodAdminForm
+    inlines = [MahallaHokimInline]
     list_display = ('name', 'district', 'population', 'head_name', 'head_phone', 'color_swatch', 'has_boundary', 'created_at')
     list_filter = ('district',)
     search_fields = ('name', 'head_name', 'head_phone')

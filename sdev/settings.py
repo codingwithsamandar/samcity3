@@ -264,10 +264,25 @@ elif _s3_bucket:
     AWS_STORAGE_BUCKET_NAME = _s3_bucket
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+    # Kalitlar bo'sh bo'lsa — S3 tanlangan bo'lsa ham upload ISHLAMAYDI (jim
+    # 500 xatosi). Render loglarida ko'rinadigan ochiq ogohlantirish beramiz.
+    if not (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY):
+        import sys as _media_sys
+        print(
+            "[media] OGOHLANTIRISH: AWS_STORAGE_BUCKET_NAME o'rnatilgan, lekin "
+            "AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY BO'SH — Supabase/S3 upload "
+            "ishlamaydi. Render -> Environment'da bu maxfiy kalitlarni kiriting.",
+            file=_media_sys.stderr,
+        )
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
     AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL', '')
     AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN', '')
-    AWS_DEFAULT_ACL = 'public-read'
+    # DIQQAT: Supabase S3-mos API obyekt ACL'ini QO'LLAB-QUVVATLAMAYDI
+    # (x-amz-acl bloklangan — rasmiy hujjatda tasdiqlangan). 'public-read'
+    # yuborilsa PutObject xato bilan qaytadi va rasm YUKLANMAYDI. Public kirish
+    # bucket'ning "public" sozlamasidan keladi (obyekt ACL'idan emas) — shuning
+    # uchun default None. Haqiqiy AWS S3 (ACL yoqilgan) uchun env bilan bering.
+    AWS_DEFAULT_ACL = os.environ.get('AWS_DEFAULT_ACL', '').strip() or None
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
     AWS_S3_SIGNATURE_VERSION = 's3v4'

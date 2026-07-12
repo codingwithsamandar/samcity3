@@ -108,3 +108,9 @@ python manage.py createsuperuser
 - **DisallowedHost** → `DJANGO_ALLOWED_HOSTS` da `.onrender.com` bor (render.yaml'da).
 - **Login ishlamayapti** → OTP kanali sozlanmagan (3-qadam): SMS yoki Telegram token, yoki `SMS_BACKEND=console`.
 - **Telegram bot 409 Conflict** → bitta token bilan ikkita poller ishlayapti (masalan lokal + Render worker). Faqat bittasini qoldiring.
+- **Rasm/media yuklanmayapti yoki keyin yo'qoladi** → Media Supabase S3'ga saqlanadi. Deploy loglarida **`▶ Media storage tekshiruvi...`** qatorini toping — u aniq sababni yozadi. Tekshiring:
+  1. `AWS_ACCESS_KEY_ID` va `AWS_SECRET_ACCESS_KEY` Render → Environment'da **kiritilganmi** (`sync: false` — panelda qo'lda). Bo'sh bo'lsa upload ishlamaydi.
+  2. `AWS_S3_REGION_NAME` Supabase loyihaning **haqiqiy regioniga** mos (Supabase → Project Settings → Storage → S3 Connection'dan oling). Mos kelmasa `SignatureDoesNotMatch`.
+  3. Supabase'da `media` nomli bucket bor va **Public** qilingan.
+  4. `AWS_DEFAULT_ACL` **bo'sh qoldiriladi** (None) — Supabase obyekt ACL'ini qo'llamaydi; `public-read` yuborilsa upload buziladi. (Kodda default None qilib tuzatilgan.)
+  5. Env'ni faqat `render.yaml` orqali emas, xizmatni **qo'lda** yaratgan bo'lsangiz — yuqoridagi `AWS_*` o'zgaruvchilar ham qo'shilganini tekshiring; aks holda media efemer lokal diskka yozilib, keyingi deploy'da yo'qoladi.

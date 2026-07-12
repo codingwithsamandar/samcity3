@@ -176,6 +176,35 @@ class AdminCreatedAnnouncementTest(TestCase):
         self.assertEqual(Notification.objects.filter(recipient=self.res).count(), 1)
 
 
+class MahallaHokimAppointmentTest(TestCase):
+    """Mahalla qo'shilgan payt hokim (ChatAdmin) admin inline orqali tayinlanadi."""
+
+    def setUp(self):
+        self.superuser = User.objects.create_user(
+            phone='+998933330001', password='x', is_staff=True)
+        self.superuser.is_superuser = True
+        self.superuser.save()
+        self.hokim = User.objects.create_user(phone='+998933330002', password='x')
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def test_appoint_hokim_when_creating_mahalla(self):
+        resp = self.client.post('/admin/main/neighborhood/add/', {
+            'name': 'Yangi mahalla',
+            'color': '#3551d1',
+            'admins-TOTAL_FORMS': '1',
+            'admins-INITIAL_FORMS': '0',
+            'admins-MIN_NUM_FORMS': '0',
+            'admins-MAX_NUM_FORMS': '1000',
+            'admins-0-user': str(self.hokim.pk),
+        }, HTTP_HOST='127.0.0.1')
+        self.assertEqual(resp.status_code, 302)  # saqlandi
+        nb = Neighborhood.objects.get(name='Yangi mahalla')
+        # Hokim tayinlandi → u mahalla admini bo'ldi (rasmiy e'lon joylay oladi)
+        self.assertTrue(ChatAdmin.objects.filter(neighborhood=nb, user=self.hokim).exists())
+        self.assertTrue(nb.is_admin(self.hokim))
+
+
 class MahallaAnnouncementRecipientsTest(TestCase):
     """Mahalla e'loni AYNAN residents'ga boradi (chat a'zoligiga bog'liq emas)."""
 

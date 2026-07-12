@@ -28,6 +28,12 @@ DAPHNE_PID=$!
 # To'xtatishda daphne'ga signal uzatamiz (Render redeploy'da toza yopilish uchun)
 trap 'kill -TERM "$DAPHNE_PID" 2>/dev/null' TERM INT
 
+# ── Media storage tekshiruvi (yoz→o'qi→o'chir) ──
+# Natija shu loglarda chiqadi: rasm/media saqlanmasa sababini aniq ko'rsatadi
+# (Supabase/S3 kaliti, ACL, region, bucket). Deploy'ni bloklamaydi (|| true).
+echo "▶ Media storage tekshiruvi..."
+python manage.py check_media || echo "!! check_media xato bilan tugadi (yuqoriga qarang)"
+
 # ── Demo ma'lumotlar (bir martalik) ──
 # SEED_DEMO true/TRUE/1/yes bo'lsa — daphne ishlab turgan holda demo seed qilinadi
 # (loglarda ko'rinadi). Idempotent. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.

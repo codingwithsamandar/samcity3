@@ -99,3 +99,41 @@ class SendLogicTest(TestCase):
         AdCampaignDelivery.objects.filter(campaign=c1).update(sent_at=old)
         c2 = AdCampaign.objects.create(title='B', text='...', gender='male', target_count=10)
         self.assertEqual(c2.send(), 10)  # cheklov muddati o'tdi
+
+
+class SendToAllTest(TestCase):
+    """«Hammaga yuborish» — butun bazaga bir vaqtda (random N va 24-soat cheklovisiz)."""
+
+    def setUp(self):
+        # 12 ta har xil user (ba'zilari mahallali, jinsli — filtr yo'q bo'lsa hammasi)
+        self.users = [_u(f'+99891000{i:04d}') for i in range(12)]
+        # bitta nofaol — hammaga yuborishda ham chiqmasligi kerak
+        self.inactive = _u('+998919999999', is_active=False)
+
+    def test_broadcast_reaches_every_active_user(self):
+        c = AdCampaign.objects.create(
+            title='Rasmiy e‘lon', text='Hammaga', send_to_all=True, target_count=3)
+        sent = c.send()
+        # target_count=3 bo'lsa ham HAMMAGA (12) boradi, nofaol chiqmaydi
+        self.assertEqual(sent, 12)
+        self.assertEqual(c.status, 'sent')
+        self.assertEqual(Notification.objects.count(), 12)
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.inactive).count(), 0)
+
+    def test_broadcast_ignores_24h_cap(self):
+        # Avval hamma bugun bitta reklama olgan bo'lsin
+        first = AdCampaign.objects.create(title='A', text='...', send_to_all=True)
+        self.assertEqual(first.send(), 12)
+        # Darhol yana «hammaga» — 24-soat cheklovi CHETLAB o'tiladi
+        second = AdCampaign.objects.create(title='B', text='...', send_to_all=True)
+        self.assertEqual(second.send(), 12)
+
+    def test_broadcast_respects_filters_when_set(self):
+        # Filtr qo'yilsa — «hammaga» ham faqat mos auditoriyaga boradi
+        male = _u('+998911110001', gender='male')
+        c = AdCampaign.objects.create(
+            title='Erkaklarga', text='...', send_to_all=True, gender='male')
+        sent = c.send()
+        self.assertEqual(sent, 1)  # faqat bitta erkak
+        self.assertEqual(Notification.objects.filter(recipient=male).count(), 1)
