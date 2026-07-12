@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 
 from main.models import (
     User, District, Neighborhood, DistrictAdmin, DistrictAnnouncement,
-    ChatRoom, ChatMember, ChatAdmin, NeighborhoodAnnouncement,
+    ChatAdmin, NeighborhoodAnnouncement,
 )
 from notifications.models import Notification
 
@@ -206,22 +206,20 @@ class MahallaHokimAppointmentTest(TestCase):
 
 
 class MahallaAnnouncementRecipientsTest(TestCase):
-    """Mahalla e'loni AYNAN residents'ga boradi (chat a'zoligiga bog'liq emas)."""
+    """Mahalla e'loni AYNAN residents'ga (mahallani tanlagan aholiga) boradi."""
 
     def setUp(self):
         self.nb = Neighborhood.objects.create(name='Mahalla R')
-        self.room = ChatRoom.objects.create(neighborhood=self.nb)
-        # resident: mahallani tanlagan, LEKIN chatga a'zo EMAS
+        # resident: mahallani "o'z mahallam" qilib tanlagan aholi
         self.resident = User.objects.create_user(phone='+998955000001', password='x', neighborhood=self.nb)
-        # chat_only: chatga a'zo, LEKIN bu mahallani tanlaMAGAN
-        self.chat_only = User.objects.create_user(phone='+998955000002', password='x')
-        ChatMember.objects.create(room=self.room, user=self.chat_only, is_approved=True)
+        # non_resident: bu mahallani tanlaMAGAN foydalanuvchi (e'lon OLMAsligi kerak)
+        self.non_resident = User.objects.create_user(phone='+998955000002', password='x')
         # admin (rais)
         self.admin_user = User.objects.create_user(phone='+998955000009', password='x')
         ChatAdmin.objects.create(neighborhood=self.nb, user=self.admin_user)
         self.client = Client()
 
-    def test_announcement_goes_to_residents_not_chat_members(self):
+    def test_announcement_goes_to_residents_only(self):
         self.client.force_login(self.admin_user)
         resp = self.client.post(
             reverse('mahalla_announce', args=[self.nb.pk]),
@@ -231,5 +229,5 @@ class MahallaAnnouncementRecipientsTest(TestCase):
         self.assertTrue(NeighborhoodAnnouncement.objects.filter(neighborhood=self.nb).exists())
         # resident (mahallani tanlagan) — OLDI
         self.assertEqual(Notification.objects.filter(recipient=self.resident).count(), 1)
-        # chat_only (faqat chat a'zosi, mahallani tanlamagan) — OLMADI
-        self.assertEqual(Notification.objects.filter(recipient=self.chat_only).count(), 0)
+        # non_resident (mahallani tanlamagan) — OLMADI
+        self.assertEqual(Notification.objects.filter(recipient=self.non_resident).count(), 0)

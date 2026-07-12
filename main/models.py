@@ -305,44 +305,13 @@ class Neighborhood(models.Model):
     # Rasmiy e'lon aynan shularga boradi (chat a'zoligiga bog'liq emas).
 
 
-class ChatRoom(models.Model):
-    neighborhood = models.OneToOneField(Neighborhood, on_delete=models.CASCADE, related_name='chat_room')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'chat_rooms'
-
-
-class ChatMessage(models.Model):
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_messages')
-    text = models.TextField(blank=True)
-    image = models.ImageField(upload_to='chat_images/%Y/%m/', blank=True, null=True)
-    file = models.FileField(upload_to='chat_files/%Y/%m/', blank=True, null=True)
-    audio = models.FileField(upload_to='chat_voice/%Y/%m/', blank=True, null=True)
-    is_admin_message = models.BooleanField(default=False)
-    # ── Advanced chat features ───────────────────────────────────────────────
-    reply_to = models.ForeignKey(
-        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies',
-    )
-    forwarded_from = models.ForeignKey(
-        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='forwards',
-    )
-    edited_at = models.DateTimeField(null=True, blank=True)
-    is_deleted = models.BooleanField(default=False, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'chat_messages'
-        ordering = ['created_at']
-        indexes = [models.Index(fields=['room', 'created_at'], name='chat_msg_room_created_idx')]
-
-    def __str__(self):
-        return f'{self.room} — {self.created_at.strftime("%H:%M")}'
-
-
 class ChatAdmin(models.Model):
-    """Mahalla admini — chatda anonim ko'rinadi, faqat mahalla bo'yicha tayinlanadi."""
+    """Mahalla admini (raisi) — mahalla bo'yicha tayinlanadi.
+
+    Neighborhood.is_admin() shu jadvalga tayanadi: rasmiy e'lon, fuqaro
+    murojaatlari va mahalla do'kon arizalarini boshqarish huquqini beradi.
+    (Model nomi/jadvali tarixiy — 'chat_admins' — backward-compat uchun saqlanadi.)
+    """
     neighborhood = models.ForeignKey(Neighborhood, on_delete=models.CASCADE, related_name='admins')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_admin_roles')
     appointed_at = models.DateTimeField(auto_now_add=True)
@@ -355,46 +324,6 @@ class ChatAdmin(models.Model):
 
     def __str__(self):
         return f'{self.neighborhood.name} — Admin'
-
-
-class ChatMember(models.Model):
-    """Chat xonasidagi a'zo — tasdiqlangan yoki ban qilingan."""
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='members')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_memberships')
-    is_approved = models.BooleanField(default=False, verbose_name='Tasdiqlangan')
-    is_banned = models.BooleanField(default=False, verbose_name='Bloklangan')
-    joined_at = models.DateTimeField(auto_now_add=True)
-    approved_at = models.DateTimeField(blank=True, null=True)
-    # ── Read receipts / presence ─────────────────────────────────────────────
-    last_read_at = models.DateTimeField(blank=True, null=True, verbose_name='Oxirgi o\'qilgan vaqt')
-    last_seen_at = models.DateTimeField(blank=True, null=True, verbose_name='Oxirgi faollik')
-
-    class Meta:
-        db_table = 'chat_members'
-        verbose_name = 'Chat a\'zosi'
-        verbose_name_plural = 'Chat a\'zolari'
-        unique_together = [('room', 'user')]
-
-    def __str__(self):
-        status = 'ban' if self.is_banned else ('tasdiqlangan' if self.is_approved else 'kutmoqda')
-        return f'{self.room.neighborhood.name} — {self.user} [{status}]'
-
-
-class MessageReaction(models.Model):
-    """Xabarga reaksiya (emoji)."""
-    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, related_name='reactions')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_reactions')
-    emoji = models.CharField(max_length=8)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'chat_message_reactions'
-        verbose_name = 'Reaksiya'
-        verbose_name_plural = 'Reaksiyalar'
-        unique_together = [('message', 'user', 'emoji')]
-
-    def __str__(self):
-        return f'{self.emoji} — {self.user}'
 
 
 # ════════════════════════════════════════════════════════════════════════════

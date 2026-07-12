@@ -114,10 +114,5 @@
     });
 })();
 </script>
-{% if neighborhood.chat_room %}
-<a href="{% url 'neighborhood_chat_room' neighborhood.chat_room.pk %}" class="btn btn-accent nb-chat-fab">
-  <svg class="ic"><use href="#i-chat"/></svg> Mahalla chatiga kirish
-</a>
-{% endif %}
 {% endif %}
 {% endblock %}

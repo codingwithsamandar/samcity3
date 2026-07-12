@@ -70,7 +70,6 @@
   .mhx .see-all{ font-size:12.5px; font-weight:700; color:var(--turquoise); cursor:pointer; display:flex; align-items:center; gap:4px; text-decoration:none; transition:gap .15s; }
   .mhx .see-all:hover{ gap:7px; }
   .mhx .see-all svg{ width:13px; height:13px; }
-  .mhx .chat-line{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; }
   .mhx .avatar{ width:26px; height:26px; border-radius:50%; background:linear-gradient(140deg,var(--turquoise),var(--violet)); flex-shrink:0; }
   .mhx .chat-line b{ color:var(--text); }
   .mhx .chat-line span.msg{ color:var(--text-muted); }
@@ -156,7 +155,6 @@
       <div class="tab" data-view="dokonlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l1-4h16l1 4M4 7h16v13H4z"/><path d="M9 21v-6h6v6"/></svg>Do'konlar{% if stores %}<span class="tab-count">{{ stores|length }}</span>{% endif %}</div>
       <div class="tab" data-view="joylar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Joylar</div>
       <div class="tab" data-view="elonlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8M18 5a8 8 0 010 14"/></svg>E'lonlar{% if announcements %}<span class="tab-count">{{ announcements|length }}</span>{% endif %}</div>
-      {% if chat_room %}<div class="tab" data-view="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Chat</div>{% endif %}
       <div class="tab" data-view="ishtirok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Ishtirok</div>
     </nav>
   </div>
@@ -185,18 +183,6 @@
         <div id="mhmap-mini" class="map-box" data-goto="joylar"></div>
       </div>
 
-      <!-- Umumiy chat -->
-      <div class="widget span2">
-        <div class="widget-head">
-          <div class="widget-title"><span class="ic" style="background:var(--turquoise-soft);color:var(--turquoise)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span>Umumiy chat</div>
-          {% if chat_room %}<span class="see-all" data-goto="chat">Barchasini ko'rish <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></span>{% endif %}
-        </div>
-        {% for msg in chat_messages %}
-        <div class="chat-line"><div class="avatar"></div><div><b>{{ msg.user.name|default:msg.user.phone }}</b> — <span class="msg">{{ msg.text|truncatechars:80 }}</span></div></div>
-        {% empty %}
-        <p class="empty-note">Hozircha xabar yo'q. Chatga kirib suhbatni boshlang.</p>
-        {% endfor %}
-      </div>
 
       <!-- So'nggi e'lon -->
       <div class="widget">
@@ -311,21 +297,6 @@
     </div>
   </div>
 
-  <!-- ═══ CHAT ═══ -->
-  {% if chat_room %}
-  <div class="view" id="view-chat">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="font-size:13.5px;color:var(--text-muted);">💬 Mahalla a'zolari bilan real vaqt suhbati.</div>
-      <a href="{% url 'neighborhood_chat_room' chat_room.pk %}" target="_blank" class="mx-btn ghost" style="display:inline-flex;">To'liq ekran ↗</a>
-    </div>
-    <div class="chat-embed">
-      <iframe id="chatFrame" title="Mahalla chati"
-              src="{% url 'neighborhood_chat_room' chat_room.pk %}?embed=1"
-              loading="lazy"></iframe>
-    </div>
-  </div>
-  {% endif %}
-
   <!-- ═══ ISHTIROK (So'rovnoma + Xayriyalik + Murojaat) ═══ -->
   <div class="view" id="view-ishtirok">
     <div class="subtabs">
@@ -418,7 +389,7 @@
 
 <script>
 (function () {
-  var titles = { home:"Mening mahallam", dokonlar:"Do'konlar", joylar:"Joylar", elonlar:"E'lonlar", chat:"Umumiy chat", ishtirok:"Ishtirok" };
+  var titles = { home:"Mening mahallam", dokonlar:"Do'konlar", joylar:"Joylar", elonlar:"E'lonlar", ishtirok:"Ishtirok" };
   var BOUNDARY = {{ boundary_json|safe }};
   var CENTER = {{ centroid_json|safe }};
   var COLOR = "{{ neighborhood.color|default:'#3551d1' }}";

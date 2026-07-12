@@ -20,7 +20,6 @@ from .delivery_views import (
     StoreRequestView,
 )
 from .taxi_views import TaxiServiceViewSet, TaxistViewSet, TripViewSet
-from .chat_views import ChatRoomViewSet, ChatMessagesView
 from .chat_store_views import (
     StoreChatStartView, StoreChatThreadView, StoreChatListView,
 )
@@ -52,7 +51,6 @@ router.register('orders', OrderViewSet, basename='order')
 router.register('taxi/services', TaxiServiceViewSet, basename='taxi-service')
 router.register('taxi/taxists', TaxistViewSet, basename='taxist')
 router.register('taxi/trips', TripViewSet, basename='trip')
-router.register('chat/rooms', ChatRoomViewSet, basename='chat-room')
 router.register('booking/venues', VenueViewSet, basename='venue')
 router.register('booking/bookings', VenueBookingViewSet, basename='venue-booking')
 
@@ -110,7 +108,6 @@ urlpatterns = [
     # ── Hokim paneli (tuman e'loni) ──
     path('hokim/', HokimPanelView.as_view(), name='hokim-panel'),
     path('hokim/<int:pk>/announce/', DistrictAnnounceView.as_view(), name='hokim-announce'),
-    path('chat/rooms/<int:room_id>/messages/', ChatMessagesView.as_view(), name='chat-messages'),
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/unread-count/', NotificationUnreadCountView.as_view(), name='notifications-unread-count'),
     path('notifications/read/', NotificationMarkReadView.as_view(), name='notifications-read'),

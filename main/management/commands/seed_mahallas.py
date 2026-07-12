@@ -10,7 +10,7 @@ qilinadi. Har bir katak — bitta mahalla. Adminda chegara/nom keyin tahrirlanad
 import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from main.models import Neighborhood, ChatRoom
+from main.models import Neighborhood
 
 # Shofirkon shahri markazi (places.views.CENTER bilan bir xil).
 CENTER_LAT, CENTER_LNG = 40.1156, 64.5036
@@ -93,7 +93,6 @@ class Command(BaseCommand):
                 if was_created and not obj.description:
                     obj.description = f"{name} mahallasi — Shofirkon shahri."
                 obj.save()
-                ChatRoom.objects.get_or_create(neighborhood=obj)
                 created += int(was_created)
                 updated += int(not was_created)
                 idx += 1

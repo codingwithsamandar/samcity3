@@ -5,7 +5,7 @@ from .admin_widgets import LatLngPickerWidget
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import (
     User, OTPCode, Ad, AdImage,
-    Neighborhood, ChatRoom, ChatMessage, ChatAdmin, ChatMember, MessageReaction,
+    Neighborhood, ChatAdmin,
     Booking, JobAd, ResumeAd, UtilityPayment,
     BoostPayment,
     Poll, PollOption, PollVote, PollComment,
@@ -63,7 +63,6 @@ class HelpRequestAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
 
 
-admin.site.register(MessageReaction)
 admin.site.register(PollVote)
 admin.site.register(PollComment)
 admin.site.register(HelpVolunteer)
@@ -328,33 +327,12 @@ class NeighborhoodAdmin(admin.ModelAdmin):
         return bool(obj.boundary)
 
 
-@admin.register(ChatRoom)
-class ChatRoomAdmin(admin.ModelAdmin):
-    list_display = ('neighborhood', 'created_at')
-
-
-@admin.register(ChatMessage)
-class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ('room', 'is_admin_message', 'text', 'created_at')
-    list_filter = ('room', 'is_admin_message')
-    search_fields = ('user__phone', 'text')
-
-
 @admin.register(ChatAdmin)
 class ChatAdminAdmin(admin.ModelAdmin):
     list_display = ('neighborhood', 'user', 'appointed_at')
     list_filter = ('neighborhood',)
     search_fields = ('user__phone', 'user__name', 'neighborhood__name')
     autocomplete_fields = ['user', 'neighborhood']
-
-
-@admin.register(ChatMember)
-class ChatMemberAdmin(admin.ModelAdmin):
-    list_display = ('room', 'user', 'is_approved', 'is_banned', 'joined_at')
-    list_filter = ('room', 'is_approved', 'is_banned')
-    search_fields = ('user__phone', 'user__name')
-    list_editable = ('is_approved', 'is_banned')
-    readonly_fields = ('joined_at', 'approved_at')
 
 
 # ── MAHALLA: e'lonlar + fuqaro murojaatlari ──────────────────────────────────

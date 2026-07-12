@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/providers.dart';
-import '../chat/chat_rooms_screen.dart';
 import '../community/community_models.dart';
 import 'mahalla_models.dart';
 import 'mahalla_store_panel.dart';
@@ -212,8 +211,6 @@ class _MahallaHomeState extends ConsumerState<_MahallaHome> {
               () => _open(_MahallaMapPage(detail: d))),
           _Section('📢', "E'lonlar", '${d.announcements.length} ta', const Color(0xFFCAA23A),
               () => _open(_AnnouncementsPage(id: widget.id, isAdmin: d.isAdmin, items: d.announcements))),
-          _Section('💬', 'Chat', '', const Color(0xFF3551d1),
-              () => _open(const ChatRoomsScreen())),
           _Section('🗳️', "So'rovnomalar", '', const Color(0xFF7C3AED),
               () => _open(_PollsPage(neighborhoodId: widget.id))),
           _Section('🤝', 'Valentyorlik', '', const Color(0xFF16A34A),

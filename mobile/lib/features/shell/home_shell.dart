@@ -117,9 +117,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               selectedIcon: Icon(Icons.delivery_dining),
               label: 'Yetkazish'),
           NavigationDestination(
-              icon: Icon(Icons.forum_outlined),
-              selectedIcon: Icon(Icons.forum),
-              label: 'Chat'),
+              icon: Icon(Icons.holiday_village_outlined),
+              selectedIcon: Icon(Icons.holiday_village),
+              label: 'Mahalla'),
           NavigationDestination(
               icon: Icon(Icons.apps_outlined),
               selectedIcon: Icon(Icons.apps),

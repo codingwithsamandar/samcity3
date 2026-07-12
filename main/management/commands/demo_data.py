@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         from main.models import (
-            User, Ad, AdImage, Neighborhood, ChatRoom, ChatMessage,
+            User, Ad, AdImage, Neighborhood,
             Booking, JobAd, ResumeAd, UtilityPayment,
         )
 
@@ -25,8 +25,6 @@ class Command(BaseCommand):
             self.stdout.write("🗑  Avvalgi demo ma'lumotlar o'chirilmoqda...")
             UtilityPayment.objects.all().delete()
             Booking.objects.all().delete()
-            ChatMessage.objects.all().delete()
-            ChatRoom.objects.all().delete()
             Neighborhood.objects.all().delete()
             ResumeAd.objects.all().delete()
             JobAd.objects.all().delete()
@@ -498,53 +496,14 @@ class Command(BaseCommand):
             {"name": "Umumiy muhokama",           "description": "Barcha foydalanuvchilar uchun ochiq chat"},
         ]
 
-        rooms = []
         for nd in neighborhoods_data:
             n, created = Neighborhood.objects.get_or_create(
                 name=nd["name"], defaults={"description": nd["description"]}
             )
-            room, _ = ChatRoom.objects.get_or_create(neighborhood=n)
-            rooms.append(room)
             if created:
                 self.stdout.write(f"  ✅ {n.name}")
             else:
                 self.stdout.write(f"  ⏭  Mavjud: {n.name}")
-
-        r_chilonzor, r_yunusobod, r_mirzo, r_umumiy = rooms
-
-        chat_messages_data = [
-            # Chilonzor
-            (r_chilonzor, sardor,  "Salom qo'shnilar! Ertaga kechqurun yig'ilish bo'ladimi?"),
-            (r_chilonzor, malika,  "Ha, soat 18:00 da bo'ladi, lift yaqinida."),
-            (r_chilonzor, bobur,   "Mavzu nima? Ko'cha yoritgichlari haqidami?"),
-            (r_chilonzor, sardor,  "Ha, va yangi bog'cha qurilishi ham muhokamada."),
-            (r_chilonzor, nilufar, "Men ham boraman. Bolalar uchun maydon so'rash kerak."),
-            (r_chilonzor, jasur,   "Yig'ilishga ulgura olmayman, natijasini yozib qo'ying."),
-            # Yunusobod
-            (r_yunusobod, bobur,   "Yunusobod mahallasiga xush kelibsiz!"),
-            (r_yunusobod, malika,  "Bizning mahallada yangi dorixona ochildi, juda qulay."),
-            (r_yunusobod, sardor,  "Qayerda? Manzilini yuboring."),
-            (r_yunusobod, malika,  "14-kvartal, 3-uy yaqinida. Ertalab 8 dan kechgacha."),
-            (r_yunusobod, nilufar, "Rahmat! Uzoq vaqt dorixona qidirardim."),
-            # Mirzo Ulug'bek
-            (r_mirzo, nilufar, "Mirzo Ulug'bek mahallasi - sakin va yashil joy!"),
-            (r_mirzo, bobur,   "To'g'ri, lekin avtobuslar kam. Ariza beraylik birgalikda."),
-            (r_mirzo, nilufar, "Yaxshi fikr. Imzo to'playlik, 50 ta bo'lsa yetarli."),
-            (r_mirzo, jasur,   "Men ham qo'shilaman. Shu masala ko'p yildan beri hal bo'lmaydi."),
-            # Umumiy
-            (r_umumiy, sardor,  "Bu platforma juda qulay ekan! Hamma narsani topsa bo'ladi."),
-            (r_umumiy, malika,  "Ha, ayniqsa ish e'lonlari bo'limi foydali."),
-            (r_umumiy, bobur,   "Mahallalar chat tizimi ham ajoyib g'oya."),
-            (r_umumiy, jasur,   "Bron tizimi ham bor ekan, ishlatib ko'raman."),
-            (r_umumiy, nilufar, "Kommunal to'lovlarni kuzatish funksiyasi foydali!"),
-        ]
-
-        added_msgs = 0
-        for room, user, text in chat_messages_data:
-            if not ChatMessage.objects.filter(room=room, user=user, text=text).exists():
-                ChatMessage.objects.create(room=room, user=user, text=text)
-                added_msgs += 1
-        self.stdout.write(f"  ✅ {added_msgs} ta yangi xabar qo'shildi")
 
         # ─────────────────────────────────────────────────────────────
         # 6. BRONLAR (Booking) — venue bron + to'lov holatlari
@@ -726,7 +685,7 @@ class Command(BaseCommand):
         # YAKUNIY HISOBOT
         # ─────────────────────────────────────────────────────────────
         from main.models import User as U, Ad as A, JobAd as J, ResumeAd as R
-        from main.models import Neighborhood as N, ChatMessage as CM
+        from main.models import Neighborhood as N
         from main.models import Booking as B, UtilityPayment as UP
 
         self.stdout.write("\n" + "=" * 60)
@@ -739,7 +698,6 @@ class Command(BaseCommand):
         self.stdout.write(f"   💼 Ish e'lonlari:         {J.objects.count()} ta")
         self.stdout.write(f"   📄 Resumelar:             {R.objects.count()} ta")
         self.stdout.write(f"   🏘  Mahallalar:           {N.objects.count()} ta")
-        self.stdout.write(f"   💬 Chat xabarlari:        {CM.objects.count()} ta")
         self.stdout.write(f"   📅 Bronlar:               {B.objects.count()} ta")
         self.stdout.write(f"   💡 Kommunal to'lovlar:    {UP.objects.count()} ta")
         self.stdout.write("")

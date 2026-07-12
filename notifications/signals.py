@@ -108,26 +108,3 @@ try:
             )
 except Exception:
     pass
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  CHAT MESSAGE — xona a'zolariga
-# ─────────────────────────────────────────────────────────────────────────────
-try:
-    from main.models import ChatMessage
-
-    @receiver(post_save, sender=ChatMessage)
-    def _chat_post(sender, instance, created, **kwargs):
-        if not created:
-            return
-        room = instance.room
-        try:
-            url = reverse('neighborhood_chat_room', args=[room.id])
-        except Exception:
-            url = ''
-        members = room.members.filter(is_approved=True, is_banned=False).exclude(user=instance.user)
-        nb_name = getattr(getattr(room, 'neighborhood', None), 'name', 'Mahalla')
-        for m in members.select_related('user'):
-            notify(m.user, f"{nb_name}: yangi xabar", url, 'chat')
-except Exception:
-    pass

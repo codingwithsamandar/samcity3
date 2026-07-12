@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
 
 from main.models import (
-    Neighborhood, NeighborhoodAnnouncement, ChatAdmin, ChatRoom,
+    Neighborhood, NeighborhoodAnnouncement, ChatAdmin,
     Poll, PollOption,
 )
 
@@ -66,7 +66,6 @@ class Command(BaseCommand):
         for idx, nb in enumerate(neighborhoods):
             # Admin — shu mahallaga admin (so'rovnoma/e'lon ochish uchun)
             ChatAdmin.objects.get_or_create(neighborhood=nb, user=admin)
-            ChatRoom.objects.get_or_create(neighborhood=nb)
 
             center = nb.centroid() or [nb.center_lat or 40.1156, nb.center_lng or 64.5036]
             clat, clng = center[0], center[1]

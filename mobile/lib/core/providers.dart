@@ -9,7 +9,6 @@ import '../features/ads/ads_repository.dart';
 import '../features/delivery/delivery_repository.dart';
 import '../features/delivery/delivery_models.dart';
 import '../features/taxi/taxi_repository.dart';
-import '../features/chat/chat_repository.dart';
 import '../features/store_chat/store_chat_repository.dart';
 import '../features/mahalla/mahalla_repository.dart';
 import '../features/hokim/hokim_repository.dart';
@@ -43,8 +42,6 @@ final deliveryRepositoryProvider =
     Provider((ref) => DeliveryRepository(ref.read(apiClientProvider)));
 final taxiRepositoryProvider =
     Provider((ref) => TaxiRepository(ref.read(apiClientProvider)));
-final chatRepositoryProvider =
-    Provider((ref) => ChatRepository(ref.read(apiClientProvider)));
 final storeChatRepositoryProvider =
     Provider((ref) => StoreChatRepository(ref.read(apiClientProvider)));
 final mahallaRepositoryProvider =

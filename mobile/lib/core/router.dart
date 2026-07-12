@@ -12,7 +12,6 @@ import '../features/taxi/my_trips_screen.dart';
 import '../features/delivery/cart_screen.dart';
 import '../features/delivery/my_orders_screen.dart';
 import '../features/delivery/my_stores_screen.dart';
-import '../features/chat/chat_room_screen.dart';
 import '../features/booking/venues_screen.dart';
 import '../features/booking/venue_detail_screen.dart';
 import '../features/booking/venue_book_screen.dart';
@@ -81,13 +80,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/jobs', builder: (_, __) => const JobsScreen()),
       GoRoute(path: '/service-payments', builder: (_, __) => const ServicesScreen()),
       GoRoute(path: '/profile-edit', builder: (_, __) => const ProfileEditScreen()),
-      GoRoute(
-        path: '/chat/:id',
-        builder: (_, st) => ChatRoomScreen(
-          roomId: st.pathParameters['id']!,
-          title: st.extra as String? ?? 'Chat',
-        ),
-      ),
     ],
   );
 });

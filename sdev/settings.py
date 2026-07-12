@@ -534,8 +534,8 @@ JAZZMIN_SETTINGS = {
     # ── Yon menyuni soddalashtirish: texnik/ichki modellarni yashirish ──
     'hide_models': [
         'main.OTPCode', 'main.SearchQuery', 'main.AdFavorite', 'main.AdInquiry',
-        'main.MessageReaction', 'main.PollVote', 'main.PollComment',
-        'main.HelpVolunteer', 'main.ChatMessage', 'main.ChatMember',
+        'main.PollVote', 'main.PollComment',
+        'main.HelpVolunteer',
         'delivery.CartItem', 'delivery.OrderItem', 'delivery.ProductImage',
         'delivery.StoreImage', 'delivery.StoreChatThread',
         'delivery.StoreChatMessage', 'delivery.StoreUpdate',
@@ -567,7 +567,6 @@ JAZZMIN_SETTINGS = {
         'main.BoostPayment': 'fas fa-rocket',
         'main.Poll': 'fas fa-poll',
         'main.HelpRequest': 'fas fa-hands-helping',
-        'main.ChatRoom': 'fas fa-comments',
         'main.ChatAdmin': 'fas fa-user-shield',
 
         'delivery': 'fas fa-truck',

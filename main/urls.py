@@ -53,19 +53,6 @@ urlpatterns = [
     path('bookings/<uuid:booking_id>/', views.booking_detail, name='booking_detail'),
     path('bookings/<uuid:booking_id>/<str:action>/', views.booking_action, name='booking_action'),
 
-    # Mahalla chat
-    path('neighborhood-chat/', views.neighborhood_chat, name='neighborhood_chat'),
-    path('neighborhood-chat/set-mahalla/', views.set_neighborhood, name='set_neighborhood'),
-    path('neighborhood-chat/<int:room_id>/', views.neighborhood_chat_room, name='neighborhood_chat_room'),
-    path('api/chat/<int:room_id>/messages/', views.chat_messages_api, name='chat_messages_api'),
-    path('api/chat/<int:room_id>/history/', views.chat_history, name='chat_history'),
-    # Chat admin API
-    path('api/chat/<int:room_id>/pending/', views.chat_pending_members, name='chat_pending_members'),
-    path('api/chat/<int:room_id>/approve/<uuid:user_id>/', views.chat_approve_member, name='chat_approve_member'),
-    path('api/chat/<int:room_id>/kick/<uuid:user_id>/', views.chat_kick_member, name='chat_kick_member'),
-    path('api/chat/<int:room_id>/delete-msg/<int:msg_id>/', views.chat_delete_message, name='chat_delete_message'),
-    path('api/chat/<int:room_id>/upload-image/', views.chat_upload_image, name='chat_upload_image'),
-
     # ─── GLOBAL SEARCH ──────────────────────────────────────────────────────
     path('search/', marketplace_views.global_search, name='global_search'),
     path('search/autocomplete/', marketplace_views.search_autocomplete, name='search_autocomplete'),
@@ -130,10 +117,6 @@ urlpatterns = [
 
     # ─── BOOST ───
     path('ads/<uuid:pk>/boost/', views.boost_ad_view, name='boost_ad'),
-
-    # ─── ESKI URL ALIAS lar (template lar uchun) ───
-    path('chat/', views.neighborhood_chat, name='neighborhood_chat_alias'),
-    path('chat/<int:room_id>/', views.neighborhood_chat_room, name='neighborhood_chat_room_alias'),
 
     # ─── ALIAS: eski hard-coded URL lar uchun ───
     path('my-bookings/', views.my_bookings, name='my_bookings_alias'),

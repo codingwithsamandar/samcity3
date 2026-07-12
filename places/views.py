@@ -131,14 +131,12 @@ def neighborhood_places_geojson(request, pk):
             except Exception:
                 pass
 
-    room = getattr(neighborhood, 'chat_room', None)
     return JsonResponse({
         'neighborhood': {
             'id': neighborhood.pk, 'name': neighborhood.name,
             'color': neighborhood.color or '#3551d1',
             'boundary': ring, 'center': neighborhood.centroid(),
             'description': neighborhood.description,
-            'room_url': (reverse('neighborhood_chat_room', args=[room.pk]) if room else ''),
         },
         'places': items,
     })
@@ -147,17 +145,15 @@ def neighborhood_places_geojson(request, pk):
 def neighborhoods_geojson(request):
     """Mahalla chegaralari (poligonlar) — xaritada ko'rsatish uchun.
 
-    Faqat chegarasi bor mahallalar qaytariladi. Har biri chat xonasiga bog'lanadi.
+    Faqat chegarasi bor mahallalar qaytariladi.
     """
     from main.models import Neighborhood
     items = []
     qs = (Neighborhood.objects
-          .exclude(boundary__isnull=True)
-          .select_related('chat_room'))
+          .exclude(boundary__isnull=True))
     for n in qs:
         if not n.boundary:
             continue
-        room = getattr(n, 'chat_room', None)
         items.append({
             'id': n.pk,
             'name': n.name,
@@ -165,7 +161,6 @@ def neighborhoods_geojson(request):
             'boundary': n.boundary,          # [[lat,lng], ...]
             'center': n.centroid(),
             'description': n.description,
-            'room_url': (reverse('neighborhood_chat_room', args=[room.pk]) if room else ''),
         })
     return JsonResponse({'neighborhoods': items})
 

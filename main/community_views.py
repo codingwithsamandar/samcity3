@@ -10,7 +10,7 @@ from datetime import timedelta
 from .utils import validate_file_type, safe_json
 from .models import (
     Poll, PollOption, PollVote, PollComment,
-    HelpRequest, HelpVolunteer, Neighborhood, ChatMember, ChatAdmin,
+    HelpRequest, HelpVolunteer, Neighborhood, ChatAdmin,
     NeighborhoodAnnouncement, CitizenRequest, CITIZEN_REQUEST_TRANSITIONS,
     District, DistrictAnnouncement,
 )
@@ -476,7 +476,6 @@ def mahalla_detail(request, pk):
     import json
     neighborhood = get_object_or_404(Neighborhood, pk=pk)
     is_admin = neighborhood.is_admin(request.user)
-    room = getattr(neighborhood, 'chat_room', None)
 
     # Murojaatlar: admin barchani, oddiy foydalanuvchi faqat o'zinikini ko'radi.
     if is_admin:
@@ -525,15 +524,7 @@ def mahalla_detail(request, pk):
     help_requests = (HelpRequest.objects.filter(neighborhood=neighborhood)
                      .select_related('creator')[:40])
 
-    # ── Dashboard uchun so'nggi chat xabarlari ──
-    chat_messages = []
-    if room is not None:
-        chat_messages = list(
-            room.messages.select_related('user').order_by('-created_at')[:4])
-        chat_messages.reverse()
-
     return render(request, 'community/mahalla_detail.html', {
-        'chat_messages': chat_messages,
         'neighborhood': neighborhood,
         'is_admin': is_admin,
         'owns_store': owns_store,
@@ -543,7 +534,6 @@ def mahalla_detail(request, pk):
         'place_groups': _places_in_grouped(neighborhood),
         'polls_data': polls_data,
         'help_requests': help_requests,
-        'chat_room': room,
         'requests': requests_qs,
         'req_categories': CitizenRequest.CATEGORY_CHOICES,
         'req_statuses': CitizenRequest.STATUS_CHOICES,
