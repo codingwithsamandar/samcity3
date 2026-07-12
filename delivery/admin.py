@@ -1,10 +1,11 @@
 from django import forms
 from django.contrib import admin, messages
+from django.utils.safestring import mark_safe
 from main.admin_widgets import LatLngPickerWidget
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, CartItem,
     Order, OrderItem, DeliveryDriver, DriverReview, StoreUpdate, StoreSubscription,
-    StoreChatThread, StoreChatMessage, StoreRequest,
+    StoreChatThread, StoreChatMessage, StoreRequest, CatalogProduct,
 )
 
 
@@ -64,12 +65,77 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'store', 'price', 'stock', 'is_available', 'created_at')
-    list_filter = ('is_available', 'store')
-    search_fields = ('name', 'store__name')
+    list_display = ('name', 'store', 'catalog_product', 'is_custom_flag', 'price',
+                    'stock', 'is_available', 'created_at')
+    list_filter = ('is_available', 'store', ('catalog_product', admin.EmptyFieldListFilter))
+    search_fields = ('name', 'store__name', 'catalog_product__name')
     list_editable = ('is_available',)
     readonly_fields = ('created_at',)
+    autocomplete_fields = ('store', 'catalog_product')
     inlines = [ProductImageInline]
+    actions = ('promote_to_catalog',)
+
+    @admin.display(description='Custom', boolean=True)
+    def is_custom_flag(self, obj):
+        return obj.is_custom
+
+    @admin.action(description="Katalogga ko'chirish (promote → CatalogProduct)")
+    def promote_to_catalog(self, request, queryset):
+        """Tanlangan CUSTOM mahsulotlardan katalog yozuvi yaratadi va manbani
+        yangi katalogga bog'laydi. Allaqachon bog'langanlari o'tkazib yuboriladi."""
+        from django.core.files.base import ContentFile
+        created = skipped = 0
+        for p in queryset.select_related('store'):
+            if p.catalog_product_id is not None:
+                skipped += 1
+                continue
+            cat = CatalogProduct.objects.create(
+                name=p.name, description=p.description,
+                category=(p.store.category if p.store_id else None),
+                created_by=request.user, promoted_from=p,
+            )
+            first = p.images.first()
+            if first and first.image:
+                try:
+                    fname = first.image.name.split('/')[-1]
+                    with first.image.open('rb') as fh:
+                        cat.image.save(fname, ContentFile(fh.read()), save=True)
+                except Exception:
+                    pass
+            p.catalog_product = cat
+            p.save(update_fields=['catalog_product'])
+            created += 1
+        self.message_user(
+            request,
+            f"{created} ta mahsulot katalogga ko'chirildi"
+            + (f"; {skipped} ta o'tkazib yuborildi (allaqachon bog'langan)." if skipped else "."),
+            messages.SUCCESS if created else messages.WARNING)
+
+
+@admin.register(CatalogProduct)
+class CatalogProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'brand', 'category', 'unit', 'is_active', 'store_count',
+                    'image_tag', 'created_at')
+    list_filter = ('is_active', 'category', 'unit')
+    search_fields = ('name', 'brand')
+    list_editable = ('is_active',)
+    autocomplete_fields = ('category',)
+    readonly_fields = ('created_by', 'promoted_from', 'created_at', 'updated_at', 'image_tag')
+
+    @admin.display(description='Rasm')
+    def image_tag(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" style="height:40px;border-radius:6px;">')
+        return '—'
+
+    @admin.display(description="Do'konlarda")
+    def store_count(self, obj):
+        return obj.store_products.count()
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 # ── PRODUCT IMAGE ─────────────────────────────────────────────────────────────

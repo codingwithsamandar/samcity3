@@ -86,6 +86,10 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
+    def custom_product_count(self):
+        """Do'konning custom (katalogsiz) mahsulotlari soni — mahalla limiti uchun."""
+        return self.products.filter(catalog_product__isnull=True).count()
+
 
 class StoreImage(models.Model):
     """Do'kon galereyasi — logo'dan tashqari qo'shimcha rasmlar (4-6 tagacha)."""
@@ -115,11 +119,84 @@ class StoreImage(models.Model):
         return f'{self.store.name} — galereya rasmi'
 
 
+# ── MARKAZIY MAHSULOT KATALOGI ──────────────────────────────────────────────
+# Admin boshqaradigan umumiy katalog. Do'konlar (ayniqsa mahalla do'konlari) shu
+# katalogdan mahsulot tanlab, faqat o'z narx/zaxira/mavjudligini qo'yadi. Do'kon
+# yaratgan "custom" (katalogsiz) mahsulot avtomatik katalogga TUSHMAYDI — u shu
+# do'konga xos bo'lib qoladi; faqat admin uni katalogga ko'chira (promote) oladi.
+class CatalogProduct(models.Model):
+    UNIT_CHOICES = [
+        ('piece', 'dona'),
+        ('bottle', 'shisha'),
+        ('liter', 'litr'),
+        ('kg', 'kg'),
+        ('gram', 'gramm'),
+        ('pack', 'paket'),
+        ('tray', 'fletka'),
+        ('box', 'quti'),
+        ('ml', 'ml'),
+    ]
+    name = models.CharField(max_length=200, db_index=True, verbose_name='Nomi')
+    # Alohida katalog taksonomiyasi emas — mavjud DeliveryCategory qayta ishlatiladi
+    # (MVP: bitta kategoriya daraxti, takrorlanmasin).
+    category = models.ForeignKey(
+        DeliveryCategory, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='catalog_products', verbose_name='Kategoriya',
+    )
+    brand = models.CharField(max_length=120, blank=True, verbose_name='Brend')
+    unit = models.CharField(
+        max_length=10, choices=UNIT_CHOICES, default='piece', verbose_name="O'lchov birligi",
+    )
+    image = models.ImageField(
+        upload_to='delivery/catalog/%Y/%m/', blank=True, null=True,
+        validators=[validate_file_type], verbose_name='Rasm',
+    )
+    description = models.TextField(blank=True, verbose_name='Tavsif')
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name='Faol')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='created_catalog_products',
+    )
+    # Katalogga do'kon mahsulotidan ko'chirilgan bo'lsa — manbaga havola (audit).
+    promoted_from = models.ForeignKey(
+        'delivery.Product', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='+', verbose_name="Manba (do'kon mahsuloti)",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'delivery_catalog_products'
+        verbose_name = 'Katalog mahsuloti'
+        verbose_name_plural = 'Katalog mahsulotlari'
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name'], name='catalog_name_idx'),
+            models.Index(fields=['category', 'is_active'], name='catalog_cat_active_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.name} — {self.brand}' if self.brand else self.name
+
+
 class Product(models.Model):
+    # Mahalla do'koni uchun custom (katalogsiz) mahsulot chegarasi. Katalogga
+    # bog'langan mahsulotlar cheklovsiz. Yetkazib beruvchi (delivery) do'konga
+    # umuman qo'llanmaydi.
+    MAHALLA_CUSTOM_LIMIT = 10
+
     store = models.ForeignKey(
         Store,
         on_delete=models.CASCADE,
         related_name='products',
+    )
+    # Katalogga bog'lanish. Bo'sh (NULL) bo'lsa — do'konning o'z (custom) mahsuloti.
+    # SET_NULL: katalog yozuvi o'chsa, do'kon mahsuloti custom bo'lib qoladi
+    # (narx/zaxira saqlanadi).
+    catalog_product = models.ForeignKey(
+        'delivery.CatalogProduct', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='store_products', verbose_name='Katalog mahsuloti',
+        help_text="Bo'sh bo'lsa — do'konning o'z (custom) mahsuloti.",
     )
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -139,6 +216,36 @@ class Product(models.Model):
 
     def __str__(self):
         return f'{self.name} — {self.store.name}'
+
+    @property
+    def is_custom(self):
+        """Custom (katalogsiz) mahsulotmi — do'konga xos, katalogga bog'lanmagan."""
+        return self.catalog_product_id is None
+
+    @property
+    def cover_image_url(self):
+        """Muqova rasmi: avval do'konning o'z rasmi, bo'lmasa katalog rasmi (fallback)."""
+        first = self.images.first()
+        if first and first.image:
+            return first.image.url
+        if self.catalog_product_id and self.catalog_product and self.catalog_product.image:
+            return self.catalog_product.image.url
+        return None
+
+    def clean(self):
+        super().clean()
+        # Mahalla do'koni faqat MAHALLA_CUSTOM_LIMIT ta CUSTOM (katalogsiz) mahsulot
+        # qo'sha oladi. Katalogga bog'langan mahsulotlar cheklovsiz. Faqat YANGI
+        # yaratishda tekshiriladi — mavjud mahsulotlar grandfather qilinadi (ular
+        # o'chirilmaydi/o'zgartirilmaydi).
+        if (self.catalog_product_id is None and self._state.adding
+                and self.store_id and getattr(self.store, 'store_type', None) == 'mahalla'):
+            used = Product.objects.filter(
+                store_id=self.store_id, catalog_product__isnull=True).count()
+            if used >= self.MAHALLA_CUSTOM_LIMIT:
+                raise ValidationError(
+                    "Mahalla do'koni eng ko'pi bilan %d ta o'z (katalogsiz) mahsulot "
+                    "qo'sha oladi. Katalogdan tanlang." % self.MAHALLA_CUSTOM_LIMIT)
 
 
 class ProductImage(models.Model):

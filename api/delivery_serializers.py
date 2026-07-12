@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from delivery.models import (
     Store, StoreImage, Product, ProductImage, Cart, CartItem, Order, OrderItem,
-    StoreUpdate, StoreSubscription,
+    StoreUpdate, StoreSubscription, CatalogProduct,
 )
 
 
@@ -26,24 +26,55 @@ class ProductImageSerializer(serializers.ModelSerializer):
         return _abs(self.context.get('request'), obj.image)
 
 
+class CatalogProductSerializer(serializers.ModelSerializer):
+    """Markaziy katalog mahsuloti (do'kon egasi tanlash uchun ko'radi)."""
+    image = serializers.SerializerMethodField()
+    category = serializers.CharField(source='category.name', default=None, read_only=True)
+    category_id = serializers.IntegerField(read_only=True)
+    unit_display = serializers.CharField(source='get_unit_display', read_only=True)
+
+    class Meta:
+        model = CatalogProduct
+        fields = ('id', 'name', 'brand', 'category', 'category_id', 'unit',
+                  'unit_display', 'image', 'description')
+
+    def get_image(self, obj):
+        return _abs(self.context.get('request'), obj.image)
+
+
 class ProductSerializer(serializers.ModelSerializer):
     price = serializers.SerializerMethodField()
     images = ProductImageSerializer(many=True, read_only=True)
     cover = serializers.SerializerMethodField()
     # Mahsulot do'koni olib ketish (pickup) rejimidami — savat/checkout uchun.
     pickup = serializers.BooleanField(source='store.pickup_enabled', read_only=True)
+    # Katalog bog'lanishi: id (yoki null = custom), custom bayrog'i, o'lchov birligi.
+    catalog_product = serializers.IntegerField(source='catalog_product_id', read_only=True)
+    is_custom = serializers.BooleanField(read_only=True)
+    unit = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ('id', 'name', 'description', 'price', 'stock',
-                  'is_available', 'images', 'cover', 'restock_at', 'pickup')
+                  'is_available', 'images', 'cover', 'restock_at', 'pickup',
+                  'catalog_product', 'is_custom', 'unit')
 
     def get_price(self, obj):
         return int(obj.price)
 
+    def get_unit(self, obj):
+        if obj.catalog_product_id and obj.catalog_product:
+            return obj.catalog_product.unit
+        return None
+
     def get_cover(self, obj):
         first = obj.images.all().first()
-        return _abs(self.context.get('request'), first.image) if first else None
+        if first:
+            return _abs(self.context.get('request'), first.image)
+        # Fallback: do'kon o'z rasmini yuklamagan bo'lsa — katalog rasmi.
+        if obj.catalog_product_id and obj.catalog_product and obj.catalog_product.image:
+            return _abs(self.context.get('request'), obj.catalog_product.image)
+        return None
 
 
 class StoreImageSerializer(serializers.ModelSerializer):
@@ -84,15 +115,27 @@ class StoreListSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source='category.name', default=None, read_only=True)
     product_count = serializers.IntegerField(source='products.count', read_only=True)
     cart_enabled = serializers.SerializerMethodField()
+    # Mahalla do'koni uchun: custom (katalogsiz) mahsulot soni + chegara. Boshqa
+    # turdagi do'konlarda null (public ro'yxatda ortiqcha so'rov bo'lmaydi).
+    custom_product_count = serializers.SerializerMethodField()
+    custom_limit = serializers.SerializerMethodField()
 
     class Meta:
         model = Store
         fields = ('id', 'name', 'description', 'address', 'phone', 'working_hours',
                   'logo', 'category', 'product_count', 'cart_enabled', 'pickup_enabled',
-                  'store_type', 'neighborhood')
+                  'store_type', 'neighborhood', 'custom_product_count', 'custom_limit')
 
     def get_logo(self, obj):
         return _abs(self.context.get('request'), obj.logo)
+
+    def get_custom_limit(self, obj):
+        return Product.MAHALLA_CUSTOM_LIMIT if obj.store_type == 'mahalla' else None
+
+    def get_custom_product_count(self, obj):
+        if obj.store_type != 'mahalla':
+            return None
+        return obj.custom_product_count()
 
     def get_cart_enabled(self, obj):
         # Savat/checkout: yetkazib beruvchi do'kon (delivery oqimi) yoki pickup
@@ -114,7 +157,8 @@ class StoreDetailSerializer(StoreListSerializer):
         )
 
     def get_products(self, obj):
-        qs = obj.products.filter(is_available=True).prefetch_related('images')
+        qs = (obj.products.filter(is_available=True)
+              .select_related('catalog_product').prefetch_related('images'))
         return ProductSerializer(qs, many=True, context=self.context).data
 
     def get_owner_photo(self, obj):

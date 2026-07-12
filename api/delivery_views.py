@@ -13,13 +13,14 @@ from rest_framework.views import APIView
 from delivery.models import (
     Store, StoreImage, Product, Cart, CartItem, CartAd, Order, OrderItem,
     DeliveryCategory, StoreUpdate, StoreSubscription, StoreRequest,
-    CheckoutGroup, get_active_cart,
+    CheckoutGroup, CatalogProduct, get_active_cart,
 )
 from delivery.feed import create_store_update
 from .throttles import CheckoutThrottle
 from .delivery_serializers import (
     StoreListSerializer, StoreDetailSerializer, ProductSerializer,
     CartSerializer, OrderSerializer, CheckoutSerializer, StoreUpdateSerializer,
+    CatalogProductSerializer,
 )
 
 
@@ -71,10 +72,25 @@ class ProductDetailView(APIView):
 
     def get(self, request, pk):
         try:
-            product = Product.objects.prefetch_related('images').get(pk=pk, is_available=True)
+            product = Product.objects.select_related('catalog_product').prefetch_related('images').get(pk=pk, is_available=True)
         except Product.DoesNotExist:
             return Response({'detail': 'Mahsulot topilmadi.'}, status=404)
         return Response(ProductSerializer(product, context={'request': request}).data)
+
+
+class CatalogListView(generics.ListAPIView):
+    """GET /api/catalog/ — markaziy katalog (do'kon egasi mahsulot tanlashi uchun).
+
+    ?search= nom/brend bo'yicha qidiruv; ?category= id bo'yicha filtr. Faqat faol
+    (is_active) yozuvlar. Sahifalangan (DRF standart paginatsiya).
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = CatalogProductSerializer
+    search_fields = ['name', 'brand']
+    filterset_fields = ['category']
+
+    def get_queryset(self):
+        return CatalogProduct.objects.filter(is_active=True).select_related('category')
 
 
 # ── Savat ─────────────────────────────────────────────────────────────────────
@@ -461,7 +477,34 @@ class StoreProductsView(APIView):
         if store is None:
             return Response({'detail': "Do'kon topilmadi yoki ruxsat yo'q."},
                             status=status.HTTP_404_NOT_FOUND)
+
+        # Katalogga bog'lash (ixtiyoriy). Berilsa — katalog mahsuloti (cheklovsiz);
+        # berilmasa — do'konning o'z (custom) mahsuloti.
+        catalog = None
+        cat_id = request.data.get('catalog_product')
+        if cat_id:
+            catalog = CatalogProduct.objects.filter(pk=cat_id, is_active=True).first()
+            if catalog is None:
+                return Response({'detail': "Katalog mahsuloti topilmadi."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # Mahalla do'koni: custom (katalogsiz) mahsulotlar chegarasi (mavjudlar
+        # grandfather qilinadi — faqat yangi custom yaratish bloklanadi).
+        if catalog is None and store.store_type == 'mahalla' \
+                and store.custom_product_count() >= Product.MAHALLA_CUSTOM_LIMIT:
+            return Response(
+                {'detail': "Mahalla do'koni eng ko'pi bilan "
+                           f"{Product.MAHALLA_CUSTOM_LIMIT} ta o'z (katalogsiz) "
+                           "mahsulot qo'sha oladi. Katalogdan tanlang."},
+                status=status.HTTP_409_CONFLICT)
+
+        # Nom/tavsif: katalogdan olinsa — prefill (bo'sh yuborilsa katalogdan).
         name = (request.data.get('name') or '').strip()
+        if not name and catalog is not None:
+            name = catalog.name
+        description = (request.data.get('description') or '').strip()
+        if not description and catalog is not None:
+            description = catalog.description
         try:
             price = int(str(request.data.get('price') or 0).replace(' ', ''))
         except (ValueError, TypeError):
@@ -476,9 +519,8 @@ class StoreProductsView(APIView):
         is_available = str(request.data.get('is_available', 'true')).lower() not in ('0', 'false', 'no')
         stock = max(stock, 0)
         product = Product.objects.create(
-            store=store, name=name, price=price, stock=stock,
-            description=(request.data.get('description') or '').strip(),
-            is_available=is_available,
+            store=store, catalog_product=catalog, name=name, price=price, stock=stock,
+            description=description, is_available=is_available,
             # restock_at faqat mahsulot tugagan (stock==0) bo'lsa ma'noli.
             restock_at=_parse_restock_at(request.data.get('restock_at')) if stock <= 0 else None,
         )

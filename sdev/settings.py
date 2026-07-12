@@ -573,6 +573,7 @@ JAZZMIN_SETTINGS = {
         'delivery.DeliveryCategory': 'fas fa-tags',
         'delivery.Store': 'fas fa-store',
         'delivery.Product': 'fas fa-box',
+        'delivery.CatalogProduct': 'fas fa-boxes',
         'delivery.Cart': 'fas fa-shopping-cart',
         'delivery.Order': 'fas fa-receipt',
         'delivery.DeliveryDriver': 'fas fa-motorcycle',

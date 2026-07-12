@@ -16,7 +16,7 @@ from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
     DeliveryDriver, DriverLocation, DriverReview, StoreUpdate, StoreSubscription,
     StoreChatThread, StoreChatMessage, StoreRequest, can_transition,
-    CheckoutGroup, get_active_cart,
+    CheckoutGroup, CatalogProduct, get_active_cart,
 )
 from .feed import create_store_update
 from .chat import get_or_create_thread, is_participant, create_message
@@ -830,12 +830,44 @@ def _parse_datetime_local(v):
 @login_required
 def product_create(request, store_pk):
     store = get_object_or_404(Store, pk=store_pk, owner=request.user)
+
+    def _render_form():
+        return render(request, 'delivery/product_form.html', {
+            'mode': 'create', 'store': store, 'post': _form_post(request),
+            'catalog_products': CatalogProduct.objects.filter(is_active=True),
+            'custom_used': store.custom_product_count(),
+            'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
+        })
+
     if request.method == 'POST':
+        # Katalogga bog'lash (ixtiyoriy). Berilsa — katalog mahsuloti (cheklovsiz).
+        catalog = None
+        cat_id = request.POST.get('catalog_product')
+        if cat_id:
+            catalog = CatalogProduct.objects.filter(pk=cat_id, is_active=True).first()
+            if catalog is None:
+                messages.error(request, "Katalog mahsuloti topilmadi.")
+                return _render_form()
+
+        # Mahalla do'koni: custom (katalogsiz) mahsulot chegarasi (mavjudlar
+        # grandfather qilinadi — faqat yangi custom yaratish bloklanadi).
+        if catalog is None and store.store_type == 'mahalla' \
+                and store.custom_product_count() >= Product.MAHALLA_CUSTOM_LIMIT:
+            messages.error(request, f"Mahalla do'koni eng ko'pi bilan "
+                           f"{Product.MAHALLA_CUSTOM_LIMIT} ta o'z (katalogsiz) mahsulot "
+                           f"qo'sha oladi. Katalogdan tanlang.")
+            return _render_form()
+
         name = request.POST.get('name', '').strip()
+        if not name and catalog is not None:
+            name = catalog.name
         price = _int_or_none(request.POST.get('price'))
         if not name or price is None:
             messages.error(request, "Mahsulot nomi va narxi majburiy.")
-            return render(request, 'delivery/product_form.html', {'mode': 'create', 'store': store, 'post': _form_post(request)})
+            return _render_form()
+        description = request.POST.get('description', '').strip()
+        if not description and catalog is not None:
+            description = catalog.description
         is_available = 'is_available' in request.POST
         stock = _int_or_none(request.POST.get('stock')) or 0
         # restock_at faqat mahsulot tugagan (stock==0) bo'lsa ma'noli.
@@ -844,8 +876,8 @@ def product_create(request, store_pk):
         except ValueError:
             restock_at = None
         product = Product.objects.create(
-            store=store, name=name,
-            description=request.POST.get('description', '').strip(),
+            store=store, catalog_product=catalog, name=name,
+            description=description,
             price=price, stock=stock,
             is_available=is_available, restock_at=restock_at,
         )
@@ -860,7 +892,7 @@ def product_create(request, store_pk):
                             text=f"Yangi mahsulot: {product.name}")
         messages.success(request, "Mahsulot qo'shildi! ✅")
         return redirect('delivery:store_detail', pk=store.pk)
-    return render(request, 'delivery/product_form.html', {'mode': 'create', 'store': store, 'post': _form_post(request)})
+    return _render_form()
 
 
 @login_required
