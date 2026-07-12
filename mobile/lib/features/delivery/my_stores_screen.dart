@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
 import 'delivery_models.dart';
+import 'catalog_picker.dart';
 
 /// Egasi paneli — do'konlarim, do'kon ochish, mahsulot qo'shish.
 class MyStoresScreen extends ConsumerStatefulWidget {
@@ -87,16 +88,18 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
     }
   }
 
-  Future<void> _addProduct(Store s) async {
+  Future<void> _addProduct(Store s, List<Map<String, dynamic>> cats) async {
     final name = TextEditingController();
     final price = TextEditingController();
     final stock = TextEditingController(text: '10');
     final desc = TextEditingController();
+    CatalogProduct? selected; // null = o'z (custom) mahsuloti (supermarket: cheklovsiz)
+
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF0F1521),
-      builder: (ctx) => Padding(
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) => Padding(
         padding: EdgeInsets.only(
           left: 16, right: 16, top: 16,
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
@@ -107,6 +110,33 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
           children: [
             Text("Mahsulot — ${s.name}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 12),
+            // Katalogdan tanlash (ixtiyoriy) — nom/tavsif avtomatik to'ldiriladi
+            // (keyin tahrirlash mumkin); narx/zaxira egasi tomonidan kiritiladi.
+            OutlinedButton.icon(
+              onPressed: () async {
+                final picked = await CatalogPickerPage.show(context, categories: cats);
+                if (picked != null) {
+                  setSheet(() {
+                    selected = picked;
+                    name.text = picked.name;
+                    desc.text = picked.description;
+                  });
+                }
+              },
+              icon: const Icon(Icons.inventory_2_outlined, size: 18),
+              label: Text(selected == null ? 'Katalogdan tanlash (ixtiyoriy)' : 'Katalog: ${selected!.label}'),
+            ),
+            if (selected != null) CatalogPreviewTile(product: selected!),
+            if (selected != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => setSheet(() => selected = null),
+                  icon: const Icon(Icons.close, size: 16),
+                  label: const Text("O'z mahsulotim (katalogsiz)"),
+                ),
+              ),
+            const SizedBox(height: 10),
             TextField(controller: name, decoration: const InputDecoration(labelText: 'Nomi *')),
             const SizedBox(height: 10),
             Row(children: [
@@ -122,7 +152,7 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
             FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Qo'shish")),
           ],
         ),
-      ),
+      )),
     );
     if (ok != true) return;
     if (name.text.trim().isEmpty || (int.tryParse(price.text.replaceAll(' ', '')) ?? 0) <= 0) {
@@ -138,6 +168,7 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
         'price': price.text.replaceAll(' ', ''),
         'stock': stock.text.trim(),
         'description': desc.text.trim(),
+        if (selected != null) 'catalog_product': selected!.id,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,11 +223,15 @@ class _MyStoresScreenState extends ConsumerState<MyStoresScreen> {
                               const SizedBox(height: 4),
                               Text('${s.productCount} mahsulot',
                                   style: const TextStyle(color: Color(0xFF69748A), fontSize: 12)),
+                              if (s.isMahalla) ...[
+                                const SizedBox(height: 6),
+                                StoreCatalogStats(store: s),
+                              ],
                               const SizedBox(height: 8),
                               Row(children: [
                                 Expanded(
                                   child: FilledButton.icon(
-                                    onPressed: () => _addProduct(s),
+                                    onPressed: () => _addProduct(s, cats),
                                     icon: const Icon(Icons.add, size: 18),
                                     label: const Text('Mahsulot'),
                                   ),

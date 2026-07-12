@@ -81,13 +81,14 @@ class ProductDetailView(APIView):
 class CatalogListView(generics.ListAPIView):
     """GET /api/catalog/ — markaziy katalog (do'kon egasi mahsulot tanlashi uchun).
 
-    ?search= nom/brend bo'yicha qidiruv; ?category= id bo'yicha filtr. Faqat faol
-    (is_active) yozuvlar. Sahifalangan (DRF standart paginatsiya).
+    ?search= nom/brend/kategoriya nomi bo'yicha qidiruv; filtrlar: ?category=<id>,
+    ?brand=<aniq nom>, ?unit=<piece|kg|...>. Faqat faol (is_active) yozuvlar.
+    Sahifalangan (DRF standart paginatsiya).
     """
     permission_classes = [IsAuthenticated]
     serializer_class = CatalogProductSerializer
-    search_fields = ['name', 'brand']
-    filterset_fields = ['category']
+    search_fields = ['name', 'brand', 'category__name']
+    filterset_fields = ['category', 'brand', 'unit']
 
     def get_queryset(self):
         return CatalogProduct.objects.filter(is_active=True).select_related('category')

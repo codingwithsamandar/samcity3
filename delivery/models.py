@@ -90,6 +90,10 @@ class Store(models.Model):
         """Do'konning custom (katalogsiz) mahsulotlari soni — mahalla limiti uchun."""
         return self.products.filter(catalog_product__isnull=True).count()
 
+    def catalog_product_count(self):
+        """Katalogga bog'langan mahsulotlar soni — egasi paneli ko'rsatkichi."""
+        return self.products.filter(catalog_product__isnull=False).count()
+
 
 class StoreImage(models.Model):
     """Do'kon galereyasi — logo'dan tashqari qo'shimcha rasmlar (4-6 tagacha)."""

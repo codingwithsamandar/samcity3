@@ -53,6 +53,20 @@ class DeliveryRepository {
     await _api.dio.post('/stores/$storeId/products/', data: data);
   }
 
+  /// Markaziy katalog — do'kon egasi mahsulot tanlashi uchun.
+  /// search: nom/brend/kategoriya nomi; filtrlar: categoryId, brand (aniq), unit.
+  Future<List<CatalogProduct>> catalog(
+      {String? search, Object? categoryId, String? brand, String? unit}) async {
+    final res = await _api.dio.get('/catalog/', queryParameters: {
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (categoryId != null) 'category': categoryId,
+      if (brand != null && brand.isNotEmpty) 'brand': brand,
+      if (unit != null && unit.isNotEmpty) 'unit': unit,
+    });
+    final results = (res.data['results'] as List?) ?? (res.data as List?) ?? [];
+    return results.map((e) => CatalogProduct.fromJson(e)).toList();
+  }
+
   Future<void> updateProduct(
       String storeId, String productId, Map<String, dynamic> data) async {
     await _api.dio.patch('/stores/$storeId/products/$productId/', data: data);

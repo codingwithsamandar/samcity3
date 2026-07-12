@@ -37,6 +37,12 @@
       <div>
         <a href="{% url 'delivery:store_detail' store.pk %}" style="font-weight:700;font-size:1.05rem;color:var(--text);">{{ store.name }}</a>
         <div style="color:var(--text2);font-size:.84rem;margin-top:.2rem;">{% if store.category %}{{ store.category.name }} · {% endif %}{{ store.products.count }} mahsulot · {% if store.is_active %}<span style="color:var(--green);font-weight:600;">faol</span>{% else %}<span style="color:var(--red);">faol emas</span>{% endif %}</div>
+        {% if store.store_type == 'mahalla' %}
+        <div style="display:flex;gap:.4rem;margin-top:.35rem;flex-wrap:wrap;">
+          <span class="badge badge-gold" title="O'z (katalogsiz) mahsulotlar — chegara {{ custom_limit }} ta">O'z mahsulotlari: {{ store.custom_product_count }} / {{ custom_limit }}</span>
+          <span class="badge badge-green" title="Markaziy katalogdan olingan mahsulotlar — cheklovsiz">Katalogdan: {{ store.catalog_product_count }}</span>
+        </div>
+        {% endif %}
       </div>
     </div>
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;">

@@ -82,3 +82,6 @@ certs/*
 
 # ── settings.py zaxira nusxasi ──
 sdev/settings_old.py
+
+# Generated catalog export (manage.py export_catalog)
+catalog_export.json

@@ -22,6 +22,11 @@ class Store {
   final String storeType; // delivery | mahalla
   final bool pickupEnabled;
   final String? neighborhoodId;
+  // Mahalla do'koni: custom (katalogsiz) mahsulot soni + chegara hamda
+  // katalogga bog'langan mahsulotlar soni. Boshqa turlarda null (qo'llanmaydi).
+  final int? customProductCount;
+  final int? customLimit;
+  final int? catalogProductCount;
 
   Store({
     required this.id,
@@ -37,9 +42,18 @@ class Store {
     this.storeType = 'delivery',
     this.pickupEnabled = false,
     this.neighborhoodId,
+    this.customProductCount,
+    this.customLimit,
+    this.catalogProductCount,
   });
 
   bool get isMahalla => storeType == 'mahalla';
+
+  /// Mahalla do'koni yana custom mahsulot qo'sha oladimi (chegaraga yetmadi).
+  bool get canAddCustom {
+    if (customLimit == null) return true; // mahalla emas — cheklovsiz
+    return (customProductCount ?? 0) < customLimit!;
+  }
 
   factory Store.fromJson(Map<String, dynamic> j) => Store(
         id: j['id'].toString(),
@@ -55,6 +69,51 @@ class Store {
         storeType: j['store_type'] ?? 'delivery',
         pickupEnabled: j['pickup_enabled'] ?? false,
         neighborhoodId: j['neighborhood']?.toString(),
+        customProductCount:
+            (j['custom_product_count'] is num) ? (j['custom_product_count'] as num).toInt() : null,
+        customLimit: (j['custom_limit'] is num) ? (j['custom_limit'] as num).toInt() : null,
+        catalogProductCount: (j['catalog_product_count'] is num)
+            ? (j['catalog_product_count'] as num).toInt()
+            : null,
+      );
+}
+
+/// Markaziy katalog mahsuloti — do'kon egasi tanlab, o'z narx/zaxirasini qo'yadi.
+class CatalogProduct {
+  final int id;
+  final String name;
+  final String brand;
+  final String? category;
+  final int? categoryId;
+  final String unit;
+  final String unitDisplay;
+  final String? image;
+  final String description;
+
+  CatalogProduct({
+    required this.id,
+    required this.name,
+    this.brand = '',
+    this.category,
+    this.categoryId,
+    this.unit = 'piece',
+    this.unitDisplay = '',
+    this.image,
+    this.description = '',
+  });
+
+  String get label => brand.isNotEmpty ? '$name — $brand' : name;
+
+  factory CatalogProduct.fromJson(Map<String, dynamic> j) => CatalogProduct(
+        id: (j['id'] is num) ? (j['id'] as num).toInt() : int.tryParse('${j['id']}') ?? 0,
+        name: j['name'] ?? '',
+        brand: j['brand'] ?? '',
+        category: j['category'],
+        categoryId: (j['category_id'] is num) ? (j['category_id'] as num).toInt() : null,
+        unit: j['unit'] ?? 'piece',
+        unitDisplay: j['unit_display'] ?? '',
+        image: j['image'],
+        description: j['description'] ?? '',
       );
 }
 
@@ -105,6 +164,10 @@ class Product {
   final List<String> images;
   final DateTime? restockAt;
   final bool pickup;
+  // Katalog bog'lanishi: id (null = custom), custom bayrog'i, o'lchov birligi.
+  final int? catalogProductId;
+  final bool isCustom;
+  final String? unit;
 
   Product({
     required this.id,
@@ -117,6 +180,9 @@ class Product {
     this.images = const [],
     this.restockAt,
     this.pickup = false,
+    this.catalogProductId,
+    this.isCustom = true,
+    this.unit,
   });
 
   factory Product.fromJson(Map<String, dynamic> j) => Product(
@@ -132,6 +198,10 @@ class Product {
             .toList(),
         restockAt: DateTime.tryParse(j['restock_at'] ?? ''),
         pickup: j['pickup'] ?? false,
+        catalogProductId:
+            (j['catalog_product'] is num) ? (j['catalog_product'] as num).toInt() : null,
+        isCustom: j['is_custom'] ?? (j['catalog_product'] == null),
+        unit: j['unit'],
       );
 
   String get priceLabel => "${money(price)} so'm";

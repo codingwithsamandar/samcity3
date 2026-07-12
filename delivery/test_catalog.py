@@ -188,6 +188,109 @@ class CatalogApiTests(TestCase):
         self.assertIn('Non', names)
         self.assertNotIn('Sut', names)
 
+    def test_catalog_search_by_brand_and_category_name(self):
+        """Qidiruv brend va kategoriya NOMI bo'yicha ham ishlaydi (Phase 4)."""
+        cat = DeliveryCategory.objects.create(name='Ichimliklar', slug='ichimliklar')
+        CatalogProduct.objects.create(name='Cola 1L', brand='CocaCola',
+                                      category=cat, unit='bottle')
+        # brend bo'yicha
+        r = self.api.get('/api/catalog/?search=CocaCola')
+        names = [c['name'] for c in (r.data.get('results') or r.data)]
+        self.assertEqual(names, ['Cola 1L'])
+        # kategoriya nomi bo'yicha
+        r = self.api.get('/api/catalog/?search=Ichimliklar')
+        names = [c['name'] for c in (r.data.get('results') or r.data)]
+        self.assertEqual(names, ['Cola 1L'])
+
+    def test_catalog_filter_by_brand_and_unit(self):
+        """?brand= va ?unit= filtrlari (Phase 4)."""
+        CatalogProduct.objects.create(name='Fanta 1L', brand='CocaCola', unit='bottle')
+        CatalogProduct.objects.create(name='Guruch 1kg', brand='Devzira', unit='kg')
+        r = self.api.get('/api/catalog/?brand=CocaCola')
+        names = [c['name'] for c in (r.data.get('results') or r.data)]
+        self.assertEqual(names, ['Fanta 1L'])
+        r = self.api.get('/api/catalog/?unit=kg')
+        names = [c['name'] for c in (r.data.get('results') or r.data)]
+        self.assertEqual(names, ['Guruch 1kg'])
+
+    def test_catalog_filter_by_category_id(self):
+        cat = DeliveryCategory.objects.create(name='Bozor', slug='bozor')
+        CatalogProduct.objects.create(name='Olma 1kg', category=cat, unit='kg')
+        r = self.api.get(f'/api/catalog/?category={cat.pk}')
+        names = [c['name'] for c in (r.data.get('results') or r.data)]
+        self.assertEqual(names, ['Olma 1kg'])
+
+
+class InactiveCatalogLinkTests(TestCase):
+    """6-vazifa: nofaol (is_active=False) katalog mahsulotiga bog'lash taqiqlanadi."""
+
+    def setUp(self):
+        self.owner = make_user('+998939100060')
+        self.store = Store.objects.create(
+            owner=self.owner, name='Link market', store_type='delivery')
+        self.inactive = CatalogProduct.objects.create(
+            name="O'chirilgan mahsulot", unit='piece', is_active=False)
+        self.api = APIClient()
+        self.api.force_authenticate(self.owner)
+
+    def test_api_rejects_inactive_catalog_link(self):
+        r = self.api.post(f'/api/stores/{self.store.pk}/products/',
+                          {'catalog_product': self.inactive.pk, 'price': 5000, 'stock': 3},
+                          format='json')
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(Product.objects.filter(store=self.store).exists())
+
+    def test_web_rejects_inactive_catalog_link(self):
+        from django.urls import reverse
+        self.client.force_login(self.owner)
+        self.client.post(
+            reverse('delivery:product_create', args=[self.store.pk]),
+            {'catalog_product': self.inactive.pk, 'name': 'X', 'price': 5000},
+            HTTP_HOST='127.0.0.1')
+        self.assertFalse(Product.objects.filter(store=self.store).exists())
+
+
+class StoreDashboardCountsTests(TestCase):
+    """5-vazifa: /api/my/stores/ mahalla do'koni uchun custom X/10 + katalog Y."""
+
+    def setUp(self):
+        self.owner = make_user('+998939100070')
+        self.nb = Neighborhood.objects.create(name='Stats mahalla')
+        self.store = Store.objects.create(
+            owner=self.owner, name='Stats do\'kon', store_type='mahalla',
+            neighborhood=self.nb, pickup_enabled=True)
+        self.catalog = CatalogProduct.objects.create(name='Katalog non', unit='piece')
+        make_custom(self.store, name='O\'z mahsulot 1')
+        make_custom(self.store, name='O\'z mahsulot 2')
+        Product.objects.create(store=self.store, name='Katalog non',
+                               catalog_product=self.catalog, price=4000, stock=10)
+        self.api = APIClient()
+        self.api.force_authenticate(self.owner)
+
+    def test_my_stores_exposes_counts(self):
+        r = self.api.get('/api/my/stores/')
+        self.assertEqual(r.status_code, 200)
+        s = r.data['results'][0]
+        self.assertEqual(s['custom_product_count'], 2)
+        self.assertEqual(s['custom_limit'], Product.MAHALLA_CUSTOM_LIMIT)
+        self.assertEqual(s['catalog_product_count'], 1)
+
+    def test_counts_null_for_delivery_store(self):
+        sup = Store.objects.create(owner=self.owner, name='Supermarket', store_type='delivery')
+        Product.objects.create(store=sup, name='K', catalog_product=self.catalog,
+                               price=1000, stock=1)
+        r = self.api.get('/api/my/stores/')
+        by_name = {s['name']: s for s in r.data['results']}
+        self.assertIsNone(by_name['Supermarket']['custom_product_count'])
+        self.assertIsNone(by_name['Supermarket']['catalog_product_count'])
+
+    def test_web_my_stores_shows_counts(self):
+        from django.urls import reverse
+        self.client.force_login(self.owner)
+        html = self.client.get(reverse('delivery:my_stores'), HTTP_HOST='127.0.0.1').content.decode()
+        self.assertIn('2 / 10', html)
+        self.assertIn('Katalogdan: 1', html)
+
 
 class PromoteToCatalogTests(TestCase):
     def setUp(self):
@@ -264,3 +367,128 @@ class StoreDetailApiTests(TestCase):
         self.assertEqual(prods['Sut 1L']['unit'], 'liter')
         self.assertTrue(prods['Uy noni']['is_custom'])
         self.assertIsNone(prods['Uy noni']['catalog_product'])
+
+
+class CatalogPaginationTests(TestCase):
+    """5-vazifa (Phase 5): /api/catalog/ paginatsiyasi — hajm, navigatsiya,
+    qidiruv/filtr bilan birga ishlashi."""
+
+    PAGE_SIZE = 20  # settings.REST_FRAMEWORK['PAGE_SIZE']
+
+    def setUp(self):
+        self.user = make_user('+998939100080')
+        self.cat = DeliveryCategory.objects.create(name='Pag kat', slug='pag-kat')
+        for i in range(25):
+            CatalogProduct.objects.create(
+                name=f'Mahsulot {i:02d}', unit='piece',
+                category=self.cat if i < 5 else None)
+        self.api = APIClient()
+        self.api.force_authenticate(self.user)
+
+    def test_page_size_and_navigation(self):
+        r = self.api.get('/api/catalog/')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data['count'], 25)
+        self.assertEqual(len(r.data['results']), self.PAGE_SIZE)
+        self.assertIsNotNone(r.data['next'])
+        self.assertIsNone(r.data['previous'])
+        r2 = self.api.get('/api/catalog/?page=2')
+        self.assertEqual(len(r2.data['results']), 25 - self.PAGE_SIZE)
+        self.assertIsNone(r2.data['next'])
+        self.assertIsNotNone(r2.data['previous'])
+
+    def test_pagination_with_filter_and_search(self):
+        r = self.api.get(f'/api/catalog/?category={self.cat.pk}')
+        self.assertEqual(r.data['count'], 5)
+        self.assertEqual(len(r.data['results']), 5)
+        r = self.api.get('/api/catalog/?search=Mahsulot 1')
+        # DRF SearchFilter atamalarni bo'lib qidiradi: nomida '1' borlar —
+        # 01, 10..19, 21 = 12 ta.
+        self.assertEqual(r.data['count'], 12)
+
+    def test_out_of_range_page_returns_404(self):
+        r = self.api.get('/api/catalog/?page=99')
+        self.assertEqual(r.status_code, 404)
+
+
+class CatalogToolingTests(TestCase):
+    """Phase 5 buyruqlari: catalog_health, export_catalog, import --validate-only
+    va admin hisoboti (rasm qamrovi + CSV)."""
+
+    def setUp(self):
+        self.cat = DeliveryCategory.objects.create(name='Tool kat', slug='tool-kat')
+        CatalogProduct.objects.create(name='Rasmli non', unit='piece', category=self.cat)
+        CatalogProduct.objects.create(name='Rasmsiz sut', unit='liter')
+        CatalogProduct.objects.create(name='Nofaol tuz', unit='kg', is_active=False)
+
+    def _call(self, cmd, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command(cmd, *args, stdout=out)
+        return out.getvalue()
+
+    def test_catalog_health_reports_counts(self):
+        out = self._call('catalog_health')
+        self.assertIn('Jami mahsulotlar:        3', out)
+        self.assertIn('Faol (is_active=True):   2', out)
+        self.assertIn('Nofaol:                  1', out)
+        self.assertIn('Rasmsiz:                 3', out)  # testda rasm yuklanmagan
+        self.assertIn('Kategoriyasiz (NULL) mahsulotlar: 2', out)
+
+    def test_export_catalog_writes_json(self):
+        import json
+        import os
+        import tempfile
+        path = os.path.join(tempfile.gettempdir(), 'test_catalog_export.json')
+        try:
+            out = self._call('export_catalog', '--output', path)
+            self.assertIn('2 ta mahsulot eksport qilindi', out)  # faqat faollar
+            data = json.load(open(path, encoding='utf-8'))
+            self.assertEqual(data['count'], 2)
+            names = {p['name'] for p in data['products']}
+            self.assertEqual(names, {'Rasmli non', 'Rasmsiz sut'})
+            p = data['products'][0]
+            for key in ('name', 'category', 'brand', 'unit', 'description',
+                        'image_path', 'image_url'):
+                self.assertIn(key, p)
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+    def test_import_validate_only_writes_nothing(self):
+        import json
+        import os
+        import tempfile
+        payload = {'products': [
+            {'name': 'Yangi validatsiya mahsuloti', 'brand': 'X', 'unit': 'piece',
+             'category': 'Beverages', 'subcategory': 'Water',
+             'description': 'test', 'image_path': 'catalog/yoq.webp'},
+        ]}
+        path = os.path.join(tempfile.gettempdir(), 'test_validate_only.json')
+        json.dump(payload, open(path, 'w', encoding='utf-8'))
+        before = CatalogProduct.objects.count()
+        try:
+            out = self._call('import_catalog', '--validate-only',
+                             '--json', path, '--images', 'yo-q-zip.zip')
+            self.assertIn('VALIDATE-ONLY', out)
+            self.assertIn('VALIDATSIYA XULOSASI', out)
+            self.assertEqual(CatalogProduct.objects.count(), before)  # yozilmadi
+        finally:
+            os.remove(path)
+
+    def test_admin_report_and_csv(self):
+        admin_u = make_user('+998939100090', is_staff=True, is_superuser=True, role='admin')
+        self.client.force_login(admin_u)
+        r = self.client.get('/admin/delivery/catalogproduct/report/', HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        self.assertIn('Katalog hisoboti', html)
+        self.assertIn('Rasmsiz sut', html)  # rasmsizlar jadvalida
+        r = self.client.get('/admin/delivery/catalogproduct/missing-images.csv',
+                            HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('text/csv', r['Content-Type'])
+        body = r.content.decode('utf-8-sig')
+        self.assertIn('Rasmsiz sut', body)
+        self.assertIn('Nofaol tuz', body)

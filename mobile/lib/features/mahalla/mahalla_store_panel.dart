@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../delivery/delivery_models.dart';
+import '../delivery/catalog_picker.dart';
 
 /// Mahalla do'koni egasi (boshlig'i) paneli — o'z do'konlari, mahsulotlar va
 /// olib ketish buyurtmalarini boshqarish.
@@ -26,44 +27,99 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
   void _reload() =>
       setState(() => _future = ref.read(deliveryRepositoryProvider).myStores());
 
-  Future<void> _addProduct(Store s) async {
+  Future<void> _addProduct(Store s, List<Map<String, dynamic>> cats) async {
     final name = TextEditingController();
     final price = TextEditingController();
     final stock = TextEditingController(text: '10');
     final desc = TextEditingController();
+    CatalogProduct? selected; // null = o'z (custom) mahsuloti
+
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF0F1521),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 16, right: 16, top: 16,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text("Mahsulot — ${s.name}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 12),
-            TextField(controller: name, decoration: const InputDecoration(labelText: 'Nomi *')),
-            const SizedBox(height: 10),
-            Row(children: [
-              Expanded(child: TextField(controller: price, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: "Narx (so'm) *"))),
-              const SizedBox(width: 10),
-              Expanded(child: TextField(controller: stock, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Zaxira'))),
-            ]),
-            const SizedBox(height: 10),
-            TextField(controller: desc, decoration: const InputDecoration(labelText: 'Tavsif')),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Qo'shish")),
-          ],
-        ),
-      ),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheet) {
+        final used = s.customProductCount ?? 0;
+        final limit = s.customLimit;
+        final remaining = limit != null ? (limit - used) : null;
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16, right: 16, top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text("Mahsulot — ${s.name}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 12),
+              // Katalogdan tanlash — mahalla do'koni uchun asosiy yo'l.
+              // Nom/tavsif avtomatik to'ldiriladi (keyin tahrirlash mumkin);
+              // narx va zaxirani egasi o'zi kiritadi.
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await CatalogPickerPage.show(context, categories: cats);
+                  if (picked != null) {
+                    setSheet(() {
+                      selected = picked;
+                      name.text = picked.name;
+                      desc.text = picked.description;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                label: Text(selected == null ? 'Katalogdan tanlash' : 'Katalog: ${selected!.label}'),
+              ),
+              if (selected != null) CatalogPreviewTile(product: selected!),
+              if (selected != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => setSheet(() => selected = null),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text("O'z mahsulotim (katalogsiz)"),
+                  ),
+                ),
+              if (selected == null && remaining != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    remaining > 0
+                        ? "O'z mahsulotlaringiz: $used/$limit (yana $remaining ta qo'shsa bo'ladi)"
+                        : "O'z mahsulot chegarasi to'ldi ($used/$limit) — katalogdan tanlang",
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: remaining > 0 ? const Color(0xFF9AA6BD) : const Color(0xFFFB7185)),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              TextField(controller: name, decoration: const InputDecoration(labelText: 'Nomi *')),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(child: TextField(controller: price, keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: "Narx (so'm) *"))),
+                const SizedBox(width: 10),
+                Expanded(child: TextField(controller: stock, keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Zaxira'))),
+              ]),
+              const SizedBox(height: 10),
+              TextField(controller: desc, decoration: const InputDecoration(labelText: 'Tavsif')),
+              const SizedBox(height: 16),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Qo'shish")),
+            ],
+          ),
+        );
+      }),
     );
     if (ok != true) return;
+    // Custom chegara to'lgan bo'lsa — katalogdan tanlash shart.
+    if (selected == null && !s.canAddCustom) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("O'z mahsulot chegarasi to'ldi — katalogdan tanlang")));
+      }
+      return;
+    }
     if (name.text.trim().isEmpty || (int.tryParse(price.text.replaceAll(' ', '')) ?? 0) <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,16 +133,26 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
         'price': price.text.replaceAll(' ', ''),
         'stock': stock.text.trim(),
         'description': desc.text.trim(),
+        if (selected != null) 'catalog_product': selected!.id,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mahsulot qo\'shildi ✅')));
         _reload();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qo\'shib bo\'lmadi')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_errorMessage(e))));
       }
     }
+  }
+
+  /// Server javobidan (masalan 409 chegara) matnli xatoni ajratadi.
+  String _errorMessage(Object e) {
+    try {
+      final data = (e as dynamic).response?.data;
+      if (data is Map && data['detail'] != null) return data['detail'].toString();
+    } catch (_) {}
+    return "Qo'shib bo'lmadi";
   }
 
   @override
@@ -99,6 +165,7 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          final cats = snap.data?.$1 ?? [];
           final all = snap.data?.$2 ?? [];
           final mahalla = all.where((s) => s.isMahalla).toList();
           if (mahalla.isEmpty) {
@@ -124,7 +191,7 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
               padding: const EdgeInsets.all(12),
               itemCount: mahalla.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _storeCard(mahalla[i]),
+              itemBuilder: (_, i) => _storeCard(mahalla[i], cats),
             ),
           );
         },
@@ -132,7 +199,7 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
     );
   }
 
-  Widget _storeCard(Store s) {
+  Widget _storeCard(Store s, List<Map<String, dynamic>> cats) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -158,11 +225,14 @@ class _MahallaStorePanelState extends ConsumerState<MahallaStorePanel> {
                       style: TextStyle(fontSize: 10, color: Color(0xFF34D399), fontWeight: FontWeight.w700)),
                 ),
             ]),
+            const SizedBox(height: 8),
+            // Ko'rsatkichlar: "O'z mahsulotlari: X/10 · Katalogdan: Y"
+            StoreCatalogStats(store: s),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => _addProduct(s),
+                  onPressed: () => _addProduct(s, cats),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Mahsulot'),
                 ),

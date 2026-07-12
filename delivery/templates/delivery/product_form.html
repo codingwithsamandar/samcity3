@@ -10,6 +10,33 @@
 
   <form method="post" enctype="multipart/form-data" class="card" style="padding:1.5rem;">
     {% csrf_token %}
+    {% if mode == 'create' and catalog_products %}
+    <div class="form-group">
+      <label class="form-label">Katalogdan tanlash (ixtiyoriy)</label>
+      <input type="text" id="id_catalog_search" class="form-control" placeholder="🔍 Nom, brend yoki kategoriya bo'yicha qidirish..."
+             autocomplete="off" style="margin-bottom:.4rem;">
+      <select name="catalog_product" id="id_catalog" class="form-control" size="1">
+        <option value="">— O'z mahsulotim (katalogsiz){% if store.store_type == 'mahalla' %} · {{ custom_used }}/{{ custom_limit }}{% endif %} —</option>
+        {% for c in catalog_products %}
+        <option value="{{ c.id }}" data-name="{{ c.name }}" data-desc="{{ c.description }}"
+                data-brand="{{ c.brand }}" data-unit="{{ c.get_unit_display }}"
+                data-image="{% if c.image %}{{ c.image.url }}{% endif %}">{{ c.name }}{% if c.brand %} — {{ c.brand }}{% endif %}{% if c.category %} ({{ c.category.name }}){% endif %}</option>
+        {% endfor %}
+      </select>
+      <p class="form-hint">Katalog mahsuloti tanlansa nom/tavsif avtomatik to'ldiriladi (keyin o'zgartirsangiz bo'ladi); narx va zaxirani o'zingiz kiritasiz.{% if store.store_type == 'mahalla' %} Mahalla do'koni {{ custom_limit }} tagacha o'z (katalogsiz) mahsulotini qo'sha oladi — katalogdan cheklovsiz.{% endif %}</p>
+      <!-- Tanlangan katalog mahsuloti ko'rinishi -->
+      <div id="catalogPreview" class="card" style="display:none;padding:.7rem;margin-top:.5rem;align-items:center;gap:.8rem;">
+        <img id="cpImg" src="" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;display:none;">
+        <div>
+          <div id="cpName" style="font-weight:700;"></div>
+          <div style="font-size:.8rem;color:var(--text2);">
+            <span id="cpBrand"></span>
+            <span id="cpUnit" class="badge badge-gold" style="margin-left:.3rem;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
     <div class="form-group">
       <label class="form-label">Nomi *</label>
       <input type="text" name="name" class="form-control" required value="{{ product.name|default:post.name|default:'' }}">
@@ -51,6 +78,64 @@
   var stock = document.getElementById('id_stock'), grp = document.getElementById('restockGroup');
   function sync() { if (grp) grp.style.display = (parseInt(stock.value || '0', 10) <= 0) ? '' : 'none'; }
   if (stock && grp) { stock.addEventListener('input', sync); sync(); }
+  var cat = document.getElementById('id_catalog');
+  if (cat) {
+    var nm = document.querySelector('input[name=name]');
+    var ds = document.querySelector('textarea[name=description]');
+    var pv = document.getElementById('catalogPreview');
+    var pvImg = document.getElementById('cpImg'), pvName = document.getElementById('cpName');
+    var pvBrand = document.getElementById('cpBrand'), pvUnit = document.getElementById('cpUnit');
+    // Oxirgi avto-to'ldirilgan qiymatlar — egasi qo'lda o'zgartirgan matnni
+    // keyingi tanlovda bosib yubormaslik uchun.
+    var lastAuto = {name: '', desc: ''};
+
+    cat.addEventListener('change', function () {
+      var opt = cat.options[cat.selectedIndex];
+      if (opt && opt.value) {
+        var n = opt.getAttribute('data-name') || '';
+        var d = opt.getAttribute('data-desc') || '';
+        if (nm && (!nm.value || nm.value === lastAuto.name)) nm.value = n;
+        if (ds && (!ds.value || ds.value === lastAuto.desc)) ds.value = d;
+        lastAuto = {name: n, desc: d};
+        // Ko'rinish paneli: rasm + brend + o'lchov birligi
+        var img = opt.getAttribute('data-image') || '';
+        var brand = opt.getAttribute('data-brand') || '';
+        var unit = opt.getAttribute('data-unit') || '';
+        if (pv) {
+          pv.style.display = 'flex';
+          pvName.textContent = n;
+          pvBrand.textContent = brand;
+          pvUnit.textContent = unit ? ('o‘lchov: ' + unit) : '';
+          pvUnit.style.display = unit ? '' : 'none';
+          if (img) { pvImg.src = img; pvImg.style.display = ''; }
+          else { pvImg.removeAttribute('src'); pvImg.style.display = 'none'; }
+        }
+      } else if (pv) {
+        pv.style.display = 'none';
+      }
+    });
+
+    // Jonli qidiruv: nom/brend/kategoriya matni bo'yicha optionlarni filtrlaydi.
+    var search = document.getElementById('id_catalog_search');
+    if (search) {
+      search.addEventListener('input', function () {
+        var q = search.value.trim().toLowerCase();
+        var firstMatch = null, shown = 0;
+        for (var i = 1; i < cat.options.length; i++) { // 0 = "o'z mahsulotim"
+          var o = cat.options[i];
+          var hay = (o.textContent + ' ' + (o.getAttribute('data-brand') || '')).toLowerCase();
+          var hit = !q || hay.indexOf(q) !== -1;
+          o.hidden = !hit;
+          if (hit) { shown++; if (!firstMatch) firstMatch = o; }
+        }
+        // Qidiruvda ko'rinmas bo'lib qolgan tanlov — birinchi mosiga o'tkaziladi.
+        if (q && cat.selectedIndex > 0 && cat.options[cat.selectedIndex].hidden && firstMatch) {
+          cat.value = firstMatch.value;
+          cat.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+  }
 })();
 </script>
 {% endblock %}

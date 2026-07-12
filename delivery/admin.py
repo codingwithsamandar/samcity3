@@ -116,11 +116,20 @@ class ProductAdmin(admin.ModelAdmin):
 class CatalogProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'brand', 'category', 'unit', 'is_active', 'store_count',
                     'image_tag', 'created_at')
-    list_filter = ('is_active', 'category', 'unit')
+    # ('image', EmptyFieldListFilter) — "rasmsiz mahsulotlar" tez filtri.
+    list_filter = ('is_active', 'category', 'brand', 'unit',
+                   ('image', admin.EmptyFieldListFilter))
     search_fields = ('name', 'brand')
     list_editable = ('is_active',)
     autocomplete_fields = ('category',)
     readonly_fields = ('created_by', 'promoted_from', 'created_at', 'updated_at', 'image_tag')
+    change_list_template = 'admin/delivery/catalogproduct/change_list.html'
+
+    def get_queryset(self, request):
+        # store_count ustuni uchun N+1 o'rniga bitta annotate so'rovi.
+        from django.db.models import Count
+        return super().get_queryset(request).annotate(
+            _store_count=Count('store_products', distinct=True))
 
     @admin.display(description='Rasm')
     def image_tag(self, obj):
@@ -128,14 +137,50 @@ class CatalogProductAdmin(admin.ModelAdmin):
             return mark_safe(f'<img src="{obj.image.url}" style="height:40px;border-radius:6px;">')
         return '—'
 
-    @admin.display(description="Do'konlarda")
+    @admin.display(description="Do'konlarda", ordering='_store_count')
     def store_count(self, obj):
-        return obj.store_products.count()
+        return obj._store_count
 
     def save_model(self, request, obj, form, change):
         if not obj.created_by_id:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+    # ── Hisobot: rasm qamrovi + salomatlik (admin ichida) ────────────────────
+    def get_urls(self):
+        from django.urls import path
+        return [
+            path('report/', self.admin_site.admin_view(self.report_view),
+                 name='delivery_catalogproduct_report'),
+            path('missing-images.csv', self.admin_site.admin_view(self.missing_images_csv),
+                 name='delivery_catalogproduct_missing_csv'),
+        ] + super().get_urls()
+
+    def report_view(self, request):
+        from django.template.response import TemplateResponse
+        from delivery.catalog_stats import catalog_stats, missing_image_products
+        ctx = {
+            **self.admin_site.each_context(request),
+            'title': 'Katalog hisoboti',
+            'stats': catalog_stats(),
+            'missing': missing_image_products()[:200],
+            'opts': self.model._meta,
+        }
+        return TemplateResponse(request, 'admin/delivery/catalogproduct/report.html', ctx)
+
+    def missing_images_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        from delivery.catalog_stats import missing_image_products
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="catalog_missing_images.csv"'
+        response.write('\ufeff')  # BOM — Excel'da UTF-8 to'g'ri ochilishi uchun
+        writer = csv.writer(response)
+        writer.writerow(['id', 'name', 'brand', 'category', 'unit', 'is_active'])
+        for p in missing_image_products():
+            writer.writerow([p.pk, p.name, p.brand,
+                             p.category.name if p.category else '', p.unit, p.is_active])
+        return response
 
 
 # ── PRODUCT IMAGE ─────────────────────────────────────────────────────────────

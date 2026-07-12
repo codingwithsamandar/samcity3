@@ -115,16 +115,19 @@ class StoreListSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source='category.name', default=None, read_only=True)
     product_count = serializers.IntegerField(source='products.count', read_only=True)
     cart_enabled = serializers.SerializerMethodField()
-    # Mahalla do'koni uchun: custom (katalogsiz) mahsulot soni + chegara. Boshqa
-    # turdagi do'konlarda null (public ro'yxatda ortiqcha so'rov bo'lmaydi).
+    # Mahalla do'koni uchun: custom (katalogsiz) mahsulot soni + chegara hamda
+    # katalogga bog'langan mahsulotlar soni (egasi paneli ko'rsatkichlari).
+    # Boshqa turdagi do'konlarda null (public ro'yxatda ortiqcha so'rov bo'lmaydi).
     custom_product_count = serializers.SerializerMethodField()
     custom_limit = serializers.SerializerMethodField()
+    catalog_product_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Store
         fields = ('id', 'name', 'description', 'address', 'phone', 'working_hours',
                   'logo', 'category', 'product_count', 'cart_enabled', 'pickup_enabled',
-                  'store_type', 'neighborhood', 'custom_product_count', 'custom_limit')
+                  'store_type', 'neighborhood', 'custom_product_count', 'custom_limit',
+                  'catalog_product_count')
 
     def get_logo(self, obj):
         return _abs(self.context.get('request'), obj.logo)
@@ -136,6 +139,11 @@ class StoreListSerializer(serializers.ModelSerializer):
         if obj.store_type != 'mahalla':
             return None
         return obj.custom_product_count()
+
+    def get_catalog_product_count(self, obj):
+        if obj.store_type != 'mahalla':
+            return None
+        return obj.catalog_product_count()
 
     def get_cart_enabled(self, obj):
         # Savat/checkout: yetkazib beruvchi do'kon (delivery oqimi) yoki pickup
@@ -220,7 +228,10 @@ class CartSerializer(serializers.ModelSerializer):
                   'delivery_subtotal', 'mahalla_subtotal', 'carts')
 
     def _items(self, obj):
-        return list(obj.items.select_related('product__store').prefetch_related('product__images'))
+        # product__catalog_product: ProductSerializer unit/cover fallback uchun
+        # (kataloglik mahsulotlarda N+1 bo'lmasligi uchun).
+        return list(obj.items.select_related('product__store', 'product__catalog_product')
+                    .prefetch_related('product__images'))
 
     def _by_type(self, obj, store_type):
         return [it for it in self._items(obj) if it.product.store.store_type == store_type]

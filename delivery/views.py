@@ -498,6 +498,7 @@ def my_stores(request):
     my_requests = StoreRequest.objects.filter(user=request.user).select_related('neighborhood')
     return render(request, 'delivery/my_stores.html', {
         'stores': stores, 'my_requests': my_requests,
+        'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
     })
 
 
@@ -834,7 +835,7 @@ def product_create(request, store_pk):
     def _render_form():
         return render(request, 'delivery/product_form.html', {
             'mode': 'create', 'store': store, 'post': _form_post(request),
-            'catalog_products': CatalogProduct.objects.filter(is_active=True),
+            'catalog_products': CatalogProduct.objects.filter(is_active=True).select_related('category'),
             'custom_used': store.custom_product_count(),
             'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
         })
