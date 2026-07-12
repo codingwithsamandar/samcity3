@@ -15,11 +15,22 @@
       <label class="form-label">Katalogdan tanlash (ixtiyoriy)</label>
       <input type="text" id="id_catalog_search" class="form-control" placeholder="🔍 Nom, brend yoki kategoriya bo'yicha qidirish..."
              autocomplete="off" style="margin-bottom:.4rem;">
+      <div style="display:flex;gap:.5rem;margin-bottom:.4rem;">
+        <select id="id_catalog_cat" class="form-control" style="flex:1;" title="Kategoriya bo'yicha filtr">
+          <option value="">Kategoriya: barchasi</option>
+          {% for cat in catalog_categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}
+        </select>
+        <select id="id_catalog_unit" class="form-control" style="flex:1;" title="O'lchov birligi bo'yicha filtr">
+          <option value="">Birlik: barchasi</option>
+          {% for val, label in unit_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
       <select name="catalog_product" id="id_catalog" class="form-control" size="1">
         <option value="">— O'z mahsulotim (katalogsiz){% if store.store_type == 'mahalla' %} · {{ custom_used }}/{{ custom_limit }}{% endif %} —</option>
         {% for c in catalog_products %}
         <option value="{{ c.id }}" data-name="{{ c.name }}" data-desc="{{ c.description }}"
                 data-brand="{{ c.brand }}" data-unit="{{ c.get_unit_display }}"
+                data-catid="{{ c.category_id|default:'' }}" data-unitval="{{ c.unit }}"
                 data-image="{% if c.image %}{{ c.image.url }}{% endif %}">{{ c.name }}{% if c.brand %} — {{ c.brand }}{% endif %}{% if c.category %} ({{ c.category.name }}){% endif %}</option>
         {% endfor %}
       </select>
@@ -115,26 +126,34 @@
       }
     });
 
-    // Jonli qidiruv: nom/brend/kategoriya matni bo'yicha optionlarni filtrlaydi.
+    // Jonli filtr: matn qidiruvi + kategoriya + birlik dropdownlari birga ishlaydi.
     var search = document.getElementById('id_catalog_search');
-    if (search) {
-      search.addEventListener('input', function () {
-        var q = search.value.trim().toLowerCase();
-        var firstMatch = null, shown = 0;
-        for (var i = 1; i < cat.options.length; i++) { // 0 = "o'z mahsulotim"
-          var o = cat.options[i];
-          var hay = (o.textContent + ' ' + (o.getAttribute('data-brand') || '')).toLowerCase();
-          var hit = !q || hay.indexOf(q) !== -1;
-          o.hidden = !hit;
-          if (hit) { shown++; if (!firstMatch) firstMatch = o; }
-        }
-        // Qidiruvda ko'rinmas bo'lib qolgan tanlov — birinchi mosiga o'tkaziladi.
-        if (q && cat.selectedIndex > 0 && cat.options[cat.selectedIndex].hidden && firstMatch) {
-          cat.value = firstMatch.value;
-          cat.dispatchEvent(new Event('change'));
-        }
-      });
+    var catSel = document.getElementById('id_catalog_cat');
+    var unitSel = document.getElementById('id_catalog_unit');
+    function applyFilter() {
+      var q = search ? search.value.trim().toLowerCase() : '';
+      var cid = catSel ? catSel.value : '';
+      var un = unitSel ? unitSel.value : '';
+      var firstMatch = null;
+      for (var i = 1; i < cat.options.length; i++) { // 0 = "o'z mahsulotim"
+        var o = cat.options[i];
+        var hay = (o.textContent + ' ' + (o.getAttribute('data-brand') || '')).toLowerCase();
+        var hit = (!q || hay.indexOf(q) !== -1)
+          && (!cid || o.getAttribute('data-catid') === cid)
+          && (!un || o.getAttribute('data-unitval') === un);
+        o.hidden = !hit;
+        if (hit && !firstMatch) firstMatch = o;
+      }
+      // Filtrda ko'rinmas bo'lib qolgan tanlov — birinchi mosiga o'tkaziladi.
+      var filtering = q || cid || un;
+      if (filtering && cat.selectedIndex > 0 && cat.options[cat.selectedIndex].hidden && firstMatch) {
+        cat.value = firstMatch.value;
+        cat.dispatchEvent(new Event('change'));
+      }
     }
+    if (search) search.addEventListener('input', applyFilter);
+    if (catSel) catSel.addEventListener('change', applyFilter);
+    if (unitSel) unitSel.addEventListener('change', applyFilter);
   }
 })();
 </script>

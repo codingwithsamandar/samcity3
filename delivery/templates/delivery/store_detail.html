@@ -137,8 +137,8 @@
           {% for product in products %}
           <div class="lcard reveal">
             <a href="{% url 'delivery:product_detail' store.pk product.pk %}" class="lc-media" style="aspect-ratio:4/3;display:block;">
-              {% with first_img=product.images.all.0 %}
-                {% if first_img %}<img src="{{ first_img.image.url }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:38px;height:38px;"><use href="#i-cart"/></svg></div>{% endif %}
+              {% with cover=product.cover_image_url %}
+                {% if cover %}<img src="{{ cover }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:38px;height:38px;"><use href="#i-cart"/></svg></div>{% endif %}
               {% endwith %}
               {% if product.stock <= 0 %}<div class="lc-badges"><span class="badge badge-red">Tugagan</span></div>{% endif %}
             </a>
@@ -161,6 +161,12 @@
                 {% endif %}
               {% endif %}
               {% if user.is_authenticated and user.id == store.owner_id %}
+              {% if product.catalog_product_id %}
+              <div style="display:flex;gap:.35rem;margin-top:.45rem;flex-wrap:wrap;">
+                <span class="badge badge-green" title="Markaziy katalogga bog'langan mahsulot">Katalog</span>
+                <span class="badge badge-gold" title="O'lchov birligi">{{ product.catalog_product.get_unit_display }}</span>
+              </div>
+              {% endif %}
               <div style="display:flex;gap:.4rem;margin-top:.5rem;">
                 <a href="{% url 'delivery:product_edit' product.pk %}" class="btn btn-ghost btn-sm" style="flex:1;">Tahrir</a>
                 <a href="{% url 'delivery:product_delete' product.pk %}" class="btn btn-outline btn-sm" style="flex:1;">O'chir</a>

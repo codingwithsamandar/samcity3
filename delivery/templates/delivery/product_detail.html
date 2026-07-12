@@ -14,9 +14,9 @@
 
   <div class="detail-grid">
     <div>
-      {% with images=product.images.all %}
+      {% with images=product.images.all cover=product.cover_image_url %}
       <div class="gallery-main">
-        {% if images %}<img src="{{ images.0.image.url }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:56px;height:56px;"><use href="#i-cart"/></svg></div>{% endif %}
+        {% if cover %}<img src="{{ cover }}" alt="{{ product.name }}">{% else %}<div class="media-ph"><svg class="ic" style="width:56px;height:56px;"><use href="#i-cart"/></svg></div>{% endif %}
       </div>
       {% if images|length > 1 %}
       <div class="gallery-thumbs">

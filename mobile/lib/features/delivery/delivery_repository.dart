@@ -55,16 +55,22 @@ class DeliveryRepository {
 
   /// Markaziy katalog — do'kon egasi mahsulot tanlashi uchun.
   /// search: nom/brend/kategoriya nomi; filtrlar: categoryId, brand (aniq), unit.
-  Future<List<CatalogProduct>> catalog(
-      {String? search, Object? categoryId, String? brand, String? unit}) async {
+  /// Sahifalangan (DRF, 20 tadan): natija bilan birga keyingi sahifa bor-yo'qligi
+  /// qaytadi — picker shu bayroq bo'yicha davomini yuklaydi.
+  Future<(List<CatalogProduct>, bool hasMore)> catalog(
+      {String? search, Object? categoryId, String? brand, String? unit,
+      int page = 1}) async {
     final res = await _api.dio.get('/catalog/', queryParameters: {
       if (search != null && search.isNotEmpty) 'search': search,
       if (categoryId != null) 'category': categoryId,
       if (brand != null && brand.isNotEmpty) 'brand': brand,
       if (unit != null && unit.isNotEmpty) 'unit': unit,
+      if (page > 1) 'page': page,
     });
-    final results = (res.data['results'] as List?) ?? (res.data as List?) ?? [];
-    return results.map((e) => CatalogProduct.fromJson(e)).toList();
+    final data = res.data;
+    final results = (data is Map ? data['results'] as List? : data as List?) ?? [];
+    final hasMore = data is Map && data['next'] != null;
+    return (results.map((e) => CatalogProduct.fromJson(e)).toList(), hasMore);
   }
 
   Future<void> updateProduct(

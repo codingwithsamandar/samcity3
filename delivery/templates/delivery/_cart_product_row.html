@@ -1,7 +1,7 @@
 {# Savatdagi bitta mahsulot qatori (yetkazish/mahalla bo'limlarida qayta ishlatiladi). #}
 <div class="cart-item">
   <div class="cart-thumb">
-    {% with img=item.product.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="{{ item.product.name }}">{% else %}<svg class="ic"><use href="#i-cart"/></svg>{% endif %}{% endwith %}
+    {% with cover=item.product.cover_image_url %}{% if cover %}<img src="{{ cover }}" alt="{{ item.product.name }}">{% else %}<svg class="ic"><use href="#i-cart"/></svg>{% endif %}{% endwith %}
   </div>
   <div>
     <a href="{% url 'delivery:product_detail' item.product.store.pk item.product.pk %}" style="font-weight:700;color:var(--text);font-size:.96rem;">{{ item.product.name }}</a>

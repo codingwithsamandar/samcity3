@@ -42,33 +42,94 @@ const _units = <(String, String)>[
 
 class _CatalogPickerPageState extends ConsumerState<CatalogPickerPage> {
   final _search = TextEditingController();
-  Future<List<CatalogProduct>>? _future;
+  final _scroll = ScrollController();
   Object? _categoryId;
   String? _unit;
   String? _brand;
   // Yuklangan natijalardan yig'ilgan brendlar — filtr chiplari uchun.
   final Set<String> _seenBrands = {};
 
+  // Sahifalab yuklash holati: server 20 tadan qaytaradi, scroll oxirida davomi.
+  final List<CatalogProduct> _items = [];
+  bool _loading = true; // birinchi sahifa yuklanmoqda (ro'yxat bo'sh)
+  bool _loadingMore = false;
+  bool _hasMore = false;
+  int _page = 1;
+  int _reqId = 0; // eskirgan javoblarni tashlab yuborish uchun
+
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(() {
+      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300) {
+        _loadMore();
+      }
+    });
     _load();
   }
 
-  void _load() {
+  /// Filtr/qidiruv o'zgarganda — birinchi sahifadan qayta yuklash.
+  Future<void> _load() async {
+    final id = ++_reqId;
     setState(() {
-      _future = ref.read(deliveryRepositoryProvider).catalog(
-            search: _search.text.trim(),
-            categoryId: _categoryId,
-            brand: _brand,
-            unit: _unit,
-          );
+      _loading = true;
+      _items.clear();
+      _page = 1;
+      _hasMore = false;
     });
+    try {
+      final (items, hasMore) = await _fetch(1);
+      if (!mounted || id != _reqId) return;
+      setState(() {
+        _items.addAll(items);
+        _hasMore = hasMore;
+        _loading = false;
+        _collectBrands(items);
+      });
+    } catch (_) {
+      if (mounted && id == _reqId) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || _loadingMore || !_hasMore) return;
+    final id = _reqId;
+    setState(() => _loadingMore = true);
+    try {
+      final (items, hasMore) = await _fetch(_page + 1);
+      if (!mounted || id != _reqId) return;
+      setState(() {
+        _page += 1;
+        _items.addAll(items);
+        _hasMore = hasMore;
+        _loadingMore = false;
+        _collectBrands(items);
+      });
+    } catch (_) {
+      if (mounted && id == _reqId) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<(List<CatalogProduct>, bool)> _fetch(int page) {
+    return ref.read(deliveryRepositoryProvider).catalog(
+          search: _search.text.trim(),
+          categoryId: _categoryId,
+          brand: _brand,
+          unit: _unit,
+          page: page,
+        );
+  }
+
+  void _collectBrands(List<CatalogProduct> items) {
+    // Brend filtri tanlangan holatda yig'maymiz — chiplar to'plami torayib qolmasin.
+    if (_brand != null) return;
+    _seenBrands.addAll(items.map((c) => c.brand).where((b) => b.isNotEmpty));
   }
 
   @override
   void dispose() {
     _search.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -157,50 +218,47 @@ class _CatalogPickerPageState extends ConsumerState<CatalogPickerPage> {
               ),
             ),
           Expanded(
-            child: FutureBuilder<List<CatalogProduct>>(
-              future: _future,
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final items = snap.data ?? [];
-                // Brend chiplarini to'ldirish (filtr tanlangan bo'lsa yig'ilganini saqlaymiz).
-                if (_brand == null) {
-                  final brands =
-                      items.map((c) => c.brand).where((b) => b.isNotEmpty).toSet();
-                  if (!_seenBrands.containsAll(brands)) {
-                    WidgetsBinding.instance.addPostFrameCallback(
-                        (_) => setState(() => _seenBrands.addAll(brands)));
-                  }
-                }
-                if (items.isEmpty) {
-                  return const Center(child: Text("Katalog bo'sh yoki topilmadi"));
-                }
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    final c = items[i];
-                    final sub = [
-                      if (c.brand.isNotEmpty) c.brand,
-                      if (c.category != null) c.category!,
-                      if (c.unitDisplay.isNotEmpty) c.unitDisplay,
-                    ].join(' · ');
-                    return ListTile(
-                      leading: c.image != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(c.image!, width: 44, height: 44, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined)))
-                          : const Icon(Icons.inventory_2_outlined, size: 32),
-                      title: Text(c.name),
-                      subtitle: sub.isEmpty ? null : Text(sub),
-                      onTap: () => Navigator.of(context).pop(c),
-                    );
-                  },
-                );
-              },
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _items.isEmpty
+                    ? const Center(child: Text("Katalog bo'sh yoki topilmadi"))
+                    : ListView.separated(
+                        controller: _scroll,
+                        // +1: oxirida "yuklanmoqda" qatori (davomi bo'lsa).
+                        itemCount: _items.length + (_hasMore ? 1 : 0),
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          if (i >= _items.length) {
+                            // Build ichida setState bo'lmasligi uchun keyingi kadrga.
+                            WidgetsBinding.instance
+                                .addPostFrameCallback((_) => _loadMore());
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: Center(
+                                  child: SizedBox(
+                                      width: 22, height: 22,
+                                      child: CircularProgressIndicator(strokeWidth: 2.4))),
+                            );
+                          }
+                          final c = _items[i];
+                          final sub = [
+                            if (c.brand.isNotEmpty) c.brand,
+                            if (c.category != null) c.category!,
+                            if (c.unitDisplay.isNotEmpty) c.unitDisplay,
+                          ].join(' · ');
+                          return ListTile(
+                            leading: c.image != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(c.image!, width: 44, height: 44, fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined)))
+                                : const Icon(Icons.inventory_2_outlined, size: 32),
+                            title: Text(c.name),
+                            subtitle: sub.isEmpty ? null : Text(sub),
+                            onTap: () => Navigator.of(context).pop(c),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

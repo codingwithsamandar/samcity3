@@ -88,6 +88,7 @@ def store_detail_view(request, pk):
     products_qs = (
         Product.objects
         .filter(store=store, is_available=True)
+        .select_related('catalog_product')
         .prefetch_related('images')
     )
     if pq:
@@ -120,7 +121,7 @@ def product_detail_view(request, store_pk, product_pk):
     store = get_object_or_404(Store, pk=store_pk, is_active=True)
     product = get_object_or_404(
         Product.objects
-               .select_related('store__category', 'store__owner')
+               .select_related('store__category', 'store__owner', 'catalog_product')
                .prefetch_related('images'),
         pk=product_pk,
         store=store,
@@ -152,7 +153,8 @@ def cart_view(request):
     """Foydalanuvchi savati sahifasi — 3 mustaqil bo'lim (e'lon / yetkazish /
     mahalla), har bo'lim do'kon bo'yicha guruhlangan + saqlangan savatlar."""
     cart = get_active_cart(request.user)
-    items = list(cart.items.select_related('product__store').prefetch_related('product__images'))
+    items = list(cart.items.select_related('product__store', 'product__catalog_product')
+                 .prefetch_related('product__images'))
     delivery_items = [it for it in items if it.product.store.store_type == 'delivery']
     mahalla_items = [it for it in items if it.product.store.store_type == 'mahalla']
     ad_items = list(cart.ad_items.select_related('ad').prefetch_related('ad__images'))
@@ -836,6 +838,10 @@ def product_create(request, store_pk):
         return render(request, 'delivery/product_form.html', {
             'mode': 'create', 'store': store, 'post': _form_post(request),
             'catalog_products': CatalogProduct.objects.filter(is_active=True).select_related('category'),
+            # Filtr dropdownlari: faqat katalogda mavjud kategoriyalar + birliklar.
+            'catalog_categories': DeliveryCategory.objects.filter(
+                catalog_products__is_active=True).distinct().order_by('name'),
+            'unit_choices': CatalogProduct.UNIT_CHOICES,
             'custom_used': store.custom_product_count(),
             'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
         })
