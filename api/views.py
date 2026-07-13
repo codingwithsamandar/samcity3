@@ -12,7 +12,7 @@ from django.contrib.auth import authenticate
 from django.db.models import F
 from django.utils import timezone
 
-from rest_framework import status, viewsets, mixins
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -222,25 +222,6 @@ class AdViewSet(viewsets.ModelViewSet):
         instance.refresh_from_db(fields=['views'])
         ser = AdDetailSerializer(instance, context={'request': request})
         return Response(ser.data)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def mine(self, request):
-        qs = (Ad.objects.filter(user=request.user)
-              .exclude(status='deleted')
-              .select_related('user').prefetch_related('images')
-              .order_by('-created_at'))
-        page = self.paginate_queryset(qs)
-        ser = AdListSerializer(page, many=True, context={'request': request})
-        return self.get_paginated_response(ser.data)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def favorites(self, request):
-        qs = (Ad.objects.filter(favorited_by__user=request.user, status='active')
-              .select_related('user').prefetch_related('images')
-              .order_by('-favorited_by__created_at'))
-        page = self.paginate_queryset(qs)
-        ser = AdListSerializer(page, many=True, context={'request': request})
-        return self.get_paginated_response(ser.data)
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):

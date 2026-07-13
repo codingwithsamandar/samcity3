@@ -61,7 +61,7 @@ def map_view(request):
 def _point_in_polygon(lat, lng, ring):
     """Ray-casting: nuqta poligon ichidami? `ring` — [[lat,lng], ...].
 
-    JS tomonidagi `inPoly()` (samcity-map.js/mahalla_map.html) bilan bir xil
+    JS tomonidagi `inPoly()` (samcity-map.js) bilan bir xil
     algoritm — natija ikkala tomonda ham mos keladi.
     """
     inside = False

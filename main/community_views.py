@@ -342,62 +342,6 @@ def help_status(request, req_id):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  MAHALLA COMMUNITY MAP
-# ════════════════════════════════════════════════════════════════════════════
-
-def community_map(request):
-    """Mahalla xaritasi — faqat foydalanuvchining o'z mahallasini ko'rsatadi."""
-    import json
-    my = None
-    if request.user.is_authenticated and request.user.neighborhood_id:
-        n = request.user.neighborhood
-        if n and n.boundary:
-            my = {
-                'id': n.pk,
-                'name': n.name,
-                'color': n.color or '#3551d1',
-                'boundary': n.boundary,
-                'center': n.centroid(),
-                'description': n.description,
-            }
-    return render(request, 'community/mahalla_map.html', {
-        'my_neighborhood_json': safe_json(my),
-        'has_my_neighborhood': my is not None,
-    })
-
-
-def community_map_geojson(request):
-    """Birlashtirilgan xarita: joylar + yordam so'rovlari + favqulodda holatlar."""
-    from places.models import Place
-    markers = []
-
-    for p in Place.objects.filter(is_active=True).only(
-            'id', 'name', 'category', 'latitude', 'longitude', 'address'):
-        markers.append({
-            'type': 'place', 'category': p.category, 'icon': p.icon,
-            'name': p.name, 'lat': p.latitude, 'lng': p.longitude,
-            'address': p.address, 'cat': p.get_category_display(),
-            'url': reverse('places:place_detail', args=[p.id]),
-        })
-
-    helps = HelpRequest.objects.filter(
-        status__in=['open', 'in_progress'], latitude__isnull=False, longitude__isnull=False,
-    ).only('id', 'title', 'category', 'is_urgent', 'latitude', 'longitude', 'location')
-    for h in helps:
-        emergency = h.category == 'emergency' or h.is_urgent
-        markers.append({
-            'type': 'emergency' if emergency else 'help',
-            'category': 'emergency' if emergency else 'help',
-            'icon': '🚨' if emergency else '🤝',
-            'name': h.title, 'lat': h.latitude, 'lng': h.longitude,
-            'address': h.location, 'cat': h.get_category_display(),
-            'url': reverse('help_detail', args=[h.id]),
-        })
-
-    return JsonResponse({'markers': markers})
-
-
-# ════════════════════════════════════════════════════════════════════════════
 #  MAHALLA SAHIFASI (yagona: ma'lumot, e'lonlar, joylar, xarita, chat, murojaat)
 # ════════════════════════════════════════════════════════════════════════════
 

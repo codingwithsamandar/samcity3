@@ -97,11 +97,3 @@ class CreateServicePaymentView(APIView):
         )
         return Response(ServicePaymentSerializer(payment).data,
                         status=status.HTTP_201_CREATED)
-
-
-class MyServicePaymentsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        qs = ServicePayment.objects.filter(user=request.user)
-        return Response({'results': ServicePaymentSerializer(qs, many=True).data})

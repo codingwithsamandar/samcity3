@@ -20,8 +20,6 @@ urlpatterns = [
 
     # Phase 4/5 — toifa bo'yicha bo'limlar (place_list ni qayta ishlatadi)
     path('tourism/', views.place_list, {'category': 'tourist'}, name='tourism_list'),
-    path('furniture/', views.place_list, {'category': 'furniture'}, name='furniture_list'),
-    path('electronics/', views.place_list, {'category': 'electronics'}, name='electronics_list'),
 
     path('<int:pk>/', views.place_detail, name='place_detail'),
     path('<int:pk>/edit/', views.place_edit, name='place_edit'),

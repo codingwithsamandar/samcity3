@@ -31,7 +31,7 @@
     <p>Barcha faoliyatingiz bir joyda</p>
   </div>
 
-  {% if not orders and not trips and not venue_bookings and not ad_bookings and not stores and not venues and not resumes %}
+  {% if not orders and not trips and not venue_bookings and not stores and not venues and not resumes %}
   <div class="onboard-banner">
     <h2 style="font-size:1.15rem;margin-bottom:.35rem;">SamCity ga xush kelibsiz! 👋</h2>
     <p style="color:var(--text2);font-size:.9rem;">Qayerdan boshlashni bilmayapsizmi? Quyidagi xizmatlardan birini tanlang:</p>
@@ -75,16 +75,6 @@
         <span class="badge {% if b.status == 'confirmed' %}badge-green{% elif b.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}">{{ b.get_status_display }}</span>
       </div>
       {% empty %}<div class="dash-empty">Hali bron yo'q. <a href="{% url 'venue_list' %}" style="color:var(--accent);">Joy tanlash →</a></div>{% endfor %}
-    </div>
-
-    <div class="dash-card">
-      <h2><span class="ht"><span class="hic g-indigo"><svg class="ic"><use href="#i-tag"/></svg></span> E'lon bronlari</span> <a href="{% url 'my_bookings' %}">Barchasi →</a></h2>
-      {% for b in ad_bookings %}
-      <a href="{% url 'booking_detail' b.id %}" class="dash-row" style="color:inherit;">
-        <span>{{ b.ad.title|truncatechars:28 }}</span>
-        <span class="badge {% if b.status == 'confirmed' %}badge-green{% elif b.status == 'cancelled' %}badge-red{% else %}badge-gold{% endif %}">{{ b.get_status_display }}</span>
-      </a>
-      {% empty %}<div class="dash-empty">Bron yo'q.</div>{% endfor %}
     </div>
 
     <div class="dash-card">

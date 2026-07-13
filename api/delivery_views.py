@@ -67,17 +67,6 @@ class StoreViewSet(viewsets.ReadOnlyModelViewSet):
         return StoreDetailSerializer if self.action == 'retrieve' else StoreListSerializer
 
 
-class ProductDetailView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get(self, request, pk):
-        try:
-            product = Product.objects.select_related('catalog_product').prefetch_related('images').get(pk=pk, is_available=True)
-        except Product.DoesNotExist:
-            return Response({'detail': 'Mahsulot topilmadi.'}, status=404)
-        return Response(ProductSerializer(product, context={'request': request}).data)
-
-
 class CatalogListView(generics.ListAPIView):
     """GET /api/catalog/ — markaziy katalog (do'kon egasi mahsulot tanlashi uchun).
 
@@ -239,13 +228,6 @@ def cart_remove(request):
     cart = _cart(request.user)
     CartItem.objects.filter(cart=cart, product_id=request.data.get('product_id')).delete()
     return Response(CartSerializer(cart, context={'request': request}).data)
-
-
-@api_view(['POST'])
-@perm([IsAuthenticated])
-def cart_clear(request):
-    _cart(request.user).items.all().delete()
-    return Response({'detail': 'Savat tozalandi.'})
 
 
 def _get_product(request):

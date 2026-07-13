@@ -6,7 +6,7 @@ app_name = 'taxi'
 urlpatterns = [
     path('', views.taxi_home, name='home'),
 
-    # ── Map / ride-hailing ───────────────────────────────────────────────────
+    # ── Map / ride-hailing (staff-preview: taxi_map hozircha "tez orada") ────
     path('map/', views.taxi_map, name='map'),
     path('api/nearby-drivers/', views.taxi_nearby_drivers, name='nearby_drivers'),
     path('api/estimate/', views.taxi_estimate, name='estimate'),

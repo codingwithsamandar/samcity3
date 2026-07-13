@@ -94,6 +94,14 @@
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap; padding-top:1rem; margin-top:1rem; border-top:1px solid var(--border);">
           <a href="{% url 'job_edit' job.pk %}" class="btn btn-outline" style="font-size:0.85rem;">✏️ Tahrirlash</a>
           <a href="{% url 'job_delete' job.pk %}" class="btn btn-red" style="font-size:0.85rem;">🗑 O'chirish</a>
+          <form method="post" action="{% url 'job_toggle_close' job.pk %}" style="display:inline;">
+            {% csrf_token %}
+            {% if job.status == 'closed' %}
+            <button type="submit" class="btn btn-ghost" style="font-size:0.85rem;">🔓 Qayta faollashtirish</button>
+            {% else %}
+            <button type="submit" class="btn btn-ghost" style="font-size:0.85rem;" onclick="return confirm('Ish e\'lonini yopish?')">✅ Yopish</button>
+            {% endif %}
+          </form>
         </div>
         {% endif %}
       </div>

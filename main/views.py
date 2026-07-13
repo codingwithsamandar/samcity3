@@ -10,7 +10,7 @@ import random
 import string
 from django.core.paginator import Paginator
 from django.db.models import F, Q
-from .models import Ad, AdImage, User, Booking, JobAd, ResumeAd, UtilityPayment, BoostPayment, OTPCode
+from .models import Ad, AdImage, User, JobAd, ResumeAd, UtilityPayment, BoostPayment, OTPCode
 import logging
 from .utils import validate_file_type, ratelimit
 from sms.backends import send_sms
@@ -307,18 +307,12 @@ def user_login(request):
 def profile(request):
     from django.db.models import Sum
     user_ads = request.user.ads.all().prefetch_related('images')
-    pending_bookings_count = Booking.objects.filter(
-        owner=request.user, status='pending'
-    ).count()
     # Profile statistika - template da ishlatiladigan
     ads_count = user_ads.exclude(status='deleted').count()
-    bookings_count = Booking.objects.filter(buyer=request.user).count()
     total_views = user_ads.aggregate(t=Sum('views'))['t'] or 0
     return render(request, 'profile.html', {
         'ads': user_ads,
-        'pending_bookings_count': pending_bookings_count,
         'ads_count': ads_count,
-        'bookings_count': bookings_count,
         'total_views': total_views,
     })
 
@@ -405,14 +399,6 @@ def ad_detail(request, pk):
         ad.save(update_fields=['views'])
         request.session[session_key] = True
 
-    user_booking = None
-    if request.user.is_authenticated and request.user != ad.user:
-        user_booking = Booking.objects.filter(
-            ad=ad, buyer=request.user
-        ).exclude(status='cancelled').first()
-
-    needs_dates = ad.category in ('uy_joy', 'avtomobil')
-
     from .models import AdFavorite, AdReport, AdInquiry
     is_favorite = False
     if request.user.is_authenticated:
@@ -423,8 +409,6 @@ def ad_detail(request, pk):
 
     return render(request, 'ad_detail.html', {
         'ad': ad,
-        'user_booking': user_booking,
-        'needs_dates': needs_dates,
         'is_favorite': is_favorite,
         'report_reasons': AdReport.REASON_CHOICES,
         'inquiries': inquiries,
@@ -713,277 +697,6 @@ def my_ads(request):
     })
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════════════════════
-# VENUE BOOKING + PAYMENT VIEWS
-# ══════════════════════════════════════════════════════════════════════════════
-
-PLATFORM_COMMISSION = 0.10  # 10%
-
-CANCELLATION_RULES = {
-    # policy: [(days_before, refund_percent), ...]  — eng katta kundan tekshiriladi
-    'flexible': [(1, 100), (0, 0)],
-    'moderate': [(3, 50),  (0, 0)],
-    'strict':   [(7, 25),  (0, 0)],
-}
-
-
-def _calc_refund(booking, cancelled_by):
-    """
-    Bekor qilish paytida mijozga qaytariladigan summa va jarima hisoblab qaytaradi.
-    Egasi bekor qilsa: 100% qaytarish, komisiya platformada qoladi.
-    """
-    total = booking.total_amount or 0
-    if cancelled_by == 'owner':
-        return total, 0  # refund, penalty
-
-    # Mijoz bekor qilsa — cancellation policy ishlaydi
-    if booking.start_date:
-        from datetime import date
-        days_left = (booking.start_date - date.today()).days
-    else:
-        days_left = 0
-
-    policy = booking.ad.cancellation_policy
-    rules = CANCELLATION_RULES.get(policy, CANCELLATION_RULES['moderate'])
-    refund_pct = 0
-    for days_threshold, pct in rules:
-        if days_left >= days_threshold:
-            refund_pct = pct
-            break
-
-    refund = int(total * refund_pct / 100)
-    penalty = total - refund
-    return refund, penalty
-
-
-@login_required
-def booking_create(request, pk):
-    """Venue bron so'rovi + mock to'lov."""
-    ad = get_object_or_404(Ad, pk=pk, status='active')
-
-    if not ad.venue_booking_enabled:
-        messages.error(request, "Bu e'lon uchun bron tizimi mavjud emas.")
-        return redirect('ad_detail', pk=pk)
-
-    if ad.user == request.user:
-        messages.error(request, "O'z e'loningizni bron qila olmaysiz.")
-        return redirect('ad_detail', pk=pk)
-
-    existing = Booking.objects.filter(
-        ad=ad, buyer=request.user
-    ).exclude(status='cancelled').first()
-
-    if existing:
-        messages.warning(request, "Siz bu e'lonni allaqachon bron qilgansiz.")
-        return redirect('ad_detail', pk=pk)
-
-    if request.method == 'POST':
-        from datetime import date, datetime
-        from django.utils import timezone as tz
-
-        msg        = request.POST.get('message', '').strip()
-        start_date = request.POST.get('start_date', '').strip()
-        end_date   = request.POST.get('end_date', '').strip()
-        guests_raw = request.POST.get('guests', '1')
-
-        try:
-            guests = max(1, int(guests_raw))
-        except ValueError:
-            guests = 1
-
-        if not start_date or not end_date:
-            messages.error(request, "Iltimos, boshlanish va tugash sanasini kiriting.")
-            return redirect('ad_detail', pk=pk)
-
-        try:
-            sd = datetime.strptime(start_date, '%Y-%m-%d').date()
-            ed = datetime.strptime(end_date, '%Y-%m-%d').date()
-        except ValueError:
-            messages.error(request, "Sana formati noto'g'ri.")
-            return redirect('ad_detail', pk=pk)
-
-        if sd < date.today():
-            messages.error(request, "Boshlanish sanasi bugundan oldin bo'lishi mumkin emas.")
-            return redirect('ad_detail', pk=pk)
-        if sd >= ed:
-            messages.error(request, "Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak.")
-            return redirect('ad_detail', pk=pk)
-
-        overlap = Booking.objects.filter(
-            ad=ad,
-            status__in=['pending', 'confirmed'],
-            start_date__lt=ed,
-            end_date__gt=sd,
-        ).exists()
-        if overlap:
-            messages.error(request, "Bu sanalar band. Boshqa sana tanlang.")
-            return redirect('ad_detail', pk=pk)
-
-        # Narx hisoblash
-        days = (ed - sd).days
-        if ad.venue_price_per_day:
-            total = ad.venue_price_per_day * days
-        elif ad.price:
-            total = int(ad.price) * days
-        else:
-            total = 0
-
-        platform_fee = int(total * PLATFORM_COMMISSION)
-        owner_amount = total - platform_fee
-
-        # Mock to'lov — darhol "held" holatiga o'tadi
-        booking = Booking.objects.create(
-            ad=ad,
-            buyer=request.user,
-            owner=ad.user,
-            message=msg,
-            guests=guests,
-            start_date=sd,
-            end_date=ed,
-            total_amount=total,
-            platform_fee=platform_fee,
-            owner_amount=owner_amount,
-            payment_status='held',
-            paid_at=tz.now(),
-        )
-
-        messages.success(request, f"Bron so'rovingiz yuborildi! {total:,} so'm platformada ushlab turildi.")
-        return redirect('booking_detail', booking_id=booking.pk)
-
-    return redirect('ad_detail', pk=pk)
-
-
-@login_required
-def my_bookings(request):
-    """Foydalanuvchi yuborgan bronlar."""
-    from django.core.paginator import Paginator
-    status_filter = request.GET.get('status', 'all')
-    bookings = Booking.objects.filter(
-        buyer=request.user
-    ).select_related('ad', 'owner').prefetch_related('ad__images')
-
-    if status_filter != 'all':
-        bookings = bookings.filter(status=status_filter)
-
-    paginator = Paginator(bookings, 15)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-
-    return render(request, 'my_bookings.html', {
-        'bookings': page_obj,
-        'page_obj': page_obj,
-        'status_filter': status_filter,
-    })
-
-
-@login_required
-def received_bookings(request):
-    """E'lon egasiga kelgan bronlar."""
-    from django.core.paginator import Paginator
-    status_filter = request.GET.get('status', 'all')
-    bookings = Booking.objects.filter(
-        owner=request.user
-    ).select_related('ad', 'buyer').prefetch_related('ad__images')
-
-    if status_filter != 'all':
-        bookings = bookings.filter(status=status_filter)
-
-    pending_count = Booking.objects.filter(owner=request.user, status='pending').count()
-
-    paginator = Paginator(bookings, 15)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-
-    return render(request, 'received_bookings.html', {
-        'bookings': page_obj,
-        'page_obj': page_obj,
-        'status_filter': status_filter,
-        'pending_count': pending_count,
-    })
-
-
-@login_required
-def booking_action(request, booking_id, action):
-    """Bronni tasdiqlash / bekor qilish / yakunlash — to'lov mantiq bilan."""
-    from django.utils import timezone as tz
-
-    booking = get_object_or_404(Booking, pk=booking_id)
-
-    if action in ('confirm', 'complete'):
-        if booking.owner != request.user:
-            messages.error(request, "Ruxsat yo'q.")
-            return redirect('received_bookings')
-    elif action == 'cancel':
-        if booking.owner != request.user and booking.buyer != request.user:
-            messages.error(request, "Ruxsat yo'q.")
-            return redirect('my_bookings')
-
-    if request.method == 'POST':
-        # ── TASDIQLASH ──────────────────────────────────────────
-        if action == 'confirm' and booking.status == 'pending':
-            booking.status = 'confirmed'
-            booking.save(update_fields=['status', 'updated_at'])
-            messages.success(request, "Bron tasdiqlandi! Mijoz xabardor qilindi.")
-            return redirect('received_bookings')
-
-        # ── BEKOR QILISH ─────────────────────────────────────────
-        elif action == 'cancel' and booking.status in ('pending', 'confirmed'):
-            cancelled_by = 'owner' if booking.owner == request.user else 'buyer'
-            refund, penalty = _calc_refund(booking, cancelled_by)
-
-            booking.status         = 'cancelled'
-            booking.cancelled_by   = cancelled_by
-            booking.refund_amount  = refund
-            booking.penalty_amount = penalty
-
-            if booking.payment_status == 'held':
-                if refund == (booking.total_amount or 0):
-                    booking.payment_status = 'refunded'
-                elif refund > 0:
-                    booking.payment_status = 'partial_refund'
-                else:
-                    booking.payment_status = 'released'
-
-            booking.save()
-
-            if cancelled_by == 'owner':
-                msg = f"Bron bekor qilindi. Mijozga {refund:,} so'm qaytarildi."
-            else:
-                if penalty > 0:
-                    msg = f"Bron bekor qilindi. {refund:,} so'm qaytarildi, {penalty:,} so'm jarima ushlab qolindi."
-                else:
-                    msg = f"Bron bekor qilindi. {refund:,} so'm to'liq qaytarildi."
-
-            messages.success(request, msg)
-            if booking.owner == request.user:
-                return redirect('received_bookings')
-            return redirect('my_bookings')
-
-        # ── YAKUNLASH ────────────────────────────────────────────
-        elif action == 'complete' and booking.status == 'confirmed':
-            booking.status         = 'completed'
-            booking.payment_status = 'released'
-            booking.save(update_fields=['status', 'payment_status', 'updated_at'])
-            messages.success(
-                request,
-                f"Bron yakunlandi! {booking.owner_amount:,} so'm egaga o'tkazildi, "
-                f"{booking.platform_fee:,} so'm komissiya platformada qoldi."
-            )
-            return redirect('received_bookings')
-
-    messages.error(request, "Noto'g'ri amal.")
-    return redirect('received_bookings')
-
-
-@login_required
-def booking_detail(request, booking_id):
-    """Bron tafsilotlari."""
-    booking = get_object_or_404(Booking, pk=booking_id)
-
-    if booking.buyer != request.user and booking.owner != request.user:
-        messages.error(request, "Ruxsat yo'q.")
-        return redirect('my_bookings')
-
-    return render(request, 'booking_detail.html', {'booking': booking})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1505,7 +1218,6 @@ def dashboard(request):
         'stores': u.stores.select_related('category').all(),
         'venues': u.venues.all(),
         'resumes': u.resume_ads.all(),
-        'ad_bookings': u.my_bookings.select_related('ad')[:10],
     })
 
 
@@ -1576,37 +1288,6 @@ def _compute_admin_dashboard():
         'metrics': metrics, 'revenue': revenue,
         'order_status': order_status, 'module_chart': module_chart,
     }
-
-
-@login_required
-def password_change_view(request):
-    """Foydalanuvchi o'z parolini o'zgartirishi mumkin."""
-    if request.method == 'POST':
-        old_password = request.POST.get('old_password', '')
-        new_password = request.POST.get('new_password', '').strip()
-        confirm = request.POST.get('confirm_password', '').strip()
-
-        if not request.user.check_password(old_password):
-            messages.error(request, "Eski parol noto'g'ri.")
-            return redirect('password_change')
-
-        if len(new_password) < 6:
-            messages.error(request, "Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak.")
-            return redirect('password_change')
-
-        if new_password != confirm:
-            messages.error(request, "Yangi parollar mos kelmaydi.")
-            return redirect('password_change')
-
-        request.user.set_password(new_password)
-        request.user.save()
-        login(request, request.user)  # session yangilash
-        messages.success(request, "Parol muvaffaqiyatli o'zgartirildi! ✅")
-        return redirect('profile')
-
-    return render(request, 'password_change.html')
-
-
 
 
 # ─── TASK 23: BOOST / FEATURED ────────────────────────────────────────────────

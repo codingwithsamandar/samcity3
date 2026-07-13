@@ -40,18 +40,10 @@ urlpatterns = [
     # E'lonlar
     path('ads/', views.my_ads, name='my_ads'),
     path('ads/create/', views.ad_create, name='ad_create'),
-    path('ads/new/', views.ad_create, name='ad_new'),
     path('ad/<uuid:pk>/', views.ad_detail, name='ad_detail'),
     path('ad/<uuid:pk>/edit/', views.ad_edit, name='ad_edit'),
     path('ad/<uuid:pk>/delete/', views.ad_delete, name='ad_delete'),
     path('ad/<uuid:pk>/toggle-sold/', views.ad_toggle_sold, name='ad_toggle_sold'),
-
-    # Bron qilish
-    path('ad/<uuid:pk>/book/', views.booking_create, name='booking_create'),
-    path('bookings/', views.my_bookings, name='my_bookings'),
-    path('bookings/received/', views.received_bookings, name='received_bookings'),
-    path('bookings/<uuid:booking_id>/', views.booking_detail, name='booking_detail'),
-    path('bookings/<uuid:booking_id>/<str:action>/', views.booking_action, name='booking_action'),
 
     # ─── GLOBAL SEARCH ──────────────────────────────────────────────────────
     path('search/', marketplace_views.global_search, name='global_search'),
@@ -62,7 +54,6 @@ urlpatterns = [
     path('ads/<uuid:pk>/favorite/', marketplace_views.ad_favorite_toggle, name='ad_favorite'),
     path('ads/<uuid:pk>/report/', marketplace_views.ad_report, name='ad_report'),
     path('ads/<uuid:pk>/inquiry/', marketplace_views.ad_inquiry, name='ad_inquiry'),
-    path('ads/<uuid:pk>/contact/', marketplace_views.ad_contact_reveal, name='ad_contact_reveal'),
 
     # ─── COMMUNITY: POLLS ───────────────────────────────────────────────────
     path('community/polls/', community_views.poll_list, name='poll_list'),
@@ -70,10 +61,6 @@ urlpatterns = [
     path('community/polls/<uuid:poll_id>/', community_views.poll_detail, name='poll_detail'),
     path('community/polls/<uuid:poll_id>/vote/', community_views.poll_vote, name='poll_vote'),
     path('community/polls/<uuid:poll_id>/comment/', community_views.poll_comment, name='poll_comment'),
-
-    # ─── COMMUNITY: MAHALLA MAP ─────────────────────────────────────────────
-    path('community/map/', community_views.community_map, name='community_map'),
-    path('community/map/geojson/', community_views.community_map_geojson, name='community_map_geojson'),
 
     # ─── MAHALLA sahifasi (ma'lumot, e'lonlar, joylar, xarita, chat, murojaat) ─
     path('mahalla/', community_views.mahalla_home, name='mahalla_home'),
@@ -118,13 +105,6 @@ urlpatterns = [
     # ─── BOOST ───
     path('ads/<uuid:pk>/boost/', views.boost_ad_view, name='boost_ad'),
 
-    # ─── ALIAS: eski hard-coded URL lar uchun ───
-    path('my-bookings/', views.my_bookings, name='my_bookings_alias'),
-    path('jobs/new/', views.job_create, name='job_new'),
-
-    # /ads/<pk>/... → /ad/<pk>/... alias lar
-    path('ads/<uuid:pk>/edit/', views.ad_edit, name='ad_edit_alias'),
-    path('ads/<uuid:pk>/delete/', views.ad_delete, name='ad_delete_alias'),
-    path('ads/<uuid:pk>/mark-sold/', views.ad_toggle_sold, name='ad_mark_sold'),
+    # /ads/<pk>/ → ad_detail alias (ad_form.html dagi hard-coded "Bekor qilish" havolasi ishlatadi)
     path('ads/<uuid:pk>/', views.ad_detail, name='ad_detail_alias'),
 ]

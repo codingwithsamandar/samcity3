@@ -88,18 +88,6 @@ def ad_inquiry(request, pk):
     return redirect('ad_detail', pk=pk)
 
 
-@require_POST
-def ad_contact_reveal(request, pk):
-    """Count a contact reveal and return the contact details (JSON)."""
-    Ad.objects.filter(pk=pk).update(contact_count=F('contact_count') + 1)
-    ad = get_object_or_404(Ad, pk=pk)
-    return JsonResponse({
-        'ok': True,
-        'phone': ad.contact_phone or '',
-        'telegram': ad.contact_telegram or '',
-    })
-
-
 # ── Global search ────────────────────────────────────────────────────────────
 def _record_term(term):
     term = (term or '').strip().lower()[:120]

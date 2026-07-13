@@ -11,9 +11,9 @@ from .views import (
     RegisterView, VerifyOTPView, ResendOTPView, LoginView, MeView, AdViewSet,
 )
 from .delivery_views import (
-    StoreViewSet, OrderViewSet, ProductDetailView, CartView,
+    StoreViewSet, OrderViewSet, CartView,
     CartListCreateView, CartManageView, CartActivateView, CartAdView,
-    cart_add, cart_set, cart_remove, cart_clear, checkout,
+    cart_add, cart_set, cart_remove, checkout,
     MyStoresView, MyStoreDetailView, StoreProductsView, StoreProductDetailView,
     StoreUpdatesView, StoreSubscribeToggleView, StoreAnnouncementCreateView,
     StoreOrdersView, StoreOrderStatusView, OrderConfirmPickupView,
@@ -39,7 +39,7 @@ from .places_views import PlacesListView
 from .community_views import PollListView, poll_vote, poll_comments, HelpListView
 from .jobs_views import JobListView, ResumeListView
 from .service_views import (
-    ProvidersListView, CreateServicePaymentView, MyServicePaymentsView,
+    ProvidersListView, CreateServicePaymentView,
 )
 
 app_name = 'api'
@@ -68,7 +68,6 @@ cart_patterns = [
     path('add/', cart_add, name='cart-add'),
     path('set/', cart_set, name='cart-set'),
     path('remove/', cart_remove, name='cart-remove'),
-    path('clear/', cart_clear, name='cart-clear'),
     # E'lon saqlash (savatning e'lonlar bo'limi)
     path('ad/', CartAdView.as_view(), name='cart-ad'),
     # Saqlangan (nomli) savatlar
@@ -80,7 +79,6 @@ cart_patterns = [
 urlpatterns = [
     path('auth/', include(auth_patterns)),
     path('cart/', include(cart_patterns)),
-    path('products/<int:pk>/', ProductDetailView.as_view(), name='product-detail'),
     path('catalog/', CatalogListView.as_view(), name='catalog'),
     path('checkout/', checkout, name='checkout'),
     path('my/stores/', MyStoresView.as_view(), name='my-stores'),
@@ -126,7 +124,6 @@ urlpatterns = [
     path('resumes/', ResumeListView.as_view(), name='resumes'),
     path('service/providers/', ProvidersListView.as_view(), name='service-providers'),
     path('service/pay/', CreateServicePaymentView.as_view(), name='service-pay'),
-    path('service/my/', MyServicePaymentsView.as_view(), name='service-my'),
     path('', include(router.urls)),
     # Hujjat (OpenAPI / Swagger)
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
