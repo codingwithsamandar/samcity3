@@ -308,6 +308,12 @@ LOGIN_REDIRECT_URL = 'profile'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 AUTH_USER_MODEL = 'main.User'
+# Telefon formatiga moslashuvchan backend (veb LoginView, admin, API uchun bir xil).
+# Bazada telefon '900...' yoki '+998900...' saqlangan bo'lishidan qat'i nazar kirish ishlaydi.
+AUTHENTICATION_BACKENDS = [
+    'main.auth_backends.PhoneModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Production uchun: CSRF_TRUSTED_ORIGINS=https://yourdomain.com qilib o'rnatish SHART
 CSRF_TRUSTED_ORIGINS = os.environ.get(

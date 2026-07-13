@@ -286,12 +286,9 @@ def user_login(request):
         phone = request.POST.get('phone') or request.POST.get('username')
         password = request.POST.get('password')
 
-        if phone:
-            phone = '+' + ''.join(filter(str.isdigit, phone)) if phone.startswith('+') else ''.join(filter(str.isdigit, phone))
-
+        # Telefon format variantlarini PhoneModelBackend hal qiladi
+        # (main/auth_backends.py) — bu yerda faqat backendga uzatamiz.
         user = authenticate(request, username=phone, password=password)
-        if not user:
-            user = authenticate(request, phone=phone, password=password)
 
         if user is not None:
             login(request, user)
