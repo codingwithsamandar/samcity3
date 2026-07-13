@@ -22,6 +22,7 @@ class Command(BaseCommand):
             ('seed_mahallas',    "Mahallalar (xarita chegaralari bilan)", {}),
             ('seed_demo_shops',  "Mahalla do'koni demo (pickup) + hisoblar", {'force': True}),
             ('seed_mahalla_demo', "Mahalla do'kon/joy/so'rovnoma/xayriya demo", {'force': True}),
+            ('seed_districts',   "Tuman + hokim + aholi (hokim paneli uchun)", {'force': True}),
         ]
         for cmd, label, kwargs in steps:
             self.stdout.write(self.style.WARNING(f"\n> {label} ..."))

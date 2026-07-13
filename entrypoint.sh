@@ -54,6 +54,20 @@ fi
 echo "▶ Katalog tarjimasi (o'zbekcha)..."
 python manage.py translate_catalog || echo "!! translate_catalog xato bilan tugadi (yuqoriga qarang)"
 
+# ── Tuman + hokim (avtomatik, bir martalik) ──
+# Hokim paneli (/hokim/) ishlashi uchun kamida bitta tuman + hokim kerak.
+# Seed unga alohida ma'lumot yaratmaydi, shuning uchun tuman bo'sh bo'lsa shu
+# yerda yaratamiz (idempotent; to'lgan bazada hech narsa qilmaydi).
+echo "▶ Tuman/hokim tekshiruvi..."
+DISTRICT_COUNT=$(python manage.py shell -c "from main.models import District; print(District.objects.count())" 2>/dev/null | tail -1)
+if [ "$DISTRICT_COUNT" = "0" ]; then
+  echo "════════ TUMAN/HOKIM SEED BOSHLANDI (baza bo'sh) ════════"
+  python manage.py seed_districts --force || echo "!! seed_districts xato bilan tugadi (yuqoriga qarang)"
+  echo "════════ TUMAN/HOKIM SEED YAKUNLANDI ════════"
+else
+  echo "  Tuman: ${DISTRICT_COUNT:-?} ta — seed shart emas."
+fi
+
 # ── Demo ma'lumotlar (bir martalik) ──
 # SEED_DEMO true/TRUE/1/yes bo'lsa — daphne ishlab turgan holda demo seed qilinadi
 # (loglarda ko'rinadi). Idempotent. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
