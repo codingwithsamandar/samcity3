@@ -100,6 +100,10 @@ services:
         value: "ap-northeast-1"
       - key: AWS_S3_ENDPOINT_URL
         value: "https://shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/s3"
+      # Public o'qish URLi: busiz django-storages endpoint'dan (/storage/v1/s3/...)
+      # havola yasaydi — u imzosiz GET'da 403 beradi. Public format shu:
+      - key: AWS_S3_CUSTOM_DOMAIN
+        value: "shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/object/public/media"
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
