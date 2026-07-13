@@ -46,6 +46,7 @@ class SeedStatusView(APIView):
         _c('polls', lambda: __import__('main.models', fromlist=['Poll']).Poll.objects.count())
         _c('stores', lambda: __import__('delivery.models', fromlist=['Store']).Store.objects.count())
         _c('products', lambda: __import__('delivery.models', fromlist=['Product']).Product.objects.count())
+        _c('catalog', lambda: __import__('delivery.models', fromlist=['CatalogProduct']).CatalogProduct.objects.count())
         _c('taxists', lambda: __import__('taxi.models', fromlist=['Taxist']).Taxist.objects.count())
         _c('venues', lambda: __import__('booking.models', fromlist=['Venue']).Venue.objects.count())
         _c('places', lambda: __import__('places.models', fromlist=['Place']).Place.objects.count())
