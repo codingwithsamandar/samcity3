@@ -34,6 +34,20 @@ trap 'kill -TERM "$DAPHNE_PID" 2>/dev/null' TERM INT
 echo "▶ Media storage tekshiruvi..."
 python manage.py check_media || echo "!! check_media xato bilan tugadi (yuqoriga qarang)"
 
+# ── Markaziy katalog (avtomatik, bir martalik) ──
+# Bepul tarifda Shell yo'q — katalog bo'sh bo'lsa New/ manbasidan shu yerda
+# import qilinadi (import_catalog idempotent; rasm faqat yo'q bo'lsa yoziladi).
+# To'lgan bazada hech narsa qilmaydi, deploy'ni bloklamaydi (|| true).
+echo "▶ Markaziy katalog tekshiruvi..."
+CATALOG_COUNT=$(python manage.py shell -c "from delivery.models import CatalogProduct; print(CatalogProduct.objects.count())" 2>/dev/null | tail -1)
+if [ "$CATALOG_COUNT" = "0" ]; then
+  echo "════════ KATALOG IMPORT BOSHLANDI (baza bo'sh) ════════"
+  python manage.py import_catalog || echo "!! import_catalog xato bilan tugadi (yuqoriga qarang)"
+  echo "════════ KATALOG IMPORT YAKUNLANDI ════════"
+else
+  echo "  Katalog: ${CATALOG_COUNT:-?} ta mahsulot — import shart emas."
+fi
+
 # ── Demo ma'lumotlar (bir martalik) ──
 # SEED_DEMO true/TRUE/1/yes bo'lsa — daphne ishlab turgan holda demo seed qilinadi
 # (loglarda ko'rinadi). Idempotent. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
