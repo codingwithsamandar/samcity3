@@ -54,6 +54,12 @@ fi
 echo "▶ Katalog tarjimasi (o'zbekcha)..."
 python manage.py translate_catalog || echo "!! translate_catalog xato bilan tugadi (yuqoriga qarang)"
 
+# ── Katalog kategoriya tuzatishi (idempotent) ──
+# Import'da 'Household' mos kategoriya topmagani uchun kategoriyasiz qolgan
+# mahsulotlarni «Uy-ro'zg'or»ga biriktiradi. NULL qolmasa hech narsa qilmaydi.
+echo "▶ Katalog kategoriya tuzatishi..."
+python manage.py fix_catalog_categories || echo "!! fix_catalog_categories xato bilan tugadi (yuqoriga qarang)"
+
 # ── Tuman + hokim (avtomatik, bir martalik) ──
 # Hokim paneli (/hokim/) ishlashi uchun kamida bitta tuman + hokim kerak.
 # Seed unga alohida ma'lumot yaratmaydi, shuning uchun tuman bo'sh bo'lsa shu
