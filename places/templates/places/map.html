@@ -75,6 +75,7 @@
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
       <a href="{% url 'places:nearby' %}" class="btn btn-outline"><svg class="ic"><use href="#i-pin"/></svg> {% trans "Yaqinimda" %}</a>
       <a href="{% url 'places:place_list' %}" class="btn btn-outline"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Ro'yxat" context "joylar ro'yxati" %}</a>
+      {% if user.is_authenticated %}<a href="{% url 'places:my_favorites' %}" class="btn btn-outline"><svg class="ic"><use href="#i-heart"/></svg> {% trans "Saqlanganlar" %}</a>{% endif %}
       <a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> {% trans "Joy qo'shish" %}</a>
     </div>
   </div>

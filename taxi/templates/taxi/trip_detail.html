@@ -52,6 +52,10 @@
       <div class="row"><span class="k">Sana</span><span class="v">{{ trip.created_at|date:"d.m.Y H:i" }}</span></div>
     </div>
 
+    {% if trip.status == 'accepted' or trip.status == 'on_way' %}
+    <a href="{% url 'taxi:trip_track' trip.id %}" class="pay-btn" style="background:transparent;border:2px solid var(--yel);color:var(--yel);">📍 Jonli kuzatish — haydovchi xaritada</a>
+    {% endif %}
+
     {% if not trip.is_paid and trip.status != 'cancelled' %}
     <a href="{% url 'taxi:trip_payment' trip.id %}" class="pay-btn">💳 To'lovni amalga oshirish</a>
     {% endif %}

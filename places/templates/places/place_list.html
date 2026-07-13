@@ -11,6 +11,7 @@
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
       <a href="{% url 'places:map' %}{% if current %}?category={{ current }}{% endif %}" class="btn btn-outline"><svg class="ic"><use href="#i-map"/></svg> Xaritada</a>
+      {% if user.is_authenticated %}<a href="{% url 'places:my_favorites' %}" class="btn btn-outline"><svg class="ic"><use href="#i-heart"/></svg> Saqlanganlar</a>{% endif %}
       <a href="{% url 'places:place_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-plus"/></svg> Joy qo'shish</a>
     </div>
   </div>
