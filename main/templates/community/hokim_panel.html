@@ -21,7 +21,9 @@
     color: inherit; font: inherit; box-sizing: border-box; }
   .hk-form textarea { min-height: 100px; resize: vertical; }
   .hk-btn { margin-top: 1rem; background: var(--accent, #3551d1); color: #fff; border: 0;
-    padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    padding: .7rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer;
+    transition: opacity .15s; }
+  .hk-btn[disabled] { opacity: .65; cursor: progress; }
   .hk-ann { border-top: 1px solid var(--border, #eee); padding: .8rem 0; }
   .hk-ann h4 { margin: 0 0 .2rem; }
   .hk-ann p { margin: .2rem 0; color: var(--muted, #6b7280); }
@@ -77,4 +79,25 @@
   </div>
   {% endfor %}
 </div>
+
+<script>
+/* E'lon formasi yuborilганda tugmaga darhol vizual javob (native submit'ni
+   to'xtatmaydi — preventDefault yo'q; faqat tugmani belgilaydi va takror
+   bosishning oldini oladi). Sahifa qayta yuklangunча shu holat ko'rinadi. */
+(function () {
+  document.querySelectorAll('form.hk-form').forEach(function (form) {
+    form.addEventListener('submit', function () {
+      if (!form.checkValidity()) return;   // required maydonlar bo'sh bo'lsa — holatni o'zgartirmaymiz
+      var btn = form.querySelector('button[type=submit]');
+      if (!btn) return;
+      // setTimeout(0): disable submit ro'yxatga olingaндан keyin ishlaydi,
+      // shuning uchun native POST muammosiz davom etadi.
+      setTimeout(function () {
+        btn.disabled = true;
+        btn.textContent = '⏳ Yuborilmoqda...';
+      }, 0);
+    });
+  });
+})();
+</script>
 {% endblock %}
