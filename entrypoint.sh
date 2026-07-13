@@ -48,6 +48,12 @@ else
   echo "  Katalog: ${CATALOG_COUNT:-?} ta mahsulot — import shart emas."
 fi
 
+# ── Katalog nomlarini o'zbekchaga o'girish (idempotent) ──
+# Import ma'lumotlari inglizcha; bu buyruq o'zbekchaga o'giradi. Allaqachon
+# o'girilgan yozuvlarni o'tkazib yuboradi — har deploy'da xavfsiz ishlaydi.
+echo "▶ Katalog tarjimasi (o'zbekcha)..."
+python manage.py translate_catalog || echo "!! translate_catalog xato bilan tugadi (yuqoriga qarang)"
+
 # ── Demo ma'lumotlar (bir martalik) ──
 # SEED_DEMO true/TRUE/1/yes bo'lsa — daphne ishlab turgan holda demo seed qilinadi
 # (loglarda ko'rinadi). Idempotent. Bir marta ishlatgach Render'da SEED_DEMO=false qiling.
