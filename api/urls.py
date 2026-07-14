@@ -19,6 +19,11 @@ from .delivery_views import (
     StoreOrdersView, StoreOrderStatusView, OrderConfirmPickupView,
     StoreRequestView, CatalogListView,
 )
+from .courier_views import (
+    CourierDashboardView, CourierRegisterView, CourierProfileView,
+    CourierAvailableView, CourierAcceptView, CourierReleaseView,
+    CourierOrderStatusView,
+)
 from .taxi_views import TaxiServiceViewSet, TaxistViewSet, TripViewSet
 from .chat_store_views import (
     StoreChatStartView, StoreChatThreadView, StoreChatListView,
@@ -93,6 +98,14 @@ urlpatterns = [
     path('my/orders/', StoreOrdersView.as_view(), name='my-orders'),
     path('my/orders/<uuid:order_id>/status/', StoreOrderStatusView.as_view(), name='my-order-status'),
     path('orders/<uuid:order_id>/confirm-pickup/', OrderConfirmPickupView.as_view(), name='order-confirm-pickup'),
+    # ── Kuryer (yetkazib beruvchi) mobil paneli ──
+    path('courier/', CourierDashboardView.as_view(), name='courier-dashboard'),
+    path('courier/register/', CourierRegisterView.as_view(), name='courier-register'),
+    path('courier/profile/', CourierProfileView.as_view(), name='courier-profile'),
+    path('courier/available/', CourierAvailableView.as_view(), name='courier-available'),
+    path('courier/orders/<uuid:order_id>/accept/', CourierAcceptView.as_view(), name='courier-accept'),
+    path('courier/orders/<uuid:order_id>/release/', CourierReleaseView.as_view(), name='courier-release'),
+    path('courier/orders/<uuid:order_id>/status/', CourierOrderStatusView.as_view(), name='courier-order-status'),
     # Do'kon bilan chat (mijoz ↔ do'kon)
     path('stores/<int:store_pk>/chat/', StoreChatStartView.as_view(), name='store-chat-start'),
     path('delivery/chat/threads/', StoreChatListView.as_view(), name='store-chat-list'),

@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from delivery.models import (
     Store, StoreImage, Product, ProductImage, Cart, CartItem, Order, OrderItem,
-    StoreUpdate, StoreSubscription, CatalogProduct,
+    StoreUpdate, StoreSubscription, CatalogProduct, DeliveryDriver,
 )
 
 
@@ -306,3 +306,28 @@ class CheckoutSerializer(serializers.Serializer):
     card_number = serializers.CharField(required=False, allow_blank=True)
     expiry = serializers.CharField(required=False, allow_blank=True)
     cvv = serializers.CharField(required=False, allow_blank=True)
+
+
+# ── KURYER (yetkazib beruvchi) ──────────────────────────────────────────────
+class DeliveryDriverSerializer(serializers.ModelSerializer):
+    vehicle_display = serializers.CharField(source='get_vehicle_type_display', read_only=True)
+    avg_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = DeliveryDriver
+        fields = ('id', 'full_name', 'phone', 'vehicle_type', 'vehicle_display',
+                  'vehicle_number', 'is_available', 'is_active',
+                  'avg_rating', 'review_count', 'created_at')
+        read_only_fields = ('id', 'is_active', 'created_at')
+
+
+class DeliveryDriverWriteSerializer(serializers.ModelSerializer):
+    """Ro'yxatdan o'tish / profil tahriri uchun (faqat kiritiladigan maydonlar)."""
+    class Meta:
+        model = DeliveryDriver
+        fields = ('full_name', 'phone', 'vehicle_type', 'vehicle_number')
+        extra_kwargs = {
+            'full_name': {'required': True},
+            'phone': {'required': True},
+        }
