@@ -33,6 +33,8 @@ dependencies:
   # Interaktiv xarita (OpenStreetMap — saytdagi Leaflet bilan bir xil)
   flutter_map: ^6.2.1
   latlong2: ^0.9.1
+  # GPS joylashuvi (buyurtma manzilini "joriy joylashuv" bilan belgilash)
+  geolocator: ^13.0.1
 
 dev_dependencies:
   flutter_lints: ^4.0.0

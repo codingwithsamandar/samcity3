@@ -589,6 +589,9 @@ class Order(models.Model):
     full_name = models.CharField(max_length=120, verbose_name='Qabul qiluvchi')
     phone = models.CharField(max_length=30, verbose_name='Telefon')
     address = models.CharField(max_length=300, verbose_name='Yetkazish manzili')
+    # Xaritadan/GPS orqali belgilangan aniq joylashuv (kuryer navigatsiyasi uchun).
+    latitude = models.FloatField(null=True, blank=True, verbose_name='Kenglik')
+    longitude = models.FloatField(null=True, blank=True, verbose_name='Uzunlik')
     note = models.TextField(blank=True, verbose_name='Izoh')
     subtotal = models.BigIntegerField(default=0, verbose_name="Mahsulotlar summasi")
     delivery_fee = models.BigIntegerField(default=0, verbose_name="Yetkazish narxi")

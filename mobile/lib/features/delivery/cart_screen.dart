@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/providers.dart';
 import '../payments/payment_sheet.dart';
 import 'delivery_models.dart';
+import 'location_picker.dart';
 
 const int kDeliveryFee = 10000;
 
@@ -423,6 +425,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   final _address = TextEditingController();
   String _method = 'cash'; // cash | online
   bool _loading = false;
+  LatLng? _location; // xaritada/GPS bilan belgilangan joylashuv
 
   @override
   void initState() {
@@ -438,14 +441,30 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
     super.dispose();
   }
 
+  Future<void> _pickLocation() async {
+    FocusScope.of(context).unfocus();
+    final picked = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(builder: (_) => LocationPickerScreen(initial: _location)),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _location = picked;
+      // Manzil bo'sh bo'lsa — koordinatani mo'ljal sifatida yozib qo'yamiz.
+      if (_address.text.trim().isEmpty) {
+        _address.text =
+            '📍 ${picked.latitude.toStringAsFixed(5)}, ${picked.longitude.toStringAsFixed(5)}';
+      }
+    });
+  }
+
   Future<void> _submit() async {
     if (_phone.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Telefon majburiy')));
       return;
     }
-    if (widget.hasDelivery && _address.text.trim().isEmpty) {
+    if (widget.hasDelivery && _address.text.trim().isEmpty && _location == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Yetkazib berish uchun manzil majburiy')));
+          content: Text('Yetkazib berish uchun manzil yoki xaritada joy belgilang')));
       return;
     }
     final method = (widget.hasPickup || _method == 'online') ? 'card' : 'cash';
@@ -455,6 +474,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             fullName: _name.text.trim(),
             phone: _phone.text.trim(),
             address: widget.hasDelivery ? _address.text.trim() : '',
+            latitude: widget.hasDelivery ? _location?.latitude : null,
+            longitude: widget.hasDelivery ? _location?.longitude : null,
             paymentMethod: method,
           );
       if (mounted) {
@@ -494,7 +515,22 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               decoration: const InputDecoration(labelText: 'Telefon *')),
           if (widget.hasDelivery) ...[
             const SizedBox(height: 10),
-            TextField(controller: _address, decoration: const InputDecoration(labelText: 'Manzil *')),
+            TextField(
+              controller: _address,
+              decoration: const InputDecoration(
+                labelText: 'Manzil *',
+                hintText: "Ko'cha, uy, mo'ljal",
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _loading ? null : _pickLocation,
+              icon: Icon(_location == null ? Icons.map_outlined : Icons.check_circle,
+                  color: _location == null ? null : const Color(0xFF34D399)),
+              label: Text(_location == null
+                  ? 'Joriy joylashuv yoki xaritadan belgilash'
+                  : 'Joylashuv belgilandi — o\'zgartirish'),
+            ),
           ],
           const SizedBox(height: 14),
           if (!widget.hasPickup)

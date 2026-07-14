@@ -155,6 +155,8 @@ class DeliveryRepository {
     String address = '',
     String note = '',
     String paymentMethod = 'cash',
+    double? latitude,
+    double? longitude,
     DateTime? pickupAt,
   }) async {
     final res = await _api.dio.post('/checkout/', data: {
@@ -163,6 +165,8 @@ class DeliveryRepository {
       'address': address,
       'note': note,
       'payment_method': paymentMethod,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       if (pickupAt != null) 'pickup_at': pickupAt.toIso8601String(),
     });
     return CheckoutResult.fromJson(res.data);

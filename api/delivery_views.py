@@ -329,6 +329,9 @@ def checkout(request):
                 full_name=data.get('full_name') or (request.user.name or ''),
                 phone=data['phone'],
                 address='' if is_pickup else (data.get('address') or ''),
+                # Xaritada/GPS bilan belgilangan joylashuv — faqat yetkazishda.
+                latitude=None if is_pickup else data.get('latitude'),
+                longitude=None if is_pickup else data.get('longitude'),
                 note=data.get('note', ''),
                 subtotal=g_subtotal, delivery_fee=fee, total=g_subtotal + fee,
                 status='pending', payment_method=method, payment_status=payment_status,

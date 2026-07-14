@@ -289,7 +289,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('id', 'full_name', 'phone', 'address', 'note',
+        fields = ('id', 'full_name', 'phone', 'address', 'latitude', 'longitude', 'note',
                   'subtotal', 'delivery_fee', 'total', 'status', 'status_display',
                   'progress_label', 'fulfillment_type', 'pickup_at',
                   'ready_for_pickup_at', 'customer_confirmed_at', 'can_confirm_pickup',
@@ -302,6 +302,9 @@ class CheckoutSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=30)
     # Manzil pickup buyurtmasida majburiy emas (view'da tekshiriladi).
     address = serializers.CharField(max_length=300, required=False, allow_blank=True)
+    # Xaritadan/GPS orqali belgilangan joylashuv (ixtiyoriy).
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True)
     payment_method = serializers.ChoiceField(choices=['card', 'cash'], default='card')
     pickup_at = serializers.DateTimeField(required=False, allow_null=True)
