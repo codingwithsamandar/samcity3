@@ -24,7 +24,11 @@ from .courier_views import (
     CourierAvailableView, CourierAcceptView, CourierReleaseView,
     CourierOrderStatusView,
 )
-from .taxi_views import TaxiServiceViewSet, TaxistViewSet, TripViewSet
+from .taxi_views import (
+    TaxiServiceViewSet, TaxistViewSet, TripViewSet,
+    TaxistMeView, TaxistRegisterView, TaxistOnlineToggleView,
+    TaxistRouteCreateView, TaxistRouteDeleteView,
+)
 from .chat_store_views import (
     StoreChatStartView, StoreChatThreadView, StoreChatListView,
 )
@@ -109,6 +113,12 @@ urlpatterns = [
     path('courier/orders/<uuid:order_id>/accept/', CourierAcceptView.as_view(), name='courier-accept'),
     path('courier/orders/<uuid:order_id>/release/', CourierReleaseView.as_view(), name='courier-release'),
     path('courier/orders/<uuid:order_id>/status/', CourierOrderStatusView.as_view(), name='courier-order-status'),
+    # ── Taksi haydovchi (taksist) mobil paneli ──
+    path('taxi/me/', TaxistMeView.as_view(), name='taxist-me'),
+    path('taxi/me/register/', TaxistRegisterView.as_view(), name='taxist-register'),
+    path('taxi/me/online/', TaxistOnlineToggleView.as_view(), name='taxist-online'),
+    path('taxi/me/routes/', TaxistRouteCreateView.as_view(), name='taxist-route-create'),
+    path('taxi/me/routes/<uuid:route_id>/', TaxistRouteDeleteView.as_view(), name='taxist-route-delete'),
     # ── To'yxona/joy egasi — bron boshqaruvi (mobil) ──
     path('booking/manage/', VenueOwnerBookingsView.as_view(), name='venue-owner-bookings'),
     path('booking/manage/<uuid:booking_id>/<str:action>/', VenueOwnerBookingActionView.as_view(), name='venue-owner-action'),

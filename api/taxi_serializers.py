@@ -104,3 +104,67 @@ class TripSerializer(serializers.ModelSerializer):
 class TripCreateSerializer(serializers.Serializer):
     route_id = serializers.UUIDField()
     is_delivery = serializers.BooleanField(default=False)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  HAYDOVCHI (TAKSIST) PANELI — o'z profili, marshrutlari, sayohatlari
+# ─────────────────────────────────────────────────────────────────────────────
+class TaxistSelfSerializer(serializers.ModelSerializer):
+    """Haydovchining o'z profili (panel uchun) — is_online va statistika bilan."""
+    photo = serializers.SerializerMethodField()
+    avg_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Taxist
+        fields = ('id', 'full_name', 'phone', 'car_model', 'photo', 'region',
+                  'trips_count', 'is_online', 'is_active', 'avg_rating', 'review_count')
+
+    def get_photo(self, obj):
+        return _abs(self.context.get('request'), obj.photo)
+
+
+class TaxistWriteSerializer(serializers.ModelSerializer):
+    """Ro'yxatdan o'tish / profil tahriri uchun (faqat kiritiladigan maydonlar)."""
+    class Meta:
+        model = Taxist
+        fields = ('full_name', 'phone', 'car_model', 'region')
+        extra_kwargs = {
+            'full_name': {'required': True},
+            'phone': {'required': True},
+        }
+
+
+class RouteWriteSerializer(serializers.ModelSerializer):
+    """AB marshrut qo'shish (haydovchi paneli)."""
+    class Meta:
+        model = Route
+        fields = ('point_a', 'point_b', 'passenger_price', 'delivery_price', 'note')
+        extra_kwargs = {
+            'point_a': {'required': True},
+            'point_b': {'required': True},
+            'passenger_price': {'required': True},
+        }
+
+
+class DriverTripSerializer(serializers.ModelSerializer):
+    """Haydovchi paneli uchun sayohat — yo'lovchi ma'lumoti bilan.
+
+    Yo'lovchining telefoni faqat unga biriktirilgan haydovchiga ko'rsatiladi
+    (kuryer buyurtma telefonini ko'rgani kabi — bog'lanish uchun zarur)."""
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    passenger_name = serializers.SerializerMethodField()
+    passenger_phone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Trip
+        fields = ('id', 'point_a', 'point_b', 'is_delivery', 'price',
+                  'status', 'status_display', 'payment_method', 'payment_status',
+                  'passenger_name', 'passenger_phone', 'created_at')
+
+    def get_passenger_name(self, obj):
+        u = obj.passenger
+        return (getattr(u, 'name', '') or getattr(u, 'phone', '')) if u else ''
+
+    def get_passenger_phone(self, obj):
+        return getattr(obj.passenger, 'phone', '') if obj.passenger else ''
