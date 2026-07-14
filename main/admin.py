@@ -312,8 +312,18 @@ class NeighborhoodAdmin(admin.ModelAdmin):
     list_filter = ('district',)
     search_fields = ('name', 'head_name', 'head_phone')
     autocomplete_fields = ['district']
+    # Markaz (center_lat/center_lng) endi qo'lda kiritilmaydi — xaritada chizilgan
+    # poligondan avtomatik hisoblanadi (save_model). Shuning uchun fields'da yo'q.
     fields = ('name', 'district', 'description', 'population', 'head_name', 'head_phone',
-              'color', 'center_lat', 'center_lng', 'boundary')
+              'color', 'boundary')
+
+    def save_model(self, request, obj, form, change):
+        # Markazni xaritada belgilangan chegara (poligon) centroididan hisoblab qo'yamiz.
+        pts = obj.boundary or []
+        if pts:
+            obj.center_lat = round(sum(p[0] for p in pts) / len(pts), 6)
+            obj.center_lng = round(sum(p[1] for p in pts) / len(pts), 6)
+        super().save_model(request, obj, form, change)
 
     @admin.display(description='Rang')
     def color_swatch(self, obj):
