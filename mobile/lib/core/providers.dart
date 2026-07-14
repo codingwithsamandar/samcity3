@@ -10,6 +10,7 @@ import '../features/delivery/delivery_repository.dart';
 import '../features/delivery/delivery_models.dart';
 import '../features/delivery/courier_repository.dart';
 import '../features/taxi/taxi_repository.dart';
+import '../features/taxi/taxist_panel_repository.dart';
 import '../features/store_chat/store_chat_repository.dart';
 import '../features/mahalla/mahalla_repository.dart';
 import '../features/hokim/hokim_repository.dart';
@@ -45,6 +46,8 @@ final courierRepositoryProvider =
     Provider((ref) => CourierRepository(ref.read(apiClientProvider)));
 final taxiRepositoryProvider =
     Provider((ref) => TaxiRepository(ref.read(apiClientProvider)));
+final taxistPanelRepositoryProvider =
+    Provider((ref) => TaxistPanelRepository(ref.read(apiClientProvider)));
 final storeChatRepositoryProvider =
     Provider((ref) => StoreChatRepository(ref.read(apiClientProvider)));
 final mahallaRepositoryProvider =

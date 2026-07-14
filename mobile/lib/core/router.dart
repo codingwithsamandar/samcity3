@@ -9,6 +9,7 @@ import '../features/ads/add_ad_screen.dart';
 import '../features/delivery/store_detail_screen.dart';
 import '../features/taxi/taxist_detail_screen.dart';
 import '../features/taxi/my_trips_screen.dart';
+import '../features/taxi/taxist_panel_screen.dart';
 import '../features/delivery/cart_screen.dart';
 import '../features/delivery/my_orders_screen.dart';
 import '../features/delivery/my_stores_screen.dart';
@@ -66,6 +67,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/orders', builder: (_, __) => const MyOrdersScreen()),
       GoRoute(path: '/my-stores', builder: (_, __) => const MyStoresScreen()),
       GoRoute(path: '/courier', builder: (_, __) => const CourierDashboardScreen()),
+      GoRoute(path: '/taxist-panel', builder: (_, __) => const TaxistPanelScreen()),
       GoRoute(path: '/venues', builder: (_, __) => const VenuesScreen()),
       GoRoute(
         path: '/venue/:id',
