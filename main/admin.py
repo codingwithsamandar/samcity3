@@ -150,24 +150,30 @@ class PolygonEditorWidget(forms.Textarea):
         attrs['style'] = 'width:100%;font-family:monospace;font-size:12px;height:90px;'
         textarea = super().render(name, value, attrs, renderer)
         return mark_safe(
+            '<style>'
+            '.mh-vertex{background:#fff;border:2px solid #3551d1;border-radius:50%;'
+            'box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:move;}'
+            '.mh-editor-ctl{background:#fff;padding:6px;border-radius:6px;'
+            'box-shadow:0 1px 4px rgba(0,0,0,.3);display:flex;gap:4px;align-items:center;}'
+            '.mh-editor-ctl button{font-size:12px;padding:3px 8px;cursor:pointer;'
+            'border:1px solid #ccc;border-radius:4px;background:#f7f7f7;}'
+            '.mh-editor-ctl .mh-count{font-size:12px;color:#555;padding:0 4px;}'
+            '</style>'
             '<div class="mahalla-poly-editor">'
             '<div id="mahallaEditorMap" style="height:440px;border:1px solid #ccc;'
             'border-radius:8px;margin:.4rem 0;"></div>'
             '<p style="font-size:12px;color:#555;margin:.2rem 0 .4rem;">'
-            "Chizish/tahrirlash: chap-yuqoridagi ✐ bilan yangi poligon chizing yoki "
-            "mavjud tugunlarni torting. Maydon avtomatik yangilanadi.</p>"
+            "Xaritaga bosib chegara nuqtalarini qo'shing (kamida 3 ta nuqta poligon "
+            "hosil qiladi). Nuqtani torting — joyini o'zgartiradi; ustiga ikki marta "
+            "bosing — o'chiradi. Markaz avtomatik hisoblanadi.</p>"
             '<details><summary style="cursor:pointer;font-size:12px;color:#666;">'
             'Chegara (JSON)</summary>' + textarea + '</details></div>'
         )
 
     class Media:
-        css = {'all': (
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.css',
-        )}
+        css = {'all': ('vendor/leaflet/leaflet.css',)}
         js = (
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js',
+            'vendor/leaflet/leaflet.js',
             'admin/js/mahalla_polygon_editor.js',
         )
 
