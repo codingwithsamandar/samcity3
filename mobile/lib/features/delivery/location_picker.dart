@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/yandex_map.dart';
+
 /// Buyurtma manzilini xaritada belgilash ekрani.
 ///
 /// Foydalanuvchi ikki yo'l bilan joy tanlaydi:
@@ -75,29 +77,23 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         children: [
           FlutterMap(
             mapController: _map,
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: _picked != null ? 16 : 14,
+            options: shofirkonMapOptions(
+              center: center,
+              zoom: _picked != null ? 16 : 14,
               onTap: (_, latLng) => setState(() => _picked = latLng),
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                // OSM ba'zi tarmoqlarda bloklanadi — Carto zaxira qatlami.
-                fallbackUrl:
-                    'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                userAgentPackageName: 'uz.samcity.app',
-              ),
+              yandexTileLayer(),
               if (_picked != null)
                 MarkerLayer(
                   markers: [
                     Marker(
                       point: _picked!,
-                      width: 44,
-                      height: 44,
+                      width: 38,
+                      height: 38,
                       alignment: Alignment.topCenter,
                       child: const Icon(Icons.location_on,
-                          color: Color(0xFFE23B3B), size: 44),
+                          color: Color(0xFFE23B3B), size: 38),
                     ),
                   ],
                 ),

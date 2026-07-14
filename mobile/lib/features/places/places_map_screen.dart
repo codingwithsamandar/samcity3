@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/providers.dart';
+import '../../core/yandex_map.dart';
 import 'place_model.dart';
 
 /// Interaktiv xarita — joylar (OpenStreetMap). Saytdagi Leaflet bilan bir xil.
@@ -163,21 +164,19 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
               Expanded(
                 child: FlutterMap(
                   mapController: _mapController,
-                  options: const MapOptions(initialCenter: _center, initialZoom: 13),
+                  options: shofirkonMapOptions(center: _center, zoom: 13),
                   children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'uz.samcity.app',
-                    ),
+                    yandexTileLayer(),
                     MarkerLayer(
                       markers: data.places.where((p) => p.lat != 0).map((p) {
                         return Marker(
                           point: LatLng(p.lat, p.lng),
-                          width: 40, height: 40,
+                          width: 30, height: 30,
+                          alignment: Alignment.topCenter,
                           child: GestureDetector(
                             onTap: () => _showPlace(p),
                             child: Icon(Icons.location_on,
-                                color: _color(p.color), size: 36),
+                                color: _color(p.color), size: 28),
                           ),
                         );
                       }).toList(),

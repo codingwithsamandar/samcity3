@@ -1,7 +1,6 @@
 {% load static %}
 {# Shared map assets — include once per map page (inside extra_css or extra_js). #}
-{# Leaflet LOKAL vendordan yuklanadi — cdnjs/unpkg CDN'lari O'zbekistonda ko'pincha
-   bloklanadi, shunda xarita "oq/bo'sh" bo'lib qolardi. Endi CDN'ga bog'liq emas. #}
+{# Leaflet LOKAL vendordan yuklanadi (cdnjs/unpkg UZ'da bloklanadi). Yandex plitka. #}
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"/>
 <link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.css' %}"/>
 <link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.Default.css' %}"/>
@@ -27,4 +26,8 @@
   }
 </script>
 <script src="{% static 'vendor/leaflet/markercluster/leaflet.markercluster.js' %}"></script>
-<script src="{% static 'js/samcity-map.js' %}"></script>
+{# proj4 + proj4leaflet — Yandex plitkalari EPSG:3395 proyeksiyasida (samcity-map.js). #}
+<script src="{% static 'vendor/proj4/proj4.js' %}"></script>
+<script src="{% static 'vendor/proj4/proj4leaflet.js' %}"></script>
+{# ?v — JS hash'lanmaydi (WhiteNoise); xarita yangilanishi keshdan o'tishi uchun bump. #}
+<script src="{% static 'js/samcity-map.js' %}?v=yandex1"></script>

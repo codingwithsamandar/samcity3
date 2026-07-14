@@ -19,40 +19,47 @@
     help: '#3551d1', emergency: '#e5484d', event: '#7a5af8', driver: '#e0a52e',
   };
 
-  var TILE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  var ATTR = '© OpenStreetMap';
-  // Zaxira plitka serveri: ba'zi mobil tarmoqlarda tile.openstreetmap.org
-  // bloklanadi/sekinlashadi → xarita "oq/bo'sh" bo'lib qoladi. Plitkalar
-  // yuklanmasa Carto'ning bepul bazasiga avtomatik o'tamiz (subdomenli, tez).
-  var TILE_FALLBACK = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  var ATTR_FALLBACK = '© OpenStreetMap © CARTO';
+  // Yandex raster plitka (kalitsiz). Yandex EPSG:3395 proyeksiyasida — quyida
+  // yandexCRS bilan to'g'ri joylashtiriladi (aks holda markerlar ~21km xato bo'ladi).
+  var TILE = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU';
+  var ATTR = '© Yandex';
 
-  // Shofirkon tumani + chegarasidan ~3km margin. Xarita shu chegaradan
-  // tashqariga surilmaydi va juda uzoqlashtirib bo'lmaydi (minZoom).
-  // (lat 1°≈111km, lng 1°≈85km @40°N → ±0.04 lat ≈ 4.4km, ±0.05 lng ≈ 4.2km)
-  var SHOFIRKON_BOUNDS = [[40.075, 64.448], [40.156, 64.558]];
+  // Shofirkon tumani + ~10km atrofi. Xarita shu chegaradan tashqariga surilmaydi
+  // va juda uzoqlashtirib bo'lmaydi (minZoom). (10km ≈ 0.09° lat, 0.117° lng @40°N)
+  var SHOFIRKON_BOUNDS = [[39.985, 64.331], [40.246, 64.676]];
+
+  // Yandex EPSG:3395 CRS — bir marta yaratib keshlaymiz (proj4leaflet kerak).
+  var _yandexCRS = null;
+  function yandexCRS() {
+    if (_yandexCRS) return _yandexCRS;
+    if (!L.Proj) return null; // proj4leaflet yuklanmagan — standart CRS
+    var res = [];
+    for (var z = 0; z <= 20; z++) res.push(156543.033928041 / Math.pow(2, z));
+    _yandexCRS = new L.Proj.CRS('EPSG:3395',
+      '+proj=merc +a=6378137 +b=6356752.314245179 +lat_ts=0 +lon_0=0 ' +
+      '+x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +no_defs',
+      {
+        origin: [-20037508.342789244, 20037508.342789244],
+        resolutions: res,
+        bounds: L.bounds([-20037508.342789244, -20037508.342789244],
+                         [20037508.342789244, 20037508.342789244])
+      });
+    return _yandexCRS;
+  }
 
   function init(elId, opts) {
     var bounds = opts.maxBounds === null ? null : (opts.maxBounds || SHOFIRKON_BOUNDS);
-    var map = L.map(elId, {
+    var mapOpts = {
       zoomControl: opts.zoom !== false,
       scrollWheelZoom: true,
       maxBounds: bounds,
       maxBoundsViscosity: bounds ? 1.0 : 0,
-      minZoom: opts.minZoom || (bounds ? 12 : undefined)
-    }).setView(opts.center || CENTER, opts.zoomLevel || 13);
-    var tiles = L.tileLayer(TILE, { maxZoom: 19, attribution: ATTR }).addTo(map);
-    // Plitkalar yuklanmasa (tarmoq/bloklash) — bir necha xatodan so'ng zaxira
-    // serverga bir marta o'tamiz, shunda xarita oq bo'lib qolmaydi.
-    var tileErrs = 0, tilesSwitched = false;
-    tiles.on('tileerror', function () {
-      if (tilesSwitched) return;
-      if (++tileErrs >= 3) {
-        tilesSwitched = true;
-        try { map.removeLayer(tiles); } catch (e) {}
-        L.tileLayer(TILE_FALLBACK, { maxZoom: 19, attribution: ATTR_FALLBACK, subdomains: 'abcd' }).addTo(map);
-      }
-    });
+      minZoom: opts.minZoom || (bounds ? 11 : undefined)
+    };
+    var crs = yandexCRS();
+    if (crs) mapOpts.crs = crs;
+    var map = L.map(elId, mapOpts).setView(opts.center || CENTER, opts.zoomLevel || 13);
+    L.tileLayer(TILE, { maxZoom: 19, attribution: ATTR }).addTo(map);
     if (opts.fullscreen !== false) addFullscreen(map, elId);
     // Tile/layout race: recalc size after the container settles.
     setTimeout(function () { map.invalidateSize(); }, 400);

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/providers.dart';
+import '../../core/yandex_map.dart';
 import '../community/community_models.dart';
 import 'mahalla_models.dart';
 import 'mahalla_store_panel.dart';
@@ -563,19 +564,17 @@ class _MahallaMapPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text('${detail.neighborhood.name} — xarita')),
       body: FlutterMap(
-        options: MapOptions(initialCenter: center, initialZoom: 14),
+        options: shofirkonMapOptions(center: center, zoom: 14),
         children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'uz.samcity.app',
-          ),
+          yandexTileLayer(),
           MarkerLayer(
             markers: points.map((e) {
               final p = e.$1;
               final isStore = e.$2;
               return Marker(
                 point: LatLng(p.lat!, p.lng!),
-                width: 44, height: 44,
+                width: 32, height: 32,
+                alignment: Alignment.topCenter,
                 child: GestureDetector(
                   onTap: () => showModalBottomSheet(
                     context: context,
@@ -600,7 +599,7 @@ class _MahallaMapPage extends StatelessWidget {
                     ),
                   ),
                   child: Icon(Icons.location_on,
-                      size: 40, color: isStore ? const Color(0xFF34D399) : const Color(0xFF22D3EE)),
+                      size: 30, color: isStore ? const Color(0xFF34D399) : const Color(0xFF22D3EE)),
                 ),
               );
             }).toList(),
