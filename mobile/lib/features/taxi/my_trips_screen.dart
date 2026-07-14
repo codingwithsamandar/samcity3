@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import '../payments/payment_sheet.dart';
 import 'taxi_models.dart';
 
@@ -61,7 +62,11 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen> {
           }
           final trips = snap.data ?? [];
           if (trips.isEmpty) {
-            return const Center(child: Text("Hali sayohatlar yo'q"));
+            return const EmptyState(
+              icon: Icons.local_taxi_outlined,
+              title: "Hali sayohatlar yo'q",
+              subtitle: "Taksi chaqirsangiz, sayohatlaringiz shu yerda ko'rinadi.",
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(12),

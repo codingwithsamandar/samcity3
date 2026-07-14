@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import '../payments/payment_sheet.dart';
 import 'booking_models.dart';
 
@@ -76,10 +78,13 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
             }
             final list = snap.data ?? [];
             if (list.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(child: Text("Hali bronlar yo'q")),
-              ]);
+              return EmptyState(
+                icon: Icons.event_note_outlined,
+                title: "Hali bronlar yo'q",
+                subtitle: "To'yxona, restoran yoki salon band qiling — bronlaringiz shu yerda ko'rinadi.",
+                actionLabel: "Joylarni ko'rish",
+                onAction: () => context.push('/venues'),
+              ).scrollable();
             }
             return ListView.separated(
               padding: const EdgeInsets.all(12),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_error.dart';
 import '../../core/providers.dart';
 import '../../core/track_socket.dart';
+import '../../core/widgets/empty_state.dart';
 import '../payments/payment_sheet.dart';
 import 'delivery_models.dart';
 
@@ -152,16 +153,11 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     }
     final orders = _orders ?? [];
     if (orders.isEmpty) {
-      return ListView(children: const [
-        SizedBox(height: 120),
-        Center(
-          child: Column(children: [
-            Icon(Icons.receipt_long_outlined, size: 48, color: Color(0xFF69748A)),
-            SizedBox(height: 8),
-            Text("Hali buyurtmalar yo'q"),
-          ]),
-        ),
-      ]);
+      return const EmptyState(
+        icon: Icons.receipt_long_outlined,
+        title: "Hali buyurtmalar yo'q",
+        subtitle: "Do'konlardan xarid qilsangiz, buyurtmalaringiz shu yerda ko'rinadi.",
+      ).scrollable();
     }
     return ListView.separated(
       padding: const EdgeInsets.all(12),

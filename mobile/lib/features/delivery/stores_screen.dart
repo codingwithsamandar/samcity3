@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import 'delivery_models.dart';
 
 /// Do'konlar ro'yxati (yetkazish bo'limi).
@@ -65,10 +66,11 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
             }
             final stores = snap.data ?? [];
             if (stores.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(child: Text("Hozircha do'konlar yo'q")),
-              ]);
+              return const EmptyState(
+                icon: Icons.storefront_outlined,
+                title: "Hozircha do'konlar yo'q",
+                subtitle: "Bu bo'limda do'konlar hali qo'shilmagan. Keyinroq qayta ko'ring.",
+              ).scrollable();
             }
             return ListView.separated(
               padding: const EdgeInsets.all(12),

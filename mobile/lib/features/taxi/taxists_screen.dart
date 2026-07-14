@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import 'taxi_models.dart';
 
 /// Taksistlar ro'yxati (taksi bo'limi).
@@ -94,10 +95,11 @@ class _TaxistsScreenState extends ConsumerState<TaxistsScreen> {
                   }
                   final list = snap.data ?? [];
                   if (list.isEmpty) {
-                    return ListView(children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text("Hozircha taksistlar yo'q")),
-                    ]);
+                    return const EmptyState(
+                      icon: Icons.local_taxi_outlined,
+                      title: "Hozircha taksistlar yo'q",
+                      subtitle: "Boshqa kalit so'z bilan qidiring yoki keyinroq qayta ko'ring.",
+                    ).scrollable();
                   }
                   return ListView.separated(
                     padding: const EdgeInsets.all(12),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import '../notifications/notification_bell.dart';
 import 'ad_model.dart';
 
@@ -173,7 +174,12 @@ class _AdsListScreenState extends ConsumerState<AdsListScreen>
               SliverFillRemaining(child: _ErrorView(onRetry: _loadFirst))
             else if (_ads.isEmpty)
               const SliverFillRemaining(
-                child: Center(child: Text('E\'lon topilmadi.')),
+                hasScrollBody: false,
+                child: EmptyState(
+                  icon: Icons.search_off,
+                  title: "E'lon topilmadi",
+                  subtitle: "Boshqa kalit so'z bilan qidiring yoki keyinroq qayta ko'ring.",
+                ),
               )
             else
               SliverPadding(

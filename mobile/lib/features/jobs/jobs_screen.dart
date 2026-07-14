@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import 'jobs_models.dart';
 
 /// Ish va rezyume bo'limi (2 tab).
@@ -67,8 +68,11 @@ class _JobsTabState extends ConsumerState<_JobsTab> {
             }
             final jobs = snap.data ?? [];
             if (jobs.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120), Center(child: Text("Ish e'lonlari yo'q"))]);
+              return const EmptyState(
+                icon: Icons.work_off_outlined,
+                title: "Ish e'lonlari yo'q",
+                subtitle: "Hozircha ochiq ish o'rinlari yo'q. Keyinroq qayta ko'ring.",
+              ).scrollable();
             }
             return ListView.separated(
               padding: const EdgeInsets.all(12),
@@ -160,8 +164,11 @@ class _ResumesTabState extends ConsumerState<_ResumesTab> {
             }
             final list = snap.data ?? [];
             if (list.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120), Center(child: Text("Rezyumelar yo'q"))]);
+              return const EmptyState(
+                icon: Icons.badge_outlined,
+                title: "Rezyumelar yo'q",
+                subtitle: "Hozircha e'lon qilingan rezyume yo'q. Keyinroq qayta ko'ring.",
+              ).scrollable();
             }
             return ListView.separated(
               padding: const EdgeInsets.all(12),

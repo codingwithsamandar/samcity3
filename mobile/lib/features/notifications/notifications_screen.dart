@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import 'notification_model.dart';
 
 /// Bildirishnomalar ro'yxati ekrani.
@@ -72,17 +73,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             }
             final items = snap.data?.items ?? [];
             if (items.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(
-                  child: Column(children: [
-                    Icon(Icons.notifications_off_outlined,
-                        size: 48, color: Color(0xFF69748A)),
-                    SizedBox(height: 8),
-                    Text('Hozircha bildirishnoma yo\'q'),
-                  ]),
-                ),
-              ]);
+              return const EmptyState(
+                icon: Icons.notifications_off_outlined,
+                title: "Hozircha bildirishnoma yo'q",
+                subtitle: "Yangi xabar, buyurtma yoki e'lon bo'lganda shu yerda ko'rasiz.",
+              ).scrollable();
             }
             return ListView.separated(
               itemCount: items.length,

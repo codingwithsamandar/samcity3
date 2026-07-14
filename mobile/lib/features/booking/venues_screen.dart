@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/empty_state.dart';
 import 'booking_models.dart';
 
 const _venueTypes = <String, String>{
@@ -87,7 +88,11 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
                 }
                 final venues = snap.data ?? [];
                 if (venues.isEmpty) {
-                  return const Center(child: Text("Joylar topilmadi"));
+                  return const EmptyState(
+                    icon: Icons.location_city_outlined,
+                    title: "Joylar topilmadi",
+                    subtitle: "Boshqa turdagi joyni tanlang yoki keyinroq qayta ko'ring.",
+                  );
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(12),
