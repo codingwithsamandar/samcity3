@@ -33,7 +33,10 @@ from .mahalla_views import (
     ComplaintListCreateView, ComplaintStatusView,
     HokimPanelView, DistrictAnnounceView,
 )
-from .booking_views import VenueViewSet, VenueBookingViewSet
+from .booking_views import (
+    VenueViewSet, VenueBookingViewSet,
+    VenueOwnerBookingsView, VenueOwnerBookingActionView, MyVenuesView,
+)
 from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
     DeviceTokenView,
@@ -106,6 +109,10 @@ urlpatterns = [
     path('courier/orders/<uuid:order_id>/accept/', CourierAcceptView.as_view(), name='courier-accept'),
     path('courier/orders/<uuid:order_id>/release/', CourierReleaseView.as_view(), name='courier-release'),
     path('courier/orders/<uuid:order_id>/status/', CourierOrderStatusView.as_view(), name='courier-order-status'),
+    # ── To'yxona/joy egasi — bron boshqaruvi (mobil) ──
+    path('booking/manage/', VenueOwnerBookingsView.as_view(), name='venue-owner-bookings'),
+    path('booking/manage/<uuid:booking_id>/<str:action>/', VenueOwnerBookingActionView.as_view(), name='venue-owner-action'),
+    path('booking/my-venues/', MyVenuesView.as_view(), name='my-venues'),
     # Do'kon bilan chat (mijoz ↔ do'kon)
     path('stores/<int:store_pk>/chat/', StoreChatStartView.as_view(), name='store-chat-start'),
     path('delivery/chat/threads/', StoreChatListView.as_view(), name='store-chat-list'),

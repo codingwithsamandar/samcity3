@@ -79,6 +79,9 @@ class VenueBookingSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source='service.name', read_only=True, default=None)
     staff_name = serializers.CharField(source='staff.name', read_only=True, default=None)
     penalty_percent = serializers.IntegerField(source='venue.penalty_percent', read_only=True)
+    # Egasi paneli uchun: bron qilgan mijoz (o'z bronida — o'zining ma'lumoti).
+    customer_name = serializers.CharField(source='user.name', read_only=True, default='')
+    customer_phone = serializers.CharField(source='user.phone', read_only=True, default='')
 
     class Meta:
         model = VenueBooking
@@ -86,7 +89,7 @@ class VenueBookingSerializer(serializers.ModelSerializer):
                   'booking_date', 'start_time', 'end_time', 'guests',
                   'message', 'total_amount', 'paid_amount', 'penalty_amount',
                   'refund_amount', 'penalty_percent', 'service_name', 'staff_name',
-                  'event_type', 'created_at')
+                  'event_type', 'customer_name', 'customer_phone', 'created_at')
 
 
 class BookingCreateSerializer(serializers.Serializer):

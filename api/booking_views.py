@@ -4,6 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from datetime import date as _date, datetime as _datetime, timedelta
 
@@ -203,3 +204,57 @@ class VenueBookingViewSet(viewsets.ReadOnlyModelViewSet):
         # Jarima ushlanadi (to'langan bo'lsa), qolgani qaytariladi.
         booking.mark_cancelled()
         return Response(VenueBookingSerializer(booking, context={'request': request}).data)
+
+
+# ── TO'YXONA EGASI — bron boshqaruvi (mobil) ────────────────────────────────
+class VenueOwnerBookingsView(APIView):
+    """GET — egaga tegishli joylardagi bronlar (kutilayotgan + boshqalar).
+
+    Web `manage_bookings` bilan bir xil: {pending: [...], others: [...]}.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = (VenueBooking.objects.filter(venue__owner=request.user)
+              .select_related('venue', 'user', 'service', 'staff')
+              .order_by('-created_at'))
+        ctx = {'request': request}
+        pending, others = [], []
+        for b in qs:
+            data = VenueBookingSerializer(b, context=ctx).data
+            (pending if b.status == 'pending' else others).append(data)
+        return Response({'pending': pending, 'others': others})
+
+
+class VenueOwnerBookingActionView(APIView):
+    """POST — egasi bron holatini o'zgartiradi: confirm / cancel / complete."""
+    permission_classes = [IsAuthenticated]
+    MAPPING = {'confirm': 'confirmed', 'cancel': 'cancelled', 'complete': 'completed'}
+
+    def post(self, request, booking_id, action):
+        booking = (VenueBooking.objects.select_related('venue')
+                   .filter(pk=booking_id).first())
+        if booking is None:
+            return Response({'detail': 'Bron topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        if booking.venue.owner_id != request.user.id:
+            return Response({'detail': "Bu bronni boshqarish huquqingiz yo'q."},
+                            status=status.HTTP_403_FORBIDDEN)
+        new_status = self.MAPPING.get(action)
+        if new_status is None:
+            return Response({'detail': "Noma'lum amal."}, status=status.HTTP_400_BAD_REQUEST)
+        if booking.status in ('cancelled', 'completed', 'no_show'):
+            return Response({'detail': "Bu bron holatini o'zgartirib bo'lmaydi."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        booking.status = new_status
+        booking.save(update_fields=['status'])
+        return Response(VenueBookingSerializer(booking, context={'request': request}).data)
+
+
+class MyVenuesView(APIView):
+    """GET — foydalanuvchiga tegishli joylar (egasi paneli ro'yxati)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = (Venue.objects.filter(owner=request.user)
+              .order_by('-created_at'))
+        return Response(VenueListSerializer(qs, many=True, context={'request': request}).data)
