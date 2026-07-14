@@ -2,7 +2,9 @@
 {% block title %}Buyurtma rasmiylashtirish — SamCity{% endblock %}
 
 {% block extra_css %}
+{% if has_delivery %}{% include '_map_assets.html' %}{% endif %}
 <style>
+  #coPickMap { height:260px; border-radius:14px; border:1px solid var(--border); z-index:1; margin:.2rem 0 .5rem; }
   .method-tabs { display:flex; gap:.6rem; margin:.5rem 0 1rem; }
   .method-tab { flex:1; text-align:center; padding:.85rem; border-radius:14px; border:1.5px solid var(--border2); background:var(--surface); color:var(--text2); font-weight:700; font-family:inherit; font-size:.92rem; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:.45rem; }
   .method-tab:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
@@ -43,6 +45,16 @@
             <div class="form-group"><label class="form-label" for="coAddress">Manzil *</label><input type="text" id="coAddress" name="address" class="form-control" placeholder="Ko'cha, uy, mo'ljal" required></div>
             {% endif %}
           </div>
+          {% if has_delivery %}
+          <div class="form-group">
+            <label class="form-label">📍 Joylashuvni belgilang</label>
+            <div id="coPickMap"></div>
+            <button type="button" id="coLocateBtn" class="btn btn-ghost btn-sm" style="margin-bottom:.4rem;"><svg class="ic"><use href="#i-pin"/></svg> Joriy joylashuvim</button>
+            <p class="form-hint">Xaritada joyni bosing yoki «Joriy joylashuvim» tugmasini bosing — manzil avtomatik to'ldiriladi.</p>
+            <input type="hidden" name="latitude" id="coLat" value="">
+            <input type="hidden" name="longitude" id="coLng" value="">
+          </div>
+          {% endif %}
           {% if has_pickup %}
           <div class="form-group">
             <label class="form-label" for="coPickupAt">Qachon olib ketasiz? (ixtiyoriy)</label>
@@ -109,4 +121,47 @@
   if(exp) exp.addEventListener('input',function(){ var d=exp.value.replace(/\D/g,'').slice(0,4); if(d.length>=3)d=d.slice(0,2)+'/'+d.slice(2); exp.value=d; });
 })();
 </script>
+
+{% if has_delivery %}
+<script>
+(function(){
+  if (typeof SamMap === 'undefined' || typeof L === 'undefined') return;
+  var latIn=document.getElementById('coLat'), lngIn=document.getElementById('coLng'),
+      addrIn=document.getElementById('coAddress'), locBtn=document.getElementById('coLocateBtn');
+  var map=SamMap.init('coPickMap', { center: SamMap.CENTER, zoomLevel: 14, fullscreen: false });
+  var marker=null;
+
+  function setPoint(ll, zoom){
+    latIn.value = ll.lat.toFixed(6);
+    lngIn.value = ll.lng.toFixed(6);
+    if (marker) { marker.setLatLng(ll); }
+    else {
+      marker = L.marker(ll, { draggable:true }).addTo(map);
+      marker.on('dragend', function(){ setPoint(marker.getLatLng()); });
+    }
+    if (zoom) map.setView(ll, zoom);
+    // Manzil bo'sh yoki avval avtomatik to'ldirilgan bo'lsa — reverse geocode.
+    SamMap.reverseGeocode(ll.lat, ll.lng).then(function(addr){
+      if (addr && (!addrIn.value || addrIn.dataset.auto === '1')) {
+        addrIn.value = addr; addrIn.dataset.auto = '1';
+      }
+    });
+  }
+  map.on('click', function(e){ setPoint(e.latlng); });
+
+  if (locBtn) locBtn.addEventListener('click', function(){
+    locBtn.disabled = true;
+    var old = locBtn.innerHTML;
+    locBtn.textContent = 'Aniqlanmoqda…';
+    SamMap.locate().then(function(p){
+      setPoint({ lat:p.lat, lng:p.lng }, 16);
+    }).catch(function(err){
+      alert((err && err.message) || "Joylashuvni aniqlab bo'lmadi");
+    }).finally(function(){
+      locBtn.disabled = false; locBtn.innerHTML = old;
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

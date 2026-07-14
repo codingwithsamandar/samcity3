@@ -236,6 +236,9 @@ def checkout(request):
         full_name = request.POST.get('full_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         address = request.POST.get('address', '').strip()
+        # Xaritada/GPS bilan belgilangan joylashuv (ixtiyoriy).
+        lat = _pfloat(request.POST.get('latitude'))
+        lng = _pfloat(request.POST.get('longitude'))
         note = request.POST.get('note', '').strip()
         method = request.POST.get('payment_method', 'card')
         try:
@@ -304,6 +307,8 @@ def checkout(request):
                     user=request.user, group=checkout_group,
                     full_name=full_name or (request.user.name or ''),
                     phone=phone, address=('' if is_pickup else address), note=note,
+                    latitude=None if is_pickup else lat,
+                    longitude=None if is_pickup else lng,
                     subtotal=g_subtotal, delivery_fee=fee, total=g_subtotal + fee,
                     status=o_status, payment_method=method, payment_status=payment_status,
                     card_last4=card_last4, card_brand=card_brand,
