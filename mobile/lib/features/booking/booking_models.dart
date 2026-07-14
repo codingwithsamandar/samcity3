@@ -148,6 +148,86 @@ class VenueDetail {
       );
 }
 
+/// Egasi paneli uchun to'liq joy — tahrir formasi va xizmat/usta boshqaruvi.
+class OwnerVenue {
+  final String id;
+  final String name;
+  final String venueType;
+  final String venueTypeDisplay;
+  final String description;
+  final String address;
+  final String phone;
+  final String? image;
+  final int? capacity;
+  final int? pricePerDay;
+  final int? pricePerHour;
+  final String? workingHoursStart; // "HH:MM:SS"
+  final String? workingHoursEnd;
+  final double? latitude;
+  final double? longitude;
+  final bool prepayRequired;
+  final int cancelPenaltyPercent;
+  final int graceMinutes;
+  final bool isActive;
+  final bool usesSlots;
+  final List<VenueService> services;
+  final List<VenueStaff> staff;
+
+  OwnerVenue({
+    required this.id,
+    required this.name,
+    required this.venueType,
+    this.venueTypeDisplay = '',
+    this.description = '',
+    this.address = '',
+    this.phone = '',
+    this.image,
+    this.capacity,
+    this.pricePerDay,
+    this.pricePerHour,
+    this.workingHoursStart,
+    this.workingHoursEnd,
+    this.latitude,
+    this.longitude,
+    this.prepayRequired = true,
+    this.cancelPenaltyPercent = 10,
+    this.graceMinutes = 15,
+    this.isActive = true,
+    this.usesSlots = false,
+    this.services = const [],
+    this.staff = const [],
+  });
+
+  factory OwnerVenue.fromJson(Map<String, dynamic> j) => OwnerVenue(
+        id: j['id'].toString(),
+        name: j['name'] ?? '',
+        venueType: j['venue_type'] ?? 'other',
+        venueTypeDisplay: j['venue_type_display'] ?? '',
+        description: j['description'] ?? '',
+        address: j['address'] ?? '',
+        phone: j['phone'] ?? '',
+        image: j['image'],
+        capacity: j['capacity'],
+        pricePerDay: j['price_per_day'],
+        pricePerHour: j['price_per_hour'],
+        workingHoursStart: j['working_hours_start'],
+        workingHoursEnd: j['working_hours_end'],
+        latitude: (j['latitude'] is num) ? (j['latitude'] as num).toDouble() : null,
+        longitude: (j['longitude'] is num) ? (j['longitude'] as num).toDouble() : null,
+        prepayRequired: j['prepay_required'] ?? true,
+        cancelPenaltyPercent: j['cancel_penalty_percent'] ?? 10,
+        graceMinutes: j['grace_minutes'] ?? 15,
+        isActive: j['is_active'] ?? true,
+        usesSlots: j['uses_slots'] ?? false,
+        services: ((j['services'] as List?) ?? [])
+            .map((e) => VenueService.fromJson(e))
+            .toList(),
+        staff: ((j['staff'] as List?) ?? [])
+            .map((e) => VenueStaff.fromJson(e))
+            .toList(),
+      );
+}
+
 class VenueBooking {
   final String id;
   final String venueName;

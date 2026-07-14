@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../core/api_client.dart';
 import 'booking_models.dart';
 
@@ -95,5 +97,65 @@ class BookingRepository {
   Future<List<Venue>> myVenues() async {
     final res = await _api.dio.get('/booking/my-venues/');
     return ((res.data as List?) ?? []).map((e) => Venue.fromJson(e)).toList();
+  }
+
+  // ── Egasi joy setup (venue create/edit + xizmat/usta) ──
+  /// Fayl bo'lsa multipart (barcha qiymatlar matnга aylantiriladi), aks holda JSON.
+  Object _payload(Map<String, dynamic> data, {String? fileField, MultipartFile? file}) {
+    if (file == null) return data;
+    final m = <String, dynamic>{};
+    data.forEach((k, v) {
+      if (v != null) m[k] = (v is bool) ? (v ? 'true' : 'false') : '$v';
+    });
+    m[fileField!] = file;
+    return FormData.fromMap(m);
+  }
+
+  Future<OwnerVenue> ownerVenueDetail(String id) async {
+    final res = await _api.dio.get('/booking/my-venues/$id/');
+    return OwnerVenue.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<OwnerVenue> createVenue(Map<String, dynamic> data, {MultipartFile? image}) async {
+    final res = await _api.dio.post('/booking/my-venues/',
+        data: _payload(data, fileField: 'image', file: image));
+    return OwnerVenue.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<OwnerVenue> updateVenue(String id, Map<String, dynamic> data,
+      {MultipartFile? image}) async {
+    final res = await _api.dio.patch('/booking/my-venues/$id/',
+        data: _payload(data, fileField: 'image', file: image));
+    return OwnerVenue.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteVenue(String id) async {
+    await _api.dio.delete('/booking/my-venues/$id/');
+  }
+
+  Future<VenueService> addService(String venueId,
+      {required String name, required int price, int durationMinutes = 30}) async {
+    final res = await _api.dio.post('/booking/my-venues/$venueId/services/', data: {
+      'name': name, 'price': price, 'duration_minutes': durationMinutes,
+    });
+    return VenueService.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteService(String serviceId) async {
+    await _api.dio.delete('/booking/my-venues/services/$serviceId/');
+  }
+
+  Future<VenueStaff> addStaff(String venueId,
+      {required String name, String specialty = '', MultipartFile? photo}) async {
+    final res = await _api.dio.post('/booking/my-venues/$venueId/staff/',
+        data: _payload({
+          'name': name,
+          if (specialty.isNotEmpty) 'specialty': specialty,
+        }, fileField: 'photo', file: photo));
+    return VenueStaff.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteStaff(String staffId) async {
+    await _api.dio.delete('/booking/my-venues/staff/$staffId/');
   }
 }
