@@ -1,9 +1,10 @@
 {% load static %}
 {# Shared map assets — include once per map page (inside extra_css or extra_js). #}
-{# Birlamchi: cdnjs (Cloudflare — global, ishonchli). Zaxira: unpkg. #}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css"/>
+{# Leaflet LOKAL vendordan yuklanadi — cdnjs/unpkg CDN'lari O'zbekistonda ko'pincha
+   bloklanadi, shunda xarita "oq/bo'sh" bo'lib qolardi. Endi CDN'ga bog'liq emas. #}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"/>
+<link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.css' %}"/>
+<link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.Default.css' %}"/>
 <script>
   window.SAMMAP = {
     center: [40.1156, 64.5036],
@@ -12,17 +13,18 @@
     geojsonUrl: "{% url 'places:geojson' %}"
   };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script>
-  // Zaxira CDN: agar cdnjs'dan Leaflet yuklanmasa, unpkg'dan sinxron yuklaydi.
-  if (typeof L === 'undefined') {
-    document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"><\/script>');
+  // Default L.marker rasmlari yo'lini aniq belgilaymiz — Leaflet'ning avtomatik
+  // aniqlashi hashed/manifest static bilan ishlamasligi mumkin (store_form,
+  // checkout kabi default marker ishlatadigan sahifalar uchun shart).
+  if (window.L && L.Icon && L.Icon.Default) {
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "{% static 'vendor/leaflet/images/marker-icon-2x.png' %}",
+      iconUrl: "{% static 'vendor/leaflet/images/marker-icon.png' %}",
+      shadowUrl: "{% static 'vendor/leaflet/images/marker-shadow.png' %}"
+    });
   }
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" crossorigin="anonymous"></script>
-<script>
-  if (typeof L !== 'undefined' && typeof L.markerClusterGroup === 'undefined') {
-    document.write('<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"><\/script>');
-  }
-</script>
+<script src="{% static 'vendor/leaflet/markercluster/leaflet.markercluster.js' %}"></script>
 <script src="{% static 'js/samcity-map.js' %}"></script>
