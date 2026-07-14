@@ -17,6 +17,11 @@ class LatLngPickerWidget(forms.NumberInput):
         attrs.setdefault('id', 'id_%s' % name)
         field_html = super().render(name, value, attrs, renderer)
         return mark_safe(
+            '<style>'
+            '.llp-pin{background:none;border:none;}'
+            '.llp-pin-dot{width:18px;height:18px;background:#e23b3b;border:3px solid #fff;'
+            'border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:move;}'
+            '</style>'
             '<div class="latlng-picker">'
             '<div id="latlngPickerMap" style="height:320px;border:1px solid #ccc;'
             'border-radius:8px;margin:.4rem 0;"></div>'
@@ -26,10 +31,8 @@ class LatLngPickerWidget(forms.NumberInput):
         )
 
     class Media:
-        css = {'all': (
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-        )}
+        css = {'all': ('vendor/leaflet/leaflet.css',)}
         js = (
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+            'vendor/leaflet/leaflet.js',
             'admin/js/latlng_picker.js',
         )
