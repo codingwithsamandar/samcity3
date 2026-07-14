@@ -60,6 +60,12 @@ python manage.py translate_catalog || echo "!! translate_catalog xato bilan tuga
 echo "▶ Katalog kategoriya tuzatishi..."
 python manage.py fix_catalog_categories || echo "!! fix_catalog_categories xato bilan tugadi (yuqoriga qarang)"
 
+# ── Rasmsiz mahsulotlarga placeholder (idempotent) ──
+# Tashqi yuklashsiz topilmagan rasmlar o'rniga toza kategoriya-rangli plitka
+# (nom + bosh harflar). Faqat rasmsizlarga tegadi; rasm bo'lsa o'tkazib yuboradi.
+echo "▶ Rasmsiz mahsulot placeholderlari..."
+python manage.py gen_catalog_placeholders || echo "!! gen_catalog_placeholders xato bilan tugadi (yuqoriga qarang)"
+
 # ── Tuman + hokim (avtomatik, bir martalik) ──
 # Hokim paneli (/hokim/) ishlashi uchun kamida bitta tuman + hokim kerak.
 # Seed unga alohida ma'lumot yaratmaydi, shuning uchun tuman bo'sh bo'lsa shu
