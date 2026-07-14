@@ -30,11 +30,11 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_staff', 'is_hokim', 'created_at')
         read_only_fields = ('id', 'phone', 'role', 'rating', 'is_staff', 'is_hokim', 'created_at')
 
-    def get_is_hokim(self, obj):
+    def get_is_hokim(self, obj) -> bool:
         # Tuman hokimi (yoki staff) — mobil ilovada "Hokim paneli" kirish nuqtasi uchun.
         return bool(obj.is_staff) or obj.district_admin_roles.exists()
 
-    def get_avatar(self, obj):
+    def get_avatar(self, obj) -> str | None:
         request = self.context.get('request')
         if obj.avatar:
             url = obj.avatar.url
@@ -97,7 +97,7 @@ class AdImageSerializer(serializers.ModelSerializer):
         model = AdImage
         fields = ('id', 'image', 'order')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str:
         request = self.context.get('request')
         url = obj.image.url
         return request.build_absolute_uri(url) if request else url
@@ -113,7 +113,7 @@ class AdListSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'price', 'price_type', 'category', 'category_display',
                   'location', 'is_boosted', 'views', 'cover', 'created_at')
 
-    def get_cover(self, obj):
+    def get_cover(self, obj) -> str | None:
         first = obj.images.all().first()
         if not first:
             return None

@@ -241,6 +241,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generatsiyasi (anon)
+            return Order.objects.none()
         return (Order.objects.filter(user=self.request.user)
                 .prefetch_related('items').order_by('-created_at'))
 
@@ -570,6 +572,8 @@ class StoreUpdatesView(generics.ListAPIView):
     serializer_class = StoreUpdateSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generatsiyasi (kwargs yo'q)
+            return StoreUpdate.objects.none()
         return StoreUpdate.objects.filter(
             store_id=self.kwargs['store_pk']).select_related('product')
 
@@ -618,6 +622,8 @@ class StoreOrdersView(generics.ListAPIView):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generatsiyasi (anon)
+            return Order.objects.none()
         qs = (Order.objects
               .filter(items__product__store__owner=self.request.user)
               .distinct().prefetch_related('items').order_by('-created_at'))

@@ -1,5 +1,6 @@
 """Booking (joy bron qilish) moduli serializerlari."""
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from booking.models import Venue, VenueBooking, VenueService, VenueStaff
@@ -26,7 +27,7 @@ class VenueStaffSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'specialty', 'photo', 'bio', 'rating',
                   'reviews_count', 'completed_count', 'experience_years')
 
-    def get_photo(self, obj):
+    def get_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.photo)
 
 
@@ -39,7 +40,7 @@ class VenueListSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'venue_type', 'venue_type_display', 'address',
                   'phone', 'image', 'capacity', 'price_per_day', 'price_per_hour')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
 
 
@@ -56,15 +57,17 @@ class VenueDetailSerializer(VenueListSerializer):
             'latitude', 'longitude', 'prepay_required', 'penalty_percent',
             'uses_slots', 'services', 'staff')
 
+    @extend_schema_field(VenueServiceSerializer(many=True))
     def get_services(self, obj):
         return VenueServiceSerializer(
             obj.services.filter(is_active=True), many=True, context=self.context).data
 
+    @extend_schema_field(VenueStaffSerializer(many=True))
     def get_staff(self, obj):
         return VenueStaffSerializer(
             obj.staff.filter(is_active=True), many=True, context=self.context).data
 
-    def get_booked_dates(self, obj):
+    def get_booked_dates(self, obj) -> list[str]:
         qs = (obj.bookings
               .filter(status__in=['pending', 'confirmed'],
                       booking_date__gte=timezone.now().date())

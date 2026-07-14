@@ -1,4 +1,5 @@
 """Taksi moduli serializerlari."""
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from taxi.models import TaxiService, Taxist, Route, Car, Trip
@@ -23,7 +24,7 @@ class TaxiServiceSerializer(serializers.ModelSerializer):
                   'base_price', 'price_per_km', 'working_hours', 'region',
                   'avg_rating', 'review_count', 'example_5km')
 
-    def get_logo(self, obj):
+    def get_logo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.logo)
 
 
@@ -38,7 +39,7 @@ class CarSerializer(serializers.ModelSerializer):
                   'seats', 'car_class', 'car_class_display',
                   'has_conditioner', 'has_baby_seat', 'allows_pets', 'photo')
 
-    def get_photo(self, obj):
+    def get_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.photo)
 
 
@@ -59,10 +60,10 @@ class TaxistListSerializer(serializers.ModelSerializer):
         fields = ('id', 'full_name', 'phone', 'car_model', 'photo', 'region',
                   'trips_count', 'is_online', 'avg_rating', 'review_count', 'min_price')
 
-    def get_photo(self, obj):
+    def get_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.photo)
 
-    def get_min_price(self, obj):
+    def get_min_price(self, obj) -> int | None:
         prices = [r.passenger_price for r in obj.routes.all() if r.is_active]
         return min(prices) if prices else None
 
@@ -74,6 +75,7 @@ class TaxistDetailSerializer(TaxistListSerializer):
     class Meta(TaxistListSerializer.Meta):
         fields = TaxistListSerializer.Meta.fields + ('routes', 'car')
 
+    @extend_schema_field(RouteSerializer(many=True))
     def get_routes(self, obj):
         qs = obj.routes.filter(is_active=True)
         return RouteSerializer(qs, many=True, context=self.context).data
@@ -86,7 +88,7 @@ class TripTaxistMiniSerializer(serializers.ModelSerializer):
         model = Taxist
         fields = ('id', 'full_name', 'phone', 'car_model', 'photo')
 
-    def get_photo(self, obj):
+    def get_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.photo)
 
 
@@ -120,7 +122,7 @@ class TaxistSelfSerializer(serializers.ModelSerializer):
         fields = ('id', 'full_name', 'phone', 'car_model', 'photo', 'region',
                   'trips_count', 'is_online', 'is_active', 'avg_rating', 'review_count')
 
-    def get_photo(self, obj):
+    def get_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.photo)
 
 
@@ -162,9 +164,9 @@ class DriverTripSerializer(serializers.ModelSerializer):
                   'status', 'status_display', 'payment_method', 'payment_status',
                   'passenger_name', 'passenger_phone', 'created_at')
 
-    def get_passenger_name(self, obj):
+    def get_passenger_name(self, obj) -> str:
         u = obj.passenger
         return (getattr(u, 'name', '') or getattr(u, 'phone', '')) if u else ''
 
-    def get_passenger_phone(self, obj):
+    def get_passenger_phone(self, obj) -> str:
         return getattr(obj.passenger, 'phone', '') if obj.passenger else ''

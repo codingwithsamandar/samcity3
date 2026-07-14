@@ -192,6 +192,8 @@ class VenueBookingViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = VenueBookingSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generatsiyasi (anon)
+            return VenueBooking.objects.none()
         return (VenueBooking.objects.filter(user=self.request.user)
                 .select_related('venue').order_by('-created_at'))
 

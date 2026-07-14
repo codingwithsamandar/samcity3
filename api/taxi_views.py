@@ -43,6 +43,8 @@ class TripViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TripSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):  # schema generatsiyasi (anon)
+            return Trip.objects.none()
         return (Trip.objects.filter(passenger=self.request.user)
                 .select_related('taxist').order_by('-created_at'))
 

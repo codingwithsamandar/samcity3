@@ -1,5 +1,6 @@
 """Delivery (yetkazish) moduli serializerlari."""
 from django.conf import settings
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from delivery.models import (
@@ -22,7 +23,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ('id', 'image')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
 
 
@@ -38,7 +39,7 @@ class CatalogProductSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'brand', 'category', 'category_id', 'unit',
                   'unit_display', 'image', 'description')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
 
 
@@ -59,15 +60,15 @@ class ProductSerializer(serializers.ModelSerializer):
                   'is_available', 'images', 'cover', 'restock_at', 'pickup',
                   'catalog_product', 'is_custom', 'unit')
 
-    def get_price(self, obj):
+    def get_price(self, obj) -> int:
         return int(obj.price)
 
-    def get_unit(self, obj):
+    def get_unit(self, obj) -> str | None:
         if obj.catalog_product_id and obj.catalog_product:
             return obj.catalog_product.unit
         return None
 
-    def get_cover(self, obj):
+    def get_cover(self, obj) -> str | None:
         first = obj.images.all().first()
         if first:
             return _abs(self.context.get('request'), first.image)
@@ -84,7 +85,7 @@ class StoreImageSerializer(serializers.ModelSerializer):
         model = StoreImage
         fields = ('id', 'image')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
 
 
@@ -100,13 +101,13 @@ class StoreUpdateSerializer(serializers.ModelSerializer):
         fields = ('id', 'update_type', 'update_type_display', 'text', 'image',
                   'product', 'product_name', 'old_price', 'new_price', 'created_at')
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
 
-    def get_old_price(self, obj):
+    def get_old_price(self, obj) -> int | None:
         return int(obj.old_price) if obj.old_price is not None else None
 
-    def get_new_price(self, obj):
+    def get_new_price(self, obj) -> int | None:
         return int(obj.new_price) if obj.new_price is not None else None
 
 
@@ -129,23 +130,23 @@ class StoreListSerializer(serializers.ModelSerializer):
                   'store_type', 'neighborhood', 'custom_product_count', 'custom_limit',
                   'catalog_product_count')
 
-    def get_logo(self, obj):
+    def get_logo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.logo)
 
-    def get_custom_limit(self, obj):
+    def get_custom_limit(self, obj) -> int | None:
         return Product.MAHALLA_CUSTOM_LIMIT if obj.store_type == 'mahalla' else None
 
-    def get_custom_product_count(self, obj):
+    def get_custom_product_count(self, obj) -> int | None:
         if obj.store_type != 'mahalla':
             return None
         return obj.custom_product_count()
 
-    def get_catalog_product_count(self, obj):
+    def get_catalog_product_count(self, obj) -> int | None:
         if obj.store_type != 'mahalla':
             return None
         return obj.catalog_product_count()
 
-    def get_cart_enabled(self, obj):
+    def get_cart_enabled(self, obj) -> bool:
         # Savat/checkout: yetkazib beruvchi do'kon (delivery oqimi) yoki pickup
         # yoqilgan mahalla do'konida ochiladi.
         return bool(obj.store_type == 'delivery' or obj.pickup_enabled or settings.DELIVERY_CART_ENABLED)
@@ -164,19 +165,21 @@ class StoreDetailSerializer(StoreListSerializer):
             'owner_bio', 'owner_photo', 'updates', 'subscribed',
         )
 
+    @extend_schema_field(ProductSerializer(many=True))
     def get_products(self, obj):
         qs = (obj.products.filter(is_available=True)
               .select_related('catalog_product').prefetch_related('images'))
         return ProductSerializer(qs, many=True, context=self.context).data
 
-    def get_owner_photo(self, obj):
+    def get_owner_photo(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.owner_photo)
 
+    @extend_schema_field(StoreUpdateSerializer(many=True))
     def get_updates(self, obj):
         qs = obj.updates.select_related('product')[:20]
         return StoreUpdateSerializer(qs, many=True, context=self.context).data
 
-    def get_subscribed(self, obj):
+    def get_subscribed(self, obj) -> bool:
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated:
@@ -193,7 +196,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ('id', 'product', 'quantity', 'line_total')
 
-    def get_line_total(self, obj):
+    def get_line_total(self, obj) -> int:
         return int(obj.get_line_total())
 
 
@@ -270,10 +273,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ('id', 'product_name', 'store_name', 'price', 'quantity', 'line_total')
 
-    def get_price(self, obj):
+    def get_price(self, obj) -> int:
         return int(obj.price)
 
-    def get_line_total(self, obj):
+    def get_line_total(self, obj) -> int:
         return int(obj.get_line_total())
 
 
