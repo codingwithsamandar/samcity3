@@ -12,6 +12,7 @@ import '../features/taxi/my_trips_screen.dart';
 import '../features/delivery/cart_screen.dart';
 import '../features/delivery/my_orders_screen.dart';
 import '../features/delivery/my_stores_screen.dart';
+import '../features/delivery/courier_dashboard_screen.dart';
 import '../features/booking/venues_screen.dart';
 import '../features/booking/venue_detail_screen.dart';
 import '../features/booking/venue_book_screen.dart';
@@ -63,6 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
       GoRoute(path: '/orders', builder: (_, __) => const MyOrdersScreen()),
       GoRoute(path: '/my-stores', builder: (_, __) => const MyStoresScreen()),
+      GoRoute(path: '/courier', builder: (_, __) => const CourierDashboardScreen()),
       GoRoute(path: '/venues', builder: (_, __) => const VenuesScreen()),
       GoRoute(
         path: '/venue/:id',

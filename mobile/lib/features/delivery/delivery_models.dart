@@ -401,6 +401,10 @@ class DeliveryOrder {
   final String paymentStatus;
   final DateTime? createdAt;
   final List<OrderLine> items;
+  // Yetkazish ma'lumoti (kuryer paneli uchun — mijoz, telefon, manzil).
+  final String fullName;
+  final String phone;
+  final String address;
 
   DeliveryOrder({
     required this.id,
@@ -416,6 +420,9 @@ class DeliveryOrder {
     required this.paymentStatus,
     this.createdAt,
     this.items = const [],
+    this.fullName = '',
+    this.phone = '',
+    this.address = '',
   });
 
   bool get isPaid => paymentStatus == 'paid';
@@ -438,6 +445,9 @@ class DeliveryOrder {
         items: ((j['items'] as List?) ?? [])
             .map((e) => OrderLine.fromJson(e))
             .toList(),
+        fullName: j['full_name'] ?? '',
+        phone: j['phone'] ?? '',
+        address: j['address'] ?? '',
       );
 }
 
