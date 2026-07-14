@@ -58,11 +58,75 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: const Color(0xFF34D399),
           foregroundColor: const Color(0xFF04130D),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF34D399),
+          side: const BorderSide(color: Color(0x4D34D399)),
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: const Color(0xFF34D399),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: surface2Dark,
+          foregroundColor: textDark,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surfaceDark,
+        elevation: 0,
+        height: 66,
+        indicatorColor: const Color(0x2634D399),
+        labelTextStyle: WidgetStateProperty.resolveWith((s) => TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: s.contains(WidgetState.selected)
+                  ? const Color(0xFF34D399)
+                  : text2Dark,
+            )),
+        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
+              color: s.contains(WidgetState.selected)
+                  ? const Color(0xFF34D399)
+                  : text2Dark,
+            )),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: surface2Dark,
+        contentTextStyle: const TextStyle(color: textDark, fontSize: 14),
+        actionTextColor: const Color(0xFF34D399),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        insetPadding: const EdgeInsets.all(12),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surface2Dark,
+        selectedColor: const Color(0xFF34D399),
+        side: BorderSide.none,
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: const TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF04130D)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      dividerTheme: const DividerThemeData(
+          color: Color(0x14FFFFFF), thickness: 1, space: 1),
+      listTileTheme: const ListTileThemeData(iconColor: text2Dark),
     );
   }
 }
