@@ -40,6 +40,8 @@ from .mahalla_views import (
 from .booking_views import (
     VenueViewSet, VenueBookingViewSet,
     VenueOwnerBookingsView, VenueOwnerBookingActionView, MyVenuesView,
+    MyVenueDetailView, MyVenueServiceView, MyVenueServiceDeleteView,
+    MyVenueStaffView, MyVenueStaffDeleteView,
 )
 from .notifications_views import (
     NotificationListView, NotificationUnreadCountView, NotificationMarkReadView,
@@ -123,6 +125,12 @@ urlpatterns = [
     path('booking/manage/', VenueOwnerBookingsView.as_view(), name='venue-owner-bookings'),
     path('booking/manage/<uuid:booking_id>/<str:action>/', VenueOwnerBookingActionView.as_view(), name='venue-owner-action'),
     path('booking/my-venues/', MyVenuesView.as_view(), name='my-venues'),
+    # Egasi joy setup — xizmat/usta o'chirish (specific-first, konfliktsiz)
+    path('booking/my-venues/services/<uuid:service_id>/', MyVenueServiceDeleteView.as_view(), name='my-venue-service-delete'),
+    path('booking/my-venues/staff/<uuid:staff_id>/', MyVenueStaffDeleteView.as_view(), name='my-venue-staff-delete'),
+    path('booking/my-venues/<uuid:venue_id>/', MyVenueDetailView.as_view(), name='my-venue-detail'),
+    path('booking/my-venues/<uuid:venue_id>/services/', MyVenueServiceView.as_view(), name='my-venue-service-add'),
+    path('booking/my-venues/<uuid:venue_id>/staff/', MyVenueStaffView.as_view(), name='my-venue-staff-add'),
     # Do'kon bilan chat (mijoz ↔ do'kon)
     path('stores/<int:store_pk>/chat/', StoreChatStartView.as_view(), name='store-chat-start'),
     path('delivery/chat/threads/', StoreChatListView.as_view(), name='store-chat-list'),

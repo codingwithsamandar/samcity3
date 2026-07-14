@@ -8,10 +8,13 @@ from rest_framework.views import APIView
 
 from datetime import date as _date, datetime as _datetime, timedelta
 
-from booking.models import Venue, VenueBooking
+from booking.models import Venue, VenueBooking, VenueService, VenueStaff
 from .booking_serializers import (
     VenueListSerializer, VenueDetailSerializer,
     VenueBookingSerializer, BookingCreateSerializer, VenueStaffSerializer,
+    VenueOwnerSerializer, VenueWriteSerializer,
+    VenueServiceWriteSerializer, VenueServiceSerializer,
+    VenueStaffWriteSerializer,
 )
 
 WHOLE_DAY_TYPES = ('wedding', 'other')
@@ -252,11 +255,110 @@ class VenueOwnerBookingActionView(APIView):
         return Response(VenueBookingSerializer(booking, context={'request': request}).data)
 
 
+def _own_venue(request, venue_id):
+    """Egaga tegishli joyni qaytaradi (is_active'дан qat'i nazar) yoki None."""
+    return Venue.objects.filter(pk=venue_id, owner=request.user).first()
+
+
 class MyVenuesView(APIView):
-    """GET — foydalanuvchiga tegishli joylar (egasi paneli ro'yxati)."""
+    """GET — egaga tegishli joylar ro'yxati. POST — yangi joy yaratish."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        qs = (Venue.objects.filter(owner=request.user)
-              .order_by('-created_at'))
+        qs = Venue.objects.filter(owner=request.user).order_by('-created_at')
         return Response(VenueListSerializer(qs, many=True, context={'request': request}).data)
+
+    def post(self, request):
+        ser = VenueWriteSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        with transaction.atomic():
+            venue = ser.save(owner=request.user, is_active=True)
+            # Joy ochgan foydalanuvchi avtomatik 'business' roliga o'tadi (web bilan bir xil)
+            if request.user.role == 'user':
+                request.user.role = 'business'
+                request.user.save(update_fields=['role'])
+        return Response(VenueOwnerSerializer(venue, context={'request': request}).data,
+                        status=status.HTTP_201_CREATED)
+
+
+class MyVenueDetailView(APIView):
+    """GET — egasi uchun to'liq joy (tahrir + xizmat/usta). PATCH — tahrir. DELETE — o'chirish."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, venue_id):
+        venue = _own_venue(request, venue_id)
+        if venue is None:
+            return Response({'detail': 'Joy topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(VenueOwnerSerializer(venue, context={'request': request}).data)
+
+    def patch(self, request, venue_id):
+        venue = _own_venue(request, venue_id)
+        if venue is None:
+            return Response({'detail': 'Joy topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        ser = VenueWriteSerializer(venue, data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response(VenueOwnerSerializer(venue, context={'request': request}).data)
+
+    def delete(self, request, venue_id):
+        venue = _own_venue(request, venue_id)
+        if venue is None:
+            return Response({'detail': 'Joy topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        venue.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MyVenueServiceView(APIView):
+    """POST — joyга xizmat qo'shadi."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, venue_id):
+        venue = _own_venue(request, venue_id)
+        if venue is None:
+            return Response({'detail': 'Joy topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        ser = VenueServiceWriteSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        svc = ser.save(venue=venue, is_active=True)
+        return Response(VenueServiceSerializer(svc, context={'request': request}).data,
+                        status=status.HTTP_201_CREATED)
+
+
+class MyVenueServiceDeleteView(APIView):
+    """DELETE — o'z joyining xizmatini o'chiradi."""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, service_id):
+        svc = VenueService.objects.filter(
+            pk=service_id, venue__owner=request.user).first()
+        if svc is None:
+            return Response({'detail': 'Xizmat topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        svc.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MyVenueStaffView(APIView):
+    """POST — joyга usta/ishchi qo'shadi (rasm bilan — multipart)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, venue_id):
+        venue = _own_venue(request, venue_id)
+        if venue is None:
+            return Response({'detail': 'Joy topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        ser = VenueStaffWriteSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        st = ser.save(venue=venue, is_active=True)
+        return Response(VenueStaffSerializer(st, context={'request': request}).data,
+                        status=status.HTTP_201_CREATED)
+
+
+class MyVenueStaffDeleteView(APIView):
+    """DELETE — o'z joyining ustasini o'chiradi."""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, staff_id):
+        st = VenueStaff.objects.filter(
+            pk=staff_id, venue__owner=request.user).first()
+        if st is None:
+            return Response({'detail': 'Usta topilmadi.'}, status=status.HTTP_404_NOT_FOUND)
+        st.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

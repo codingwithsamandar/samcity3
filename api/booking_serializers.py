@@ -95,6 +95,75 @@ class VenueBookingSerializer(serializers.ModelSerializer):
                   'event_type', 'customer_name', 'customer_phone', 'created_at')
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  EGASI SETUP — joy yaratish/tahrirlash + xizmat/usta boshqaruvi
+# ─────────────────────────────────────────────────────────────────────────────
+class VenueOwnerSerializer(serializers.ModelSerializer):
+    """Egasi paneli uchun to'liq joy — barcha tahrirlanadigan maydonlar + xizmat/usta.
+
+    Public VenueDetailSerializer'dan farqi: tahrir uchun kerakli maydonlar
+    (ish vaqti, jarima foizi, kutish daqiqasi, is_active) hamda BARCHA
+    (nafaqat faol) xizmat va ustalar qaytadi."""
+    venue_type_display = serializers.CharField(source='get_venue_type_display', read_only=True)
+    uses_slots = serializers.BooleanField(read_only=True)
+    image = serializers.SerializerMethodField()
+    services = serializers.SerializerMethodField()
+    staff = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Venue
+        fields = ('id', 'name', 'venue_type', 'venue_type_display', 'description',
+                  'address', 'phone', 'image', 'capacity', 'price_per_day',
+                  'price_per_hour', 'working_hours_start', 'working_hours_end',
+                  'latitude', 'longitude', 'prepay_required', 'cancel_penalty_percent',
+                  'grace_minutes', 'is_active', 'uses_slots', 'services', 'staff')
+
+    def get_image(self, obj) -> str | None:
+        return _abs(self.context.get('request'), obj.image)
+
+    @extend_schema_field(VenueServiceSerializer(many=True))
+    def get_services(self, obj):
+        return VenueServiceSerializer(
+            obj.services.all(), many=True, context=self.context).data
+
+    @extend_schema_field(VenueStaffSerializer(many=True))
+    def get_staff(self, obj):
+        return VenueStaffSerializer(
+            obj.staff.all(), many=True, context=self.context).data
+
+
+class VenueWriteSerializer(serializers.ModelSerializer):
+    """Joy yaratish / tahrirlash (faqat kiritiladigan maydonlar)."""
+    class Meta:
+        model = Venue
+        fields = ('name', 'venue_type', 'description', 'address', 'phone', 'image',
+                  'capacity', 'price_per_day', 'price_per_hour',
+                  'working_hours_start', 'working_hours_end', 'latitude', 'longitude',
+                  'prepay_required', 'cancel_penalty_percent', 'grace_minutes', 'is_active')
+        extra_kwargs = {
+            'name': {'required': True},
+        }
+
+
+class VenueServiceWriteSerializer(serializers.ModelSerializer):
+    """Xizmat qo'shish."""
+    price = serializers.IntegerField(min_value=1)
+    duration_minutes = serializers.IntegerField(min_value=10, default=30)
+
+    class Meta:
+        model = VenueService
+        fields = ('name', 'price', 'duration_minutes')
+        extra_kwargs = {'name': {'required': True}}
+
+
+class VenueStaffWriteSerializer(serializers.ModelSerializer):
+    """Usta/ishchi qo'shish."""
+    class Meta:
+        model = VenueStaff
+        fields = ('name', 'specialty', 'photo', 'bio', 'experience_years')
+        extra_kwargs = {'name': {'required': True}}
+
+
 class BookingCreateSerializer(serializers.Serializer):
     booking_date = serializers.DateField()
     start_time = serializers.TimeField(required=False, allow_null=True)
