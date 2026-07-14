@@ -580,8 +580,8 @@ class _MahallaMapPage extends StatelessWidget {
                   onTap: () => showModalBottomSheet(
                     context: context,
                     backgroundColor: const Color(0xFF0F1521),
-                    builder: (_) => Padding(
-                      padding: const EdgeInsets.all(20),
+                    builder: (ctx) => Padding(
+                      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).padding.bottom),
                       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('${p.icon} ${p.name}',
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),

@@ -473,10 +473,13 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final media = MediaQuery.of(context);
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 16, right: 16, top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        // Klaviatura (viewInsets) + tizim navigatsiya paneli (padding.bottom) —
+        // tasdiqlash tugmasi hech qachon panel ostida kesilib qolmasin.
+        bottom: media.viewInsets.bottom + media.padding.bottom + 16,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
