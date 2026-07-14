@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
 import '../../core/yandex_map.dart';
 import '../community/community_models.dart';
@@ -1108,11 +1109,8 @@ class _VolunteerPageState extends ConsumerState<_VolunteerPage> {
                 Text(h.location, style: const TextStyle(fontSize: 12, color: Color(0xFF69748A))),
                 const SizedBox(width: 12),
               ],
-              if (h.phone.isNotEmpty) ...[
-                const Icon(Icons.phone, size: 14, color: Color(0xFF69748A)),
-                const SizedBox(width: 4),
-                Text(h.phone, style: const TextStyle(fontSize: 12, color: Color(0xFF69748A))),
-              ],
+              if (h.phone.isNotEmpty)
+                PhoneLink(h.phone, style: const TextStyle(fontSize: 12)),
             ]),
           ],
         ]),

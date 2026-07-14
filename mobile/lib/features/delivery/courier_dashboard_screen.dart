@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
 import 'courier_models.dart';
 import 'delivery_models.dart';
@@ -200,7 +201,7 @@ class _CourierDashboardScreenState extends ConsumerState<CourierDashboardScreen>
           if (o.address.isNotEmpty)
             Text('📍 ${o.address}', style: const TextStyle(color: _muted, fontSize: 13)),
           if (o.phone.isNotEmpty)
-            Text('📞 ${o.phone}', style: const TextStyle(color: _muted, fontSize: 13)),
+            Align(alignment: Alignment.centerLeft, child: PhoneLink(o.phone)),
           if (o.items.isNotEmpty)
             Text(o.items.map((i) => '${i.productName}×${i.quantity}').join(', '),
                 style: const TextStyle(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),

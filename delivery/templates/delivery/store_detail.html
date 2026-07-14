@@ -196,7 +196,7 @@
         <div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>Egasi</span><b>{{ store.owner.name|default:store.owner.phone }}</b></div>
         <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Qo'shilgan</span><b>{{ store.created_at|date:"d.m.Y" }}</b></div>
         {% if store.latitude and store.longitude %}
-        <a href="https://maps.google.com/?q={{ store.latitude|unlocalize }},{{ store.longitude|unlocalize }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-block" style="margin-top:1rem;"><svg class="ic"><use href="#i-map"/></svg> Xaritada ko'rish</a>
+        <a href="https://yandex.uz/maps/?ll={{ store.longitude|unlocalize }}%2C{{ store.latitude|unlocalize }}&z=17&pt={{ store.longitude|unlocalize }}%2C{{ store.latitude|unlocalize }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-block" style="margin-top:1rem;"><svg class="ic"><use href="#i-map"/></svg> Yandex xaritada ochish</a>
         {% endif %}
       </div>
       <a href="{% url 'delivery:store_list' %}" class="btn btn-ghost btn-block" style="margin-top:1rem;">← Barcha do'konlar</a>

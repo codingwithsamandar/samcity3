@@ -83,7 +83,7 @@
       <div class="card card-pad" style="margin-top:1.5rem;">
         <h3 style="font-size:1.1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-pin"/></svg> Joylashuv</h3>
         <div id="venueMap"></div>
-        <a href="https://maps.google.com/?q={{ venue.latitude|unlocalize }},{{ venue.longitude|unlocalize }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-top:.7rem;"><svg class="ic"><use href="#i-map"/></svg> Google xaritada ochish</a>
+        <a href="https://yandex.uz/maps/?ll={{ venue.longitude|unlocalize }}%2C{{ venue.latitude|unlocalize }}&z=17&pt={{ venue.longitude|unlocalize }}%2C{{ venue.latitude|unlocalize }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-top:.7rem;"><svg class="ic"><use href="#i-map"/></svg> Yandex xaritada ochish</a>
       </div>
       {% endif %}
 

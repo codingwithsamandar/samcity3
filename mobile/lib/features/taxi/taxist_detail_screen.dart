@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
 import 'taxi_models.dart';
 
@@ -128,6 +129,18 @@ class _TaxistDetailScreenState extends ConsumerState<TaxistDetailScreen> {
                             '${t.tripsCount} sayohat'),
                       ],
                     ),
+                    if (t.phone.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => callPhone(context, t.phone),
+                        icon: const Icon(Icons.phone, size: 18),
+                        label: Text("Qo'ng'iroq — ${t.phone}"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF34D399),
+                          side: const BorderSide(color: Color(0xFF34D399)),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

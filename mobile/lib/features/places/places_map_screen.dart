@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
 import '../../core/yandex_map.dart';
 import 'place_model.dart';
@@ -87,7 +88,8 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
             ],
             const SizedBox(height: 8),
             if (p.address.isNotEmpty) _row(Icons.place, p.address),
-            if (p.phone.isNotEmpty) _row(Icons.phone, p.phone),
+            if (p.phone.isNotEmpty)
+              Align(alignment: Alignment.centerLeft, child: PhoneLink(p.phone)),
             if (p.hours.isNotEmpty) _row(Icons.schedule, p.hours),
           ],
         ),

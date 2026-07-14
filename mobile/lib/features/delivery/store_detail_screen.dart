@@ -1,8 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/cart_badge_button.dart';
 import '../store_chat/store_chat_screen.dart';
 import 'delivery_models.dart';
 
@@ -18,11 +21,15 @@ class StoreDetailScreen extends ConsumerStatefulWidget {
 class _StoreDetailScreenState extends ConsumerState<StoreDetailScreen> {
   late Future<StoreDetail> _future;
   bool? _subscribed;
+  String _storePhone = '';
 
   @override
   void initState() {
     super.initState();
     _future = ref.read(deliveryRepositoryProvider).storeDetail(widget.id);
+    _future.then((d) {
+      if (mounted) setState(() => _storePhone = d.store.phone);
+    }).catchError((_) {});
   }
 
   Future<void> _toggleSubscribe() async {
@@ -56,11 +63,19 @@ class _StoreDetailScreenState extends ConsumerState<StoreDetailScreen> {
     try {
       await ref.read(cartControllerProvider.notifier).add(p.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("«${p.name}» savatga qo'shildi"),
-          backgroundColor: Colors.green.shade700,
-          duration: const Duration(milliseconds: 900),
-        ));
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text("«${p.name}» savatga qo'shildi ✅"),
+            backgroundColor: Colors.green.shade700,
+            duration: const Duration(milliseconds: 1400),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Savat',
+              textColor: Colors.white,
+              onPressed: () => context.push('/cart'),
+            ),
+          ));
       }
     } catch (e) {
       if (mounted) {
@@ -81,11 +96,19 @@ class _StoreDetailScreenState extends ConsumerState<StoreDetailScreen> {
       appBar: AppBar(
         title: const Text("Do'kon"),
         actions: [
+          if (_storePhone.isNotEmpty)
+            IconButton(
+              tooltip: "Qo'ng'iroq qilish",
+              onPressed: () => callPhone(context, _storePhone),
+              icon: const Icon(Icons.phone),
+            ),
           IconButton(
             tooltip: "Do'kon bilan bog'lanish",
             onPressed: _contactStore,
             icon: const Icon(Icons.chat_bubble_outline),
           ),
+          const CartBadgeButton(),
+          const SizedBox(width: 4),
         ],
       ),
       body: FutureBuilder<StoreDetail>(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers.dart';
+import '../../core/widgets/cart_badge_button.dart';
 import '../../core/widgets/empty_state.dart';
 import 'delivery_models.dart';
 
@@ -29,7 +30,6 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartQty = ref.watch(cartControllerProvider).totalQuantity;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Yetkazish'),
@@ -39,15 +39,8 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
             onPressed: () => context.push('/orders'),
             icon: const Icon(Icons.receipt_long_outlined),
           ),
-          IconButton(
-            tooltip: 'Savat',
-            onPressed: () => context.push('/cart'),
-            icon: Badge(
-              isLabelVisible: cartQty > 0,
-              label: Text('$cartQty'),
-              child: const Icon(Icons.shopping_cart_outlined),
-            ),
-          ),
+          const CartBadgeButton(),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(

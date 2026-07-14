@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/dialer.dart';
 import '../../core/providers.dart';
 import 'community_models.dart';
 
@@ -312,11 +313,8 @@ class _HelpTabState extends ConsumerState<_HelpTab> {
                 Text(h.location, style: const TextStyle(fontSize: 12, color: Color(0xFF69748A))),
                 const SizedBox(width: 12),
               ],
-              if (h.phone.isNotEmpty) ...[
-                const Icon(Icons.phone, size: 14, color: Color(0xFF69748A)),
-                const SizedBox(width: 4),
-                Text(h.phone, style: const TextStyle(fontSize: 12, color: Color(0xFF69748A))),
-              ],
+              if (h.phone.isNotEmpty)
+                PhoneLink(h.phone, style: const TextStyle(fontSize: 12)),
             ]),
           ],
         ),
