@@ -17,6 +17,7 @@ import '../features/booking/venues_screen.dart';
 import '../features/booking/venue_detail_screen.dart';
 import '../features/booking/venue_book_screen.dart';
 import '../features/booking/my_bookings_screen.dart';
+import '../features/booking/venue_manage_screen.dart';
 import '../features/profile/profile_edit_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/places/places_map_screen.dart';
@@ -75,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, st) => VenueBookScreen(id: st.pathParameters['id']!),
       ),
       GoRoute(path: '/my-bookings', builder: (_, __) => const MyBookingsScreen()),
+      GoRoute(path: '/venue-manage', builder: (_, __) => const VenueManageScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
       GoRoute(path: '/map', builder: (_, __) => const PlacesMapScreen()),
       GoRoute(path: '/community', builder: (_, __) => const CommunityScreen()),

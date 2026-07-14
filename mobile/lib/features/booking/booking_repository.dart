@@ -76,4 +76,24 @@ class BookingRepository {
   Future<void> cancel(String bookingId) async {
     await _api.dio.post('/booking/bookings/$bookingId/cancel/');
   }
+
+  // ── Egasi (to'yxona/joy) bron boshqaruvi ──
+  /// Egaga tegishli joylardagi bronlar: (kutilayotgan, boshqalar).
+  Future<(List<VenueBooking>, List<VenueBooking>)> ownerBookings() async {
+    final res = await _api.dio.get('/booking/manage/');
+    List<VenueBooking> parse(String key) =>
+        ((res.data[key] as List?) ?? []).map((e) => VenueBooking.fromJson(e)).toList();
+    return (parse('pending'), parse('others'));
+  }
+
+  /// action: confirm / cancel / complete
+  Future<VenueBooking> ownerAction(String bookingId, String action) async {
+    final res = await _api.dio.post('/booking/manage/$bookingId/$action/');
+    return VenueBooking.fromJson(res.data);
+  }
+
+  Future<List<Venue>> myVenues() async {
+    final res = await _api.dio.get('/booking/my-venues/');
+    return ((res.data as List?) ?? []).map((e) => Venue.fromJson(e)).toList();
+  }
 }

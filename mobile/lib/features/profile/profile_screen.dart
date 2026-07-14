@@ -104,6 +104,15 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       const Divider(height: 1),
                       ListTile(
+                        leading: const Icon(Icons.event_available,
+                            color: Color(0xFF34D399)),
+                        title: const Text('Bronlarni boshqarish'),
+                        subtitle: const Text('Joy egasi: kelgan bronlar'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/venue-manage'),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
                         leading: const Icon(Icons.local_taxi,
                             color: Color(0xFFCAA23A)),
                         title: const Text('Sayohatlarim (taksi)'),

@@ -158,6 +158,11 @@ class VenueBooking {
   final int guests;
   final int? totalAmount;
   final DateTime? createdAt;
+  // Egasi paneli uchun: bron qilgan mijoz + qo'shimcha ma'lumot.
+  final String customerName;
+  final String customerPhone;
+  final String message;
+  final String? startTime;
 
   VenueBooking({
     required this.id,
@@ -169,6 +174,10 @@ class VenueBooking {
     required this.guests,
     this.totalAmount,
     this.createdAt,
+    this.customerName = '',
+    this.customerPhone = '',
+    this.message = '',
+    this.startTime,
   });
 
   factory VenueBooking.fromJson(Map<String, dynamic> j) => VenueBooking(
@@ -181,6 +190,10 @@ class VenueBooking {
         guests: j['guests'] ?? 1,
         totalAmount: j['total_amount'],
         createdAt: DateTime.tryParse(j['created_at'] ?? ''),
+        customerName: j['customer_name'] ?? '',
+        customerPhone: j['customer_phone'] ?? '',
+        message: j['message'] ?? '',
+        startTime: j['start_time'],
       );
 
   String get amountLabel =>
