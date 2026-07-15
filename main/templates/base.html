@@ -878,7 +878,6 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
       <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
       <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
       <a href="{% url 'taxi:home' %}" {% if '/taxi' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-car"/></svg>{% trans "Taksi" %}</a>
-      <a href="{% url 'payments:home' %}" {% if '/payments' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-card"/></svg>{% trans "To'lovlar" %}</a>
       <a href="{% url 'venue_list' %}" {% if '/booking' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>{% trans "Joylar" %}</a>
       <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
       <a href="{% url 'delivery:store_list' %}" {% if request.path == '/delivery/' %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>{% trans "Yetkazish" %}</a>
@@ -979,7 +978,6 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <a href="{% url 'delivery:store_list' %}"><svg class="ic"><use href="#i-bike"/></svg> {% trans "Yetkazish" %}</a>
   <a href="{% url 'venue_list' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Joylar" %}</a>
   <a href="{% url 'places:map' %}"><svg class="ic"><use href="#i-map"/></svg> {% trans "Xarita" %}</a>
-  <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> {% trans "To'lovlar" %}</a>
   <a href="{% url 'mahalla_home' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Mahalla" %}</a>
   <div class="mm-divider"></div>
   {% if user.is_authenticated %}
@@ -1027,7 +1025,6 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     <a href="{% url 'delivery:store_list' %}">{% trans "Yetkazish" %}</a>
     <a href="{% url 'venue_list' %}">{% trans "Joylar" %}</a>
     <a href="{% url 'places:map' %}">{% trans "Xarita" %}</a>
-    <a href="{% url 'payments:home' %}">{% trans "To'lovlar" %}</a>
     <a href="{% url 'app_download' %}" style="color:var(--accent);font-weight:700;">📱 {% trans "Ilovani yuklab olish" %}</a>
   </div>
 </div></footer>
