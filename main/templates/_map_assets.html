@@ -14,15 +14,14 @@
 </script>
 <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
 <script>
-  // Default L.marker rasmlari yo'lini aniq belgilaymiz — Leaflet'ning avtomatik
-  // aniqlashi hashed/manifest static bilan ishlamasligi mumkin (store_form,
-  // checkout kabi default marker ishlatadigan sahifalar uchun shart).
+  // Default L.marker rasmlari uchun imagePath'ni vendor katalogiga qo'yamiz.
+  // DIQQAT: mergeOptions bilan TO'LIQ URL berish XATO — Leaflet imagePath'ni
+  // (leaflet.css'dan) avtomatik aniqlab, bergan URL OLDIGA qo'shadi va yo'l
+  // ikkilanadi (marker-icon.png 404 → marker buzuq quti). Shuning uchun faqat
+  // imagePath = katalog beramiz; fayl nomlari default qoladi. Storage hash'siz
+  // (CompressedStaticFilesStorage) — static teg oddiy /static/... qaytaradi.
   if (window.L && L.Icon && L.Icon.Default) {
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: "{% static 'vendor/leaflet/images/marker-icon-2x.png' %}",
-      iconUrl: "{% static 'vendor/leaflet/images/marker-icon.png' %}",
-      shadowUrl: "{% static 'vendor/leaflet/images/marker-shadow.png' %}"
-    });
+    L.Icon.Default.imagePath = "{% static 'vendor/leaflet/images/' %}";
   }
 </script>
 <script src="{% static 'vendor/leaflet/markercluster/leaflet.markercluster.js' %}"></script>

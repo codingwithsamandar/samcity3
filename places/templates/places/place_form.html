@@ -3,7 +3,7 @@
 {% block title %}{% if mode == 'edit' %}Joyni tahrirlash{% else %}Joy qo'shish{% endif %} — Shofirkon{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% include '_map_assets.html' %}
 <style>#pickmap{height:300px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
 {% endblock %}
 
@@ -63,13 +63,11 @@
   </form>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const latIn=document.getElementById('latIn'), lngIn=document.getElementById('lngIn');
 const startLat=parseFloat(latIn.value)||{{ center_lat|unlocalize }};
 const startLng=parseFloat(lngIn.value)||{{ center_lng|unlocalize }};
-const pk=L.map('pickmap').setView([startLat,startLng],14);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pk);
+const pk=SamMap.init('pickmap', { center: [startLat,startLng], zoomLevel: 14 });
 let mk=(latIn.value&&lngIn.value)?L.marker([startLat,startLng]).addTo(pk):null;
 pk.on('click',function(e){
   latIn.value=e.latlng.lat.toFixed(6); lngIn.value=e.latlng.lng.toFixed(6);

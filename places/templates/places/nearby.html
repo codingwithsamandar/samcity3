@@ -3,7 +3,7 @@
 {% block title %}Yaqin atrofda — Shofirkon{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% if groups %}{% include '_map_assets.html' %}{% endif %}
 <style>
   #nmap{height:340px;border-radius:var(--radius);border:1px solid var(--border);z-index:1;margin-bottom:1.4rem}
   .near-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.85rem 1.1rem;
@@ -79,10 +79,8 @@ function detectLocation(){
 </script>
 
 {% if groups %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const nm=L.map('nmap').setView([{{ lat|unlocalize }}, {{ lng|unlocalize }}], 14);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(nm);
+const nm=SamMap.init('nmap', { center: [{{ lat|unlocalize }}, {{ lng|unlocalize }}], zoomLevel: 14 });
 L.marker([{{ lat|unlocalize }}, {{ lng|unlocalize }}]).addTo(nm).bindPopup("📍 Siz shu yerdasiz").openPopup();
 const COLORS={furniture:'#b45309',electronics:'#2563eb',tourist:'#9333ea',government:'#475569',organization:'#0891b2',post:'#ea580c',bank:'#15803d',pharmacy:'#dc2626',hospital:'#e11d48',hotel:'#7c3aed',wedding:'#db2777',restaurant:'#d97706',delivery_store:'#059669'};
 const NP=[{% for p, d in groups.all %}{lat:{{ p.latitude|unlocalize }},lng:{{ p.longitude|unlocalize }},c:'{{ p.category }}',n:"{{ p.localized_name|escapejs }}"},{% endfor %}];

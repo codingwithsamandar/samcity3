@@ -3,7 +3,7 @@
 {% block title %}{{ place.localized_name }} — Shofirkon{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% include '_map_assets.html' %}
 <style>#pmap{height:300px;border-radius:var(--radius);border:1px solid var(--border);z-index:1} .btn-sm{min-height:44px;min-width:44px;}</style>
 {% endblock %}
 
@@ -101,10 +101,8 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const pm=L.map('pmap').setView([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}], 16);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pm);
+const pm=SamMap.init('pmap', { center: [{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}], zoomLevel: 16 });
 L.circleMarker([{{ place.latitude|unlocalize }}, {{ place.longitude|unlocalize }}],{radius:11,color:'#fff',weight:2,fillColor:'{{ place.color }}',fillOpacity:.95}).addTo(pm).bindPopup("{{ place.localized_name|escapejs }}").openPopup();
 
 function getCookie(n){var v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?v.pop():'';}
