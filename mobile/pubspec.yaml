@@ -30,11 +30,9 @@ dependencies:
   url_launcher: ^6.3.0
   # Deep link (to'lovdan qaytish: samcity://payment-success)
   app_links: ^6.3.2
-  # Interaktiv xarita (Yandex raster plitka — EPSG:3395 proyeksiya bilan)
+  # Interaktiv xarita (Carto yorliqsiz raster plitka — standart EPSG:3857)
   flutter_map: ^6.2.1
   latlong2: ^0.9.1
-  # Yandex EPSG:3395 CRS uchun proyeksiya (Proj4Crs)
-  proj4dart: ^2.1.0
   # GPS joylashuvi (buyurtma manzilini "joriy joylashuv" bilan belgilash)
   geolocator: ^13.0.1
 

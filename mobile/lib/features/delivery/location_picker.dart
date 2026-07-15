@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/yandex_map.dart';
+import '../../core/shofirkon_map.dart';
 
 /// Buyurtma manzilini xaritada belgilash ekрani.
 ///
@@ -83,7 +83,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               onTap: (_, latLng) => setState(() => _picked = latLng),
             ),
             children: [
-              yandexTileLayer(),
+              basemapTileLayer(),
               if (_picked != null)
                 MarkerLayer(
                   markers: [

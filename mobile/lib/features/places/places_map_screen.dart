@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/dialer.dart';
 import '../../core/providers.dart';
-import '../../core/yandex_map.dart';
+import '../../core/shofirkon_map.dart';
 import 'place_model.dart';
 
 /// Interaktiv xarita — joylar (OpenStreetMap). Saytdagi Leaflet bilan bir xil.
@@ -168,7 +168,7 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
                   mapController: _mapController,
                   options: shofirkonMapOptions(center: _center, zoom: 13),
                   children: [
-                    yandexTileLayer(),
+                    basemapTileLayer(),
                     MarkerLayer(
                       markers: data.places.where((p) => p.lat != 0).map((p) {
                         return Marker(

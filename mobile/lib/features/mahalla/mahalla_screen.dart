@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/dialer.dart';
 import '../../core/providers.dart';
-import '../../core/yandex_map.dart';
+import '../../core/shofirkon_map.dart';
 import '../community/community_models.dart';
 import 'mahalla_models.dart';
 import 'mahalla_store_panel.dart';
@@ -567,7 +567,7 @@ class _MahallaMapPage extends StatelessWidget {
       body: FlutterMap(
         options: shofirkonMapOptions(center: center, zoom: 14),
         children: [
-          yandexTileLayer(),
+          basemapTileLayer(),
           MarkerLayer(
             markers: points.map((e) {
               final p = e.$1;

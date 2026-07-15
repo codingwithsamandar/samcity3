@@ -19,10 +19,12 @@
     help: '#3551d1', emergency: '#e5484d', event: '#7a5af8', driver: '#e0a52e',
   };
 
-  // Yandex raster plitka (kalitsiz). Yandex EPSG:3395 proyeksiyasida — quyida
-  // yandexCRS bilan to'g'ri joylashtiriladi (aks holda markerlar ~21km xato bo'ladi).
-  var TILE = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU';
-  var ATTR = '© Yandex';
+  // Yorliqsiz (no-labels) raster plitka — uy raqamlari va ko'cha nomlari
+  // ko'rsatilmaydi. Carto Positron standart EPSG:3857 proyeksiyasida, shuning
+  // uchun pastdagi yandexCRS ISHLATILMAYDI (aks holda markerlar siljib ketadi).
+  var TILE = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png';
+  var TILE_SUBDOMAINS = 'abcd';
+  var ATTR = '© OpenStreetMap, © CARTO';
 
   // Shofirkon tumani + ~10km atrofi. Xarita shu chegaradan tashqariga surilmaydi
   // va juda uzoqlashtirib bo'lmaydi (minZoom). (10km ≈ 0.09° lat, 0.117° lng @40°N)
@@ -56,10 +58,10 @@
       maxBoundsViscosity: bounds ? 1.0 : 0,
       minZoom: opts.minZoom || (bounds ? 11 : undefined)
     };
-    var crs = yandexCRS();
-    if (crs) mapOpts.crs = crs;
+    // Standart EPSG:3857 (Leaflet default) — Carto plitkasiga mos. yandexCRS
+    // endi ishlatilmaydi (Yandex plitkasi olib tashlandi).
     var map = L.map(elId, mapOpts).setView(opts.center || CENTER, opts.zoomLevel || 13);
-    L.tileLayer(TILE, { maxZoom: 19, attribution: ATTR }).addTo(map);
+    L.tileLayer(TILE, { maxZoom: 19, subdomains: TILE_SUBDOMAINS, attribution: ATTR }).addTo(map);
     if (opts.fullscreen !== false) addFullscreen(map, elId);
     // Tile/layout race: recalc size after the container settles.
     setTimeout(function () { map.invalidateSize(); }, 400);
