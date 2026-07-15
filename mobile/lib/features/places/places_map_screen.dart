@@ -168,7 +168,7 @@ class _PlacesMapScreenState extends ConsumerState<PlacesMapScreen> {
                   mapController: _mapController,
                   options: shofirkonMapOptions(center: _center, zoom: 13),
                   children: [
-                    basemapTileLayer(),
+                    ...basemapLayers(),
                     MarkerLayer(
                       markers: data.places.where((p) => p.lat != 0).map((p) {
                         return Marker(

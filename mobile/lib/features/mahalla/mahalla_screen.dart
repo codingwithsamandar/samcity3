@@ -567,7 +567,7 @@ class _MahallaMapPage extends StatelessWidget {
       body: FlutterMap(
         options: shofirkonMapOptions(center: center, zoom: 14),
         children: [
-          basemapTileLayer(),
+          ...basemapLayers(),
           MarkerLayer(
             markers: points.map((e) {
               final p = e.$1;

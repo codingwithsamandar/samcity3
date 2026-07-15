@@ -1,13 +1,22 @@
-import 'package:flutter/widgets.dart' show Color;
+import 'dart:math' show Point, pow;
+
+import 'package:flutter/widgets.dart' show Color, Widget;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:proj4dart/proj4dart.dart' as proj4;
 
-/// Xarita asosi — yorliqsiz (no-labels) raster plitka.
+/// Xarita asosi — uy raqamlarisiz, lekin boy Yandex plitkasi.
 ///
-/// Carto Positron "light_nolabels": uy raqamlari va ko'cha nomlari
-/// ko'rsatilmaydi, faqat bizning markerlarimiz ko'rinadi. Plitka standart
-/// EPSG:3857 da — flutter_map default CRS'i bilan mos, shuning uchun alohida
-/// proyeksiya (ilgari Yandex EPSG:3395 uchun kerak bo'lgan) ishlatilmaydi.
+/// Yandex chizma qatlami uy raqamlarini aynan **z16 dan** chiza boshlaydi; z15 va
+/// undan uzoqda esa faqat ko'cha/mahalla nomlari va do'kon-maktab kabi joylar
+/// bo'ladi. Sputnik qatlamida esa umuman yozuv yo'q. Shu sabab masshtabga qarab
+/// ikki qatlam almashadi ([basemapLayers]):
+///   z<=15 chizma  — nomlar bor, raqam yo'q
+///   z>=16 sputnik — raqam yo'q, z21 gacha yaqinlashadi (z19 dan keyin cho'ziladi)
+///
+/// KRITIK — proyeksiya: Yandex plitkalari EPSG:3395 (ellipsoidal Mercator) da.
+/// Standart EPSG:3857 ga qo'yilsa ~40°N (Shofirkon) da markerlar ~21 km xato
+/// bo'ladi, shuning uchun [yandexCrs] ishlatiladi.
 ///
 /// Xarita FAQAT Shofirkon tumani + ~10 km atrofi bilan cheklanadi
 /// ([kShofirkonBounds] + [kShofirkonMinZoom]).
@@ -24,18 +33,62 @@ final LatLngBounds kShofirkonBounds = LatLngBounds(
 
 /// Bundan uzoqlashtirib bo'lmaydi (butun dunyo ko'rinib ketmasin).
 const double kShofirkonMinZoom = 11;
-const double kShofirkonMaxZoom = 19;
+const double kShofirkonMaxZoom = 21;
 
-/// Yorliqsiz raster plitka qatlami.
-TileLayer basemapTileLayer() => TileLayer(
-      urlTemplate:
-          'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-      subdomains: const ['a', 'b', 'c', 'd'],
-      userAgentPackageName: 'uz.samcity.app',
-      maxNativeZoom: 19,
-      maxZoom: kShofirkonMaxZoom,
-      tileProvider: NetworkTileProvider(),
-    );
+/// Chizma qatlami shu masshtabgacha — bundan yuqorida uy raqamlari chiqadi.
+const double _kSchemeMaxZoom = 15;
+
+/// Sputnikning eng chuqur haqiqiy plitkasi (undan keyin tasvir cho'ziladi).
+const int _kSatMaxNative = 19;
+
+// ── Yandex EPSG:3395 CRS ─────────────────────────────────────────────────────
+final proj4.Projection _yandexProjection = proj4.Projection.add(
+  'EPSG:3395',
+  '+proj=merc +a=6378137 +b=6356752.314245179 +lat_ts=0 +lon_0=0 '
+  '+x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +no_defs',
+);
+
+final List<double> _resolutions = [
+  for (var z = 0; z <= kShofirkonMaxZoom.toInt(); z++)
+    156543.033928041 / pow(2, z).toDouble(),
+];
+
+/// Yandex plitkalari uchun CRS — `MapOptions.crs` ga beriladi.
+final Crs yandexCrs = Proj4Crs.fromFactory(
+  code: 'EPSG:3395',
+  proj4Projection: _yandexProjection,
+  resolutions: _resolutions,
+  origins: const [Point<double>(-20037508.342789244, 20037508.342789244)],
+  bounds: Bounds<double>(
+    const Point<double>(-20037508.342789244, -20037508.342789244),
+    const Point<double>(20037508.342789244, 20037508.342789244),
+  ),
+);
+
+/// Xarita asosi — pastda chizma (z<=15), tepada sputnik (z>=16).
+///
+/// `FlutterMap.children` ning BOSHIGA qo'yiladi (markerlar ustidan tushmasin).
+/// Qatlam darajasidagi minZoom/maxZoom tufayli raqamli chizma z16+ da umuman
+/// yuklanmaydi.
+List<Widget> basemapLayers() => [
+      TileLayer(
+        urlTemplate:
+            'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU',
+        userAgentPackageName: 'uz.samcity.app',
+        maxNativeZoom: _kSchemeMaxZoom.toInt(),
+        maxZoom: _kSchemeMaxZoom,
+        tileProvider: NetworkTileProvider(),
+      ),
+      TileLayer(
+        urlTemplate:
+            'https://core-sat.maps.yandex.net/tiles?l=sat&v=3.1000.0&x={x}&y={y}&z={z}',
+        userAgentPackageName: 'uz.samcity.app',
+        minZoom: _kSchemeMaxZoom + 1,
+        maxNativeZoom: _kSatMaxNative,
+        maxZoom: kShofirkonMaxZoom,
+        tileProvider: NetworkTileProvider(),
+      ),
+    ];
 
 /// Shofirkon bilan cheklangan xarita uchun tayyor `MapOptions`.
 MapOptions shofirkonMapOptions({
@@ -44,6 +97,7 @@ MapOptions shofirkonMapOptions({
   void Function(TapPosition, LatLng)? onTap,
 }) =>
     MapOptions(
+      crs: yandexCrs,
       initialCenter: center ?? kShofirkonCenter,
       initialZoom: zoom,
       minZoom: kShofirkonMinZoom,

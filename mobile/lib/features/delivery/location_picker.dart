@@ -83,7 +83,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               onTap: (_, latLng) => setState(() => _picked = latLng),
             ),
             children: [
-              basemapTileLayer(),
+              ...basemapLayers(),
               if (_picked != null)
                 MarkerLayer(
                   markers: [

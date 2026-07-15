@@ -1,6 +1,6 @@
 {% load static %}
 {# Shared map assets — include once per map page (inside extra_css or extra_js). #}
-{# Leaflet LOKAL vendordan yuklanadi (cdnjs/unpkg UZ'da bloklanadi). Yorliqsiz Carto plitka. #}
+{# Leaflet LOKAL vendordan yuklanadi (cdnjs/unpkg UZ'da bloklanadi). Yandex plitka. #}
 <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"/>
 <link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.css' %}"/>
 <link rel="stylesheet" href="{% static 'vendor/leaflet/markercluster/MarkerCluster.Default.css' %}"/>
@@ -29,4 +29,4 @@
 <script src="{% static 'vendor/proj4/proj4.js' %}"></script>
 <script src="{% static 'vendor/proj4/proj4leaflet.js' %}"></script>
 {# ?v — JS hash'lanmaydi (WhiteNoise); xarita yangilanishi keshdan o'tishi uchun bump. #}
-<script src="{% static 'js/samcity-map.js' %}?v=nolabels1"></script>
+<script src="{% static 'js/samcity-map.js' %}?v=satzoom1"></script>
