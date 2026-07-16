@@ -142,22 +142,78 @@
     });
   }
 
-  // ── GPS with permission handling, high accuracy + fallback ──
+  // ── GPS ──
+  // getCurrentPosition birinchi kelgan fiksni qaytaradi — bu odatda Wi-Fi/uyali
+  // tarmoq bo'yicha taxminiy nuqta (aniqligi 1-20 km, ko'pincha shahar markazi).
+  // Haqiqiy GPS fiksi 5-20 soniyada keladi va aniqligi o'nlab metr. Shuning uchun
+  // watchPosition bilan fikslarni kuzatamiz va eng aniqini tanlaymiz:
+  //   • aniqlik desiredAccuracy dan yaxshi bo'lsa — darhol qaytaramiz
+  //   • maxWait tugasa — shu paytgacha kelgan eng aniq fiksni qaytaramiz
+  // Tarmoq fiksining e'lon qilgan "accuracy" si Shofirkonda ishonchsiz: sinovda
+  // baza stansiyasi bo'yicha nuqta Peshku tumaniga — 18 km narida — tushdi.
+  // Shuning uchun maxAccuracy qat'iy: GPS darajasidan qo'poli "joylashuvingiz"
+  // deb ko'rsatilmaydi. Tuman ichidagi manzil uchun 300 m dan qo'poli baribir
+  // yaroqsiz — foydalanuvchi xaritadan qo'lda tanlagani aniqroq.
+  // opts: { desiredAccuracy (m, default 50), maxWait (ms, default 20000),
+  //         maxAccuracy (m, default 300 — bundan qo'polini rad etamiz),
+  //         onProgress(fix) }
   function locate(opts) {
     opts = opts || {};
+    var desired = opts.desiredAccuracy || 50;
+    var maxWait = opts.maxWait || 20000;
+    var maxAcc = opts.maxAccuracy || 300;
     return new Promise(function (resolve, reject) {
       if (!navigator.geolocation) { reject({ code: 'unsupported', message: "Brauzer geolokatsiyani qo'llamaydi" }); return; }
-      var done = false;
-      function ok(pos) { if (done) return; done = true; resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }); }
+      var done = false, watchId = null, timer = null, best = null, lastErr = null, coarse = null;
+
+      function stop() {
+        if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+      function finish() {
+        if (done) return; done = true; stop();
+        if (best) { resolve(best); return; }
+        if (lastErr && lastErr.code === 1) { reject({ code: 1, message: gpsMsg(lastErr) }); return; }
+        // Faqat tarmoq fiksi keldi — uni ko'rsatish xato (18 km gacha adashadi).
+        // Sababini aytamiz, aks holda "vaqt tugadi" chalg'ituvchi bo'ladi.
+        if (coarse) {
+          reject({
+            code: 'coarse',
+            accuracy: coarse,
+            message: "Faqat taxminiy joylashuv topildi (~" +
+              (coarse >= 1000 ? Math.round(coarse / 1000) + ' km' : Math.round(coarse) + ' m') +
+              " xatolik) — GPS'ni yoqing, ochiq havoga chiqing yoki xaritadan qo'lda tanlang",
+          });
+          return;
+        }
+        if (lastErr) { reject({ code: lastErr.code, message: gpsMsg(lastErr) }); return; }
+        reject({ code: 3, message: gpsMsg({ code: 3 }) });
+      }
+      function ok(pos) {
+        if (done) return;
+        var acc = pos.coords.accuracy;
+        // Aniqligi ma'lum bo'lmagan yoki qo'pol (tarmoq darajasidagi) fiks — hozircha
+        // kutamiz, GPS yaxshirog'ini berishi mumkin; bermasa sababini aytamiz.
+        if (typeof acc !== 'number' || acc > maxAcc) {
+          if (typeof acc === 'number' && (coarse === null || acc < coarse)) coarse = acc;
+          return;
+        }
+        if (!best || acc < best.accuracy) {
+          best = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: acc };
+          if (typeof opts.onProgress === 'function') { try { opts.onProgress(best); } catch (e) {} }
+        }
+        if (best.accuracy <= desired) finish();
+      }
       function fail(err) {
         if (done) return;
-        // Retry once in low-accuracy mode as a fallback.
-        if (opts._retried) { done = true; reject({ code: err.code, message: gpsMsg(err) }); return; }
-        opts._retried = true;
-        navigator.geolocation.getCurrentPosition(ok, function (e) { done = true; reject({ code: e.code, message: gpsMsg(e) }); },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+        lastErr = err;
+        // Ruxsat berilmadi — kutishdan foyda yo'q.
+        if (err.code === 1) finish();
       }
-      navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+
+      watchId = navigator.geolocation.watchPosition(ok, fail,
+        { enableHighAccuracy: true, timeout: maxWait, maximumAge: 0 });
+      timer = setTimeout(finish, maxWait);
     });
   }
   function gpsMsg(err) {

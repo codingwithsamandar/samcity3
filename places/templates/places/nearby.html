@@ -3,7 +3,8 @@
 {% block title %}Yaqin atrofda — Shofirkon{% endblock %}
 
 {% block extra_css %}
-{% if groups %}{% include '_map_assets.html' %}{% endif %}
+{# Xarita yo'q holatda ham kerak: "Joylashuvni aniqlash" tugmasi SamMap.locate() ishlatadi #}
+{% include '_map_assets.html' %}
 <style>
   #nmap{height:340px;border-radius:var(--radius);border:1px solid var(--border);z-index:1;margin-bottom:1.4rem}
   .near-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.85rem 1.1rem;
@@ -70,11 +71,15 @@
 <script>
 function detectLocation(){
   var msg=document.getElementById('locMsg'), btn=document.getElementById('locBtn');
-  if(!navigator.geolocation){msg.textContent="Brauzer geolokatsiyani qo'llab-quvvatlamaydi.";return;}
-  btn.disabled=true; msg.textContent="Aniqlanmoqda...";
-  navigator.geolocation.getCurrentPosition(function(pos){
-    location.href="{% url 'places:nearby' %}?lat="+pos.coords.latitude+"&lng="+pos.coords.longitude;
-  },function(){btn.disabled=false;msg.textContent="Joylashuvni aniqlab bo'lmadi. Ruxsat bering yoki xaritadan foydalaning.";});
+  btn.disabled=true; msg.textContent="Aniqlanmoqda... (GPS uchun bir necha soniya kuting)";
+  SamMap.locate({ onProgress: function(f){ msg.textContent="Aniqlanmoqda... (~"+Math.round(f.accuracy)+" m)"; } })
+    .then(function(loc){
+      location.href="{% url 'places:nearby' %}?lat="+loc.lat+"&lng="+loc.lng;
+    })
+    .catch(function(e){
+      btn.disabled=false;
+      msg.textContent=(e.message||"Joylashuvni aniqlab bo'lmadi")+". Ruxsat bering yoki xaritadan foydalaning.";
+    });
 }
 </script>
 

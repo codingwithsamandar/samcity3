@@ -50,7 +50,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 25),
+        ),
       );
       final here = LatLng(pos.latitude, pos.longitude);
       setState(() => _picked = here);

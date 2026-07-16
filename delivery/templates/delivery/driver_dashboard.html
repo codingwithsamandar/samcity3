@@ -101,10 +101,13 @@
   var csrf = (document.querySelector('input[name=csrfmiddlewaretoken]')||{}).value || '';
   var last = 0;
   function send(pos) {
+    var c = pos.coords;
+    // Wi-Fi/uyali tarmoq bo'yicha taxminiy fikslar (kilometrlab xato) haydovchi
+    // nishonini shahar bo'ylab sakratadi — faqat GPS darajasidagilarini uzatamiz.
+    if (typeof c.accuracy !== 'number' || c.accuracy > 200) return;
     var now = Date.now();
     if (now - last < 4000) return;  // throttle: at most once per 4s
     last = now;
-    var c = pos.coords;
     var body = new URLSearchParams({ lat: c.latitude, lng: c.longitude });
     if (c.heading != null && !isNaN(c.heading)) body.append('heading', c.heading);
     if (c.speed != null && !isNaN(c.speed)) body.append('speed', c.speed);
@@ -115,7 +118,7 @@
   }
   navigator.geolocation.watchPosition(send, function () {
     var t=document.getElementById('gpsText'); if(t) t.textContent = "Joylashuvga ruxsat berilmadi — kuzatuv ishlamaydi";
-  }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
+  }, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
 })();
 </script>
 {% endif %}

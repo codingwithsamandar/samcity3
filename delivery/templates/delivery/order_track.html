@@ -109,13 +109,12 @@
   }
 
   window.useMyLocation = function () {
-    if (!navigator.geolocation) { alert("Brauzer geolokatsiyani qo'llamaydi"); return; }
-    navigator.geolocation.getCurrentPosition(function (p) {
-      dest = { lat: p.coords.latitude, lng: p.coords.longitude };
+    SamMap.locate().then(function (p) {
+      dest = { lat: p.lat, lng: p.lng };
       if (meMarker) meMarker.setLatLng([dest.lat, dest.lng]);
       else meMarker = L.marker([dest.lat, dest.lng]).addTo(map).bindPopup('📍 Mening manzilim');
       updateRouteAndEta();
-    }, function () { alert("Joylashuvni aniqlab bo'lmadi"); });
+    }).catch(function (e) { alert((e && e.message) || "Joylashuvni aniqlab bo'lmadi"); });
   };
 
   function setStatus(text, raw) {

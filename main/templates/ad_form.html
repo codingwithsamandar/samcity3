@@ -223,20 +223,18 @@ function getMyLocation() {
   const latInput = document.getElementById('latInput');
   const lngInput = document.getElementById('lngInput');
 
-  if (!navigator.geolocation) {
-    status.textContent = '❌ Brauzeringiz joylashuvni aniqlamaydi.';
-    status.style.display = 'block';
-    return;
-  }
-
   btn.disabled = true;
   btn.textContent = '⏳ Aniqlanmoqda...';
-  status.textContent = 'Joylashuv aniqlanmoqda...';
+  status.textContent = 'Joylashuv aniqlanmoqda... (GPS uchun bir necha soniya kuting)';
   status.style.display = 'block';
 
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude } = pos.coords;
+  SamMap.locate({
+    onProgress: (f) => {
+      status.textContent = 'Joylashuv aniqlanmoqda... (~' + Math.round(f.accuracy) + ' m)';
+    },
+  }).then(
+    async (loc) => {
+      const latitude = loc.lat, longitude = loc.lng;
       if (latInput) latInput.value = latitude;
       if (lngInput) lngInput.value = longitude;
       try {
@@ -265,14 +263,14 @@ function getMyLocation() {
         1: 'Joylashuvga ruxsat berilmadi. Brauzer sozlamalaridan ruxsat bering.',
         2: 'Joylashuv aniqlanmadi. Internet aloqasini tekshiring.',
         3: 'Vaqt tugadi. Qayta urinib ko\'ring.',
+        unsupported: 'Brauzeringiz joylashuvni aniqlamaydi.',
       };
-      status.textContent = '❌ ' + (msgs[err.code] || 'Xatolik yuz berdi.');
+      status.textContent = '❌ ' + (msgs[err.code] || err.message || 'Xatolik yuz berdi.');
       status.style.color = 'var(--red, red)';
       status.style.display = 'block';
       btn.disabled = false;
       btn.textContent = '📍 Joylashuv';
-    },
-    { timeout: 10000, enableHighAccuracy: true }
+    }
   );
 }
 
