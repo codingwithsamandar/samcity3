@@ -3,10 +3,11 @@
 {% block title %}Yaqin atrofda — Shofirkon{% endblock %}
 
 {% block extra_css %}
-{# Xarita yo'q holatda ham kerak: "Joylashuvni aniqlash" tugmasi SamMap.locate() ishlatadi #}
+{# Natija yo'q holatda ham kerak: "Joylashuvni aniqlash" SamMap.locate() ishlatadi va qo'lda tanlash xaritasi shu yerda ochiladi #}
 {% include '_map_assets.html' %}
 <style>
   #nmap{height:340px;border-radius:var(--radius);border:1px solid var(--border);z-index:1;margin-bottom:1.4rem}
+  #pmap{height:320px;border-radius:var(--radius);border:1px solid var(--border);z-index:1;}
   .near-row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.85rem 1.1rem;
     background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.6rem;transition:all .15s;box-shadow:var(--shadow-xs);}
   .near-row:hover{border-color:#cfd8ee;box-shadow:var(--shadow);transform:translateX(3px);}
@@ -33,7 +34,16 @@
     <p style="color:var(--text2);margin-bottom:1.25rem;max-width:380px;margin-inline:auto;">Eng yaqin joylarni ko'rsatish uchun joylashuvingizga ruxsat bering.</p>
     <button class="btn btn-accent btn-lg" id="locBtn" onclick="detectLocation()"><svg class="ic"><use href="#i-pin"/></svg> Joylashuvni aniqlash</button>
     <div id="locMsg" style="color:var(--text2);font-size:.85rem;margin-top:.9rem;"></div>
-    <div style="margin-top:1.25rem;"><a href="{% url 'places:map' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-map"/></svg> Xaritaga o'tish</a></div>
+    <div style="margin-top:1.25rem;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;">
+      <button type="button" class="btn btn-ghost" id="pickToggle"><svg class="ic"><use href="#i-pin"/></svg> Xaritadan qo'lda tanlash</button>
+      <a href="{% url 'places:map' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-map"/></svg> Xaritaga o'tish</a>
+    </div>
+
+    <div id="pickWrap" hidden style="margin-top:1.25rem;text-align:left;">
+      <p style="color:var(--text2);font-size:.85rem;margin-bottom:.6rem;">Xaritada turgan joyingizni bosing — belgini sudrab aniqlashtirsangiz ham bo'ladi.</p>
+      <div id="pmap"></div>
+      <button type="button" class="btn btn-accent btn-block" id="pickGo" disabled style="margin-top:.8rem;"><svg class="ic"><use href="#i-check"/></svg> Shu joydan qidirish</button>
+    </div>
   </div>
   {% else %}
   <div id="nmap"></div>
@@ -68,20 +78,58 @@
   {% endif %}
 </div>
 
+{% if not groups %}
 <script>
+var pickMap=null, pickMarker=null, picked=null;
+
+// GPS'siz qurilmada (kompyuter) locate() hech qachon ishlamaydi, shuning uchun
+// qo'lda tanlash shu sahifaning yagona ishlaydigan yo'li — xato bo'lsa o'zi ochiladi.
+function showPicker(){
+  var wrap=document.getElementById('pickWrap');
+  if(!wrap.hidden) return;
+  wrap.hidden=false;
+  // .btn `display:flex` beradi — u `[hidden]{display:none}` ni bosib ketadi,
+  // shuning uchun tugmani display bilan yashiramiz.
+  document.getElementById('pickToggle').style.display='none';
+  // Init yashirilgandan keyin: Leaflet yopiq konteynerni 0×0 deb o'lchaydi.
+  pickMap=SamMap.init('pmap',{ zoomLevel:14, fullscreen:false });
+  pickMap.on('click',function(e){ setPicked(e.latlng); });
+  wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function setPicked(ll){
+  picked=ll;
+  if(pickMarker){ pickMarker.setLatLng(ll); }
+  else {
+    pickMarker=L.marker(ll,{ draggable:true }).addTo(pickMap);
+    pickMarker.on('dragend',function(){ picked=pickMarker.getLatLng(); });
+  }
+  document.getElementById('pickGo').disabled=false;
+}
+
+function goTo(lat,lng){
+  location.href="{% url 'places:nearby' %}?lat="+Number(lat).toFixed(6)+"&lng="+Number(lng).toFixed(6);
+}
+
+document.getElementById('pickToggle').addEventListener('click',showPicker);
+document.getElementById('pickGo').addEventListener('click',function(){
+  if(picked) goTo(picked.lat,picked.lng);
+});
+
 function detectLocation(){
   var msg=document.getElementById('locMsg'), btn=document.getElementById('locBtn');
-  btn.disabled=true; msg.textContent="Aniqlanmoqda... (GPS uchun bir necha soniya kuting)";
+  btn.disabled=true; msg.style.color=''; msg.textContent="Aniqlanmoqda... (GPS uchun bir necha soniya kuting)";
   SamMap.locate({ onProgress: function(f){ msg.textContent="Aniqlanmoqda... (~"+Math.round(f.accuracy)+" m)"; } })
-    .then(function(loc){
-      location.href="{% url 'places:nearby' %}?lat="+loc.lat+"&lng="+loc.lng;
-    })
+    .then(function(loc){ goTo(loc.lat,loc.lng); })
     .catch(function(e){
       btn.disabled=false;
-      msg.textContent=(e.message||"Joylashuvni aniqlab bo'lmadi")+". Ruxsat bering yoki xaritadan foydalaning.";
+      msg.textContent=e.message||"Joylashuvni aniqlab bo'lmadi";
+      msg.style.color='var(--red)';
+      showPicker();
     });
 }
 </script>
+{% endif %}
 
 {% if groups %}
 <script>

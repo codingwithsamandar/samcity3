@@ -159,6 +159,12 @@
   // opts: { desiredAccuracy (m, default 50), maxWait (ms, default 20000),
   //         maxAccuracy (m, default 300 — bundan qo'poli "aniq" emas),
   //         onProgress(fix) }
+  // Uyali baza stansiyasi fiksi eng yomoni ~2-5 km (sinovda 2000 m). Bundan
+  // o'n barobar qo'poli — IP bo'yicha taxmin, ya'ni qurilmada joylashuv
+  // apparati umuman yo'q (kompyuterda 50 km kuzatildi). Bunday fiks kutish
+  // bilan hech qachon yaxshilanmaydi — darhol to'xtaymiz.
+  var IP_LEVEL = 20000;
+
   function locate(opts) {
     opts = opts || {};
     var desired = opts.desiredAccuracy || 50;
@@ -179,12 +185,19 @@
         // Faqat tarmoq fiksi keldi — uni ko'rsatish xato (18 km gacha adashadi).
         // Sababini aytamiz, aks holda "vaqt tugadi" chalg'ituvchi bo'ladi.
         if (coarse) {
+          var acc = coarse >= 1000 ? Math.round(coarse / 1000) + ' km' : Math.round(coarse) + ' m';
+          // O'nlab km aniqlik — bu Wi-Fi/IP darajasidagi taxmin, ya'ni qurilmada
+          // GPS qabul qilgichi yo'q (odatda kompyuter). U yerda "ochiq havoga
+          // chiqing" bema'ni maslahat: fiks kutish bilan yaxshilanmaydi, shuning
+          // uchun yagona ishlaydigan yo'l — qo'lda tanlashga yo'naltiramiz.
           reject({
             code: 'coarse',
             accuracy: coarse,
-            message: "Faqat taxminiy joylashuv topildi (~" +
-              (coarse >= 1000 ? Math.round(coarse / 1000) + ' km' : Math.round(coarse) + ' m') +
-              " xatolik) — GPS'ni yoqing, ochiq havoga chiqing yoki xaritadan qo'lda tanlang",
+            message: coarse >= IP_LEVEL
+              ? "Bu qurilmada GPS yo'q — joylashuv internet orqali faqat ~" + acc +
+                " aniqlikda taxmin qilindi. Joyni xaritadan qo'lda belgilang."
+              : "Faqat taxminiy joylashuv topildi (~" + acc +
+                " xatolik) — GPS'ni yoqing, ochiq havoga chiqing yoki xaritadan qo'lda tanlang",
           });
           return;
         }
@@ -198,6 +211,9 @@
         // kutamiz, GPS yaxshirog'ini berishi mumkin; bermasa sababini aytamiz.
         if (typeof acc !== 'number' || acc > maxAcc) {
           if (typeof acc === 'number' && (coarse === null || acc < coarse)) coarse = acc;
+          // IP darajasidagi fiks — GPS keyin ham kelmaydi, 20 soniya behuda
+          // ushlab turmasdan darhol sababini aytamiz.
+          if (coarse !== null && coarse >= IP_LEVEL) finish();
           return;
         }
         if (!best || acc < best.accuracy) {
@@ -218,10 +234,12 @@
       timer = setTimeout(finish, maxWait);
     });
   }
+  // GPS'siz qurilmada "qayta urinib ko'ring" behuda maslahat — har bir chaqiruvchi
+  // sahifada xarita bor, shuning uchun ishlaydigan yo'lni ham aytamiz.
   function gpsMsg(err) {
     if (err.code === 1) return "Joylashuvga ruxsat berilmadi";
-    if (err.code === 2) return "Joylashuv aniqlanmadi";
-    if (err.code === 3) return "Vaqt tugadi — qayta urinib ko'ring";
+    if (err.code === 2) return "Joylashuv aniqlanmadi — joyni xaritadan qo'lda belgilang";
+    if (err.code === 3) return "GPS signali topilmadi — qayta urinib ko'ring yoki joyni xaritadan qo'lda belgilang";
     return "Joylashuvni aniqlab bo'lmadi";
   }
 

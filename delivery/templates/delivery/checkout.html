@@ -50,7 +50,7 @@
             <label class="form-label">📍 Joylashuvni belgilang</label>
             <div id="coPickMap"></div>
             <button type="button" id="coLocateBtn" class="btn btn-ghost btn-sm" style="margin-bottom:.4rem;"><svg class="ic"><use href="#i-pin"/></svg> Joriy joylashuvim</button>
-            <p class="form-hint">Xaritada joyni bosing yoki «Joriy joylashuvim» tugmasini bosing — manzil avtomatik to'ldiriladi.</p>
+            <p class="form-hint" id="coLocHint">Xaritada joyni bosing yoki «Joriy joylashuvim» tugmasini bosing — manzil avtomatik to'ldiriladi.</p>
             <input type="hidden" name="latitude" id="coLat" value="">
             <input type="hidden" name="longitude" id="coLng" value="">
           </div>
@@ -127,7 +127,9 @@
 (function(){
   if (typeof SamMap === 'undefined' || typeof L === 'undefined') return;
   var latIn=document.getElementById('coLat'), lngIn=document.getElementById('coLng'),
-      addrIn=document.getElementById('coAddress'), locBtn=document.getElementById('coLocateBtn');
+      addrIn=document.getElementById('coAddress'), locBtn=document.getElementById('coLocateBtn'),
+      hint=document.getElementById('coLocHint');
+  var hintText = hint.textContent;
   var map=SamMap.init('coPickMap', { center: SamMap.CENTER, zoomLevel: 14, fullscreen: false });
   var marker=null;
 
@@ -153,10 +155,14 @@
     locBtn.disabled = true;
     var old = locBtn.innerHTML;
     locBtn.textContent = 'Aniqlanmoqda…';
+    hint.style.color = ''; hint.textContent = hintText;
     SamMap.locate().then(function(p){
       setPoint({ lat:p.lat, lng:p.lng }, 16);
     }).catch(function(err){
-      alert((err && err.message) || "Joylashuvni aniqlab bo'lmadi");
+      // Xarita yonginasida turibdi va bosib tanlash ishlaydi — alert bilan
+      // to'sib qo'yish o'rniga xatoni shu yerda, xarita yonida ko'rsatamiz.
+      hint.textContent = (err && err.message) || "Joylashuvni aniqlab bo'lmadi";
+      hint.style.color = 'var(--red)';
     }).finally(function(){
       locBtn.disabled = false; locBtn.innerHTML = old;
     });
