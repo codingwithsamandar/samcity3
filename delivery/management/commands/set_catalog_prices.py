@@ -11,8 +11,10 @@ Idempotent: standart holatda faqat `suggested_price IS NULL` bo'lgan yozuvlarga
 tegadi — admin panelida qo'lda o'zgartirilgan narxlar saqlanib qoladi. --force
 berilsa, xaritadagi barcha narxlar qayta yoziladi.
 
-Narxlar — 2026 yil O'zbekiston chakana bozori uchun taxminiy tavsiya qiymatlar
-(so'mda). Do'kon egasi qo'shishdan oldin kartochkada o'zgartira oladi.
+Narxlar — 2026 yil O'zbekiston (Buxoro/Shofirkon mintaqasi) chakana bozoriga
+yaqinlashtirilgan taxminiy tavsiya qiymatlar (so'mda): mahalliy tandir noni
+arzonroq, mol/qo'y go'shti va import mahsulotlar qimmatroq. Do'kon egasi
+qo'shishdan oldin kartochkada narxni o'zgartira oladi.
 """
 from django.core.management.base import BaseCommand
 
@@ -21,19 +23,19 @@ from delivery.models import CatalogProduct
 # O'zbekcha (yakuniy) nom -> tavsiya narx (so'm). translate_catalog'dagi nomlar bilan bir xil.
 PRICES = {
     # ── Ichimliklar ──
-    "7UP 1L": 12000,
+    "7UP 1L": 11000,
     "Coca-Cola 1L": 12000,
-    "Coca-Cola Zero 0.5L": 8000,
-    "Fanta Orange 1L": 12000,
-    "Sprite 1L": 12000,
-    "Pepsi 1.5L": 14000,
-    "Mirinda Orange 1L": 12000,
-    "Adrenaline Rush energetik ichimlik 0.5L": 15000,
-    "Red Bull energetik ichimlik 250ml": 22000,
-    "Ahmad Tea ko'k choy 100g": 25000,
-    "Lipton Yellow Label choy 100 paket": 45000,
-    "Nescafe Classic eritma qahva 190g": 75000,
-    "Jacobs Monarch tuyulgan qahva 250g": 55000,
+    "Coca-Cola Zero 0.5L": 7000,
+    "Fanta Orange 1L": 11000,
+    "Sprite 1L": 11000,
+    "Pepsi 1.5L": 13000,
+    "Mirinda Orange 1L": 11000,
+    "Adrenaline Rush energetik ichimlik 0.5L": 14000,
+    "Red Bull energetik ichimlik 250ml": 20000,
+    "Ahmad Tea ko'k choy 100g": 24000,
+    "Lipton Yellow Label choy 100 paket": 48000,
+    "Nescafe Classic eritma qahva 190g": 78000,
+    "Jacobs Monarch tuyulgan qahva 250g": 62000,
     "Chortoq mineral suvi 1L": 4000,
     "Hydrolife gazsiz suv 1.5L": 4000,
     "Nestle Pure Life suvi 5L": 12000,
@@ -44,34 +46,34 @@ PRICES = {
     "Nesquik shokoladli sut 200ml": 8000,
     # ── Sut mahsulotlari ──
     "Activia natural yogurt 290g": 12000,
-    "Pasterlangan sut 2.5% 1L": 13000,
+    "Pasterlangan sut 2.5% 1L": 12000,
     "UHT sut 3.2% 1L": 14000,
     "Kefir 2.5% 500ml": 9000,
     "Qatiq 3.2% 500g": 10000,
-    "Suzma 400g": 15000,
-    "Ayron 0.5L": 7000,
+    "Suzma 400g": 14000,
+    "Ayron 0.5L": 6000,
     "Smetana 20% 400g": 16000,
     "Qulupnayli yogurt 290g": 12000,
     "Sariyog' 82.5% 200g": 22000,
     "Hochland krem pishloq 180g": 25000,
-    "Suluguni pishlog'i 300g": 35000,
-    "Quyultirilgan sut 380g": 18000,
-    "Tovuq tuxumi C0 30 dona": 45000,
+    "Suluguni pishlog'i 300g": 34000,
+    "Quyultirilgan sut 380g": 17000,
+    "Tovuq tuxumi C0 30 dona": 42000,
     "Tovuq tuxumi C1 10 dona": 15000,
     "Tuxum 10 dona": 14000,
-    "Sut 1L": 13000,
+    "Sut 1L": 12000,
     # ── Go'sht va baliq ──
-    "Mol go'shti fileti 1kg": 110000,
-    "Mol go'shti qiymasi 500g": 55000,
-    "Mol go'shtli sosiska 400g": 35000,
-    "«Doktorskaya» qaynatilgan kolbasa 500g": 45000,
-    "Dudlangan mol salami 300g": 55000,
-    "Qazi (ot go'shti) 300g": 90000,
-    "Tovuq son-boldiri 1kg": 40000,
-    "Tovuq fileti 1kg": 55000,
-    "Butun tovuq 1.5kg": 65000,
-    "Qo'y qovurg'asi 1kg": 95000,
-    "Muzlatilgan skumbriya 1kg": 45000,
+    "Mol go'shti fileti 1kg": 120000,
+    "Mol go'shti qiymasi 500g": 52000,
+    "Mol go'shtli sosiska 400g": 34000,
+    "«Doktorskaya» qaynatilgan kolbasa 500g": 44000,
+    "Dudlangan mol salami 300g": 52000,
+    "Qazi (ot go'shti) 300g": 95000,
+    "Tovuq son-boldiri 1kg": 38000,
+    "Tovuq fileti 1kg": 52000,
+    "Butun tovuq 1.5kg": 52000,
+    "Qo'y qovurg'asi 1kg": 105000,
+    "Muzlatilgan skumbriya 1kg": 42000,
     # ── Meva va sabzavot ──
     "Banan 1kg": 18000,
     "Golden olma 1kg": 15000,
@@ -124,14 +126,14 @@ PRICES = {
     "Tuyulgan qora murch 50g": 10000,
     "Paprika (qizil murch) 50g": 8000,
     # ── Non mahsulotlari ──
-    "Obi non": 4000,
-    "Patir non": 5000,
-    "Yupqa lavash 200g": 6000,
+    "Obi non": 3000,
+    "Patir non": 4000,
+    "Yupqa lavash 200g": 5000,
     "Bo'laklangan oq non 500g": 9000,
     "Javdar non 400g": 12000,
     "Saf-Moment quruq achitqi 11g": 4000,
     "Dr. Oetker xamirturush kukuni 10g": 5000,
-    "Non (tandir)": 4000,
+    "Non (tandir)": 3000,
     # ── Shirinliklar / gazaklar ──
     "Alpen Gold funduqli shokolad 85g": 15000,
     "KitKat 4 tayoqcha 41g": 10000,
