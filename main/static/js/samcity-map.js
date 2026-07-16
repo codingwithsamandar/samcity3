@@ -149,13 +149,15 @@
   // watchPosition bilan fikslarni kuzatamiz va eng aniqini tanlaymiz:
   //   • aniqlik desiredAccuracy dan yaxshi bo'lsa — darhol qaytaramiz
   //   • maxWait tugasa — shu paytgacha kelgan eng aniq fiksni qaytaramiz
-  // Tarmoq fiksining e'lon qilgan "accuracy" si Shofirkonda ishonchsiz: sinovda
-  // baza stansiyasi bo'yicha nuqta Peshku tumaniga — 18 km narida — tushdi.
-  // Shuning uchun maxAccuracy qat'iy: GPS darajasidan qo'poli "joylashuvingiz"
-  // deb ko'rsatilmaydi. Tuman ichidagi manzil uchun 300 m dan qo'poli baribir
-  // yaroqsiz — foydalanuvchi xaritadan qo'lda tanlagani aniqroq.
+  // Tarmoq fiksining e'lon qilgan "accuracy" si O'zbekistonda ishonchsiz va
+  // baribir yaroqsiz: telefonda baza stansiyasi bo'yicha nuqta Peshku tumaniga —
+  // 18 km narida — tushdi (2000 m aniqlik da'vo qilgan holda), kompyuterda esa
+  // Wi-Fi/IP bo'yicha aniqlik 50 km (butun tumandan katta). Shuning uchun
+  // maxAccuracy qat'iy — bunday nuqta "joylashuvingiz" deb ko'rsatilmaydi.
+  // Kompyuterda GPS qurilmasi yo'q: u yerda yagona to'g'ri yo'l — xaritadan
+  // qo'lda tanlash, shuning uchun xato xabari aynan shunga yo'naltiradi.
   // opts: { desiredAccuracy (m, default 50), maxWait (ms, default 20000),
-  //         maxAccuracy (m, default 300 — bundan qo'polini rad etamiz),
+  //         maxAccuracy (m, default 300 — bundan qo'poli "aniq" emas),
   //         onProgress(fix) }
   function locate(opts) {
     opts = opts || {};

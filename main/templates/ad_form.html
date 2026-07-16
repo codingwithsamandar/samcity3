@@ -237,6 +237,8 @@ function getMyLocation() {
       const latitude = loc.lat, longitude = loc.lng;
       if (latInput) latInput.value = latitude;
       if (lngInput) lngInput.value = longitude;
+      // Xaritada ham belgilaymiz — foydalanuvchi nuqtani ko'rib, kerak bo'lsa sudrab tuzatadi.
+      if (window.adSetPoint) window.adSetPoint({ lat: latitude, lng: longitude });
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=uz`
@@ -270,6 +272,11 @@ function getMyLocation() {
       status.style.display = 'block';
       btn.disabled = false;
       btn.textContent = '📍 Joylashuv';
+      // Kompyuterda GPS yo'q — bu yerda GPS hech qachon ishlamaydi. Foydalanuvchini
+      // boshi berk ko'chada qoldirmay, ishlaydigan yo'lga — xaritaga — olib boramiz.
+      if (err.code === 'coarse' || err.code === 2 || err.code === 3 || err.code === 'unsupported') {
+        if (window.adFocusMap) window.adFocusMap();
+      }
     }
   );
 }
@@ -283,6 +290,24 @@ function getMyLocation() {
   var start = (latIn.value && lngIn.value) ? [parseFloat(latIn.value), parseFloat(lngIn.value)] : SamMap.CENTER;
   var map = SamMap.init('adPickmap', { center: start, zoomLevel: 13, fullscreen: false });
   var marker = (latIn.value && lngIn.value) ? L.marker(start, { draggable: true }).addTo(map) : null;
+
+  // GPS tugmasi ham shu xaritaga nuqta qo'yishi kerak (avval faqat yashirin
+  // lat/lng maydonlarini to'ldirardi — xaritada hech nima ko'rinmasdi).
+  window.adSetPoint = function (ll, zoom) {
+    setPoint(ll);
+    // animate:false — 13→17 sakrash animatsiyasi sekin, bu yerda esa nuqta darhol
+    // ko'rinishi kerak; qo'shimcha foyda: natija rAF kadriga bog'liq bo'lmaydi.
+    map.setView([ll.lat, ll.lng], zoom || 17, { animate: false });
+  };
+  // GPS bo'lmasa foydalanuvchini xaritaga yo'naltiramiz — u yagona ishlaydigan yo'l.
+  window.adFocusMap = function () {
+    var el = document.getElementById('adPickmap');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.transition = 'box-shadow .3s';
+    el.style.boxShadow = '0 0 0 3px var(--accent, #3551d1)';
+    setTimeout(function () { el.style.boxShadow = ''; }, 2500);
+  };
 
   function setPoint(ll) {
     latIn.value = ll.lat.toFixed(6);
