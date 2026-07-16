@@ -837,33 +837,90 @@ def _parse_datetime_local(v):
 
 @login_required
 def product_create(request, store_pk):
+    """Katalog gridi: do'kon egasi kartochkadan narx/zaxira kiritib qo'shadi.
+
+    O'z (katalogsiz) mahsuloti uchun alohida forma — product_custom_create.
+    """
+    store = get_object_or_404(Store, pk=store_pk, owner=request.user)
+
+    if request.method == 'POST':
+        # pk raqam bo'lmasa filter(pk=...) ValueError beradi — avval tekshiriladi.
+        catalog_id = _int_or_none(request.POST.get('catalog_product'))
+        catalog = CatalogProduct.objects.filter(
+            pk=catalog_id, is_active=True).first() if catalog_id else None
+        if catalog is None:
+            messages.error(request, "Katalog mahsuloti topilmadi.")
+            return redirect('delivery:product_create', store_pk=store.pk)
+
+        price = _int_or_none(request.POST.get('price'))
+        if price is None or price < 0:
+            messages.error(request, f"{catalog.name}: narxni to'g'ri kiriting.")
+            return redirect('delivery:product_create', store_pk=store.pk)
+
+        # Bir katalog mahsuloti do'konda ikki marta turmasin — mavjudi yangilanadi.
+        existing = Product.objects.filter(store=store, catalog_product=catalog).first()
+        stock = max(_int_or_none(request.POST.get('stock')) or 0, 0)
+        if existing is not None:
+            old_price = existing.price
+            was_in_stock = existing.stock > 0
+            existing.price, existing.stock = price, stock
+            existing.is_available = True
+            existing.save(update_fields=['price', 'stock', 'is_available'])
+            if price != old_price:
+                create_store_update(store, 'price_changed', product=existing,
+                                    old_price=old_price, new_price=price,
+                                    text=f"Narx yangilandi: {existing.name}")
+            if stock > 0 and not was_in_stock:
+                create_store_update(store, 'restocked', product=existing,
+                                    text=f"Qayta sotuvga qaytdi: {existing.name}")
+            messages.success(request, f"{existing.name} yangilandi ✅")
+            return redirect('delivery:product_create', store_pk=store.pk)
+
+        product = Product.objects.create(
+            store=store, catalog_product=catalog, name=catalog.name,
+            description=catalog.description, price=price, stock=stock,
+            is_available=True,
+        )
+        create_store_update(store, 'new_product', product=product,
+                            text=f"Yangi mahsulot: {product.name}")
+        messages.success(request, f"{product.name} do'koningizga qo'shildi ✅")
+        return redirect('delivery:product_create', store_pk=store.pk)
+
+    catalog_products = list(
+        CatalogProduct.objects.filter(is_active=True).select_related('category'))
+    # Do'konda allaqachon bor katalog mahsulotlari: kartochkada joriy narx/zaxira
+    # ko'rinsin va "qo'shish" o'rniga "yangilash" bo'lsin.
+    mine = {p.catalog_product_id: p for p in Product.objects.filter(
+        store=store, catalog_product__isnull=False)}
+    for c in catalog_products:
+        c.in_store = mine.get(c.id)
+
+    return render(request, 'delivery/product_catalog.html', {
+        'store': store,
+        'catalog_products': catalog_products,
+        'catalog_categories': DeliveryCategory.objects.filter(
+            catalog_products__is_active=True).distinct().order_by('name'),
+        'custom_used': store.custom_product_count(),
+        'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
+    })
+
+
+@login_required
+def product_custom_create(request, store_pk):
+    """Do'kon egasining o'z mahsuloti: rasm/nom/narx/zaxirani o'zi to'ldiradi."""
     store = get_object_or_404(Store, pk=store_pk, owner=request.user)
 
     def _render_form():
         return render(request, 'delivery/product_form.html', {
             'mode': 'create', 'store': store, 'post': _form_post(request),
-            'catalog_products': CatalogProduct.objects.filter(is_active=True).select_related('category'),
-            # Filtr dropdownlari: faqat katalogda mavjud kategoriyalar + birliklar.
-            'catalog_categories': DeliveryCategory.objects.filter(
-                catalog_products__is_active=True).distinct().order_by('name'),
-            'unit_choices': CatalogProduct.UNIT_CHOICES,
             'custom_used': store.custom_product_count(),
             'custom_limit': Product.MAHALLA_CUSTOM_LIMIT,
         })
 
     if request.method == 'POST':
-        # Katalogga bog'lash (ixtiyoriy). Berilsa — katalog mahsuloti (cheklovsiz).
-        catalog = None
-        cat_id = request.POST.get('catalog_product')
-        if cat_id:
-            catalog = CatalogProduct.objects.filter(pk=cat_id, is_active=True).first()
-            if catalog is None:
-                messages.error(request, "Katalog mahsuloti topilmadi.")
-                return _render_form()
-
         # Mahalla do'koni: custom (katalogsiz) mahsulot chegarasi (mavjudlar
         # grandfather qilinadi — faqat yangi custom yaratish bloklanadi).
-        if catalog is None and store.store_type == 'mahalla' \
+        if store.store_type == 'mahalla' \
                 and store.custom_product_count() >= Product.MAHALLA_CUSTOM_LIMIT:
             messages.error(request, f"Mahalla do'koni eng ko'pi bilan "
                            f"{Product.MAHALLA_CUSTOM_LIMIT} ta o'z (katalogsiz) mahsulot "
@@ -871,15 +928,10 @@ def product_create(request, store_pk):
             return _render_form()
 
         name = request.POST.get('name', '').strip()
-        if not name and catalog is not None:
-            name = catalog.name
         price = _int_or_none(request.POST.get('price'))
         if not name or price is None:
             messages.error(request, "Mahsulot nomi va narxi majburiy.")
             return _render_form()
-        description = request.POST.get('description', '').strip()
-        if not description and catalog is not None:
-            description = catalog.description
         is_available = 'is_available' in request.POST
         stock = _int_or_none(request.POST.get('stock')) or 0
         # restock_at faqat mahsulot tugagan (stock==0) bo'lsa ma'noli.
@@ -888,8 +940,8 @@ def product_create(request, store_pk):
         except ValueError:
             restock_at = None
         product = Product.objects.create(
-            store=store, catalog_product=catalog, name=name,
-            description=description,
+            store=store, name=name,
+            description=request.POST.get('description', '').strip(),
             price=price, stock=stock,
             is_available=is_available, restock_at=restock_at,
         )

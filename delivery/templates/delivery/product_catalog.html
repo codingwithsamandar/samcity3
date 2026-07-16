@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Katalog — {{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}">{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'delivery:store_detail' store.pk %}" style="color:var(--text2);font-size:.85rem;">← {{ store.name }}</a>
+
+  <div class="page-header" style="margin-top:.6rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;">🧺 Katalogdan mahsulot qo'shish</h1>
+      <p style="font-size:.85rem;color:var(--text2);margin:.3rem 0 0;">
+        Narx va zaxirani kartochkada o'zgartirib, «Qo'shish»ni bosing.
+      </p>
+    </div>
+    <a href="{% url 'delivery:product_custom_create' store.pk %}" class="btn btn-accent btn-sm" style="flex:none;">
+      <svg class="ic"><use href="#i-plus"/></svg> Mahsulot yaratish
+    </a>
+  </div>
+
+  <!-- Kategoriya chiplari + qidiruv -->
+  <div class="card card-pad" style="margin:1rem 0 1.25rem;">
+    <input type="text" id="catSearch" class="form-control" autocomplete="off"
+           placeholder="🔍 Nom yoki brend bo'yicha qidirish..." style="margin-bottom:.7rem;">
+    <div id="catChips" style="display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.2rem;">
+      <button type="button" class="chip is-on" data-cat="">Barchasi</button>
+      {% for cat in catalog_categories %}
+      <button type="button" class="chip" data-cat="{{ cat.id }}">{{ cat.name }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="catGrid" class="cat-grid">
+    {% for c in catalog_products %}
+    <form method="post" class="cat-card card" data-cat="{{ c.category_id|default:'' }}"
+          data-hay="{{ c.name|lower }} {{ c.brand|lower }}">
+      {% csrf_token %}
+      <input type="hidden" name="catalog_product" value="{{ c.id }}">
+
+      <div class="cat-thumb">
+        {% if c.image %}<img src="{{ c.image.url }}" alt="{{ c.name }}" loading="lazy">
+        {% else %}<span style="font-size:1.8rem;opacity:.35;">📦</span>{% endif %}
+        {% if c.in_store %}<span class="badge badge-green cat-have">✓ Do'konda</span>{% endif %}
+      </div>
+
+      <div class="cat-body">
+        <div class="cat-name">{{ c.name }}</div>
+        <div style="font-size:.75rem;color:var(--text2);">
+          {% if c.brand %}{{ c.brand }} · {% endif %}{{ c.get_unit_display }}
+        </div>
+      </div>
+
+      <div class="cat-foot">
+        <label class="cat-lbl">Narx (so'm)
+          <input type="number" name="price" min="0" required class="form-control cat-inp"
+                 value="{% if c.in_store %}{{ c.in_store.price|floatformat:'0' }}{% elif c.suggested_price %}{{ c.suggested_price }}{% endif %}"
+                 placeholder="0">
+        </label>
+        <label class="cat-lbl">Zaxira
+          <input type="number" name="stock" min="0" class="form-control cat-inp"
+                 value="{% if c.in_store %}{{ c.in_store.stock }}{% else %}0{% endif %}">
+        </label>
+        <button type="submit" class="btn {% if c.in_store %}btn-outline{% else %}btn-green{% endif %} btn-sm cat-add">
+          {% if c.in_store %}Yangilash{% else %}Qo'shish{% endif %}
+        </button>
+      </div>
+    </form>
+    {% empty %}
+    <div class="card card-pad" style="grid-column:1/-1;text-align:center;color:var(--text2);">
+      Katalog hozircha bo'sh. «Mahsulot yaratish» orqali o'z mahsulotingizni qo'shing.
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="catEmpty" class="card card-pad" style="display:none;text-align:center;color:var(--text2);">
+    Bu filtr bo'yicha mahsulot topilmadi.
+  </div>
+</div>
+
+<style>
+  .chip { flex:none;border:1px solid var(--border);background:var(--card,#fff);color:var(--text2);
+          border-radius:999px;padding:.4rem .85rem;font-size:.82rem;font-weight:600;cursor:pointer;
+          white-space:nowrap; }
+  .chip.is-on { background:var(--accent,#19b97f);border-color:var(--accent,#19b97f);color:#fff; }
+  /* 150px — telefonda (375px) ikki ustun chiqishi uchun eng past chegara. */
+  .cat-grid { display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+  .cat-card { display:flex;flex-direction:column;overflow:hidden;margin:0; }
+  .cat-thumb { position:relative;height:130px;display:grid;place-items:center;background:var(--bg2,#f4f5f7); }
+  .cat-thumb img { width:100%;height:100%;object-fit:cover; }
+  .cat-have { position:absolute;top:.4rem;right:.4rem;font-size:.68rem; }
+  .cat-body { padding:.6rem .7rem .3rem; }
+  .cat-name { font-weight:700;font-size:.88rem;line-height:1.3;
+              display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+  .cat-foot { margin-top:auto;padding:.6rem .7rem .7rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-end; }
+  .cat-lbl { flex:1;min-width:64px;font-size:.68rem;color:var(--text3,var(--text2));font-weight:600; }
+  .cat-inp { padding:.35rem .45rem;font-size:.85rem;margin-top:.15rem; }
+  .cat-add { width:100%; }
+</style>
+
+<script>
+(function () {
+  var grid = document.getElementById('catGrid');
+  var search = document.getElementById('catSearch');
+  var chips = document.getElementById('catChips');
+  var empty = document.getElementById('catEmpty');
+  if (!grid || !chips) return;
+  var cards = grid.querySelectorAll('.cat-card');
+  var activeCat = '';
+
+  function apply() {
+    var q = (search.value || '').trim().toLowerCase();
+    var shown = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      var hit = (!activeCat || c.getAttribute('data-cat') === activeCat)
+             && (!q || c.getAttribute('data-hay').indexOf(q) !== -1);
+      c.style.display = hit ? '' : 'none';
+      if (hit) shown++;
+    }
+    if (empty) empty.style.display = shown ? 'none' : '';
+  }
+
+  chips.addEventListener('click', function (e) {
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    activeCat = b.getAttribute('data-cat') || '';
+    chips.querySelectorAll('.chip').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+    apply();
+  });
+  if (search) search.addEventListener('input', apply);
+})();
+</script>
+{% endblock %}

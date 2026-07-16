@@ -56,6 +56,66 @@ class CatalogModelTests(TestCase):
         self.assertEqual(self.store.custom_product_count(), 2)
 
 
+class CatalogGridPageTests(TestCase):
+    """Katalog gridi (web): kartochkadan narx/zaxira bilan qo'shish."""
+
+    def setUp(self):
+        self.owner = make_user('+998939100080')
+        self.other = make_user('+998939100081')
+        self.cat = DeliveryCategory.objects.create(name='Ichimliklar', slug='ichimliklar')
+        self.store = Store.objects.create(
+            owner=self.owner, name='Grid market', store_type='delivery')
+        self.catalog = CatalogProduct.objects.create(
+            name='Cola 1L', category=self.cat, unit='bottle', suggested_price=12000)
+        self.url = f'/delivery/store/{self.store.pk}/product/create/'
+        self.client.force_login(self.owner)
+
+    def test_grid_shows_catalog_with_suggested_price(self):
+        html = self.client.get(self.url, HTTP_HOST='127.0.0.1').content.decode()
+        self.assertIn('Cola 1L', html)
+        self.assertIn('12000', html)          # tavsiya narx inputga to'ldirilgan
+        self.assertIn('Ichimliklar', html)    # kategoriya chipi
+
+    def test_add_from_card_uses_edited_price(self):
+        r = self.client.post(self.url, {'catalog_product': self.catalog.pk,
+                                        'price': 15000, 'stock': 7}, HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 302)
+        p = Product.objects.get(store=self.store, catalog_product=self.catalog)
+        # Egasi tavsiya narxni o'zgartirdi — do'konga o'zgartirilgani tushadi.
+        self.assertEqual(p.price, 15000)
+        self.assertEqual(p.stock, 7)
+        self.assertEqual(p.name, 'Cola 1L')
+
+    def test_second_add_updates_instead_of_duplicating(self):
+        for price in (15000, 16000):
+            self.client.post(self.url, {'catalog_product': self.catalog.pk,
+                                        'price': price, 'stock': 3}, HTTP_HOST='127.0.0.1')
+        qs = Product.objects.filter(store=self.store, catalog_product=self.catalog)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first().price, 16000)
+
+    def test_price_required(self):
+        self.client.post(self.url, {'catalog_product': self.catalog.pk, 'stock': 3},
+                         HTTP_HOST='127.0.0.1')
+        self.assertFalse(Product.objects.filter(store=self.store).exists())
+
+    def test_rejects_negative_price_and_junk_catalog_id(self):
+        self.client.post(self.url, {'catalog_product': self.catalog.pk, 'price': -5},
+                         HTTP_HOST='127.0.0.1')
+        # Raqam bo'lmagan pk 500 bermasligi kerak.
+        r = self.client.post(self.url, {'catalog_product': 'abc', 'price': 5000},
+                             HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(Product.objects.filter(store=self.store).exists())
+
+    def test_non_owner_cannot_add(self):
+        self.client.force_login(self.other)
+        r = self.client.post(self.url, {'catalog_product': self.catalog.pk,
+                                        'price': 9000, 'stock': 1}, HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 404)
+        self.assertFalse(Product.objects.filter(store=self.store).exists())
+
+
 class MahallaCustomLimitTests(TestCase):
     def setUp(self):
         self.owner = make_user('+998939100010')
@@ -95,7 +155,7 @@ class MahallaCustomLimitTests(TestCase):
         self._fill_custom(10)
         self.client.force_login(self.owner)
         r = self.client.post(
-            f'/delivery/store/{self.mahalla.pk}/product/create/',
+            f'/delivery/store/{self.mahalla.pk}/product/create/custom/',
             {'name': '11-chi', 'price': 5000, 'stock': 3}, HTTP_HOST='127.0.0.1')
         self.assertEqual(r.status_code, 200)  # forma qayta ko'rsatiladi (redirect emas)
         self.assertEqual(self.mahalla.custom_product_count(), 10)

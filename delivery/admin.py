@@ -114,13 +114,15 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(CatalogProduct)
 class CatalogProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'brand', 'category', 'unit', 'is_active', 'store_count',
-                    'image_tag', 'created_at')
+    list_display = ('name', 'brand', 'category', 'unit', 'suggested_price', 'is_active',
+                    'store_count', 'image_tag', 'created_at')
     # ('image', EmptyFieldListFilter) — "rasmsiz mahsulotlar" tez filtri.
+    # ('suggested_price', EmptyFieldListFilter) — "tavsiya narxsiz" tez filtri.
     list_filter = ('is_active', 'category', 'brand', 'unit',
-                   ('image', admin.EmptyFieldListFilter))
+                   ('image', admin.EmptyFieldListFilter),
+                   ('suggested_price', admin.EmptyFieldListFilter))
     search_fields = ('name', 'brand')
-    list_editable = ('is_active',)
+    list_editable = ('suggested_price', 'is_active')
     autocomplete_fields = ('category',)
     readonly_fields = ('created_by', 'promoted_from', 'created_at', 'updated_at', 'image_tag')
     change_list_template = 'admin/delivery/catalogproduct/change_list.html'

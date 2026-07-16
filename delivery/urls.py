@@ -42,6 +42,8 @@ urlpatterns = [
     path('chat/thread/<int:thread_id>/send/', views.store_chat_send, name='store_chat_send'),
     path('chat/inbox/', views.store_chat_inbox, name='store_chat_inbox'),
     path('store/<int:store_pk>/product/create/', views.product_create, name='product_create'),
+    path('store/<int:store_pk>/product/create/custom/', views.product_custom_create,
+         name='product_custom_create'),
     path('product/<int:pk>/edit/', views.product_edit, name='product_edit'),
     path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
 

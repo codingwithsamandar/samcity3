@@ -37,7 +37,7 @@ class CatalogProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = CatalogProduct
         fields = ('id', 'name', 'brand', 'category', 'category_id', 'unit',
-                  'unit_display', 'image', 'description')
+                  'unit_display', 'image', 'description', 'suggested_price')
 
     def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)

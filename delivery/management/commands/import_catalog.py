@@ -143,6 +143,10 @@ class Command(BaseCommand):
                 'description': (p.get('description') or '').strip(),
                 'is_active': True,
             }
+            # Tavsiya narx faqat JSON'da berilgan bo'lsa yoziladi — aks holda
+            # qayta import admin panelida qo'lda kiritilgan narxni o'chirib yuborardi.
+            if p.get('suggested_price') is not None:
+                fields['suggested_price'] = p['suggested_price']
 
             existing = CatalogProduct.objects.filter(name__iexact=name).first()
             obj = existing or CatalogProduct(name=name)

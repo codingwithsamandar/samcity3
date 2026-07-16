@@ -40,6 +40,7 @@ class Command(BaseCommand):
                 'category': c.category.name if c.category else None,
                 'brand': c.brand,
                 'unit': c.unit,
+                'suggested_price': c.suggested_price,
                 'description': c.description,
                 'image_path': image_path,
                 'image_url': image_url,

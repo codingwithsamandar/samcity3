@@ -151,6 +151,11 @@ class CatalogProduct(models.Model):
     unit = models.CharField(
         max_length=10, choices=UNIT_CHOICES, default='piece', verbose_name="O'lchov birligi",
     )
+    # Katalog kartochkasida oldindan to'ldiriladigan narx. Do'kon egasi qo'shishdan
+    # oldin uni o'zgartira oladi — bu yerdagi qiymat majburiy emas, faqat taklif.
+    suggested_price = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Tavsiya narx (so'm)",
+    )
     image = models.ImageField(
         upload_to='delivery/catalog/%Y/%m/', blank=True, null=True,
         validators=[validate_file_type], verbose_name='Rasm',
