@@ -46,9 +46,7 @@
 
       <div class="cat-body">
         <div class="cat-name">{{ c.name }}</div>
-        <div style="font-size:.75rem;color:var(--text2);">
-          {% if c.brand %}{{ c.brand }} · {% endif %}{{ c.get_unit_display }}
-        </div>
+        <div class="cat-meta">{% if c.brand %}{{ c.brand }} · {% endif %}{{ c.get_unit_display }}</div>
       </div>
 
       <div class="cat-foot">
@@ -80,22 +78,32 @@
 
 <style>
   .chip { flex:none;border:1px solid var(--border);background:var(--card,#fff);color:var(--text2);
-          border-radius:999px;padding:.4rem .85rem;font-size:.82rem;font-weight:600;cursor:pointer;
-          white-space:nowrap; }
+          border-radius:999px;padding:.45rem .95rem;font-size:.85rem;font-weight:600;cursor:pointer;
+          white-space:nowrap;transition:background .15s,color .15s,border-color .15s; }
+  .chip:hover { border-color:var(--accent,#19b97f);color:var(--accent-d,#0b7d57); }
   .chip.is-on { background:var(--accent,#19b97f);border-color:var(--accent,#19b97f);color:#fff; }
-  /* 150px — telefonda (375px) ikki ustun chiqishi uchun eng past chegara. */
-  .cat-grid { display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
-  .cat-card { display:flex;flex-direction:column;overflow:hidden;margin:0; }
-  .cat-thumb { position:relative;height:130px;display:grid;place-items:center;background:var(--bg2,#f4f5f7); }
+
+  /* Mobil: 2 ustun. Kengroq ekranda kartochkalar kattalashadi (media querylar). */
+  .cat-grid { display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); }
+  @media (min-width:600px)  { .cat-grid { gap:1.15rem;grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); } }
+  @media (min-width:1000px) { .cat-grid { grid-template-columns:repeat(auto-fill,minmax(235px,1fr)); } }
+
+  .cat-card { display:flex;flex-direction:column;overflow:hidden;margin:0;
+              transition:transform .15s ease, box-shadow .15s ease; }
+  .cat-card:hover { transform:translateY(-3px);box-shadow:0 10px 24px rgba(15,23,42,.12); }
+  .cat-thumb { position:relative;aspect-ratio:1/1;display:grid;place-items:center;
+               background:var(--bg2,#f4f5f7); }
   .cat-thumb img { width:100%;height:100%;object-fit:cover; }
-  .cat-have { position:absolute;top:.4rem;right:.4rem;font-size:.68rem; }
-  .cat-body { padding:.6rem .7rem .3rem; }
-  .cat-name { font-weight:700;font-size:.88rem;line-height:1.3;
-              display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
-  .cat-foot { margin-top:auto;padding:.6rem .7rem .7rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-end; }
-  .cat-lbl { flex:1;min-width:64px;font-size:.68rem;color:var(--text3,var(--text2));font-weight:600; }
-  .cat-inp { padding:.35rem .45rem;font-size:.85rem;margin-top:.15rem; }
-  .cat-add { width:100%; }
+  .cat-have { position:absolute;top:.5rem;right:.5rem;font-size:.7rem;box-shadow:0 1px 4px rgba(0,0,0,.15); }
+  .cat-body { padding:.8rem .85rem .35rem; }
+  .cat-name { font-weight:700;font-size:1rem;line-height:1.3;
+              display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+              min-height:2.6em; }
+  .cat-meta { font-size:.8rem;color:var(--text2);margin-top:.15rem; }
+  .cat-foot { margin-top:auto;padding:.35rem .85rem .9rem;display:flex;gap:.55rem;flex-wrap:wrap;align-items:flex-end; }
+  .cat-lbl { flex:1;min-width:58px;font-size:.72rem;color:var(--text3,var(--text2));font-weight:650; }
+  .cat-inp { padding:.5rem .55rem;font-size:.95rem;margin-top:.25rem;text-align:right; }
+  .cat-add { width:100%;font-size:.92rem;padding-top:.55rem;padding-bottom:.55rem; }
 </style>
 
 <script>
