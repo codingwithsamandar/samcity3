@@ -4,7 +4,7 @@ from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -1018,6 +1018,140 @@ def product_delete(request, pk):
         messages.success(request, "Mahsulot o'chirildi.")
         return redirect('delivery:store_detail', pk=store_pk)
     return render(request, 'delivery/product_confirm_delete.html', {'product': product})
+
+
+# ── KATALOG BOSHQARUVI (faqat admin/xodim) ──────────────────────────────────────
+# Umumiy katalog (CatalogProduct) — hamma do'konlar tanlaydigan markaziy ro'yxat.
+# Django admin'dan tashqari, sayt ichida o'zbekcha web interfeys. Do'kon egalari
+# katalogga qo'sha olmaydi (ular faqat o'z do'koniga 'Mahsulot yaratish' orqali).
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+def catalog_manage(request):
+    qs = CatalogProduct.objects.select_related('category').annotate(
+        store_count=Count('store_products', distinct=True))
+    q = request.GET.get('q', '').strip()
+    if q:
+        qs = qs.filter(Q(name__icontains=q) | Q(brand__icontains=q))
+    cat_id = _int_or_none(request.GET.get('category'))
+    if cat_id:
+        qs = qs.filter(category_id=cat_id)
+    status = request.GET.get('status', '')
+    if status == 'active':
+        qs = qs.filter(is_active=True)
+    elif status == 'inactive':
+        qs = qs.filter(is_active=False)
+    qs = qs.order_by('name')
+
+    page = Paginator(qs, 40).get_page(request.GET.get('page'))
+    return render(request, 'delivery/catalog_manage.html', {
+        'products': page,
+        'categories': DeliveryCategory.objects.order_by('name'),
+        'q': q, 'cat_id': cat_id, 'status': status,
+        'total': qs.count(),
+    })
+
+
+def _save_catalog_product(request, obj):
+    """Formadan CatalogProduct'ni to'ldiradi va saqlaydi. Xato bo'lsa (nom/narx)
+    xabar qoldirib None qaytaradi; muvaffaqiyatda obj'ni qaytaradi."""
+    name = request.POST.get('name', '').strip()
+    if not name:
+        messages.error(request, "Mahsulot nomi majburiy.")
+        return None
+    price = request.POST.get('suggested_price', '').strip()
+    suggested_price = _int_or_none(price) if price else None
+    if price and (suggested_price is None or suggested_price < 0):
+        messages.error(request, "Tavsiya narx noto'g'ri.")
+        return None
+
+    unit = request.POST.get('unit', 'piece')
+    if unit not in dict(CatalogProduct.UNIT_CHOICES):
+        unit = 'piece'
+    obj.name = name
+    obj.brand = request.POST.get('brand', '').strip()[:120]
+    obj.unit = unit
+    obj.suggested_price = suggested_price
+    obj.description = request.POST.get('description', '').strip()
+    obj.category_id = _int_or_none(request.GET.get('category')) or \
+        _int_or_none(request.POST.get('category'))
+    obj.is_active = 'is_active' in request.POST
+    if obj.created_by_id is None:
+        obj.created_by = request.user
+
+    img = request.FILES.get('image')
+    if img:
+        try:
+            validate_file_type(img)
+            obj.image = img
+        except Exception as e:
+            messages.warning(request, f"Rasm: {str(e)}")
+    obj.save()
+    return obj
+
+
+def _catalog_form_values(request, product=None):
+    """Forma maydonlari uchun boshlang'ich qiymatlar. POSTda — yuborilgani (xato
+    holatda ham saqlanadi); tahrirda — mahsulotdan; yangida — bo'sh."""
+    if request.method == 'POST':
+        p = request.POST
+        return {
+            'name': p.get('name', ''), 'brand': p.get('brand', ''),
+            'price': p.get('suggested_price', ''), 'desc': p.get('description', ''),
+            'cat': _int_or_none(p.get('category')), 'unit': p.get('unit', 'piece'),
+            'active': 'is_active' in p,
+        }
+    if product is not None:
+        return {
+            'name': product.name, 'brand': product.brand,
+            'price': product.suggested_price or '', 'desc': product.description,
+            'cat': product.category_id, 'unit': product.unit,
+            'active': product.is_active,
+        }
+    return {'name': '', 'brand': '', 'price': '', 'desc': '',
+            'cat': None, 'unit': 'piece', 'active': True}
+
+
+@staff_member_required
+def catalog_product_create(request):
+    if request.method == 'POST':
+        obj = _save_catalog_product(request, CatalogProduct())
+        if obj is not None:
+            messages.success(request, f"«{obj.name}» katalogga qo'shildi ✅")
+            return redirect('delivery:catalog_manage')
+    return render(request, 'delivery/catalog_manage_form.html', {
+        'mode': 'create', 'f': _catalog_form_values(request), 'image_url': None,
+        'categories': DeliveryCategory.objects.order_by('name'),
+        'unit_choices': CatalogProduct.UNIT_CHOICES,
+    })
+
+
+@staff_member_required
+def catalog_product_edit(request, pk):
+    product = get_object_or_404(CatalogProduct, pk=pk)
+    if request.method == 'POST':
+        obj = _save_catalog_product(request, product)
+        if obj is not None:
+            messages.success(request, f"«{obj.name}» yangilandi ✅")
+            return redirect('delivery:catalog_manage')
+    return render(request, 'delivery/catalog_manage_form.html', {
+        'mode': 'edit', 'f': _catalog_form_values(request, product),
+        'image_url': product.image.url if product.image else None,
+        'categories': DeliveryCategory.objects.order_by('name'),
+        'unit_choices': CatalogProduct.UNIT_CHOICES,
+    })
+
+
+@staff_member_required
+@require_POST
+def catalog_product_toggle(request, pk):
+    product = get_object_or_404(CatalogProduct, pk=pk)
+    product.is_active = not product.is_active
+    product.save(update_fields=['is_active', 'updated_at'])
+    messages.success(request, f"«{product.name}» "
+                     + ("faollashtirildi ✅" if product.is_active else "o'chirildi (nofaol)"))
+    return redirect(request.META.get('HTTP_REFERER') or 'delivery:catalog_manage')
 
 
 # ── STORE ORDER DASHBOARD (egasi) ───────────────────────────────────────────────

@@ -47,6 +47,12 @@ urlpatterns = [
     path('product/<int:pk>/edit/', views.product_edit, name='product_edit'),
     path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
 
+    # ── Katalog boshqaruvi (faqat admin/xodim) ──────────────────────────────────
+    path('catalog/manage/', views.catalog_manage, name='catalog_manage'),
+    path('catalog/manage/new/', views.catalog_product_create, name='catalog_product_create'),
+    path('catalog/manage/<int:pk>/edit/', views.catalog_product_edit, name='catalog_product_edit'),
+    path('catalog/manage/<int:pk>/toggle/', views.catalog_product_toggle, name='catalog_product_toggle'),
+
     # ── Store order dashboard (egasi) ───────────────────────────────────────────
     path('manage/orders/', views.store_orders, name='store_orders'),
     path('manage/order/<uuid:order_id>/status/', views.store_order_status, name='store_order_status'),

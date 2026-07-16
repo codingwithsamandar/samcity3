@@ -116,6 +116,79 @@ class CatalogGridPageTests(TestCase):
         self.assertFalse(Product.objects.filter(store=self.store).exists())
 
 
+class CatalogManageTests(TestCase):
+    """Admin katalog boshqaruvi (web): faqat xodim qo'sha/tahrirlaydi."""
+
+    def setUp(self):
+        from django.urls import reverse
+        self.reverse = reverse
+        self.admin = make_user('+998939100090', is_staff=True, role='admin')
+        self.owner = make_user('+998939100091')  # oddiy do'kon egasi (xodim emas)
+        self.cat = DeliveryCategory.objects.create(name='Ichimliklar', slug='ich2')
+        self.list_url = reverse('delivery:catalog_manage')
+        self.create_url = reverse('delivery:catalog_product_create')
+
+    def test_non_staff_blocked(self):
+        self.client.force_login(self.owner)
+        r = self.client.get(self.list_url, HTTP_HOST='127.0.0.1')
+        # staff_member_required admin login sahifasiga yo'naltiradi (302).
+        self.assertEqual(r.status_code, 302)
+        self.assertNotIn('/delivery/catalog/manage/new', r.url)
+
+    def test_staff_sees_list(self):
+        CatalogProduct.objects.create(name='Royxatdagi mahsulot', unit='piece',
+                                      suggested_price=7000)
+        self.client.force_login(self.admin)
+        r = self.client.get(self.list_url, HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        self.assertIn('Royxatdagi mahsulot', html)
+        self.assertIn('7000', html)
+
+    def test_staff_can_create(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(self.create_url, {
+            'name': 'Yangi ichimlik 1L', 'category': self.cat.pk, 'brand': 'TestBrand',
+            'unit': 'bottle', 'suggested_price': 9000,
+            'description': 'Tavsif', 'is_active': 'on',
+        }, HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 302)
+        p = CatalogProduct.objects.get(name='Yangi ichimlik 1L')
+        self.assertEqual(p.suggested_price, 9000)
+        self.assertEqual(p.category, self.cat)
+        self.assertEqual(p.unit, 'bottle')
+        self.assertEqual(p.created_by, self.admin)
+        self.assertTrue(p.is_active)
+
+    def test_create_requires_name(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(self.create_url, {'name': '', 'unit': 'piece'},
+                             HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 200)  # forma qayta ko'rsatiladi
+        self.assertEqual(CatalogProduct.objects.count(), 0)
+
+    def test_staff_can_edit(self):
+        self.client.force_login(self.admin)
+        p = CatalogProduct.objects.create(name='Eski nom', unit='piece')
+        r = self.client.post(
+            self.reverse('delivery:catalog_product_edit', args=[p.pk]),
+            {'name': 'Yangi nom', 'unit': 'kg', 'suggested_price': 5000, 'is_active': 'on'},
+            HTTP_HOST='127.0.0.1')
+        self.assertEqual(r.status_code, 302)
+        p.refresh_from_db()
+        self.assertEqual(p.name, 'Yangi nom')
+        self.assertEqual(p.unit, 'kg')
+        self.assertEqual(p.suggested_price, 5000)
+
+    def test_toggle_active(self):
+        self.client.force_login(self.admin)
+        p = CatalogProduct.objects.create(name='Toggle', unit='piece', is_active=True)
+        self.client.post(self.reverse('delivery:catalog_product_toggle', args=[p.pk]),
+                         HTTP_HOST='127.0.0.1')
+        p.refresh_from_db()
+        self.assertFalse(p.is_active)
+
+
 class MahallaCustomLimitTests(TestCase):
     def setUp(self):
         self.owner = make_user('+998939100010')

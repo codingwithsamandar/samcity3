@@ -927,6 +927,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
             <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
             <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
             {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
+            {% if user.is_staff %}<a href="{% url 'delivery:catalog_manage' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Katalog boshqaruvi" %}</a>{% endif %}
             {% if user.is_staff or user.district_admin_roles.exists %}<a href="{% url 'hokim_panel' %}" role="menuitem"><svg class="ic"><use href="#i-building"/></svg> {% trans "Hokim paneli" %}</a>{% endif %}
             <div class="am-divider"></div>
             <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="danger" role="menuitem"><svg class="ic"><use href="#i-logout"/></svg> {% trans "Chiqish" %}</button></form>
