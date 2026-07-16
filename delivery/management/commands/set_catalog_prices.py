@@ -11,10 +11,14 @@ Idempotent: standart holatda faqat `suggested_price IS NULL` bo'lgan yozuvlarga
 tegadi — admin panelida qo'lda o'zgartirilgan narxlar saqlanib qoladi. --force
 berilsa, xaritadagi barcha narxlar qayta yoziladi.
 
-Narxlar — 2026 yil O'zbekiston (Buxoro/Shofirkon mintaqasi) chakana bozoriga
-yaqinlashtirilgan taxminiy tavsiya qiymatlar (so'mda): mahalliy tandir noni
-arzonroq, mol/qo'y go'shti va import mahsulotlar qimmatroq. Do'kon egasi
-qo'shishdan oldin kartochkada narxni o'zgartira oladi.
+Narxlar — 2026 yil O'zbekiston chakana bozoriga yaqinlashtirilgan tavsiya
+qiymatlar (so'mda). Asosiy oziq-ovqat langarlari Korzinka (2026 may-iyun),
+Numbeo Toshkent (2026) va Milliy statistika monitoringi ma'lumotlariga
+moslangan: masalan tovuq fileti ~52k, mol go'shti fileti ~130k, qo'y ~120k,
+sut ~14k, oq non 500g ~9k, pishloq ~102k/kg, kartoshka ~7k, pomidor ~14k.
+Yangi meva-sabzavot mavsumga qarab o'zgaradi (bu — yillik o'rtacha yaqin).
+Mahalliy tandir noni arzon (kichik shaharda 3k). Do'kon egasi qo'shishdan
+oldin kartochkada narxni o'zgartira oladi.
 """
 from django.core.management.base import BaseCommand
 
@@ -46,24 +50,24 @@ PRICES = {
     "Nesquik shokoladli sut 200ml": 8000,
     # ── Sut mahsulotlari ──
     "Activia natural yogurt 290g": 12000,
-    "Pasterlangan sut 2.5% 1L": 12000,
-    "UHT sut 3.2% 1L": 14000,
+    "Pasterlangan sut 2.5% 1L": 13000,
+    "UHT sut 3.2% 1L": 15000,
     "Kefir 2.5% 500ml": 9000,
     "Qatiq 3.2% 500g": 10000,
     "Suzma 400g": 14000,
     "Ayron 0.5L": 6000,
     "Smetana 20% 400g": 16000,
     "Qulupnayli yogurt 290g": 12000,
-    "Sariyog' 82.5% 200g": 22000,
+    "Sariyog' 82.5% 200g": 24000,
     "Hochland krem pishloq 180g": 25000,
     "Suluguni pishlog'i 300g": 34000,
     "Quyultirilgan sut 380g": 17000,
-    "Tovuq tuxumi C0 30 dona": 42000,
-    "Tovuq tuxumi C1 10 dona": 15000,
-    "Tuxum 10 dona": 14000,
-    "Sut 1L": 12000,
+    "Tovuq tuxumi C0 30 dona": 45000,
+    "Tovuq tuxumi C1 10 dona": 16000,
+    "Tuxum 10 dona": 15000,
+    "Sut 1L": 14000,
     # ── Go'sht va baliq ──
-    "Mol go'shti fileti 1kg": 120000,
+    "Mol go'shti fileti 1kg": 130000,
     "Mol go'shti qiymasi 500g": 52000,
     "Mol go'shtli sosiska 400g": 34000,
     "«Doktorskaya» qaynatilgan kolbasa 500g": 44000,
@@ -72,36 +76,36 @@ PRICES = {
     "Tovuq son-boldiri 1kg": 38000,
     "Tovuq fileti 1kg": 52000,
     "Butun tovuq 1.5kg": 52000,
-    "Qo'y qovurg'asi 1kg": 105000,
+    "Qo'y qovurg'asi 1kg": 120000,
     "Muzlatilgan skumbriya 1kg": 42000,
     # ── Meva va sabzavot ──
-    "Banan 1kg": 18000,
-    "Golden olma 1kg": 15000,
+    "Banan 1kg": 19000,
+    "Golden olma 1kg": 16000,
     "Apelsin 1kg": 18000,
     "Husayni uzumi 1kg": 25000,
     "Tarvuz": 25000,
     "Mirzacho'l qovuni": 30000,
     "Anor 1kg": 22000,
     "Limon 500g": 12000,
-    "Kartoshka 1kg": 6000,
+    "Kartoshka 1kg": 7000,
     "Piyoz 1kg": 5000,
-    "Sabzi 1kg": 6000,
-    "Pomidor 1kg": 12000,
-    "Bodring 1kg": 10000,
+    "Sabzi 1kg": 7000,
+    "Pomidor 1kg": 14000,
+    "Bodring 1kg": 11000,
     "Bulg'or qalampiri 500g": 12000,
     "Sarimsoq 200g": 12000,
     "Oq karam": 7000,
     "Yangi shivit": 3000,
     "Yangi kashnich": 3000,
     # ── Oshxona / yormalar ──
-    "Devzira guruchi 1kg": 28000,
-    "Lazer guruchi 1kg": 16000,
+    "Devzira guruchi 1kg": 30000,
+    "Lazer guruchi 1kg": 18000,
     "Grechka yormasi 800g": 18000,
     "Suli xlopyasi 500g": 14000,
     "Bug'doy uni, oliy nav 2kg": 16000,
-    "Shakar (qum) 1kg": 12000,
+    "Shakar (qum) 1kg": 11500,
     "Yodlangan tuz 1kg": 3500,
-    "Kungaboqar yog'i 5L": 95000,
+    "Kungaboqar yog'i 5L": 98000,
     "Paxta yog'i 1L": 22000,
     "Oleina kungaboqar yog'i 1L": 24000,
     "Borges zaytun yog'i 500ml": 75000,
