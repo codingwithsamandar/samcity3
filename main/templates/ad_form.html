@@ -14,7 +14,7 @@
   .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.6rem; }
   .cat-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
   .cat-btn:hover { border-color: var(--accent); }
-  .cat-btn.active { border-color: var(--accent); background: rgba(245,158,11,0.08); }
+  .cat-btn.active { border-color: var(--accent); background: var(--accent-l); color: var(--accent); }
   .cat-btn .cat-ico { font-size: 1.6rem; }
   .cat-btn .cat-lbl { font-size: 0.75rem; font-weight: 600; color: var(--text2); }
   .cat-btn.active .cat-lbl { color: var(--accent); }
@@ -23,11 +23,11 @@
   .price-type-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
   .price-type-btn { flex: 1; min-width: 90px; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 2px solid var(--border); background: var(--surface2); color: var(--text2); transition: all 0.15s; }
   .price-type-btn:hover { border-color: var(--accent); }
-  .price-type-btn.active { border-color: var(--accent2); background: rgba(16,185,129,0.08); color: var(--accent2); }
+  .price-type-btn.active { border-color: var(--accent); background: var(--accent-l); color: var(--accent); }
 
   /* Image upload */
   .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.15s; }
-  .upload-zone:hover { border-color: var(--accent); background: rgba(245,158,11,0.04); }
+  .upload-zone:hover { border-color: var(--accent); background: var(--accent-l); }
   .upload-zone input { display: none; }
   .image-previews { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
   .img-preview { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load taxi_extras %}
 {% block title %}Haydovchi paneli — SamCity{% endblock %}
 
 {% block extra_css %}
@@ -10,6 +11,12 @@
   .avail .dot{width:10px;height:10px;border-radius:50%}
   .sec-t{font-size:1.15rem;font-weight:750;margin:1.75rem 0 .9rem;display:flex;align-items:center;gap:.5rem}
   .sec-t .ic{color:var(--accent)}
+  /* Mijozga qo'ng'iroq — kuryerning asosiy amali, telefonda bir qo'l bilan.
+     Avval .85rem matn ichidagi havola edi: barmoq uchun juda kichik
+     (base.html .btn min-height:44px — WCAG, lekin bu .btn emas edi). */
+  .call-link{display:inline-flex;align-items:center;gap:.35rem;min-height:44px;padding:0 .7rem;
+    border-radius:100px;background:var(--accent-l);color:var(--accent);font-weight:700;text-decoration:none;}
+  .call-link:hover{background:var(--accent);color:#fff;}
 </style>
 {% endblock %}
 
@@ -46,9 +53,9 @@
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-green"><svg class="ic"><use href="#i-check"/></svg></div></div><div class="kpi-num">{{ delivered_count }}</div><div class="kpi-lbl">Yetkazilgan</div></div>
     <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-bike"/></svg></div></div><div class="kpi-num">{{ my_active|length }}</div><div class="kpi-lbl">Faol buyurtma</div></div>
-    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_today }}</div><div class="kpi-lbl">Bugun (so'm)</div></div>
-    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_week }}</div><div class="kpi-lbl">7 kun (so'm)</div></div>
-    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings }}</div><div class="kpi-lbl">Jami daromad (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_today|som }}</div><div class="kpi-lbl">Bugun (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings_week|som }}</div><div class="kpi-lbl">7 kun (so'm)</div></div>
+    <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-gold"><svg class="ic"><use href="#i-card"/></svg></div></div><div class="kpi-num">{{ earnings|som }}</div><div class="kpi-lbl">Jami daromad (so'm)</div></div>
     <div class="kpi"><div class="kpi-top"><div class="kpi-ic g-indigo"><svg class="ic"><use href="#i-star"/></svg></div></div><div class="kpi-num">{% if driver.avg_rating %}{{ driver.avg_rating }}{% else %}—{% endif %}</div><div class="kpi-lbl">Reyting ({{ driver.review_count }} baho)</div></div>
   </div>
 
@@ -62,7 +69,7 @@
         ishlardi: lookup xato berib, |default o.address ga tushardi.
         {% endcomment %}
         <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }}</div>
-        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }}</span><a href="tel:{{ o.phone }}" style="color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:.25rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-phone"/></svg> {{ o.phone }}</a><span style="font-weight:700;color:var(--text);">{{ o.total }} so'm</span></div>
+        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }}</span><a href="tel:{{ o.phone }}" class="call-link"><svg class="ic" style="width:1em;height:1em;"><use href="#i-phone"/></svg> {{ o.phone }}</a><span style="font-weight:700;color:var(--text);">{{ o.total|som }} so'm</span></div>
         <div style="color:var(--text3);font-size:.8rem;margin-top:.3rem;">{% for it in o.items.all %}{{ it.product_name }}×{{ it.quantity }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
       </div>
       <span class="badge badge-gold">{{ o.get_status_display }}</span>
@@ -84,7 +91,13 @@
       {% endif %}
     </div>
   </div>
-  {% empty %}<p style="color:var(--text2);">Faol buyurtma yo'q.</p>{% endfor %}
+  {% empty %}
+  <div class="empty-state" style="padding:2rem 1rem;">
+    <div class="icon"><svg class="ic"><use href="#i-bike"/></svg></div>
+    <h3>Faol buyurtma yo'q</h3>
+    <p>Quyidagi ro'yxatdan buyurtma qabul qiling.</p>
+  </div>
+  {% endfor %}
 
   <div class="sec-t" style="justify-content:space-between;">
     <span style="display:flex;align-items:center;gap:.5rem;"><svg class="ic"><use href="#i-cart"/></svg> Qabul qilish mumkin</span>
@@ -111,10 +124,16 @@
   <div class="o-card" style="padding:.8rem 1.25rem;">
     <div class="o-head" style="align-items:center;">
       <span style="color:var(--text2);font-size:.85rem;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.address }} · {{ o.created_at|date:"d.m.Y" }}</span>
-      <span style="font-weight:700;color:var(--green);">+{{ o.delivery_fee }} so'm</span>
+      <span style="font-weight:700;color:var(--green);">+{{ o.delivery_fee|som }} so'm</span>
     </div>
   </div>
-  {% empty %}<p style="color:var(--text2);">Hali yetkazilgan buyurtma yo'q.</p>{% endfor %}
+  {% empty %}
+  <div class="empty-state" style="padding:2rem 1rem;">
+    <div class="icon"><svg class="ic"><use href="#i-clock"/></svg></div>
+    <h3>Hali yetkazilgan buyurtma yo'q</h3>
+    <p>Birinchi buyurtmangizdan keyin bu yerda tarix chiqadi.</p>
+  </div>
+  {% endfor %}
 </div>
 
 <script>

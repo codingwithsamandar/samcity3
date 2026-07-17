@@ -58,7 +58,9 @@
   .mh-section-lbl .cnt { color: var(--text3); font-size: .82rem; font-weight: 600; }
 
   /* ── CARDS GRID ───────────────────────────────────────────────── */
-  .mh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  /* 300px + .container padding => 340px kerak; 320px telefonda toshardi
+     (body overflow-x:clip uni jimgina kesardi). */
+  .mh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 1rem; }
   .mh-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
     padding: 1.35rem; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;
     transition: transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .22s, border-color .22s; }
@@ -181,9 +183,14 @@
     {% endfor %}
   </div>
 
+  {# Yuqoridagi "mahalla yo'q" holati .empty-state ishlatadi — bu ham shunday
+     bo'lsin (avval xom emoji + inline style edi: bitta faylda ikki xil uslub). #}
   <div class="mh-no-results" id="mhNoResults">
-    <div style="font-size:2.2rem;margin-bottom:.6rem;">🔍</div>
-    <p>Bunday nomdagi mahalla topilmadi.</p>
+    <div class="empty-state">
+      <div class="icon"><svg class="ic"><use href="#i-search"/></svg></div>
+      <h3>Bunday nomdagi mahalla topilmadi</h3>
+      <p>Nomni tekshirib qayta urinib ko'ring.</p>
+    </div>
   </div>
 
 </div>

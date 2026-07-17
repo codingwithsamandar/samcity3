@@ -24,7 +24,7 @@
       <label class="form-label">Telefon *</label>
       <input type="text" name="phone" class="form-control" required value="{{ driver.phone|default:user.phone|default:'' }}" placeholder="+998 ...">
     </div>
-    <div style="display:flex;gap:.8rem;">
+    <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
       <div class="form-group" style="flex:1;">
         <label class="form-label">Transport turi</label>
         <select name="vehicle_type" class="form-control">

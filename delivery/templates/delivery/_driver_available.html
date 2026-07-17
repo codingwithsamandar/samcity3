@@ -1,3 +1,4 @@
+{% load taxi_extras %}
 {% comment %}
 "Qabul qilish mumkin" ro'yxati. Panel ham, `driver_orders_feed` (12s polling)
 ham AYNAN shu qismni render qiladi — ikkiga bo'linsa, jonli yangilanish
@@ -8,8 +9,8 @@ bilan chaqiradi, aks holda csrf_token bo'sh chiqadi.
 <div class="o-card">
   <div class="o-head">
     <div>
-      <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.total }} so'm</div>
-      <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }} · {{ o.delivery_fee }} so'm yetkazish</div>
+      <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.total|som }} so'm</div>
+      <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }} · {{ o.delivery_fee|som }} so'm yetkazish</div>
     </div>
     <form method="post" action="{% url 'delivery:order_accept' o.id %}" class="js-once">{% csrf_token %}<button class="btn btn-accent">Qabul qilish</button></form>
   </div>

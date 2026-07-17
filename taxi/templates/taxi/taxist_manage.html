@@ -43,18 +43,22 @@
     <form method="post" action="{% url 'taxi:route_delete' route.id %}" onsubmit="return confirm('«{{ route.point_a|escapejs }} → {{ route.point_b|escapejs }}» marshruti o&#39;chirilsinmi? Buni qaytarib bo&#39;lmaydi.')">{% csrf_token %}<button class="btn btn-outline" style="font-size:.8rem;">O'chirish</button></form>
   </div>
   {% empty %}
-  <p style="color:var(--text2);">Hali marshrut yo'q. Quyida qo'shing.</p>
+  <div class="empty-state" style="padding:2rem 1rem;">
+    <div class="icon"><svg class="ic"><use href="#i-pin"/></svg></div>
+    <h3>Hali marshrut yo'q</h3>
+    <p>Quyida birinchi marshrutingizni qo'shing — yo'lovchilar sizni shu bo'yicha topadi.</p>
+  </div>
   {% endfor %}
 
   <div class="card" style="padding:1.2rem;margin-top:1rem;">
     <h3 style="font-size:1rem;margin-bottom:1rem;">+ Yangi marshrut</h3>
     <form method="post" action="{% url 'taxi:route_add' %}">
       {% csrf_token %}
-      <div style="display:flex;gap:.8rem;">
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
         <div class="form-group" style="flex:1;"><label class="form-label">A punkt *</label><input type="text" name="point_a" class="form-control" required placeholder="Shofirkon"></div>
         <div class="form-group" style="flex:1;"><label class="form-label">B punkt *</label><input type="text" name="point_b" class="form-control" required placeholder="Buxoro"></div>
       </div>
-      <div style="display:flex;gap:.8rem;">
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
         <div class="form-group" style="flex:1;"><label class="form-label">Yo'lovchi narxi (so'm) *</label><input type="number" name="passenger_price" class="form-control" required min="0"></div>
         <div class="form-group" style="flex:1;"><label class="form-label">Dostavka narxi (ixtiyoriy)</label><input type="number" name="delivery_price" class="form-control" min="0"></div>
       </div>
