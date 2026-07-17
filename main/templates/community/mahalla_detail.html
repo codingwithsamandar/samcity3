@@ -3,9 +3,11 @@
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
-{# Unbounded shrifti va ikkinchi Inter so'rovi olib tashlandi: base.html allaqachon
-   'Plus Jakarta Sans' + 'Inter' yuklaydi. Bitta sahifa uchun uchinchi shrift oilasi
-   va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish. #}
+{% comment %}
+Unbounded shrifti va ikkinchi Inter so'rovi olib tashlandi: base.html allaqachon
+'Plus Jakarta Sans' + 'Inter' yuklaydi. Bitta sahifa uchun uchinchi shrift oilasi
+va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
+{% endcomment %}
 <style>
   /* Bu blok base tokenlarini (--bg, --surface, --line, --text, --radius) QAYTA
      BELGILAB, qattiq qora qiymatlar bergan edi. Oqibati: mahalla sahifasi

@@ -183,8 +183,10 @@
     {% endfor %}
   </div>
 
-  {# Yuqoridagi "mahalla yo'q" holati .empty-state ishlatadi — bu ham shunday
-     bo'lsin (avval xom emoji + inline style edi: bitta faylda ikki xil uslub). #}
+  {% comment %}
+  Yuqoridagi "mahalla yo'q" holati .empty-state ishlatadi — bu ham shunday
+  bo'lsin (avval xom emoji + inline style edi: bitta faylda ikki xil uslub).
+  {% endcomment %}
   <div class="mh-no-results" id="mhNoResults">
     <div class="empty-state">
       <div class="icon"><svg class="ic"><use href="#i-search"/></svg></div>
