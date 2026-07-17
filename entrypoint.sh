@@ -48,6 +48,22 @@ echo "▶ Yetim rasm yozuvlari tekshiruvi..."
 timeout 180 python manage.py check_media --rows \
   || echo "!! check_media --rows xato yoki 180s timeout (yuqoriga qarang)"
 
+# ── Yetim yozuvlarni TUZATISH (BIR MARTALIK) ──────────────────────────────────
+# Render'da FIX_ORPHAN_MEDIA=true qo'ying; deploy tugagach QAYTA false qiling.
+# Doimiy yoqib qo'yish shart emas — yuqoridagi tekshiruv yetimlarni loglarda
+# baribir ko'rsatib turadi, --fix esa yozuv o'chiradi.
+#
+# Ma'lumot yo'qotmaydi: storage javob bermasa buyruq "tekshirib bo'lmadi" deb
+# o'tkazib yuboradi va HECH NIMANI o'chirmaydi. Bu ataylab sinab ko'rilgan —
+# S3 uzilishi taqlid qilinganda 185 ta yozuvning hech biriga tegilmadi.
+FIX_MEDIA_LC=$(printf '%s' "${FIX_ORPHAN_MEDIA:-}" | tr '[:upper:]' '[:lower:]')
+if [ "$FIX_MEDIA_LC" = "true" ] || [ "$FIX_MEDIA_LC" = "1" ] || [ "$FIX_MEDIA_LC" = "yes" ]; then
+  echo "════════ YETIM YOZUVLARNI TUZATISH (FIX_ORPHAN_MEDIA=$FIX_ORPHAN_MEDIA) ════════"
+  timeout 180 python manage.py check_media --rows --fix \
+    || echo "!! check_media --fix xato yoki 180s timeout (yuqoriga qarang)"
+  echo "════════ TUGADI — endi Render'da FIX_ORPHAN_MEDIA=false qiling ════════"
+fi
+
 # ── Markaziy katalog (avtomatik, bir martalik) ──
 # Bepul tarifda Shell yo'q — katalog bo'sh bo'lsa New/ manbasidan shu yerda
 # import qilinadi (import_catalog idempotent; rasm faqat yo'q bo'lsa yoziladi).

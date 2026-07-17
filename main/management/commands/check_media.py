@@ -165,7 +165,7 @@ class Command(BaseCommand):
                 '--fix YOQILGAN: yetim yozuvlar tuzatiladi (fayllarga tegilmaydi).'))
             w(line)
 
-        total = missing = blank = 0
+        total = missing = blank = unknown = 0
         orphans = []
         fixed_cleared = fixed_deleted = 0
         for model in apps.get_models():
@@ -187,11 +187,17 @@ class Command(BaseCommand):
                         continue
                     checked += 1
                     total += 1
+                    # XAVFSIZLIK: "fayl YO'Q" bilan "tekshira olmadim" ni ajratamiz.
+                    # Ilgari exists() xatosi ham `ok=False` bo'lardi — ya'ni S3
+                    # vaqtincha javob bermasa, --fix BARCHA rasm yozuvlarini
+                    # o'chirib yuborardi. Endi xato -> `unknown`, tegilmaydi.
                     try:
                         ok = default_storage.exists(val.name)
                     except Exception as exc:  # noqa: BLE001
-                        ok = False
-                        w(f'   (xato: {val.name} -> {exc})')
+                        unknown += 1
+                        w(f'   [?] {val.name} — tekshirib bo\'lmadi ({exc}); '
+                          f'tegilmadi')
+                        continue
                     if not ok:
                         missing += 1
                         miss_here += 1
@@ -211,6 +217,10 @@ class Command(BaseCommand):
         w(f"Jami tekshirildi : {total}")
         w(f"Bo'sh (rasm yo'q): {blank}")
         w(f"YETIM (storage'da YO'Q): {missing}")
+        if unknown:
+            w(self.style.WARNING(
+                f"TEKSHIRIB BO'LMADI (storage javob bermadi): {unknown} — "
+                f"ularga tegilmadi. Tarmoq tinchigach qayta ishga tushiring."))
         if orphans:
             w('')
             w('Yetim yozuvlar (saytda singan rasm sifatida ko\'rinadi):')
