@@ -2,8 +2,21 @@
 {% block title %}Mahalla — SamCity{% endblock %}
 
 {% block extra_css %}
+{% include '_map_assets.html' %}
 <style>
   .mh-home { max-width: 1080px; margin: 0 auto; }
+
+  /* ── Xaritadan tanlash ────────────────────────────────────────── */
+  #mhPickMap { height: 380px; border-radius: var(--radius); border: 1px solid var(--border);
+    z-index: 1; margin-bottom: .6rem; }
+  .mh-map-wrap { margin-bottom: 1.5rem; }
+  .mh-map-hint { color: var(--text2); font-size: .85rem; display: flex; align-items: center;
+    gap: .4rem; flex-wrap: wrap; }
+  .mahalla-label span { display: inline-block; transform: translate(-50%, -50%); white-space: nowrap;
+    font-weight: 750; font-size: .8rem; color: var(--text); text-shadow: 0 1px 3px var(--surface),
+    0 0 6px var(--surface); pointer-events: none; }
+  .mh-pop b { font-size: .95rem; }
+  .mh-pop .btn { margin-top: .6rem; width: 100%; }
 
   /* ── HERO ─────────────────────────────────────────────────────── */
   .mh-hero { position: relative; border-radius: var(--radius-xl); overflow: hidden; padding: 2.6rem 2rem 2.2rem;
@@ -77,6 +90,7 @@
 
 {% block content %}
 <div class="container mh-home">
+  {% include '_flash.html' %}
 
   <!-- ═══ HERO ═══ -->
   <div class="mh-hero reveal">
@@ -106,6 +120,21 @@
     <div class="mh-stat">
       <div class="ic-wrap" style="background:linear-gradient(140deg,var(--violet),#4338ca);"><svg class="ic"><use href="#i-chat"/></svg></div>
       <div><div class="num" style="font-size:1.05rem;">Chat &amp; e'lonlar</div><div class="lbl">Har bir mahallada faol</div></div>
+    </div>
+  </div>
+
+  {% comment %}
+  Xaritadan tanlash. Poligonlar, ranglar va Leaflet allaqachon bor edi
+  (places:neighborhoods_geojson + places/map.html), faqat mahallani BELGILASH
+  yo'li yo'q edi. Chegarasi yo'q mahalla xaritada chiqmaydi (endpoint ularni
+  filtrlaydi) — shuning uchun quyidagi kartochka grid'i zaxira sifatida qoladi.
+  {% endcomment %}
+  <div class="mh-map-wrap reveal" data-reveal-delay="80">
+    <div id="mhPickMap"></div>
+    <div class="mh-map-hint">
+      <svg class="ic"><use href="#i-pin"/></svg>
+      Xaritada mahallangizni bosing{% if not user.is_authenticated %} (belgilash uchun avval kiring){% endif %}.
+      Chegarasi belgilanmagan mahallalar xaritada ko'rinmaydi — ularni quyidagi ro'yxatdan tanlang.
     </div>
   </div>
 
@@ -177,6 +206,76 @@
     if (noRes) noRes.classList.toggle('show', visible === 0 && cards.length > 0);
     if (countEl) countEl.textContent = visible + ' ta';
   });
+})();
+
+/* ── Xaritadan mahalla tanlash ──────────────────────────────────────────────
+   Poligon naqshi places/map.html:buildMahallaLayer dan. SamMap.init SHART:
+   Yandex plitkalari EPSG:3395 da va oddiy L.map bilan poligonlar ~21 km siljib
+   ketadi (proj4leaflet CRS'ini SamMap o'rnatadi). */
+(function () {
+  var el = document.getElementById('mhPickMap');
+  if (!el || typeof SamMap === 'undefined' || typeof L === 'undefined') return;
+
+  var MY_ID = {{ my_neighborhood_json|default:"null" }};
+  var AUTHED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+  var CSRF = "{{ csrf_token }}";
+  var selectTpl = "{% url 'mahalla_select' 0 %}";
+  var detailTpl = "{% url 'mahalla_detail' 0 %}";
+  var loginUrl = "{% url 'login' %}?next={{ request.path|urlencode }}";
+
+  var map = SamMap.init('mhPickMap', { zoomLevel: 12 });
+  var bounds = [];
+
+  fetch("{% url 'places:neighborhoods_geojson' %}")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      (d.neighborhoods || []).forEach(function (n) {
+        if (!n.boundary || !n.boundary.length) return;
+        var mine = (n.id === MY_ID);
+        var base = { color: n.color, weight: mine ? 4 : 2, opacity: .9,
+                     fillColor: n.color, fillOpacity: mine ? .32 : .12 };
+        var poly = L.polygon(n.boundary, base).addTo(map);
+        bounds = bounds.concat(n.boundary);
+
+        // Tanlangan mahalla doim ajralib tursin — hover uni o'chirmasin.
+        if (!mine) {
+          poly.on('mouseover', function () { this.setStyle({ fillOpacity: .30 }); });
+          poly.on('mouseout', function () { this.setStyle({ fillOpacity: .12 }); });
+        }
+
+        var detailUrl = detailTpl.replace('/0/', '/' + n.id + '/');
+        var html = '<div class="mh-pop" style="min-width:190px"><b>' + SamMap.esc(n.name) + '</b>';
+        if (n.description) {
+          html += '<br><span style="color:var(--text2);font-size:.85em">' + SamMap.esc(n.description) + '</span>';
+        }
+        if (mine) {
+          html += '<div style="margin-top:.5rem;font-weight:700;color:' + n.color + '">✓ Mening mahallam</div>';
+        } else if (AUTHED) {
+          // Haqiqiy forma — POST + CSRF. URL shablon orqali quriladi, JS'da
+          // qattiq kodlanmaydi (places/map.html dagi naqsh).
+          html += '<form method="post" action="' + selectTpl.replace('/0/', '/' + n.id + '/') + '">'
+                + '<input type="hidden" name="csrfmiddlewaretoken" value="' + CSRF + '">'
+                + '<button type="submit" class="btn btn-accent btn-sm">Mening mahallam qilib belgilash</button>'
+                + '</form>';
+        } else {
+          html += '<a href="' + loginUrl + '" class="btn btn-outline btn-sm" style="margin-top:.6rem;">Belgilash uchun kiring</a>';
+        }
+        html += '<a href="' + detailUrl + '" style="display:inline-block;margin-top:.5rem;font-weight:700;color:'
+              + n.color + '">Mahallani ochish →</a></div>';
+        poly.bindPopup(html);
+
+        if (n.center) {
+          L.marker(n.center, { interactive: false, keyboard: false,
+            icon: L.divIcon({ className: 'mahalla-label', html: '<span>' + SamMap.esc(n.name) + '</span>', iconSize: [0, 0] })
+          }).addTo(map);
+        }
+      });
+      if (bounds.length) map.fitBounds(bounds, { padding: [20, 20] });
+    })
+    .catch(function () {
+      el.innerHTML = '<div style="padding:1rem;color:var(--text2);font-size:.85rem;">'
+        + 'Xarita yuklanmadi — mahallani quyidagi ro\'yxatdan tanlang.</div>';
+    });
 })();
 </script>
 {% endblock %}

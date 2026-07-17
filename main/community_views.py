@@ -5,9 +5,11 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from datetime import timedelta
 
-from .utils import validate_file_type, safe_json
+from .utils import validate_file_type, safe_json, ratelimit
 from .models import (
     Poll, PollOption, PollVote, PollComment,
     HelpRequest, HelpVolunteer, Neighborhood, ChatAdmin,
@@ -422,7 +424,34 @@ def mahalla_home(request):
     return render(request, 'community/mahalla_home.html', {
         'neighborhoods': Neighborhood.objects.all(),
         'my_neighborhood_id': my_id,
+        'my_neighborhood_json': safe_json(my_id),
     })
+
+
+@login_required
+@require_POST
+@ratelimit('mahalla_select', limit=20, window=60)
+def mahalla_select(request, pk):
+    """«Mening mahallam» ni belgilaydi.
+
+    Butun mahalla tizimi (poligonlar, ranglar, aholi, rasmiy e'lonlar) shu
+    maydonga tayanadi, lekin uni YOZADIGAN kod hech qayerda yo'q edi — yagona
+    yozuvchi seed_districts.py bo'lgan. Natijada mahalla_home.html:88 dagi
+    "tanlang — avtomatik belgilanadi" va'dasi bajarilmasdi, `.is-mine` /
+    "Mening mahallam" UI hech qachon chiqmasdi, va `_notify_mahalla` rasmiy
+    e'lonlarni BO'SH auditoriyaga yuborardi (`neighborhood.residents` doim bo'sh).
+    """
+    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    request.user.neighborhood = neighborhood
+    request.user.save(update_fields=['neighborhood'])
+    messages.success(request, f"«{neighborhood.name}» mahallangiz sifatida belgilandi. ✅")
+
+    nxt = request.POST.get('next') or ''
+    # Faqat o'z saytimizga — tashqi hostga yo'naltirishga ruxsat bermaymiz.
+    if nxt and url_has_allowed_host_and_scheme(
+            nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(nxt)
+    return redirect('mahalla_home')
 
 
 def mahalla_detail(request, pk):

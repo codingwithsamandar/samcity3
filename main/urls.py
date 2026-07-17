@@ -64,6 +64,7 @@ urlpatterns = [
 
     # ─── MAHALLA sahifasi (ma'lumot, e'lonlar, joylar, xarita, chat, murojaat) ─
     path('mahalla/', community_views.mahalla_home, name='mahalla_home'),
+    path('mahalla/<int:pk>/select/', community_views.mahalla_select, name='mahalla_select'),
     path('mahalla/<int:pk>/', community_views.mahalla_detail, name='mahalla_detail'),
     path('mahalla/<int:pk>/announce/', community_views.announcement_create, name='mahalla_announce'),
     path('mahalla/<int:pk>/complaint/', community_views.citizen_request_create, name='mahalla_complaint'),
