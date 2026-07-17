@@ -30,9 +30,23 @@ trap 'kill -TERM "$DAPHNE_PID" 2>/dev/null' TERM INT
 
 # ── Media storage tekshiruvi (yoz→o'qi→o'chir) ──
 # Natija shu loglarda chiqadi: rasm/media saqlanmasa sababini aniq ko'rsatadi
-# (Supabase/S3 kaliti, ACL, region, bucket). Deploy'ni bloklamaydi (|| true).
+# (Supabase/S3 kaliti, ACL, region, bucket). Deploy'ni bloklamaydi (|| echo).
+# `timeout` SHART: bu S3 ga tarmoq I/O qiladi va javob kelmasa cheksiz osilib,
+# entrypoint'ning qolgan qismini (katalog, seed) to'sib qo'yardi.
 echo "▶ Media storage tekshiruvi..."
-python manage.py check_media || echo "!! check_media xato bilan tugadi (yuqoriga qarang)"
+timeout 60 python manage.py check_media \
+  || echo "!! check_media xato yoki 60s timeout (yuqoriga qarang)"
+
+# ── Yetim rasm yozuvlari (bazada bor, storage'da YO'Q) ──
+# Yuqoridagi tekshiruv YANGI fayl yozib o'qiydi — u faqat "storage hozir
+# ishlayaptimi?" degan savolga javob beradi va yetim yozuvlarni KO'RMAYDI.
+# Ular esa foydalanuvchida singan rasm bo'lib chiqadi (topilgan misol:
+# ads/2026/06/rrr.jpg — bazada AdImage bor, Supabase 404 qaytaradi).
+# Har yozuv = 1 ta S3 HEAD so'rovi, shuning uchun timeout kattaroq.
+# Faqat o'qiydi — hech nima o'zgartirmaydi.
+echo "▶ Yetim rasm yozuvlari tekshiruvi..."
+timeout 180 python manage.py check_media --rows \
+  || echo "!! check_media --rows xato yoki 180s timeout (yuqoriga qarang)"
 
 # ── Markaziy katalog (avtomatik, bir martalik) ──
 # Bepul tarifda Shell yo'q — katalog bo'sh bo'lsa New/ manbasidan shu yerda
