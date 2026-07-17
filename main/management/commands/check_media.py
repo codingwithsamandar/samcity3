@@ -43,12 +43,17 @@ class Command(BaseCommand):
         parser.add_argument(
             '--limit', type=int, default=0,
             help='--rows uchun: har modeldan nechta yozuv tekshirilsin (0 = hammasi).')
+        parser.add_argument(
+            '--fix', action='store_true',
+            help="--rows bilan: yetim yozuvlarni tuzatadi. Ixtiyoriy maydon (blank=True) "
+                 "bo'shatiladi; faqat rasm uchun mavjud yozuv (blank=False) O'CHIRILADI. "
+                 "Fayllarga tegmaydi (ular allaqachon yo'q).")
 
     def handle(self, *args, **options):
         w = self.stdout.write
         line = '-' * 64
         if options['rows']:
-            return self._check_rows(w, line, options['limit'])
+            return self._check_rows(w, line, options['limit'], options['fix'])
         w(line)
         w('MEDIA STORAGE TEKSHIRUVI')
         w(line)
@@ -134,7 +139,7 @@ class Command(BaseCommand):
                     w(f"\n(test faylni o'chirib bo'lmadi: {exc})")
 
     # ── --rows ────────────────────────────────────────────────────────────────
-    def _check_rows(self, w, line, limit):
+    def _check_rows(self, w, line, limit, fix=False):
         """Bazadagi rasm yozuvlari storage'da chindan bormi?
 
         Yuqoridagi asosiy tekshiruvning KO'R NUQTASI shu edi: u YANGI fayl yozib
@@ -155,14 +160,21 @@ class Command(BaseCommand):
         w(f'Backend: {default_storage.__class__.__name__}')
         w(line)
 
+        if fix:
+            w(self.style.WARNING(
+                '--fix YOQILGAN: yetim yozuvlar tuzatiladi (fayllarga tegilmaydi).'))
+            w(line)
+
         total = missing = blank = 0
         orphans = []
+        fixed_cleared = fixed_deleted = 0
         for model in apps.get_models():
             fields = [f for f in model._meta.get_fields()
                       if isinstance(f, FileField)]
             if not fields:
                 continue
             names = [f.name for f in fields]
+            blank_ok = {f.name: f.blank for f in fields}
             qs = model._default_manager.all().only('pk', *names)
             if limit:
                 qs = qs[:limit]
@@ -185,6 +197,11 @@ class Command(BaseCommand):
                         miss_here += 1
                         orphans.append(
                             f'{model._meta.label}#{obj.pk}.{fname} -> {val.name}')
+                        if fix:
+                            fixed_cleared, fixed_deleted = self._fix_one(
+                                w, obj, fname, blank_ok[fname],
+                                fixed_cleared, fixed_deleted)
+                            break  # yozuv o'chgan bo'lishi mumkin
             if checked:
                 mark = 'XATO' if miss_here else ' OK '
                 w(f'[{mark}] {model._meta.label:38} {checked:4} ta yozuv, '
@@ -201,10 +218,43 @@ class Command(BaseCommand):
                 w(f'  * {o}')
             if len(orphans) > 40:
                 w(f'  ... yana {len(orphans) - 40} ta')
-            self.stdout.write(self.style.WARNING(
-                "\n[NATIJA] Yetim yozuvlar bor. Storage ISHLAYAPTI, lekin bu "
-                "yozuvlar ko'rsatayotgan fayllar yo'q — ular qayta yuklanishi "
-                "yoki yozuvdan tozalanishi kerak."))
+            if fix:
+                self.stdout.write(self.style.SUCCESS(
+                    f"\n[NATIJA] Tuzatildi: {fixed_cleared} ta maydon bo'shatildi, "
+                    f"{fixed_deleted} ta yozuv o'chirildi. Singan rasmlar o'rniga "
+                    f"endi placeholder ko'rinadi."))
+            else:
+                self.stdout.write(self.style.WARNING(
+                    "\n[NATIJA] Yetim yozuvlar bor. Storage ISHLAYAPTI, lekin bu "
+                    "yozuvlar ko'rsatayotgan fayllar yo'q — ular qayta yuklanishi "
+                    "yoki yozuvdan tozalanishi kerak.\n"
+                    "Tuzatish uchun: python manage.py check_media --rows --fix"))
         else:
             self.stdout.write(self.style.SUCCESS(
                 '\n[NATIJA] Yetim yozuv yo\'q — har bir rasm yozuvi storage\'da mavjud.'))
+
+    def _fix_one(self, w, obj, fname, blank_ok, cleared, deleted):
+        """Bitta yetim yozuvni tuzatadi.
+
+        Qoida `blank` ga qarab: maydon IXTIYORIY bo'lsa (User.avatar,
+        Store.logo...) uni bo'shatamiz — shablonlar `{% if %}` bilan himoyalangan,
+        placeholder chiqadi. Maydon MAJBURIY bo'lsa (AdImage/StoreImage/
+        ProductImage/PlaceImage — yozuv faqat rasm uchun mavjud) yozuvning O'ZINI
+        o'chiramiz: bo'sh qoldirish `{{ ad.images.first.image.url }}` ni
+        `ValueError: attribute has no file associated with it` ga aylantiradi,
+        ya'ni singan rasm 500 XATOSIGA aylanardi — bu battar.
+        """
+        label, pk = obj._meta.label, obj.pk  # delete() pk'ni None qiladi
+        try:
+            if blank_ok:
+                setattr(obj, fname, '')
+                obj.save(update_fields=[fname])
+                w(f"   [tuzatildi] {label}#{pk}.{fname} bo'shatildi")
+                return cleared + 1, deleted
+            obj.delete()
+            w(f'   [tuzatildi] {label}#{pk} yozuvi o\'chirildi '
+              f'(faqat rasm uchun mavjud edi)')
+            return cleared, deleted + 1
+        except Exception as exc:  # noqa: BLE001
+            w(f'   [XATO] {obj._meta.label}#{obj.pk} tuzatilmadi: {exc}')
+            return cleared, deleted
