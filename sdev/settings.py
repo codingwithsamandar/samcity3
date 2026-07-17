@@ -524,6 +524,12 @@ JAZZMIN_SETTINGS = {
     'copyright': 'SamCity',
     'search_model': ['main.User', 'main.Ad', 'delivery.Store', 'delivery.Order'],
 
+    # ── Yuqori menyu (navbar): OTP kodlar eng yuqorida, har sahifada ko'rinadi ──
+    'topmenu_links': [
+        {'name': '📩 OTP kodlar', 'url': 'admin:main_otpcode_changelist',
+         'permissions': ['main.view_otpcode']},
+    ],
+
     # ── Bo'limlar tartibi: chapdagi menyuda app'lar shu tartibda chiqadi ──
     'order_with_respect_to': [
         'main',          # Asosiy — Mahalla, E'lonlar, Foydalanuvchilar
@@ -538,8 +544,9 @@ JAZZMIN_SETTINGS = {
     ],
 
     # ── Yon menyuni soddalashtirish: texnik/ichki modellarni yashirish ──
+    # (OTPCode YASHIRILMAYDI — kelgan kodlarni ko'rish uchun ochiq turadi)
     'hide_models': [
-        'main.OTPCode', 'main.SearchQuery', 'main.AdFavorite', 'main.AdInquiry',
+        'main.SearchQuery', 'main.AdFavorite', 'main.AdInquiry',
         'main.PollVote', 'main.PollComment',
         'main.HelpVolunteer',
         'delivery.CartItem', 'delivery.OrderItem', 'delivery.ProductImage',
@@ -556,6 +563,7 @@ JAZZMIN_SETTINGS = {
 
         'main': 'fas fa-city',
         'main.User': 'fas fa-user',
+        'main.OTPCode': 'fas fa-sms',
         'main.Ad': 'fas fa-bullhorn',
         'main.AdCampaign': 'fas fa-ad',
         'main.AdCampaignDelivery': 'fas fa-paper-plane',

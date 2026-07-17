@@ -96,9 +96,34 @@ class UserAdmin(BaseUserAdmin):
 # ── OTP ──────────────────────────────────────────────────────────────────────
 @admin.register(OTPCode)
 class OTPCodeAdmin(admin.ModelAdmin):
-    list_display = ('phone', 'code', 'used', 'expires_at', 'created_at')
-    list_filter = ('used',)
-    search_fields = ('phone',)
+    """Kelgan OTP tasdiqlash kodlari — eng yangisi tepada. Faqat o'qish
+    (kodlar ilova orqali yaratiladi, qo'lda emas)."""
+    list_display = ('code_display', 'phone', 'status_badge', 'created_at', 'expires_at')
+    list_filter = ('used', 'created_at')
+    search_fields = ('phone', 'code')
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'
+    readonly_fields = ('id', 'phone', 'code', 'attempts', 'expires_at', 'used', 'created_at')
+
+    @admin.display(description='Kod', ordering='code')
+    def code_display(self, obj):
+        from django.utils.html import format_html
+        return format_html(
+            '<span style="font-size:1.15rem;font-weight:700;letter-spacing:3px;'
+            'font-family:monospace;">{}</span>', obj.code)
+
+    @admin.display(description='Holat')
+    def status_badge(self, obj):
+        from django.utils import timezone
+        from django.utils.html import format_html
+        if obj.used:
+            return format_html('<span style="color:#6b7280;">✔ Ishlatilgan</span>')
+        if obj.expires_at and obj.expires_at < timezone.now():
+            return format_html('<span style="color:#c0392b;">⏰ Muddati o‘tgan</span>')
+        return format_html('<span style="color:#0e9f6e;font-weight:700;">● Faol</span>')
+
+    def has_add_permission(self, request):
+        return False  # kodlar ro'yxatdan/loginda avtomatik yaratiladi
 
 
 # ── ADS ──────────────────────────────────────────────────────────────────────
