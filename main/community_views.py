@@ -9,7 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 
-from .utils import validate_file_type, safe_json, ratelimit
+from .utils import validate_file_type, clean_image, safe_json, ratelimit
 from .models import (
     Poll, PollOption, PollVote, PollComment,
     HelpRequest, HelpVolunteer, Neighborhood, ChatAdmin,
@@ -106,8 +106,7 @@ def district_announce(request, pk):
         img = request.FILES.get('image')
         if img:
             try:
-                validate_file_type(img)
-                ann.image = img
+                ann.image = clean_image(img)
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
         ann.save()
@@ -280,8 +279,7 @@ def help_create(request):
         help_image = request.FILES.get('image')
         if help_image:
             try:
-                validate_file_type(help_image)
-                req.image = help_image
+                req.image = clean_image(help_image)
             except Exception as e:
                 messages.error(request, f"Rasm: {str(e)}")
             req.save(update_fields=['image'])
@@ -553,8 +551,7 @@ def announcement_create(request, pk):
         img = request.FILES.get('image')
         if img:
             try:
-                validate_file_type(img)
-                ann.image = img
+                ann.image = clean_image(img)
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
         ann.save()
@@ -583,8 +580,7 @@ def citizen_request_create(request, pk):
         img = request.FILES.get('image')
         if img:
             try:
-                validate_file_type(img)
-                req.image = img
+                req.image = clean_image(img)
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
         req.save()

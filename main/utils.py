@@ -1,14 +1,22 @@
+import io
 import os
 import json
 import functools
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
+from django.core.files.base import ContentFile
 from django.http import JsonResponse, HttpResponse
 from django.utils.safestring import mark_safe
 
 # Allowed image extensions and MIME-style headers
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-MAX_FILE_SIZE_MB = 5
+# 5MB edi — bu oddiy telefon rasmini ham RAD ETARDI: o'lchandi, 12 MP / sifat 90
+# JPEG = ~6.5MB, 24 MP = ~13MB. Ya'ni foydalanuvchi rasm yuklolmasdi. Endi
+# yuklangach `downscale_image` uni ~150-400KB ga tushiradi, shuning uchun katta
+# kirishni qabul qilish xavfsiz. Bombalardan `MAX_IMAGE_PIXELS` himoya qiladi,
+# dekodlash RAM'ini esa JPEG uchun `Image.draft()` past ushlab turadi.
+# (`DATA_UPLOAD_MAX_MEMORY_SIZE` fayllarga taalluqli emas — ular alohida.)
+MAX_FILE_SIZE_MB = 12
 # Piksel chegarasi. Hajm chegarasi (5MB) buni USHLAMAYDI: siqilgan rasm kichkina
 # bo'lib, ochilganda ulkan bo'lishi mumkin (dekompressiya bombasi). Sinovda
 # 164KB lik PNG o'zini 13000x13000 (169 MP) deb e'lon qilib o'tib ketdi — u
@@ -71,6 +79,105 @@ def validate_file_type(file):
     except Exception:
         raise ValidationError("Fayl haqiqiy rasm emas yoki buzilgan.")
     return True
+
+
+def downscale_image(f, max_dim=1600, quality=82):
+    """Rasmni `max_dim` ichiga siqadi. Yangi fayl obyektini yoki ORIGINALNI qaytaradi.
+
+    Nima uchun: telefon rasmi 4000x3000 / 5MB bo'ladi, biz esa uni 100-1000px
+    katakda ko'rsatamiz. Shofirkonda mobil internetdan 6 ta shunday rasm ~30MB.
+    1600px @ q82 odatda ~90% ni qirqadi.
+
+    Muhim qoidalar (adversarial tekshiruvda aniqlangan):
+    * FORMAT SAQLANADI. JPEG'ga majburlash shaffof PNG logo'ni `OSError: cannot
+      write mode RGBA as JPEG` qiladi, `.convert('RGB')` esa uni qora quti qiladi.
+      Format saqlansa kengaytma ham o'zgarmaydi — S3 ContentType nomdan olinadi.
+    * GIF'ga tegilmaydi (animatsiya yo'qoladi).
+    * YANGI obyekt qaytariladi, original mutatsiya QILINMAYDI: `file.file` ni
+      BytesIO bilan almashtirish FileSystemStorage'da >2.5MB yuklamalarni
+      buzadi (TemporaryUploadedFile.temporary_file_path() -> AttributeError),
+      S3'da esa ishlaydi — ya'ni dev'da yiqilib, prod'da o'tib ketadigan farq.
+    * Har qanday xatoda original qaytariladi — kichraytirish yuklashni
+      hech qachon buzmasligi kerak.
+
+    Chaqirishdan OLDIN `validate_file_type` o'tgan bo'lishi shart (u piksel
+    chegarasini tekshiradi — bu yerda dekod qilamiz).
+    """
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        return f
+    name = getattr(f, 'name', '') or ''
+    ext = os.path.splitext(name)[1].lower()
+    if ext == '.gif':
+        return f
+    try:
+        pos = f.tell() if hasattr(f, 'tell') else None
+        try:
+            im = Image.open(f)
+            fmt = im.format                     # 'JPEG' | 'PNG' | 'WEBP'
+            if not fmt or fmt == 'GIF':
+                return f
+            if max(im.size) <= max_dim:
+                return f                        # allaqachon kichik — tegmaymiz
+            if fmt == 'JPEG':
+                # JPEG'ni to'liq o'lchamda dekod QILMAYMIZ: draft() uni DCT
+                # darajasida 1/2..1/8 ga kichraytirib ochadi. Render free tier'da
+                # (512MB) bu hal qiluvchi — 24 MP foto to'liq ochilsa ~72MB RAM.
+                im.draft('RGB', (max_dim, max_dim))
+            im = ImageOps.exif_transpose(im)    # telefon rasmi yonboshlab qolmasin
+            im.thumbnail((max_dim, max_dim), Image.LANCZOS)
+            buf = io.BytesIO()
+            save_kw = {'optimize': True}
+            if fmt == 'JPEG':
+                save_kw['quality'] = quality
+                save_kw['progressive'] = True
+                if im.mode not in ('RGB', 'L'):
+                    im = im.convert('RGB')      # JPEG alfa qo'llamaydi
+            elif fmt == 'WEBP':
+                save_kw['quality'] = quality
+            im.save(buf, fmt, **save_kw)
+        finally:
+            if pos is not None and hasattr(f, 'seek'):
+                f.seek(pos)
+        data = buf.getvalue()
+        if len(data) >= getattr(f, 'size', len(data) + 1):
+            return f                            # kichraymadi — originalni qoldiramiz
+        return ContentFile(data, name=name)
+    except Exception:
+        return f
+
+
+# Profillar: rasm nima uchun ishlatilishiga qarab.
+#   PHOTO   — galereya/e'lon fotosi, katta ko'rsatiladi
+#   PORTRAIT— avatar/egasi rasmi, kichik doira
+#   LOGO    — do'kon/xizmat logosi; shaffoflik saqlanadi (format o'zgarmagani uchun)
+IMAGE_PROFILES = {
+    'photo': (1600, 82),
+    'portrait': (1024, 82),
+    'logo': (512, 88),
+}
+
+
+def clean_image(f, profile='photo'):
+    """Yuklangan rasmni TEKSHIRADI va kichraytirib qaytaradi.
+
+    Yaroqsiz bo'lsa `ValidationError` (validate_file_type bilan bir xil).
+    Chaqiruvchi QAYTGAN qiymatni ishlatishi shart:
+
+        img = clean_image(request.FILES['logo'], 'logo')
+        store.logo = img
+
+    Nega qaytariladi, mutatsiya emas: yuklangan faylning ichki `file` ini
+    almashtirish >2.5MB yuklamalarda FileSystemStorage'ni yiqitadi
+    (TemporaryUploadedFile.temporary_file_path() -> AttributeError), S3'da esa
+    ishlaydi — dev'da yiqilib prod'da o'tib ketadigan farq.
+    """
+    if not f:
+        return f
+    validate_file_type(f)          # piksel chegarasi shu yerda — dekoddan oldin
+    max_dim, quality = IMAGE_PROFILES.get(profile, IMAGE_PROFILES['photo'])
+    return downscale_image(f, max_dim, quality)
 
 
 def check_images(*files):

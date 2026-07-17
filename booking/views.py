@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from main.utils import validate_file_type
+from main.utils import validate_file_type, clean_image
 from .models import (
     Venue, VenueBooking, VenueService, VenueStaff,
     VENUE_TYPE_CHOICES, SLOT_TYPES, MAX_PENALTY_PERCENT,
@@ -299,8 +299,7 @@ def _apply_venue_fields(request, venue):
     venue_image = request.FILES.get('image')
     if venue_image:
         try:
-            validate_file_type(venue_image)
-            venue.image = venue_image
+            venue.image = clean_image(venue_image)
         except Exception as e:
             messages.error(request, f"Rasm: {str(e)}")
     venue.save()
@@ -519,8 +518,7 @@ def staff_add(request, pk):
         photo = request.FILES.get('photo')
         if photo:
             try:
-                validate_file_type(photo)
-                st.photo = photo
+                st.photo = clean_image(photo, 'portrait')
             except Exception:
                 pass
         st.save()

@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from main.utils import check_images
+from main.utils import check_images, clean_image
 
 from main.models import (
     Neighborhood, NeighborhoodAnnouncement, CitizenRequest,
@@ -99,7 +99,7 @@ class AnnouncementCreateView(APIView):
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         ann = NeighborhoodAnnouncement.objects.create(
             neighborhood=nb, title=title, text=text, created_by=request.user,
-            image=img)
+            image=clean_image(img))
         try:
             from main.community_views import _notify_mahalla
             _notify_mahalla(nb, f"📢 Mahalla e'loni: {title[:60]}",
@@ -151,7 +151,7 @@ class DistrictAnnounceView(APIView):
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         ann = DistrictAnnouncement.objects.create(
             district=district, title=title, text=text, created_by=request.user,
-            image=img)
+            image=clean_image(img))
         try:
             from main.community_views import _notify_district
             sent = _notify_district(
@@ -196,7 +196,7 @@ class ComplaintListCreateView(APIView):
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         req = CitizenRequest.objects.create(
             neighborhood=nb, user=request.user, category=category,
-            title=title, text=text, image=img)
+            title=title, text=text, image=clean_image(img))
         try:
             from main.community_views import _notify_neighborhood_admins
             _notify_neighborhood_admins(nb, f"🗣 Yangi murojaat: {title[:50]}",

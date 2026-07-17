@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from main.utils import validate_file_type
+from main.utils import validate_file_type, clean_image
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
     DeliveryDriver, DriverLocation, DriverReview, StoreUpdate, StoreSubscription,
@@ -607,8 +607,7 @@ def _save_gallery_images(request, store):
             f"qo'shilmadi (jami {StoreImage.MAX_IMAGES} tagacha).")
     for f in files[:remaining]:
         try:
-            validate_file_type(f)
-            StoreImage.objects.create(store=store, image=f)
+            StoreImage.objects.create(store=store, image=clean_image(f))
         except Exception as e:
             messages.warning(request, f"Galereya rasmi: {str(e)}")
 
@@ -649,15 +648,13 @@ def store_create(request):
         logo = request.FILES.get('logo')
         if logo:
             try:
-                validate_file_type(logo)
-                store.logo = logo
+                store.logo = clean_image(logo, 'logo')
             except Exception as e:
                 messages.error(request, f"Logo: {str(e)}")
         owner_photo = request.FILES.get('owner_photo')
         if owner_photo:
             try:
-                validate_file_type(owner_photo)
-                store.owner_photo = owner_photo
+                store.owner_photo = clean_image(owner_photo, 'portrait')
             except Exception as e:
                 messages.error(request, f"Egasi rasmi: {str(e)}")
         store.save()
@@ -700,15 +697,13 @@ def store_edit(request, pk):
         logo = request.FILES.get('logo')
         if logo:
             try:
-                validate_file_type(logo)
-                store.logo = logo
+                store.logo = clean_image(logo, 'logo')
             except Exception as e:
                 messages.error(request, f"Logo: {str(e)}")
         owner_photo = request.FILES.get('owner_photo')
         if owner_photo:
             try:
-                validate_file_type(owner_photo)
-                store.owner_photo = owner_photo
+                store.owner_photo = clean_image(owner_photo, 'portrait')
             except Exception as e:
                 messages.error(request, f"Egasi rasmi: {str(e)}")
         store.save()
@@ -747,7 +742,7 @@ def store_announcement_create(request, pk):
     image = request.FILES.get('image')
     if image:
         try:
-            validate_file_type(image)
+            image = clean_image(image)
         except Exception as e:
             messages.warning(request, f"Rasm: {str(e)}")
             image = None
@@ -958,8 +953,7 @@ def product_custom_create(request, store_pk):
         img = request.FILES.get('image')
         if img:
             try:
-                validate_file_type(img)
-                ProductImage.objects.create(product=product, image=img)
+                ProductImage.objects.create(product=product, image=clean_image(img))
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
         create_store_update(store, 'new_product', product=product,
@@ -996,8 +990,7 @@ def product_edit(request, pk):
         img = request.FILES.get('image')
         if img:
             try:
-                validate_file_type(img)
-                ProductImage.objects.create(product=product, image=img)
+                ProductImage.objects.create(product=product, image=clean_image(img))
             except Exception as e:
                 messages.warning(request, f"Rasm: {str(e)}")
 
@@ -1093,8 +1086,7 @@ def _save_catalog_product(request, obj):
     img = request.FILES.get('image')
     if img:
         try:
-            validate_file_type(img)
-            obj.image = img
+            obj.image = clean_image(img)
         except Exception as e:
             messages.warning(request, f"Rasm: {str(e)}")
     obj.save()

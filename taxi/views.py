@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext as _
 
-from main.utils import validate_file_type
+from main.utils import validate_file_type, clean_image
 from .models import (
     TaxiService, ServiceReview, Taxist, Route, TaxistReview,
     Car, Trip, Payment,
@@ -459,8 +459,7 @@ def _save_taxist_from_post(request, taxist):
     photo = request.FILES.get('photo')
     if photo:
         try:
-            validate_file_type(photo)
-            taxist.photo = photo
+            taxist.photo = clean_image(photo, 'portrait')
         except Exception as e:
             messages.error(request, f"Foto: {str(e)}")
     taxist.save()

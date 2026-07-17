@@ -13,7 +13,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, F, Q, Sum
 from .models import Ad, AdImage, User, JobAd, ResumeAd, UtilityPayment, BoostPayment, OTPCode
 import logging
-from .utils import validate_file_type, ratelimit
+from .utils import validate_file_type, clean_image, ratelimit
 from sms.backends import send_sms
 from telegrambot.delivery import try_send_telegram, telegram_connect_url
 
@@ -370,8 +370,7 @@ def profile_edit(request):
 
         if avatar:
             try:
-                validate_file_type(avatar)
-                user.avatar = avatar
+                user.avatar = clean_image(avatar, 'portrait')
                 user.avatar_url = ''
             except Exception as e:
                 messages.error(request, f"Rasm yuklashda xatolik: {str(e)}")
@@ -519,8 +518,7 @@ def ad_create(request):
 
         for i, img in enumerate(images[:10]):
             try:
-                validate_file_type(img)
-                AdImage.objects.create(ad=ad, image=img, order=i)
+                AdImage.objects.create(ad=ad, image=clean_image(img), order=i)
             except Exception as e:
                 messages.warning(request, f"Rasm yuklashda xatolik: {str(e)}")
 
@@ -629,8 +627,7 @@ def ad_edit(request, pk):
         existing_count = ad.images.count()
         for i, img in enumerate(new_images[:max(0, 10 - existing_count)]):
             try:
-                validate_file_type(img)
-                AdImage.objects.create(ad=ad, image=img, order=existing_count + i)
+                AdImage.objects.create(ad=ad, image=clean_image(img), order=existing_count + i)
             except Exception as e:
                 messages.warning(request, f"Rasm yuklashda xatolik: {str(e)}")
 

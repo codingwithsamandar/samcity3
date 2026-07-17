@@ -16,7 +16,7 @@ from delivery.models import (
     CheckoutGroup, CatalogProduct, get_active_cart,
 )
 from delivery.feed import create_store_update
-from main.utils import check_images
+from main.utils import check_images, clean_image
 from .throttles import CheckoutThrottle
 from .delivery_serializers import (
     StoreListSerializer, StoreDetailSerializer, ProductSerializer,
@@ -417,12 +417,12 @@ class MyStoresView(APIView):
             category=cat, is_active=True,
         )
         if request.FILES.get('logo'):
-            store.logo = request.FILES['logo']
+            store.logo = clean_image(request.FILES['logo'], 'logo')
         if request.FILES.get('owner_photo'):
-            store.owner_photo = request.FILES['owner_photo']
+            store.owner_photo = clean_image(request.FILES['owner_photo'], 'portrait')
         store.save()
         for f in gallery:
-            StoreImage.objects.create(store=store, image=f)
+            StoreImage.objects.create(store=store, image=clean_image(f))
         return Response(StoreDetailSerializer(store, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
 
@@ -455,9 +455,9 @@ class MyStoreDetailView(APIView):
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
 
         if request.FILES.get('logo'):
-            store.logo = request.FILES['logo']
+            store.logo = clean_image(request.FILES['logo'], 'logo')
         if request.FILES.get('owner_photo'):
-            store.owner_photo = request.FILES['owner_photo']
+            store.owner_photo = clean_image(request.FILES['owner_photo'], 'portrait')
         store.save()
 
         remove_ids = request.data.getlist('remove_image') if hasattr(request.data, 'getlist') else []
@@ -465,7 +465,7 @@ class MyStoreDetailView(APIView):
             StoreImage.objects.filter(store=store, pk__in=remove_ids).delete()
         remaining = StoreImage.MAX_IMAGES - store.images.count()
         for f in gallery[:max(remaining, 0)]:
-            StoreImage.objects.create(store=store, image=f)
+            StoreImage.objects.create(store=store, image=clean_image(f))
 
         return Response(StoreDetailSerializer(store, context={'request': request}).data)
 
@@ -631,7 +631,7 @@ class StoreAnnouncementCreateView(APIView):
         if err:
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         update = create_store_update(
-            store, 'announcement', text=text, image=img)
+            store, 'announcement', text=text, image=clean_image(img))
         return Response(StoreUpdateSerializer(update, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
 

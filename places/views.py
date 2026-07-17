@@ -468,15 +468,13 @@ def _apply(request, place):
     img = request.FILES.get('image')
     if img:
         try:
-            validate_file_type(img)
-            place.image = img
+            place.image = clean_image(img)
         except Exception as e:
             messages.error(request, f"Rasm: {str(e)}")
     place.save()
     for g in request.FILES.getlist('gallery')[:8]:
         try:
-            validate_file_type(g)
-            PlaceImage.objects.create(place=place, image=g)
+            PlaceImage.objects.create(place=place, image=clean_image(g))
         except Exception as e:
             messages.warning(request, f"Galereya rasmi: {str(e)}")
 
