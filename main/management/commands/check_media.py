@@ -32,11 +32,23 @@ def _mask(value: str) -> str:
 
 
 class Command(BaseCommand):
-    help = "Media storage backendini uchidan-uchiga tekshiradi (yoz/o'qi/o'chir)."
+    help = ("Media storage backendini uchidan-uchiga tekshiradi (yoz/o'qi/o'chir). "
+            "--rows bilan bazadagi mavjud rasm yozuvlarini ham tekshiradi.")
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--rows', action='store_true',
+            help="Bazadagi HAR BIR rasm yozuvi storage'da chindan bormi — tekshiradi "
+                 "(yetim yozuvlar = saytda singan rasm).")
+        parser.add_argument(
+            '--limit', type=int, default=0,
+            help='--rows uchun: har modeldan nechta yozuv tekshirilsin (0 = hammasi).')
 
     def handle(self, *args, **options):
         w = self.stdout.write
         line = '-' * 64
+        if options['rows']:
+            return self._check_rows(w, line, options['limit'])
         w(line)
         w('MEDIA STORAGE TEKSHIRUVI')
         w(line)
@@ -120,3 +132,79 @@ class Command(BaseCommand):
                     w(f"\n(test fayl o'chirildi: {saved_name})")
                 except Exception as exc:  # noqa: BLE001
                     w(f"\n(test faylni o'chirib bo'lmadi: {exc})")
+
+    # ── --rows ────────────────────────────────────────────────────────────────
+    def _check_rows(self, w, line, limit):
+        """Bazadagi rasm yozuvlari storage'da chindan bormi?
+
+        Yuqoridagi asosiy tekshiruvning KO'R NUQTASI shu edi: u YANGI fayl yozib
+        o'qiydi, ya'ni "storage hozir ishlayaptimi?" degan savolga javob beradi va
+        "ISHLAYAPTI" deb yozadi — holbuki bazada storage'da mavjud bo'lmagan
+        faylga ishora qiluvchi yetim yozuvlar bo'lishi mumkin. Foydalanuvchi
+        aynan o'shalarni singan rasm sifatida ko'radi.
+
+        Sabablari: eski deploy'da efemer diskdan S3'ga o'tilgan (fayllar
+        ko'chirilmagan), yuklash yarim qolgan, yoki fayl storage'dan qo'lda
+        o'chirilgan.
+        """
+        from django.apps import apps
+        from django.db.models import FileField
+
+        w(line)
+        w('BAZADAGI RASM YOZUVLARI TEKSHIRUVI (--rows)')
+        w(f'Backend: {default_storage.__class__.__name__}')
+        w(line)
+
+        total = missing = blank = 0
+        orphans = []
+        for model in apps.get_models():
+            fields = [f for f in model._meta.get_fields()
+                      if isinstance(f, FileField)]
+            if not fields:
+                continue
+            names = [f.name for f in fields]
+            qs = model._default_manager.all().only('pk', *names)
+            if limit:
+                qs = qs[:limit]
+            checked = miss_here = 0
+            for obj in qs.iterator():
+                for fname in names:
+                    val = getattr(obj, fname, None)
+                    if not val or not getattr(val, 'name', ''):
+                        blank += 1
+                        continue
+                    checked += 1
+                    total += 1
+                    try:
+                        ok = default_storage.exists(val.name)
+                    except Exception as exc:  # noqa: BLE001
+                        ok = False
+                        w(f'   (xato: {val.name} -> {exc})')
+                    if not ok:
+                        missing += 1
+                        miss_here += 1
+                        orphans.append(
+                            f'{model._meta.label}#{obj.pk}.{fname} -> {val.name}')
+            if checked:
+                mark = 'XATO' if miss_here else ' OK '
+                w(f'[{mark}] {model._meta.label:38} {checked:4} ta yozuv, '
+                  f'{miss_here} ta yo\'q')
+
+        w(line)
+        w(f"Jami tekshirildi : {total}")
+        w(f"Bo'sh (rasm yo'q): {blank}")
+        w(f"YETIM (storage'da YO'Q): {missing}")
+        if orphans:
+            w('')
+            w('Yetim yozuvlar (saytda singan rasm sifatida ko\'rinadi):')
+            for o in orphans[:40]:
+                w(f'  * {o}')
+            if len(orphans) > 40:
+                w(f'  ... yana {len(orphans) - 40} ta')
+            self.stdout.write(self.style.WARNING(
+                "\n[NATIJA] Yetim yozuvlar bor. Storage ISHLAYAPTI, lekin bu "
+                "yozuvlar ko'rsatayotgan fayllar yo'q — ular qayta yuklanishi "
+                "yoki yozuvdan tozalanishi kerak."))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                '\n[NATIJA] Yetim yozuv yo\'q — har bir rasm yozuvi storage\'da mavjud.'))
