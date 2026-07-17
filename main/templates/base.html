@@ -170,6 +170,30 @@
   .empty-state .icon .ic { width: 38px; height: 38px; }
   .empty-state h3 { font-size: 1.2rem; color: var(--text); margin-bottom: 0.5rem; }
 
+  /* ── GALLERY ─────────────────────────────────────────────────────
+     ad_detail.html dan ko'chirildi: do'kon galereyasi ham aynan shu
+     komponentni ishlatadi. Ikki nusxa bo'lsa, ular ajralib ketardi. */
+  .gallery-main { border-radius: var(--radius); overflow: hidden; background: var(--surface); aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center; font-size: 4rem; margin-bottom: 0.75rem; cursor: zoom-in; }
+  .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+  .gallery-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin; }
+  .gallery-thumb { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; flex-shrink: 0;
+    border: 2px solid transparent; cursor: pointer; background: var(--surface); display: flex;
+    align-items: center; justify-content: center; padding: 0; }
+  .gallery-thumb.active { border-color: var(--accent); }
+  .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Lightbox — rasmni to'liq ko'rish. Avval galereya 100x100 kesilgan
+     kvadratlardan iborat edi va kattalashtirishning imkoni yo'q edi. */
+  .lightbox { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.88);
+    display: none; align-items: center; justify-content: center; padding: 2rem; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-sm); }
+  .lightbox-x { position: absolute; top: 1rem; right: 1rem; width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,.15); color: #fff; border: 0; cursor: pointer; display: grid; place-items: center; }
+  .lightbox-x:hover { background: rgba(255,255,255,.3); }
+  .lightbox-x .ic { width: 22px; height: 22px; }
+
   /* ── PAGINATION ──────────────────────────────────────────────── */
   .pagination { display: flex; gap: 0.4rem; justify-content: center; margin-top: 2.25rem; flex-wrap: wrap; }
   .pagination a, .pagination span { padding: 0.58rem 0.95rem; border-radius: var(--radius-sm); font-size: 0.875rem; background: #fff; border: 1px solid var(--border); color: var(--text2); font-weight: 600; }
@@ -1382,6 +1406,48 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   window.addEventListener('appinstalled', function () {
     if (installBanner) installBanner.style.display = 'none';
     deferredInstallPrompt = null;
+  });
+})();
+</script>
+
+{# Global lightbox: `.gallery-main` bo'lgan har qanday sahifa ishlatadi. #}
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="{% trans 'Rasmni ko\'rish' %}">
+  <button type="button" class="lightbox-x" id="lightboxX" aria-label="{% trans 'Yopish' %}"><svg class="ic"><use href="#i-x"/></svg></button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+<script>
+(function () {
+  var box = document.getElementById('lightbox');
+  var img = document.getElementById('lightboxImg');
+  if (!box || !img) return;
+  var lastFocus = null;
+
+  function open(src, alt) {
+    img.src = src; img.alt = alt || '';
+    box.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    lastFocus = document.activeElement;
+    document.getElementById('lightboxX').focus();
+  }
+  function close() {
+    box.classList.remove('open');
+    document.body.style.overflow = '';
+    img.src = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  // Delegatsiya: galereya rasmi keyin almashsa ham (switchImg) ishlayveradi.
+  document.addEventListener('click', function (e) {
+    var main = e.target.closest ? e.target.closest('.gallery-main') : null;
+    if (main) {
+      var el = main.querySelector('img');
+      if (el && el.src) open(el.src, el.alt);
+      return;
+    }
+    if (e.target === box || (e.target.closest && e.target.closest('#lightboxX'))) close();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && box.classList.contains('open')) close();
   });
 })();
 </script>

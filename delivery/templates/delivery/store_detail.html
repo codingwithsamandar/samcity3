@@ -51,12 +51,41 @@
   {% endif %}
 
   {% if gallery %}
+  {% comment %}
+  Avval galereya 100x100 kesilgan kvadratlar edi: bosib bo'lmasdi, kattalashtirib
+  ham bo'lmasdi — do'kon vitrinasi shu o'lchamda umuman o'qilmaydi. Endi
+  base.html dagi .gallery-main/.gallery-thumbs komponenti (ad_detail bilan bir xil)
+  + global lightbox.
+  {% endcomment %}
   <div class="card card-pad" style="margin-bottom:1.5rem;">
     <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.6rem;">Galereya</h3>
-    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-      {% for img in gallery %}<img src="{{ img.image.url }}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;">{% endfor %}
+    <div class="gallery-main" id="stMain" title="Kattalashtirish uchun bosing">
+      <img src="{{ gallery.0.image.url }}" alt="{{ store.name }} — galereya rasmi" id="stMainImg">
     </div>
+    {% if gallery|length > 1 %}
+    <div class="gallery-thumbs">
+      {% for img in gallery %}
+      <button type="button" class="gallery-thumb{% if forloop.first %} active{% endif %}"
+              data-src="{{ img.image.url }}" aria-label="{{ forloop.counter }}-rasm">
+        <img src="{{ img.image.url }}" alt="" loading="lazy">
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
+  <script>
+  (function () {
+    var main = document.getElementById('stMainImg');
+    if (!main) return;
+    document.querySelectorAll('.gallery-thumb[data-src]').forEach(function (t) {
+      t.addEventListener('click', function () {
+        main.src = t.dataset.src;
+        document.querySelectorAll('.gallery-thumb').forEach(function (x) { x.classList.remove('active'); });
+        t.classList.add('active');
+      });
+    });
+  })();
+  </script>
   {% endif %}
 
   <div class="detail-grid">

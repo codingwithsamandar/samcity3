@@ -86,7 +86,9 @@
   .mhx .shop-row{ display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
   .mhx .shop-card{ min-width:132px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text); text-decoration:none; transition:transform .18s cubic-bezier(.2,.8,.3,1), border-color .18s; }
   .mhx .shop-card:hover{ transform:translateY(-3px); border-color:var(--turquoise); }
-  .mhx .shop-card .thumb{ height:56px; border-radius:8px; background:linear-gradient(140deg,var(--surface-3),var(--surface-2)); margin-bottom:8px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .mhx .shop-card .thumb{ height:56px; border-radius:8px; background:linear-gradient(140deg,var(--surface-3),var(--surface-2)); margin-bottom:8px; display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden; }
+  /* Avval har bir do'kon bir xil 🛒 emoji edi — logo/galereya umuman ishlatilmasdi. */
+  .mhx .shop-card .thumb img{ width:100%; height:100%; object-fit:cover; }
   .mhx .info-row2{ display:flex; justify-content:space-between; font-size:13.5px; padding:8px 0; border-bottom:1px solid var(--line); }
   .mhx .info-row2:last-child{ border-bottom:none; }
   .mhx .info-row2 span{ color:var(--text-muted); }
@@ -218,7 +220,7 @@
         </div>
         <div class="shop-row">
           {% for s in stores|slice:":8" %}
-          <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">🛒</div>{{ s.name|truncatechars:22 }}</a>
+          <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">{% if s.logo %}<img src="{{ s.logo.url }}" alt="" loading="lazy">{% elif s.images.all %}<img src="{{ s.images.all.0.image.url }}" alt="" loading="lazy">{% else %}🛒{% endif %}</div>{{ s.name|truncatechars:22 }}</a>
           {% empty %}
           <p class="empty-note">Bu mahallada hali do'kon yo'q.</p>
           {% endfor %}
@@ -255,7 +257,7 @@
 
     <div class="shop-row" style="flex-wrap:wrap;">
       {% for s in stores %}
-      <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">🛒</div><b>{{ s.name|truncatechars:24 }}</b>{% if s.address %}<div style="color:var(--text-dim);margin-top:3px;">{{ s.address|truncatechars:28 }}</div>{% endif %}</a>
+      <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">{% if s.logo %}<img src="{{ s.logo.url }}" alt="" loading="lazy">{% elif s.images.all %}<img src="{{ s.images.all.0.image.url }}" alt="" loading="lazy">{% else %}🛒{% endif %}</div><b>{{ s.name|truncatechars:24 }}</b>{% if s.address %}<div style="color:var(--text-dim);margin-top:3px;">{{ s.address|truncatechars:28 }}</div>{% endif %}</a>
       {% empty %}
       <div class="empty-block" style="width:100%;"><div class="eb-ic">🏪</div><b>Do'kon topilmadi</b><p class="empty-note">Bu mahallada hali do'kon ro'yxatga olinmagan.</p></div>
       {% endfor %}

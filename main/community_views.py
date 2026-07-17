@@ -363,10 +363,12 @@ def _stores_in(neighborhood):
         from delivery.models import Store
     except Exception:
         return []
+    # `images` prefetch — kartochkalarda logo bo'lmasa galereyaning birinchi
+    # rasmi ko'rsatiladi; prefetch'siz bu har do'kon uchun alohida so'rov bo'lardi.
     return list(
         Store.objects.filter(
             is_active=True, store_type='mahalla', neighborhood=neighborhood,
-        ).select_related('category')
+        ).select_related('category').prefetch_related('images')
     )
 
 
