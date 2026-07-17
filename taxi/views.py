@@ -2,7 +2,8 @@ import math
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Avg, Count
+from django.db import transaction
+from django.db.models import Q, Avg, Count, F
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -282,6 +283,33 @@ def order_create(request, taxist_pk):
 # ─────────────────────────────────────────────────────────────────────────────
 #  To'lov sahifasi — karta orqali (SIMULYATSIYA)
 # ─────────────────────────────────────────────────────────────────────────────
+def _settle(trip, method):
+    """Sayohatni to'langan deb yopadi va haydovchi hisoblagichini oshiradi.
+
+    `True` — shu chaqiruv to'ladi; `False` — allaqachon to'langan edi.
+
+    Qulf SHART: avval `is_paid` tekshiruvi qulfsiz edi va `trips_count` esa
+    read-modify-write (`(x or 0) + 1`) bilan oshirilardi. Sekin aloqada tugmani
+    ikki marta bosish ikkala so'rovni ham tekshiruvdan o'tkazib, haydovchining
+    "tashilgan yo'lovchi" sonini IKKI MARTA oshirardi. Naqsh
+    delivery.order_accept dan (u buni to'g'ri qiladi).
+    """
+    with transaction.atomic():
+        locked = (Trip.objects.select_for_update()
+                  .filter(pk=trip.pk, payment_status='unpaid').first())
+        if locked is None:
+            return False
+        locked.payment_method = method
+        locked.payment_status = 'paid'
+        locked.status = 'completed'
+        locked.completed_at = timezone.now()
+        locked.save(update_fields=['payment_method', 'payment_status', 'status', 'completed_at'])
+        # F(): parallel so'rovlar bir-birining qiymatini bosib ketmasin.
+        Taxist.objects.filter(pk=locked.taxist_id).update(trips_count=F('trips_count') + 1)
+    trip.refresh_from_db()
+    return True
+
+
 @login_required
 def trip_payment(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, passenger=request.user)
@@ -295,15 +323,10 @@ def trip_payment(request, trip_id):
 
         if method == 'cash':
             # Naqd to'lov — haydovchiga to'lanadi, sayohat yakunlanadi
-            trip.payment_method = 'cash'
-            trip.payment_status = 'paid'
-            trip.status = 'completed'
-            trip.completed_at = timezone.now()
-            trip.save()
+            if not _settle(trip, 'cash'):
+                messages.info(request, _("Bu sayohat allaqachon to'langan."))
+                return redirect('taxi:trip_detail', trip_id=trip.id)
             push_trip_status(trip)   # jonli yangilash
-            taxist = trip.taxist
-            taxist.trips_count = (taxist.trips_count or 0) + 1
-            taxist.save(update_fields=['trips_count'])
             messages.success(request, _("Buyurtma yakunlandi! Naqd to'lov haydovchiga beriladi. ✅"))
             return redirect('taxi:trip_detail', trip_id=trip.id)
 
@@ -332,16 +355,10 @@ def trip_payment(request, trip_id):
                 'paid_at': timezone.now(),
             },
         )
-        trip.payment_method = 'card'
-        trip.payment_status = 'paid'
-        trip.status = 'completed'
-        trip.completed_at = timezone.now()
-        trip.save()
+        if not _settle(trip, 'card'):
+            messages.info(request, _("Bu sayohat allaqachon to'langan."))
+            return redirect('taxi:trip_detail', trip_id=trip.id)
         push_trip_status(trip)   # jonli yangilash
-
-        taxist = trip.taxist
-        taxist.trips_count = (taxist.trips_count or 0) + 1
-        taxist.save(update_fields=['trips_count'])
 
         messages.success(request, _("To'lov muvaffaqiyatli amalga oshirildi! ✅"))
         return redirect('taxi:trip_detail', trip_id=trip.id)
@@ -520,6 +537,10 @@ def taxist_manage(request):
     return render(request, 'taxi/taxist_manage.html', {
         'taxist': taxist, 'car': getattr(taxist, 'car', None),
         'routes': taxist.routes.all(),
+        # `is_active=False` — admin bloklagan: yo'lovchilarga ko'rinmaydi
+        # (taxist_detail:218 buni filtrlaydi), lekin panelda hech qanday belgi
+        # yo'q edi va taksist buni bilmasdan ishlashda davom etardi.
+        'blocked': not taxist.is_active,
     })
 
 

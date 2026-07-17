@@ -8,6 +8,7 @@ from django.db.models import Q, Sum, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -597,6 +598,13 @@ def _save_gallery_images(request, store):
     if remaining <= 0:
         messages.warning(request, f"Galereyada {StoreImage.MAX_IMAGES} tadan ko'p rasm bo'lishi mumkin emas.")
         return
+    if len(files) > remaining:
+        # Avval ortiqchasi jimgina tashlab yuborilardi — foydalanuvchi 10 ta
+        # tanlab, 2 tasi saqlanganini bilmay qolardi.
+        messages.warning(
+            request,
+            f"Galereyaga yana {remaining} ta rasm sig'adi — {len(files) - remaining} tasi "
+            f"qo'shilmadi (jami {StoreImage.MAX_IMAGES} tagacha).")
     for f in files[:remaining]:
         try:
             validate_file_type(f)
@@ -631,7 +639,9 @@ def store_create(request):
             pickup_enabled='pickup_enabled' in request.POST,
             latitude=_pfloat(request.POST.get('latitude')),
             longitude=_pfloat(request.POST.get('longitude')),
-            is_active='is_active' in request.POST or True,
+            # `X in POST or True` har doim True edi (amallar tartibi) — "Faol"
+            # belgisini olib tashlash hech narsa qilmasdi. store_edit:687 to'g'ri.
+            is_active='is_active' in request.POST,
         )
         cat_id = request.POST.get('category')
         if cat_id:
@@ -1247,7 +1257,22 @@ logger = logging.getLogger(__name__)
 
 
 def _get_driver(request):
+    """Kuryer yozuvi — bloklangan bo'lsa ham qaytaradi.
+
+    `user` OneToOne: bu yerda `is_active` bo'yicha filtrlash mumkin emas, aks
+    holda bloklangan kuryer ro'yxatdan o'tish formasiga tushib, POST'da
+    IntegrityError bergan bo'lardi. Ish huquqi uchun `_get_working_driver`.
+    """
     return DeliveryDriver.objects.filter(user=request.user).first()
+
+
+def _get_working_driver(request):
+    """Buyurtma olishga haqli kuryer. `is_active=False` — admin bloklagan.
+
+    Avval `is_active` HECH QAYERDA tekshirilmasdi: bloklangan kuryer ishlashda
+    davom etar va mijozlarning manzil/telefonini ko'raverardi.
+    """
+    return DeliveryDriver.objects.filter(user=request.user, is_active=True).first()
 
 
 def _normalize_phone(phone):
@@ -1308,13 +1333,37 @@ def driver_profile(request):
 
 
 @login_required
+@require_POST
 def driver_toggle_available(request):
-    driver = _get_driver(request)
-    if driver and request.method == 'POST':
+    driver = _get_working_driver(request)
+    if driver:
         driver.is_available = not driver.is_available
         driver.save(update_fields=['is_available'])
         messages.success(request, "Holat yangilandi: " + ("Bo'sh ✅" if driver.is_available else "Band ⛔"))
     return redirect('delivery:driver_dashboard')
+
+
+def _driver_queues(driver):
+    """Kuryer panelidagi uch ro'yxat: (available, my_active, history).
+
+    `driver_dashboard` va `driver_orders_feed` AYNAN shu manbadan olishi shart —
+    ajralib ketsa, jonli yangilanish panelga mos kelmay qoladi.
+    """
+    base = Order.objects.select_related('driver')
+    # Pickup buyurtmalari haydovchini talab qilmaydi (mijoz o'zi olib ketadi) —
+    # 'ready' bo'lsa ham haydovchi ro'yxatida ko'rinmasligi kerak.
+    available = base.filter(status='ready', driver__isnull=True, fulfillment_type='delivery')
+    if not driver.is_active:
+        # Bloklangan kuryer mijozlarning manzil/telefonini ko'rmasligi kerak.
+        available = available.none()
+    # `picked_up` ham FAOL holat: mobil ilova uni o'rnatadi (api/courier_views.py)
+    # va u `assigned` dan qonuniy o'tish (ORDER_TRANSITIONS). Ro'yxatdan tushib
+    # qolgani uchun bunday buyurtma web panelda umuman ko'rinmasdi — na
+    # "qabul qilish mumkin", na tarixda — va GPS uzatish ham to'xtardi.
+    my_active = (base.prefetch_related('items')
+                 .filter(driver=driver, status__in=['assigned', 'picked_up', 'on_the_way']))
+    history = base.filter(driver=driver, status='delivered')
+    return available, my_active, history
 
 
 @login_required
@@ -1322,12 +1371,7 @@ def driver_dashboard(request):
     driver = _get_driver(request)
     if not driver:
         return redirect('delivery:driver_register')
-    base = Order.objects.select_related('driver').prefetch_related('items')
-    # Pickup buyurtmalari haydovchini talab qilmaydi (mijoz o'zi olib ketadi) —
-    # 'ready' bo'lsa ham haydovchi ro'yxatida ko'rinmasligi kerak.
-    available = base.filter(status='ready', driver__isnull=True, fulfillment_type='delivery')
-    my_active = base.filter(driver=driver, status__in=['assigned', 'on_the_way'])
-    history = base.filter(driver=driver, status='delivered')
+    available, my_active, history = _driver_queues(driver)
     earnings = history.aggregate(s=Sum('delivery_fee'))['s'] or 0
 
     # ── Davriy daromad (bugun / 7 kun / 30 kun) — delivered_at bo'yicha.
@@ -1340,47 +1384,87 @@ def driver_dashboard(request):
     earnings_month = dated.filter(delivered_at__gte=now - timedelta(days=30)).aggregate(s=Sum('delivery_fee'))['s'] or 0
 
     return render(request, 'delivery/driver_dashboard.html', {
-        'driver': driver, 'available': available, 'my_active': my_active,
+        'driver': driver, 'blocked': not driver.is_active,
+        'available': available, 'my_active': my_active,
         'history': history[:20], 'earnings': earnings, 'delivered_count': history.count(),
         'earnings_today': earnings_today, 'earnings_week': earnings_week,
         'earnings_month': earnings_month,
+        # Eski yozuvlarda `delivered_at` bo'sh (0016 migratsiyasidan oldingi):
+        # ular "Jami" ga kiradi, lekin hech qaysi davrga tushmaydi. Buni aytmasak,
+        # kuryer "Jami 500 000, bugun 0, 7 kun 0" ni ko'rib tushunolmaydi.
+        'undated_count': history.filter(delivered_at__isnull=True).count(),
     })
 
 
 @login_required
-def order_accept(request, order_id):
+@ratelimit('driver_feed', limit=30, window=60)
+def driver_orders_feed(request):
+    """Kuryer paneli uchun "qabul qilish mumkin" ro'yxati (12s polling).
+
+    Websocket EMAS: kanal qatlami InMemory (settings.py) va faqat bitta daphne
+    jarayoni borligi uchun ishlayapti — ikkinchi instance qo'shilsa jim to'xtaydi.
+    Bundan tashqari pool filtri (`is_available`, `driver__isnull`) guruh
+    broadcast'ida ifodalanmaydi: klient filtrlashi kerak bo'lardi va bu boshqa
+    kuryerlarning buyurtma ma'lumotini oshkor qilardi.
+    """
     driver = _get_driver(request)
     if not driver:
-        return redirect('delivery:driver_register')
-    if request.method == 'POST':
-        if not driver.is_available:
-            messages.error(request, "Avval «Bo'sh» holatiga o'ting.")
+        return JsonResponse({'ok': False, 'error': 'not_a_driver'}, status=403)
+    available, my_active, _ = _driver_queues(driver)
+    if not driver.is_available or not driver.is_active:
+        available = available.none()
+    return JsonResponse({
+        'ok': True,
+        # `request=request` SHART — aks holda {% csrf_token %} bo'sh chiqadi va
+        # "Qabul qilish" 403 beradi.
+        'html': render_to_string('delivery/_driver_available.html',
+                                 {'available': available}, request=request),
+        'available_count': available.count(),
+        'active_count': my_active.count(),
+    })
+
+
+@login_required
+@require_POST
+def order_accept(request, order_id):
+    # Yangi buyurtma olish — bloklangan kuryerga ruxsat yo'q.
+    driver = _get_working_driver(request)
+    if not driver:
+        if _get_driver(request):
+            messages.error(request, "Hisobingiz bloklangan — buyurtma qabul qila olmaysiz.")
             return redirect('delivery:driver_dashboard')
-        # Race-himoya: qatorni qulflaymiz — ikki haydovchi bir buyurtmani
-        # bir vaqtda ola olmaydi. Ikkinchisi qulf ochilgach bo'sh emasligini ko'radi.
-        taken = False
-        with transaction.atomic():
-            order = (Order.objects.select_for_update()
-                     .filter(pk=order_id, status='ready', driver__isnull=True,
-                             fulfillment_type='delivery').first())
-            if order is not None:
-                order.driver = driver
-                order.status = 'assigned'
-                order.assigned_at = timezone.now()
-                order.save(update_fields=['driver', 'status', 'assigned_at'])
-                taken = True
-        if taken:
-            push_order_status(order)
-            messages.success(request, "Buyurtma qabul qilindi! 🚗")
-        else:
-            messages.error(request, "Buyurtma allaqachon olingan yoki mavjud emas.")
+        return redirect('delivery:driver_register')
+    if not driver.is_available:
+        messages.error(request, "Avval «Bo'sh» holatiga o'ting.")
+        return redirect('delivery:driver_dashboard')
+    # Race-himoya: qatorni qulflaymiz — ikki haydovchi bir buyurtmani
+    # bir vaqtda ola olmaydi. Ikkinchisi qulf ochilgach bo'sh emasligini ko'radi.
+    taken = False
+    with transaction.atomic():
+        order = (Order.objects.select_for_update()
+                 .filter(pk=order_id, status='ready', driver__isnull=True,
+                         fulfillment_type='delivery').first())
+        if order is not None:
+            order.driver = driver
+            order.status = 'assigned'
+            order.assigned_at = timezone.now()
+            order.save(update_fields=['driver', 'status', 'assigned_at'])
+            taken = True
+    if taken:
+        push_order_status(order)
+        messages.success(request, "Buyurtma qabul qilindi! 🚗")
+    else:
+        messages.error(request, "Buyurtma allaqachon olingan yoki mavjud emas.")
     return redirect('delivery:driver_dashboard')
 
 
 @login_required
+@require_POST
 def order_release(request, order_id):
+    # Ataylab `_get_driver`: bloklangan kuryer ham qo'lidagi buyurtmani qaytara
+    # olishi kerak, aks holda buyurtma hech kimga o'tmay qotib qolardi.
     driver = _get_driver(request)
-    if request.method == 'POST' and driver:
+    if driver:
         order = get_object_or_404(Order, pk=order_id, driver=driver, status='assigned')
         order.driver = None
         order.status = 'ready'
@@ -1392,12 +1476,15 @@ def order_release(request, order_id):
 
 
 @login_required
+@require_POST
 def driver_order_status(request, order_id):
+    # `_get_driver`: bloklangan kuryer ham boshlagan yetkazishini yakunlay olsin.
     driver = _get_driver(request)
-    if request.method == 'POST' and driver:
+    if driver:
         order = get_object_or_404(Order, pk=order_id, driver=driver)
         new_status = request.POST.get('status', '')
-        if new_status in {'picked_up', 'on_the_way', 'delivered'} and can_transition(order.status, new_status):
+        if new_status in {'picked_up', 'on_the_way', 'delivered'} and can_transition(
+                order.status, new_status, order.fulfillment_type):
             order.status = new_status
             update_fields = ['status']
             if new_status == 'delivered':

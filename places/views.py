@@ -99,6 +99,14 @@ def neighborhood_places_geojson(request, pk):
         cat = request.GET.get('category', '').strip()
         if cat:
             qs = qs.filter(category=cat)
+        # Poligon tekshiruvi Python'da — avval SQL'da bbox bilan qisqartiramiz,
+        # aks holda har chaqiriqda butun jadval o'qilardi (mahalla sahifasi buni
+        # ikki marta qilardi: _places_in_grouped + shu fetch).
+        box = neighborhood.bbox()
+        if box:
+            lat_min, lat_max, lng_min, lng_max = box
+            qs = qs.filter(latitude__gte=lat_min, latitude__lte=lat_max,
+                           longitude__gte=lng_min, longitude__lte=lng_max)
         for p in qs:
             if not _point_in_polygon(p.latitude, p.longitude, ring):
                 continue

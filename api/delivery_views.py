@@ -1,4 +1,5 @@
 """Delivery (yetkazish) API view'lari: do'konlar, mahsulotlar, savat, buyurtma."""
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -16,12 +17,32 @@ from delivery.models import (
     CheckoutGroup, CatalogProduct, get_active_cart,
 )
 from delivery.feed import create_store_update
+from main.utils import validate_file_type
 from .throttles import CheckoutThrottle
 from .delivery_serializers import (
     StoreListSerializer, StoreDetailSerializer, ProductSerializer,
     CartSerializer, OrderSerializer, CheckoutSerializer, StoreUpdateSerializer,
     CatalogProductSerializer,
 )
+
+
+def _check_images(*files):
+    """Yuklangan rasmlarni tekshiradi; yaroqsizi bo'lsa xato matnini qaytaradi.
+
+    Model maydonidagi `validators=[validate_file_type]` FAQAT `full_clean()` da
+    ishlaydi — `objects.create()` va `.save()` uni chetlab o'tadi. Web yo'li uni
+    ochiq chaqiradi (delivery/views.py:_save_gallery_images), API esa chaqirmasdi:
+    /api/ orqali istalgan fayl — har qanday kengaytma, hajm chegarasisiz va
+    Pillow tekshiruvisiz — do'kon galereyasiga tushib ketardi.
+    """
+    for f in files:
+        if not f:
+            continue
+        try:
+            validate_file_type(f)
+        except ValidationError as e:
+            return '; '.join(e.messages)
+    return None
 
 
 def _parse_restock_at(raw):
@@ -398,6 +419,12 @@ class MyStoresView(APIView):
         if not name:
             return Response({'detail': "Do'kon nomi majburiy."},
                             status=status.HTTP_400_BAD_REQUEST)
+        gallery = request.FILES.getlist('gallery')[:StoreImage.MAX_IMAGES]
+        # Do'kon yaratilishidan OLDIN tekshiramiz — aks holda yaroqsiz rasm
+        # egasiz do'kon qoldirardi.
+        err = _check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         cat = DeliveryCategory.objects.filter(pk=request.data.get('category')).first() \
             if request.data.get('category') else None
         store = Store.objects.create(
@@ -414,7 +441,7 @@ class MyStoresView(APIView):
         if request.FILES.get('owner_photo'):
             store.owner_photo = request.FILES['owner_photo']
         store.save()
-        for f in request.FILES.getlist('gallery')[:StoreImage.MAX_IMAGES]:
+        for f in gallery:
             StoreImage.objects.create(store=store, image=f)
         return Response(StoreDetailSerializer(store, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
@@ -440,6 +467,13 @@ class MyStoreDetailView(APIView):
             store.category = DeliveryCategory.objects.filter(pk=cat_id).first() if cat_id else None
         if 'is_active' in request.data:
             store.is_active = str(request.data.get('is_active')).lower() in ('1', 'true', 'yes')
+
+        # Hech narsa saqlanmasdan oldin barcha rasmlarni tekshiramiz.
+        gallery = request.FILES.getlist('gallery')
+        err = _check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.FILES.get('logo'):
             store.logo = request.FILES['logo']
         if request.FILES.get('owner_photo'):
@@ -450,7 +484,7 @@ class MyStoreDetailView(APIView):
         if remove_ids:
             StoreImage.objects.filter(store=store, pk__in=remove_ids).delete()
         remaining = StoreImage.MAX_IMAGES - store.images.count()
-        for f in request.FILES.getlist('gallery')[:max(remaining, 0)]:
+        for f in gallery[:max(remaining, 0)]:
             StoreImage.objects.create(store=store, image=f)
 
         return Response(StoreDetailSerializer(store, context={'request': request}).data)

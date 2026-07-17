@@ -372,8 +372,18 @@ def _places_in_grouped(neighborhood):
     """Mahalla ichidagi joylarni toifa bo'yicha guruhlaydi (do'kon toifasidan tashqari)."""
     from places.models import Place, CATEGORY_CHOICES
     labels = dict(CATEGORY_CHOICES)
-    inside = [p for p in Place.objects.filter(is_active=True)
-              if p.category != 'delivery_store' and neighborhood.contains_point(p.latitude, p.longitude)]
+    # Avval butun `Place` jadvali o'qilib, har qatorga Python ray-casting
+    # yugurtirilardi. Endi SQL darajasida bbox bilan qisqartiramiz — chegara
+    # tashqarisidagi qatorlar umuman kelmaydi.
+    inside = []
+    box = neighborhood.bbox()
+    if box:
+        lat_min, lat_max, lng_min, lng_max = box
+        qs = (Place.objects.filter(is_active=True)
+              .exclude(category='delivery_store')
+              .filter(latitude__gte=lat_min, latitude__lte=lat_max,
+                      longitude__gte=lng_min, longitude__lte=lng_max))
+        inside = [p for p in qs if neighborhood.contains_point(p.latitude, p.longitude)]
     by_cat = {}
     for p in inside:
         by_cat.setdefault(p.category, []).append(p)
@@ -453,10 +463,14 @@ def mahalla_detail(request, pk):
     polls_data = []
     for p in polls_qs[:30]:
         opts = list(p.options.all())
-        total = sum(o.votes.count() for o in opts)
+        # `.count()` yuqoridagi prefetch keshini CHETLAB O'TADI va har chaqiruvda
+        # yangi SELECT COUNT yuboradi — variant boshiga 3 ta, 30 ta so'rovnomada
+        # ~360 so'rov. `len(...all())` keshdan o'qiydi.
+        counts = {o.id: len(o.votes.all()) for o in opts}
+        total = sum(counts.values())
         opt_data = [{
-            'opt': o, 'count': o.votes.count(),
-            'pct': round(o.votes.count() * 100 / total) if total else 0,
+            'opt': o, 'count': counts[o.id],
+            'pct': round(counts[o.id] * 100 / total) if total else 0,
             'voted': o.id in my_poll_votes,
         } for o in opts]
         polls_data.append({

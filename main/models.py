@@ -254,6 +254,10 @@ class Neighborhood(models.Model):
         db_table = 'neighborhoods'
         verbose_name = 'Mahalla'
         verbose_name_plural = 'Mahallalar'
+        # Tartibsiz qolsa Postgres qatorlarni har UPDATE'dan keyin boshqacha
+        # qaytarishi mumkin — mahalla grid'i va barcha dropdown'lar joyini
+        # o'zgartirib turardi.
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -271,6 +275,19 @@ class Neighborhood(models.Model):
         if self.center_lat is not None and self.center_lng is not None:
             return [self.center_lat, self.center_lng]
         return None
+
+    def bbox(self):
+        """Chegarani qamrab oluvchi to'rtburchak: (lat_min, lat_max, lng_min, lng_max).
+
+        `contains_point` ray-casting'i Python'da ishlaydi — uni butun jadvalga
+        yugurtirmaslik uchun avval SQL darajasida shu to'rtburchak bilan
+        filtrlanadi. Chegara yo'q bo'lsa None."""
+        ring = self.boundary or []
+        if not ring:
+            return None
+        lats = [p[0] for p in ring]
+        lngs = [p[1] for p in ring]
+        return (min(lats), max(lats), min(lngs), max(lngs))
 
     def contains_point(self, lat, lng):
         """Nuqta (lat,lng) mahalla chegarasi ichidami? (ray-casting).

@@ -1,0 +1,6 @@
+{% comment %}
+Django messages — yagona ko'rinish. Bu blok 38 ta shablonda qo'lda takrorlangan
+va bir qanchasida (my_ads, saved_ads, dashboard, mahalla_home) umuman yo'q edi:
+redirect'dan keyingi "saqlandi/o'chirildi" xabari jimgina yo'qolib ketardi.
+{% endcomment %}
+{% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}

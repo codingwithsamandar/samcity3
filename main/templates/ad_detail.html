@@ -42,9 +42,10 @@
   <div class="breadcrumb">
     <a href="{% url 'home' %}">Bosh sahifa</a>
     <span>›</span>
-    <a href="{% url 'my_ads' %}">E'lonlar</a>
+    {# Ommaviy sahifa — 'my_ads' login talab qiladi va boshqaning e'lonini ko'rsatadi. #}
+    <a href="{% url 'all_ads' %}">E'lonlar</a>
     <span>›</span>
-    <a href="/ads/?cat={{ ad.category }}">{{ ad.get_category_display }}</a>
+    <a href="{% url 'all_ads' %}?cat={{ ad.category }}">{{ ad.get_category_display }}</a>
     <span>›</span>
     <span style="color:var(--text);">{{ ad.title }}</span>
   </div>
@@ -122,8 +123,13 @@
         <a href="{% url 'ad_edit' ad.pk  %}" class="btn btn-outline">✏️ Tahrirlash</a>
         <a href="{% url 'boost_ad' ad.pk  %}" class="btn btn-accent">⚡ TOP ga chiqarish</a>
         <a href="{% url 'ad_delete' ad.pk  %}" class="btn btn-red">🗑 O'chirish</a>
-        {% if ad.status == 'active' %}
-        <form method="post" action="{% url 'ad_toggle_sold' ad.pk  %}" style="display:inline;">
+        {% if ad.status == 'sold' %}
+        <form method="post" action="{% url 'ad_toggle_sold' ad.pk %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost">↩ Qayta faollashtirish</button>
+        </form>
+        {% elif ad.status == 'active' %}
+        <form method="post" action="{% url 'ad_toggle_sold' ad.pk %}" style="display:inline;">
           {% csrf_token %}
           <button type="submit" class="btn btn-ghost">✅ Sotildi deb belgilash</button>
         </form>

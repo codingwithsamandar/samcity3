@@ -4,7 +4,17 @@
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
-<style>#pickmap{height:280px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}</style>
+<style>
+  #pickmap{height:280px;border-radius:14px;border:1px solid var(--border);z-index:1;margin-bottom:.6rem}
+  /* Rasm endi label ichida emas — bosish uni o'chirishga belgilamaydi. */
+  .gal-item{position:relative;}
+  .gal-item img{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block;transition:opacity .15s,filter .15s;}
+  .gal-x{position:absolute;top:2px;right:2px;background:var(--surface);border:1px solid var(--border);
+    border-radius:100px;padding:1px 5px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;gap:2px;}
+  /* Belgilangani ko'rinib tursin — avval hech qanday belgi yo'q edi. */
+  .gal-item:has(input:checked) img{opacity:.3;filter:grayscale(1);}
+  .gal-item:has(input:checked) .gal-x{background:var(--red);color:#fff;border-color:var(--red);}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -23,56 +33,60 @@
       <label class="form-label">Kategoriya</label>
       <select name="category" class="form-control">
         <option value="">— tanlang —</option>
-        {% for c in categories %}<option value="{{ c.pk }}" {% if store.category_id == c.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        {% comment %}
+        `post.X` fallback: xato bo'lganda forma bo'shab qolmasin.
+        Naqsh store_request_form.html dan.
+        {% endcomment %}
+        {% for c in categories %}<option value="{{ c.pk }}" {% if store.category_id == c.pk or post.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
       </select>
     </div>
     <div class="form-group">
       <label class="form-label">Tavsif</label>
-      <textarea name="description" class="form-control">{{ store.description|default:'' }}</textarea>
+      <textarea name="description" class="form-control">{{ store.description|default:post.description|default:'' }}</textarea>
     </div>
     <div class="form-group">
       <label class="form-label">📍 Joylashuv — xaritadan tanlang</label>
       <div id="pickmap"></div>
       <p class="form-hint" style="margin-bottom:.5rem;">Xaritada do'konni bosing — manzil va koordinata avtomatik to'ldiriladi.</p>
-      <input type="hidden" name="latitude" id="latIn" value="{{ store.latitude|default:''|unlocalize }}">
-      <input type="hidden" name="longitude" id="lngIn" value="{{ store.longitude|default:''|unlocalize }}">
+      <input type="hidden" name="latitude" id="latIn" value="{{ store.latitude|unlocalize|default:post.latitude|default:'' }}">
+      <input type="hidden" name="longitude" id="lngIn" value="{{ store.longitude|unlocalize|default:post.longitude|default:'' }}">
     </div>
     <div class="form-group">
       <label class="form-label">Manzil</label>
-      <input type="text" name="address" id="addrIn" class="form-control" value="{{ store.address|default:'' }}" placeholder="Xaritada belgilang — manzil avtomatik chiqadi">
+      <input type="text" name="address" id="addrIn" class="form-control" value="{{ store.address|default:post.address|default:'' }}" placeholder="Xaritada belgilang — manzil avtomatik chiqadi">
     </div>
     <div class="form-group">
       <label class="form-label">Telefon</label>
-      <input type="text" name="phone" class="form-control" value="{{ store.phone|default:'' }}">
+      <input type="text" name="phone" class="form-control" value="{{ store.phone|default:post.phone|default:'' }}">
     </div>
     <div class="form-group">
       <label class="form-label">Ish vaqti</label>
-      <input type="text" name="working_hours" class="form-control" placeholder="Masalan: 9:00–22:00, har kuni" value="{{ store.working_hours|default:'' }}">
+      <input type="text" name="working_hours" class="form-control" placeholder="Masalan: 9:00–22:00, har kuni" value="{{ store.working_hours|default:post.working_hours|default:'' }}">
     </div>
     <div class="form-group">
       <label class="form-label">Logo</label>
       <input type="file" name="logo" class="form-control" accept="image/*">
     </div>
     <div class="form-group">
-      <label class="form-label">Galereya rasmlari (4-6 tagacha)</label>
+      <label class="form-label">Galereya rasmlari (6 tagacha)</label>
       {% if gallery %}
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;">
         {% for img in gallery %}
-        <label style="position:relative;cursor:pointer;">
-          <img src="{{ img.image.url }}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
-          <span style="position:absolute;top:2px;right:2px;background:#fff;border-radius:50%;padding:1px 4px;font-size:.7rem;">
+        <div class="gal-item">
+          <img src="{{ img.image.url }}" alt="{{ store.name|default:'Doʻkon' }} — galereya rasmi" loading="lazy">
+          <label class="gal-x" title="O'chirish uchun belgilang">
             <input type="checkbox" name="remove_image" value="{{ img.pk }}" style="width:auto;"> ✕
-          </span>
-        </label>
+          </label>
+        </div>
         {% endfor %}
       </div>
       {% endif %}
       <input type="file" name="gallery" class="form-control" accept="image/*" multiple>
-      <p class="form-hint">Bir nechta rasm tanlashingiz mumkin.</p>
+      <p class="form-hint">Bir nechta rasm tanlashingiz mumkin. Jami 6 tagacha.</p>
     </div>
     <div class="form-group">
       <label class="form-label">Do'kon egasi haqida (ixtiyoriy)</label>
-      <textarea name="owner_bio" class="form-control" placeholder="Mijozlarga o'zingiz haqingizda qisqa ma'lumot">{{ store.owner_bio|default:'' }}</textarea>
+      <textarea name="owner_bio" class="form-control" placeholder="Mijozlarga o'zingiz haqingizda qisqa ma'lumot">{{ store.owner_bio|default:post.owner_bio|default:'' }}</textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Egasi rasmi (ixtiyoriy)</label>
@@ -80,7 +94,7 @@
     </div>
     <div class="form-group">
       <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-        <input type="checkbox" name="pickup_enabled" style="width:auto;" {% if store.pickup_enabled %}checked{% endif %}> 🛍️ Olib ketish (pickup) rejimi
+        <input type="checkbox" name="pickup_enabled" style="width:auto;" {% if store.pickup_enabled or post.pickup_enabled %}checked{% endif %}> 🛍️ Olib ketish (pickup) rejimi
       </label>
       <p class="form-hint">Yoqilsa — mijozlar mahsulotni oldindan karta orqali to'lab, do'kondan o'zi olib ketadi (yetkazib berishsiz).</p>
     </div>

@@ -113,6 +113,16 @@
 
 <script>
 (function () {
+  // Ikki marta yuborishdan himoya. Server tomonda ham qulf bor (_settle:
+  // select_for_update), lekin sekin aloqada tugmani qayta bosish — eng ko'p
+  // uchraydigan holat, va avval u haydovchi hisoblagichini ikki marta oshirardi.
+  var form = document.getElementById('payForm');
+  if (form) form.addEventListener('submit', function () {
+    var b = document.getElementById('payBtn');
+    if (b) { b.disabled = true; b.style.opacity = '.6'; b.textContent = 'Yuborilmoqda…'; }
+  });
+})();
+(function () {
   var num = document.getElementById('cardNumber');
   var vnum = document.getElementById('vnum');
   var holder = document.getElementById('cardHolder');

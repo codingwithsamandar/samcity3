@@ -62,6 +62,7 @@ urlpatterns = [
     path('driver/', views.driver_dashboard, name='driver_dashboard'),
     path('driver/profile/', views.driver_profile, name='driver_profile'),
     path('driver/available/', views.driver_toggle_available, name='driver_toggle_available'),
+    path('driver/feed/', views.driver_orders_feed, name='driver_orders_feed'),
     path('order/<uuid:order_id>/accept/', views.order_accept, name='order_accept'),
     path('order/<uuid:order_id>/release/', views.order_release, name='order_release'),
     path('order/<uuid:order_id>/dstatus/', views.driver_order_status, name='driver_order_status'),

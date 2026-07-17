@@ -51,7 +51,7 @@
           {% else %}<span class="badge badge-gray">Foydalanuvchi</span>{% endif %}
         </div>
         <div class="profile-stats">
-          <div class="stat-item"><div class="stat-val">{{ user.ads.count }}</div><div class="stat-lbl">E'lonlar</div></div>
+          <div class="stat-item"><div class="stat-val">{{ ads_count }}</div><div class="stat-lbl">E'lonlar</div></div>
           <div class="stat-item"><div class="stat-val">{{ user.rating }}</div><div class="stat-lbl">Reyting</div></div>
           {% if user.role == 'business' %}<div class="stat-item"><div class="stat-val">{{ user.stores.count }}</div><div class="stat-lbl">Do'konlar</div></div>{% endif %}
         </div>
@@ -60,7 +60,7 @@
       <nav class="sidebar-nav">
         <a href="{% url 'profile' %}" class="active"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
         <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
-        <a href="{% url 'my_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> Mening e'lonlarim {% if user.ads.count %}<span class="nav-badge">{{ user.ads.count }}</span>{% endif %}</a>
+        <a href="{% url 'my_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> Mening e'lonlarim {% if ads_count %}<span class="nav-badge">{{ ads_count }}</span>{% endif %}</a>
         <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> Ish e'lonlari</a>
         <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>
         <a href="{% url 'my_venue_bookings' %}"><svg class="ic"><use href="#i-doc"/></svg> Bronlar</a>
@@ -106,7 +106,7 @@
 
       <div class="content-card">
         <div class="content-card-header"><h2><svg class="ic"><use href="#i-tag"/></svg> So'nggi e'lonlarim</h2><a href="{% url 'ad_create' %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-plus"/></svg> E'lon qo'shish</a></div>
-        {% for ad in user.ads.all|slice:":5" %}
+        {% for ad in ads|slice:":5" %}
         <div style="display:flex;align-items:center;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--border);">
           <div style="flex:1;min-width:0;">
             <div style="font-weight:650;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ ad.title }}</div>
@@ -116,7 +116,7 @@
           <a href="{% url 'ad_detail' ad.pk %}" class="btn btn-ghost btn-sm" style="flex-shrink:0;">Ko'rish</a>
         </div>
         {% empty %}<p style="color:var(--text2);font-size:.9rem;text-align:center;padding:1.5rem 0;">Hali e'lon yo'q</p>{% endfor %}
-        {% if user.ads.count > 5 %}<div style="text-align:center;margin-top:1rem;"><a href="{% url 'my_ads' %}" class="btn btn-ghost btn-sm">Barcha {{ user.ads.count }} ta e'lonni ko'rish →</a></div>{% endif %}
+        {% if ads_count > 5 %}<div style="text-align:center;margin-top:1rem;"><a href="{% url 'my_ads' %}" class="btn btn-ghost btn-sm">Barcha {{ ads_count }} ta e'lonni ko'rish →</a></div>{% endif %}
       </div>
 
     </div>

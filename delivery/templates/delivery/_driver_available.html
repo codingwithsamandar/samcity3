@@ -1,0 +1,23 @@
+{% comment %}
+"Qabul qilish mumkin" ro'yxati. Panel ham, `driver_orders_feed` (12s polling)
+ham AYNAN shu qismni render qiladi — ikkiga bo'linsa, jonli yangilanish
+paneldan farq qila boshlaydi. Feed render_to_string(..., request=request)
+bilan chaqiradi, aks holda csrf_token bo'sh chiqadi.
+{% endcomment %}
+{% for o in available %}
+<div class="o-card">
+  <div class="o-head">
+    <div>
+      <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.total }} so'm</div>
+      <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }} · {{ o.delivery_fee }} so'm yetkazish</div>
+    </div>
+    <form method="post" action="{% url 'delivery:order_accept' o.id %}" class="js-once">{% csrf_token %}<button class="btn btn-accent">Qabul qilish</button></form>
+  </div>
+</div>
+{% empty %}
+<div class="empty-state" style="padding:2rem 1rem;">
+  <div class="icon"><svg class="ic"><use href="#i-cart"/></svg></div>
+  <h3>Hozircha tayyor buyurtma yo'q</h3>
+  <p>Yangi buyurtma chiqishi bilan shu yerda o'zi paydo bo'ladi — sahifani yangilash shart emas.</p>
+</div>
+{% endfor %}

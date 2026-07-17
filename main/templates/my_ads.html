@@ -31,6 +31,7 @@
 
 {% block content %}
 <div class="container">
+  {% include '_flash.html' %}
   <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
     <div>
       <h1>📋 Mening e'lonlarim</h1>
@@ -55,12 +56,14 @@
     </div>
   </div>
 
-  <!-- Status tabs -->
+  {% comment %}
+  "Muddati o'tgan" tab yo'q: Ad modelida muddat maydoni umuman yo'q va hech
+  nima status'ni 'expired' qilmaydi — tab har doim bo'sh chiqardi.
+  {% endcomment %}
   <div class="status-tabs">
-    <a href="{% url 'my_ads' %}" class="status-tab {% if not request.GET.status %}active{% endif %}">Barchasi</a>
-    <a href="?status=active" class="status-tab {% if request.GET.status == 'active' %}active{% endif %}">✅ Faol</a>
-    <a href="?status=sold" class="status-tab {% if request.GET.status == 'sold' %}active{% endif %}">🔴 Sotilgan</a>
-    <a href="?status=expired" class="status-tab {% if request.GET.status == 'expired' %}active{% endif %}">⏰ Muddati o'tgan</a>
+    <a href="{% url 'my_ads' %}" class="status-tab {% if status_filter == 'all' %}active{% endif %}">Barchasi</a>
+    <a href="?status=active" class="status-tab {% if status_filter == 'active' %}active{% endif %}">✅ Faol</a>
+    <a href="?status=sold" class="status-tab {% if status_filter == 'sold' %}active{% endif %}">🔴 Sotilgan</a>
   </div>
 
   {% if ads %}
@@ -96,8 +99,18 @@
         <div class="my-ad-actions">
           <a href="{% url 'ad_detail' ad.pk  %}" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.8rem;">Ko'rish</a>
           <a href="{% url 'ad_edit' ad.pk  %}" class="btn btn-outline" style="font-size:0.8rem; padding:0.3rem 0.8rem;">✏️ Tahrirlash</a>
-          {% if ad.status == 'active' %}
-          <form method="post" action="{% url 'ad_toggle_sold' ad.pk  %}" style="display:inline;">
+          {% comment %}
+          Sotilgan e'lonni ham qaytarish kerak: view buni qo'llab-quvvatlaydi
+          (ad_toggle_sold), lekin tugma faqat 'active' da chiqib, xato bosilgan
+          "Sotildi" ni ortga qaytarishning imkoni qolmasdi.
+          {% endcomment %}
+          {% if ad.status == 'sold' %}
+          <form method="post" action="{% url 'ad_toggle_sold' ad.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.8rem;" onclick="return confirm('E&#39;lon yana faol holatga qaytarilsinmi?')">↩ Qayta faollashtirish</button>
+          </form>
+          {% elif ad.status == 'active' %}
+          <form method="post" action="{% url 'ad_toggle_sold' ad.pk %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-ghost" style="font-size:0.8rem; padding:0.3rem 0.8rem;" onclick="return confirm('Sotildi deb belgilansinmi?')">✅ Sotildi</button>
           </form>
@@ -126,11 +139,15 @@
   <div class="empty-state">
     <div class="icon">📋</div>
     <h3>
-      {% if request.GET.status == 'active' %}Faol e'lon yo'q
-      {% elif request.GET.status == 'sold' %}Sotilgan e'lon yo'q
+      {% if status_filter == 'active' %}Faol e'lon yo'q
+      {% elif status_filter == 'sold' %}Sotilgan e'lon yo'q
+      {% elif status_filter != 'all' %}Bu bo'limda e'lon yo'q
       {% else %}Hali e'lon joylagan emassiz{% endif %}
     </h3>
-    <p>Birinchi e'loningizni joylashtiring</p>
+    <p>
+      {% if status_filter != 'all' %}Boshqa bo'limni tanlang yoki yangi e'lon joylashtiring
+      {% else %}Birinchi e'loningizni joylashtiring{% endif %}
+    </p>
     <a href="{% url 'ad_create' %}" class="btn btn-accent" style="margin-top:1rem;">+ E'lon berish</a>
   </div>
   {% endif %}

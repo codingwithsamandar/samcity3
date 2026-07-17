@@ -5,11 +5,12 @@ from django.contrib.auth import login, authenticate
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
 import random
 import string
 from django.core.paginator import Paginator
-from django.db.models import F, Q
+from django.db.models import Count, F, Q, Sum
 from .models import Ad, AdImage, User, JobAd, ResumeAd, UtilityPayment, BoostPayment, OTPCode
 import logging
 from .utils import validate_file_type, ratelimit
@@ -302,10 +303,9 @@ def user_login(request):
 
 @login_required
 def profile(request):
-    from django.db.models import Sum
-    user_ads = request.user.ads.all().prefetch_related('images')
-    # Profile statistika - template da ishlatiladigan
-    ads_count = user_ads.exclude(status='deleted').count()
+    # O'chirilgan e'lonlar profilda ko'rinmasligi ham, sanalmasligi ham kerak.
+    user_ads = request.user.ads.exclude(status='deleted').prefetch_related('images')
+    ads_count = user_ads.count()
     total_views = user_ads.aggregate(t=Sum('views'))['t'] or 0
     return render(request, 'profile.html', {
         'ads': user_ads,
@@ -424,6 +424,15 @@ def _form_post(request):
     if request.method == 'POST':
         d.update(request.POST.dict())
     return d
+
+
+def _back_or(request, fallback, **kwargs):
+    """Kelgan sahifaga qaytaradi; faqat shu saytga bo'lsa (ochiq redirect himoyasi)."""
+    nxt = request.POST.get('next') or request.META.get('HTTP_REFERER', '')
+    if nxt and url_has_allowed_host_and_scheme(
+            nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(nxt)
+    return redirect(fallback, **kwargs)
 
 
 # ───────── E'LON YARATISH ─────────
@@ -576,7 +585,7 @@ def ad_edit(request, pk):
             if not price or not str(price).strip():
                 messages.error(request, "Belgilangan narx turi uchun narx kiritish majburiy.")
                 return render(request, 'ad_form.html', {
-                    'mode': 'edit', 'ad': ad,
+                    'mode': 'edit', 'ad': ad, 'post': _form_post(request),
                     'categories': Ad.CATEGORY_CHOICES,
                     'price_types': Ad.PRICE_TYPE_CHOICES,
                     'statuses': Ad.STATUS_CHOICES,
@@ -587,7 +596,7 @@ def ad_edit(request, pk):
             except ValueError:
                 messages.error(request, "Narx noto'g'ri kiritildi.")
                 return render(request, 'ad_form.html', {
-                    'mode': 'edit', 'ad': ad,
+                    'mode': 'edit', 'ad': ad, 'post': _form_post(request),
                     'categories': Ad.CATEGORY_CHOICES,
                     'price_types': Ad.PRICE_TYPE_CHOICES,
                     'statuses': Ad.STATUS_CHOICES,
@@ -598,7 +607,7 @@ def ad_edit(request, pk):
         if not ad.title or not ad.category:
             messages.error(request, "Sarlavha va kategoriya majburiy.")
             return render(request, 'ad_form.html', {
-                'mode': 'edit', 'ad': ad,
+                'mode': 'edit', 'ad': ad, 'post': _form_post(request),
                 'categories': Ad.CATEGORY_CHOICES,
                 'price_types': Ad.PRICE_TYPE_CHOICES,
                 'statuses': Ad.STATUS_CHOICES,
@@ -651,7 +660,7 @@ def ad_delete(request, pk):
         ad.status = 'deleted'
         ad.save(update_fields=['status'])
         messages.success(request, "E'lon o'chirildi.")
-        return redirect('profile')
+        return redirect('my_ads')
 
     return render(request, 'ad_confirm_delete.html', {'ad': ad})
 
@@ -676,21 +685,40 @@ def ad_toggle_sold(request, pk):
             messages.success(request, "E'lon sotilgan deb belgilandi. Barcha foydalanuvchilar buni ko'radi.")
         ad.save(update_fields=['status', 'sold_at'])
 
-    return redirect('ad_detail', pk=pk)
+    # Ro'yxatdan belgilangan bo'lsa — ro'yxatga qaytaramiz. Avval har safar
+    # e'lon sahifasiga otib yuborardi va foydalanuvchi joyini yo'qotardi.
+    return _back_or(request, 'ad_detail', pk=pk)
 
 
 # ───────── E'LONLARIM (alohida sahifa) ─────────
 @login_required
 def my_ads(request):
     status_filter = request.GET.get('status', 'all')
-    ads = request.user.ads.prefetch_related('images')
+    base = request.user.ads.exclude(status='deleted')
+
+    # Statistika har doim to'liq ro'yxat bo'yicha — tab filtri unga ta'sir qilmasin.
+    stats = base.aggregate(
+        active=Count('pk', filter=Q(status='active')),
+        sold=Count('pk', filter=Q(status='sold')),
+        views=Sum('views'),
+    )
+
+    ads = base.prefetch_related('images')
     if status_filter != 'all':
         ads = ads.filter(status=status_filter)
-    ads = ads.exclude(status='deleted')
+    paginator = Paginator(ads, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'my_ads.html', {
-        'ads': ads,
+        'ads': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'is_paginated': page_obj.has_other_pages(),
         'status_filter': status_filter,
         'statuses': Ad.STATUS_CHOICES,
+        'active_count': stats['active'],
+        'sold_count': stats['sold'],
+        'total_views': stats['views'] or 0,
     })
 
 
@@ -1306,7 +1334,13 @@ def boost_ad_view(request, pk):
 
         plan = PLANS[plan_key]
         now = timezone.now()
-        expires = now + timezone.timedelta(days=plan['days'])
+        # Amaldagi boost tugamagan bo'lsa — yangisi uning ustiga qo'shiladi.
+        # Aks holda qolgan kunlar yonib ketardi: 90 kunlik ustiga 7 kunlik
+        # olish `boosted_until` ni +90 dan +7 ga TUSHIRARDI.
+        starts = now
+        if ad.is_boosted and ad.boosted_until and ad.boosted_until > now:
+            starts = ad.boosted_until
+        expires = starts + timezone.timedelta(days=plan['days'])
 
         # Boost payment yaratish
         BoostPayment.objects.create(
@@ -1315,7 +1349,7 @@ def boost_ad_view(request, pk):
             plan=plan_key,
             amount=plan['amount'],
             status='active',
-            starts_at=now,
+            starts_at=starts,
             expires_at=expires,
         )
 
@@ -1324,7 +1358,13 @@ def boost_ad_view(request, pk):
         ad.boosted_until = expires
         ad.save()
 
-        messages.success(request, f"E'lon {plan['days']} kunga TOP ga chiqarildi! ✅")
+        if starts > now:
+            messages.success(
+                request,
+                f"Boost {plan['days']} kunga uzaytirildi — "
+                f"{timezone.localtime(expires):%d.%m.%Y} gacha TOP da. ✅")
+        else:
+            messages.success(request, f"E'lon {plan['days']} kunga TOP ga chiqarildi! ✅")
         return redirect('ad_detail', pk=pk)
 
     # Joriy boost holati

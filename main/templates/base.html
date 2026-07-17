@@ -924,6 +924,8 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
               </div>
             </div>
             <a href="{% url 'dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Boshqaruv paneli" %}</a>
+            <a href="{% url 'my_ads' %}" role="menuitem"><svg class="ic"><use href="#i-tag"/></svg> {% trans "Mening e'lonlarim" %}</a>
+            <a href="{% url 'saved_ads' %}" role="menuitem"><svg class="ic"><use href="#i-heart"/></svg> {% trans "Saqlangan e'lonlar" %}</a>
             <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
             <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
             {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
@@ -985,6 +987,8 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     <div class="mm-label">{% trans "Hisob" %}</div>
     <a href="{% url 'delivery:cart' %}"><svg class="ic"><use href="#i-cart"/></svg> {% trans "Savat" %}</a>
     <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Boshqaruv paneli" %}</a>
+    <a href="{% url 'my_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> {% trans "Mening e'lonlarim" %}</a>
+    <a href="{% url 'saved_ads' %}"><svg class="ic"><use href="#i-heart"/></svg> {% trans "Saqlangan e'lonlar" %}</a>
     {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
     <a href="{% url 'profile' %}"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
     <a href="{% url 'notification_list' %}"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
