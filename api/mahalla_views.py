@@ -1,13 +1,17 @@
 """Mahalla bo'limi — mobil API view'lari.
 
-Do'kon/joylar mahallaga poligon (chegara) bo'yicha bog'lanadi (web bilan bir xil
-mantiq: main.community_views._stores_in / _places_in_grouped)."""
+Web bilan bir xil mantiq (main.community_views), lekin bog'lanish qoidasi ikki xil:
+DO'KONLAR — FK bo'yicha (`_stores_in`: Store.neighborhood), JOYLAR esa poligon
+(chegara) bo'yicha (`_places_in_grouped`: Neighborhood.contains_point). Bu yerda
+avval "ikkalasi ham poligon bo'yicha" deb yozilgan edi — noto'g'ri."""
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from main.utils import check_images
 
 from main.models import (
     Neighborhood, NeighborhoodAnnouncement, CitizenRequest,
@@ -87,9 +91,15 @@ class AnnouncementCreateView(APIView):
         text = (request.data.get('text') or '').strip()
         if not title or not text:
             return Response({'detail': "Sarlavha va matn majburiy."}, status=status.HTTP_400_BAD_REQUEST)
+        img = request.FILES.get('image')
+        # Maydondagi `validators=[validate_file_type]` `objects.create()` da
+        # ishlamaydi (faqat full_clean'da) — shuning uchun ochiq tekshiramiz.
+        err = check_images(img)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         ann = NeighborhoodAnnouncement.objects.create(
             neighborhood=nb, title=title, text=text, created_by=request.user,
-            image=request.FILES.get('image'))
+            image=img)
         try:
             from main.community_views import _notify_mahalla
             _notify_mahalla(nb, f"📢 Mahalla e'loni: {title[:60]}",
@@ -135,9 +145,13 @@ class DistrictAnnounceView(APIView):
         if not title or not text:
             return Response({'detail': "Sarlavha va matn majburiy."},
                             status=status.HTTP_400_BAD_REQUEST)
+        img = request.FILES.get('image')
+        err = check_images(img)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         ann = DistrictAnnouncement.objects.create(
             district=district, title=title, text=text, created_by=request.user,
-            image=request.FILES.get('image'))
+            image=img)
         try:
             from main.community_views import _notify_district
             sent = _notify_district(
@@ -176,9 +190,13 @@ class ComplaintListCreateView(APIView):
             return Response({'detail': "Mavzu va matn majburiy."}, status=status.HTTP_400_BAD_REQUEST)
         if category not in dict(CitizenRequest.CATEGORY_CHOICES):
             category = 'other'
+        img = request.FILES.get('image')
+        err = check_images(img)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         req = CitizenRequest.objects.create(
             neighborhood=nb, user=request.user, category=category,
-            title=title, text=text, image=request.FILES.get('image'))
+            title=title, text=text, image=img)
         try:
             from main.community_views import _notify_neighborhood_admins
             _notify_neighborhood_admins(nb, f"🗣 Yangi murojaat: {title[:50]}",

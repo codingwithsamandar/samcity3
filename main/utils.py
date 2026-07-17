@@ -9,6 +9,11 @@ from django.utils.safestring import mark_safe
 # Allowed image extensions and MIME-style headers
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 MAX_FILE_SIZE_MB = 5
+# Piksel chegarasi. Hajm chegarasi (5MB) buni USHLAMAYDI: siqilgan rasm kichkina
+# bo'lib, ochilganda ulkan bo'lishi mumkin (dekompressiya bombasi). Sinovda
+# 164KB lik PNG o'zini 13000x13000 (169 MP) deb e'lon qilib o'tib ketdi — u
+# dekodlansa ~484MB RAM oladi. 80 MP eng yirik telefon kamerasidan ham katta.
+MAX_IMAGE_PIXELS = 80_000_000
 
 
 def safe_json(value):
@@ -43,16 +48,48 @@ def validate_file_type(file):
         from PIL import Image
         pos = file.tell() if hasattr(file, 'tell') else None
         try:
-            Image.open(file).verify()
+            im = Image.open(file)
+            # Piksel chegarasi verify() dan OLDIN va o'lchamni O'QIB tekshiriladi:
+            # Image.verify() JPEG/GIF/WEBP uchun amalda hech nima qilmaydi (uni
+            # faqat PNG qayta belgilaydi), shuning uchun sarlavhasida ulkan
+            # o'lcham e'lon qilgan kichkina fayl bemalol o'tib ketardi.
+            # `Image.open` faqat sarlavhani o'qiydi — bu yerda hali RAM yeyilmaydi.
+            w, h = im.size
+            if w * h > MAX_IMAGE_PIXELS:
+                raise ValidationError(
+                    f"Rasm o'lchami juda katta: {w}x{h}. "
+                    f"Maksimal {MAX_IMAGE_PIXELS // 1_000_000} megapiksel.")
+            im.verify()
         finally:
             if pos is not None and hasattr(file, 'seek'):
                 file.seek(pos)
     except ImportError:
         # Pillow yo'q bo'lsa — kengaytma+hajm tekshiruvi bilan cheklaymiz.
         pass
+    except ValidationError:
+        raise  # o'z xabarimiz quyidagi umumiy xabarga aylanib ketmasin
     except Exception:
         raise ValidationError("Fayl haqiqiy rasm emas yoki buzilgan.")
     return True
+
+
+def check_images(*files):
+    """Bir nechta yuklangan rasmni tekshiradi. Yaroqsizi bo'lsa xato MATNI, aks holda None.
+
+    Nima uchun kerak: model maydonidagi `validators=[validate_file_type]` FAQAT
+    `full_clean()` da ishlaydi — `objects.create()` va `.save()` uni butunlay
+    chetlab o'tadi. Django admin va ModelForm full_clean chaqiradi, API va
+    qo'lda yozilgan view'lar esa yo'q. Shuning uchun har bir API kirish nuqtasi
+    buni OCHIQ chaqirishi shart; maydondagi validator u yerda hujjat, himoya emas.
+    """
+    for f in files:
+        if not f:
+            continue
+        try:
+            validate_file_type(f)
+        except ValidationError as e:
+            return '; '.join(e.messages)
+    return None
 
 
 def parse_int(val):

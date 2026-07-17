@@ -3,16 +3,31 @@
 
 {% block extra_css %}
 {% include '_map_assets.html' %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{# Unbounded shrifti va ikkinchi Inter so'rovi olib tashlandi: base.html allaqachon
+   'Plus Jakarta Sans' + 'Inter' yuklaydi. Bitta sahifa uchun uchinchi shrift oilasi
+   va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish. #}
 <style>
+  /* Bu blok base tokenlarini (--bg, --surface, --line, --text, --radius) QAYTA
+     BELGILAB, qattiq qora qiymatlar bergan edi. Oqibati: mahalla sahifasi
+     mavzudan qat'i nazar doim qora bo'lar, mavzu tugmasi bu yerda umuman
+     ishlamas, va oq mahalla_home dan bitta bosishda #0A0F1C ga tushardi.
+     Accent ham emerald'dan turquoise'ga o'zgarib ketardi — bitta bosishda
+     boshqa brend rangi. base.html:21-23 buni ochiq taqiqlaydi:
+     "The colour palette (:root tokens) is defined ONCE... Do not redefine
+     tokens here."
+     Endi faqat SHU sahifaning lokal nomlari base tizimga bog'lanadi —
+     qolgan ~115 satr CSS o'zgarishsiz ishlayveradi. */
   .mhx{
-    --bg:#0A0F1C; --surface:#131B2E; --surface-2:#182238; --surface-3:#1D2A44;
-    --line:#232E47; --turquoise:#22B8B0; --turquoise-soft:rgba(34,184,176,.14);
-    --terracotta:#CE7C4E; --terracotta-soft:rgba(206,124,78,.14);
-    --violet:#8B7CF6; --violet-soft:rgba(139,124,246,.14);
-    --text:#EDEFF6; --text-muted:#8C95AC; --text-dim:#5D667D; --radius:16px;
-    font-family:'Inter',sans-serif; color:var(--text); max-width:1080px; margin:0 auto;
+    --surface-2: var(--surface2);
+    --surface-3: var(--surface3);
+    --turquoise: var(--accent);
+    --turquoise-soft: var(--accent-l);
+    --terracotta: var(--gold);
+    --terracotta-soft: var(--gold-l);
+    --violet-soft: var(--violet-l);
+    --text-muted: var(--text2);
+    --text-dim: var(--text3);
+    max-width:1080px; margin:0 auto;
   }
   .mhx *{ box-sizing:border-box; }
 
@@ -30,9 +45,9 @@
   .mhx .header-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-top:16px; flex-wrap:wrap; }
   .mhx .title-group{ display:flex; align-items:center; gap:14px; }
   .mhx .title-chip{ width:52px; height:52px; border-radius:15px; box-shadow:0 12px 26px -6px rgba(0,0,0,.4); flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; font-family:'Unbounded'; font-weight:700; font-size:20px; color:#fff; position:relative; }
+    display:flex; align-items:center; justify-content:center; font-family:'Plus Jakarta Sans','Inter',sans-serif; font-weight:700; font-size:20px; color:#fff; position:relative; }
   .mhx .title-chip::after{ content:""; position:absolute; inset:0; border-radius:inherit; background:linear-gradient(180deg,rgba(255,255,255,.35),transparent 60%); }
-  .mhx h1{ font-family:'Unbounded',sans-serif; font-weight:700; font-size:30px; letter-spacing:-.01em; margin:0; color:var(--text); }
+  .mhx h1{ font-family:'Plus Jakarta Sans','Inter',sans-serif; font-weight:700; font-size:30px; letter-spacing:-.01em; margin:0; color:var(--text); }
   .mhx .title-sub{ color:var(--text-muted); font-size:13.5px; margin-top:3px; }
   .mhx .other-mahalla{ display:inline-flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-weight:600; font-size:14px; padding:11px 18px; border-radius:12px; cursor:pointer; text-decoration:none; transition:.15s ease; }
   .mhx .other-mahalla:hover{ border-color:var(--turquoise); background:var(--surface-3); transform:translateY(-1px); }
@@ -81,7 +96,7 @@
   .mhx .stat-row{ display:flex; gap:10px; }
   .mhx .stat{ flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; transition:border-color .15s, transform .15s; }
   .mhx .stat:hover{ border-color:var(--violet); transform:translateY(-2px); }
-  .mhx .stat b{ display:block; font-family:'Unbounded'; font-size:18px; }
+  .mhx .stat b{ display:block; font-family:'Plus Jakarta Sans','Inter',sans-serif; font-size:18px; }
   .mhx .stat span{ font-size:11px; color:var(--text-dim); }
   .mhx .shop-row{ display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
   .mhx .shop-card{ min-width:132px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text); text-decoration:none; transition:transform .18s cubic-bezier(.2,.8,.3,1), border-color .18s; }

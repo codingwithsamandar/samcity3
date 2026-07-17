@@ -1,5 +1,4 @@
 """Delivery (yetkazish) API view'lari: do'konlar, mahsulotlar, savat, buyurtma."""
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -17,32 +16,13 @@ from delivery.models import (
     CheckoutGroup, CatalogProduct, get_active_cart,
 )
 from delivery.feed import create_store_update
-from main.utils import validate_file_type
+from main.utils import check_images
 from .throttles import CheckoutThrottle
 from .delivery_serializers import (
     StoreListSerializer, StoreDetailSerializer, ProductSerializer,
     CartSerializer, OrderSerializer, CheckoutSerializer, StoreUpdateSerializer,
     CatalogProductSerializer,
 )
-
-
-def _check_images(*files):
-    """Yuklangan rasmlarni tekshiradi; yaroqsizi bo'lsa xato matnini qaytaradi.
-
-    Model maydonidagi `validators=[validate_file_type]` FAQAT `full_clean()` da
-    ishlaydi — `objects.create()` va `.save()` uni chetlab o'tadi. Web yo'li uni
-    ochiq chaqiradi (delivery/views.py:_save_gallery_images), API esa chaqirmasdi:
-    /api/ orqali istalgan fayl — har qanday kengaytma, hajm chegarasisiz va
-    Pillow tekshiruvisiz — do'kon galereyasiga tushib ketardi.
-    """
-    for f in files:
-        if not f:
-            continue
-        try:
-            validate_file_type(f)
-        except ValidationError as e:
-            return '; '.join(e.messages)
-    return None
 
 
 def _parse_restock_at(raw):
@@ -422,7 +402,7 @@ class MyStoresView(APIView):
         gallery = request.FILES.getlist('gallery')[:StoreImage.MAX_IMAGES]
         # Do'kon yaratilishidan OLDIN tekshiramiz — aks holda yaroqsiz rasm
         # egasiz do'kon qoldirardi.
-        err = _check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
+        err = check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
         if err:
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         cat = DeliveryCategory.objects.filter(pk=request.data.get('category')).first() \
@@ -470,7 +450,7 @@ class MyStoreDetailView(APIView):
 
         # Hech narsa saqlanmasdan oldin barcha rasmlarni tekshiramiz.
         gallery = request.FILES.getlist('gallery')
-        err = _check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
+        err = check_images(request.FILES.get('logo'), request.FILES.get('owner_photo'), *gallery)
         if err:
             return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -643,8 +623,15 @@ class StoreAnnouncementCreateView(APIView):
         text = (request.data.get('text') or '').strip()
         if not text:
             return Response({'detail': "E'lon matni majburiy."}, status=status.HTTP_400_BAD_REQUEST)
+        img = request.FILES.get('image')
+        # StoreUpdate.image da `validators=[validate_file_type]` bor, lekin u
+        # `objects.create()` da ISHLAMAYDI (faqat full_clean'da) — bu yo'l
+        # tekshiruvsiz qolgan edi.
+        err = check_images(img)
+        if err:
+            return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         update = create_store_update(
-            store, 'announcement', text=text, image=request.FILES.get('image'))
+            store, 'announcement', text=text, image=img)
         return Response(StoreUpdateSerializer(update, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
 
