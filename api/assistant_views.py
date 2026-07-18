@@ -19,11 +19,13 @@ Ochiq (autentifikatsiyasiz). DRF sozlamalaridagi standart throttling (anon 60/mi
 avtomatik qo'llanadi — server barqarorligi uchun.
 """
 
+from django.http import HttpResponse
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from assistant.service import build_response, parse_location
+from assistant import tts as tts_mod
 
 
 class AssistantChatView(APIView):
@@ -43,3 +45,24 @@ class AssistantChatView(APIView):
 
         res = build_response(message, location=location, history=history, context=context)
         return Response(res)
+
+
+class AssistantTTSView(APIView):
+    """`POST /api/assistant/tts/`  {text}  →  audio/mpeg yoki 204 (o'chiq bo'lsa).
+
+    Flutter ilova javob matnini yuboradi, tayyor o'zbek audiosini olib ijro etadi.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        data = request.data if isinstance(request.data, dict) else {}
+        text = (data.get('text') or '').strip()
+        if not text:
+            return Response({'ok': False, 'error': 'empty'}, status=400)
+        audio = tts_mod.synthesize(text)
+        if not audio:
+            return HttpResponse(status=204)
+        resp = HttpResponse(audio, content_type='audio/mpeg')
+        resp['Cache-Control'] = 'private, max-age=86400'
+        return resp

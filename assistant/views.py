@@ -11,12 +11,12 @@ import json
 import os
 
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from . import service
+from . import service, tts as tts_mod
 
 
 # ── So'rov cheklovi (throttling) — server barqarorligi + suiiste'mol himoyasi ─
@@ -88,6 +88,30 @@ def chat(request):
 
     res = service.build_response(message, location=location, history=history, context=context)
     return JsonResponse(res)
+
+
+@require_POST
+def tts(request):
+    """POST /ai/tts/  {text}  →  audio/mpeg (bulut sozlangan bo'lsa) yoki 204.
+
+    204 → server TTS o'chiq/ishlamadi; widget brauzer ovoziga qaytadi.
+    """
+    if _rate_limited(request):
+        return JsonResponse({'ok': False, 'error': 'rate_limited'}, status=429)
+    try:
+        body = json.loads(request.body.decode('utf-8') or '{}')
+    except (ValueError, UnicodeDecodeError):
+        return JsonResponse({'ok': False, 'error': 'bad_json'}, status=400)
+    text = (body.get('text') or '').strip()
+    if not text:
+        return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
+
+    audio = tts_mod.synthesize(text)
+    if not audio:
+        return HttpResponse(status=204)
+    resp = HttpResponse(audio, content_type='audio/mpeg')
+    resp['Cache-Control'] = 'private, max-age=86400'
+    return resp
 
 
 @ensure_csrf_cookie

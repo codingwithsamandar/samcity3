@@ -225,8 +225,11 @@
   var micBtn = document.getElementById('samAiMic'), chips = document.getElementById('samAiChips');
 
   var CHAT_URL = "{% url 'assistant:chat' %}";
+  var TTS_URL = "{% url 'assistant:tts' %}";
   var ci = root.querySelector('input[name="csrfmiddlewaretoken"]');
   var CSRF = ci ? ci.value : '';
+  var currentAudio = null;   // server TTS audiosi
+  var serverTTS = null;      // null=noma'lum, true=bor, false=yo'q (brauzerga qaytamiz)
 
   var opened = false, loc = null, history = [], busy = false, speakOn = false;
   // Suhbat konteksti: davom ettirish ("yana") va follow-up ("birinchisining telefoni") uchun
@@ -452,7 +455,8 @@
     return out.replace(/'/g, '').replace(/\s+/g, ' ').trim();
   }
 
-  function speak(text) {
+  // Brauzer ovozi (server TTS bo'lmasa — zaxira). O'zbekni turk/rus ovoziga moslaydi.
+  function browserSpeak(text) {
     if (!speakOn || !TTS) return;
     if (ttsMode === 'default') pickVoice();   // ovozlar keyin yuklangan bo'lishi mumkin
     var clean = stripEmoji(text);
@@ -477,11 +481,51 @@
       TTS.speak(u);
     } catch (e) {}
   }
-  function stopSpeak() { try { if (TTS) TTS.cancel(); } catch (e) {} }
+  function stopSpeak() {
+    try { if (TTS) TTS.cancel(); } catch (e) {}
+    try { if (currentAudio) { currentAudio.pause(); currentAudio = null; } } catch (e) {}
+  }
+
+  // Server (bulut) TTS'ni sinaydi — tayyor o'zbek audiosini ijro etadi.
+  // 204/xato bo'lsa cb(false) → brauzer ovoziga qaytamiz. Bir marta o'chiq deb
+  // aniqlansa (serverTTS=false), keyingi safar so'ramaymiz.
+  function speakServer(text, cb) {
+    try {
+      fetch(TTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ text: text })
+      })
+        .then(function (r) {
+          if (r.status === 204 || !r.ok) { serverTTS = false; cb(false); return null; }
+          serverTTS = true; return r.blob();
+        })
+        .then(function (blob) {
+          if (!blob) return;
+          stopSpeak();
+          var url = URL.createObjectURL(blob);
+          currentAudio = new Audio(url);
+          currentAudio.onended = function () { try { URL.revokeObjectURL(url); } catch (e) {} };
+          currentAudio.play().catch(function () {});
+          cb(true);
+        })
+        .catch(function () { serverTTS = false; cb(false); });
+    } catch (e) { serverTTS = false; cb(false); }
+  }
+
+  // Asosiy: avval server (haqiqiy o'zbek ovozi), bo'lmasa brauzer ovozi.
+  function speak(text) {
+    if (!speakOn) return;
+    var clean = stripEmoji(text);
+    if (!clean) return;
+    if (serverTTS === false) { browserSpeak(text); return; }
+    speakServer(clean, function (ok) { if (!ok) browserSpeak(text); });
+  }
+
   function applySpeakBtn() { if (speakBtn) speakBtn.classList.toggle('on', speakOn); }
 
-  if (!TTS) { if (speakBtn) speakBtn.style.display = 'none'; }
-  else if (speakBtn) {
+  // Tugma doim ko'rinadi: brauzer ovozi bo'lmasa ham server (bulut) ovozi ishlashi mumkin.
+  if (speakBtn) {
     speakBtn.addEventListener('click', function () {
       speakOn = !speakOn; applySpeakBtn(); persist();
       if (!speakOn) stopSpeak();

@@ -473,6 +473,45 @@ class MobileApiTests(TestCase):
         self.assertEqual(resp.status_code, 400)
 
 
+class TtsEndpointTests(TestCase):
+    """Bulutli ovoz (TTS) endpointi. Kalit yo'q — 204 qaytadi (widget brauzerga qaytadi)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_tts_unconfigured_returns_204(self):
+        from unittest import mock
+        c = Client()
+        with mock.patch.dict('os.environ', {'TTS_PROVIDER': ''}):
+            resp = c.post(reverse('assistant:tts'),
+                          data=json.dumps({'text': 'salom'}),
+                          content_type='application/json')
+        self.assertEqual(resp.status_code, 204)
+
+    def test_tts_empty_returns_400(self):
+        c = Client()
+        resp = c.post(reverse('assistant:tts'),
+                      data=json.dumps({'text': ''}),
+                      content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_synthesize_none_when_unconfigured(self):
+        from unittest import mock
+        from assistant import tts
+        with mock.patch.dict('os.environ', {'TTS_PROVIDER': ''}):
+            self.assertIsNone(tts.synthesize('salom'))
+            self.assertFalse(tts.is_enabled())
+
+    def test_api_tts_unconfigured_returns_204(self):
+        from unittest import mock
+        c = Client()
+        with mock.patch.dict('os.environ', {'TTS_PROVIDER': ''}):
+            resp = c.post(reverse('api:assistant-tts'),
+                          data=json.dumps({'text': 'salom'}),
+                          content_type='application/json')
+        self.assertEqual(resp.status_code, 204)
+
+
 class ThrottleTests(TestCase):
     def setUp(self):
         cache.clear()
