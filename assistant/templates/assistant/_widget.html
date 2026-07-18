@@ -417,6 +417,12 @@
   }
 
   form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
+  // Enter — xabar yuboradi (Shift+Enter yangi qatorga qoldiriladi, IME kompozitsiyasi hurmatlanadi)
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault(); send(input.value);
+    }
+  });
   chips.addEventListener('click', function (e) {
     var b = e.target.closest('.sam-ai-chip'); if (b) send(b.getAttribute('data-q'));
   });
