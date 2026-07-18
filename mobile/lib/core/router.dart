@@ -28,6 +28,7 @@ import '../features/hokim/hokim_panel_screen.dart';
 import '../features/jobs/jobs_screen.dart';
 import '../features/services/services_screen.dart';
 import '../features/shell/home_shell.dart';
+import '../features/assistant/assistant_screen.dart';
 
 /// Ilova marshrutlari. Auth holatiga qarab kirish/asosiy ekranga yo'naltiradi.
 final routerProvider = Provider<GoRouter>((ref) {
@@ -88,6 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/jobs', builder: (_, __) => const JobsScreen()),
       GoRoute(path: '/service-payments', builder: (_, __) => const ServicesScreen()),
       GoRoute(path: '/profile-edit', builder: (_, __) => const ProfileEditScreen()),
+      GoRoute(path: '/assistant', builder: (_, __) => const AssistantScreen()),
     ],
   );
 });

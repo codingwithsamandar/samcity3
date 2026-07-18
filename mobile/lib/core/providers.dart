@@ -21,6 +21,7 @@ import '../features/places/places_repository.dart';
 import '../features/community/community_repository.dart';
 import '../features/jobs/jobs_repository.dart';
 import '../features/services/services_repository.dart';
+import '../features/assistant/assistant_repository.dart';
 
 // ─── Infratuzilma ─────────────────────────────────────────────────────────────
 final tokenStorageProvider = Provider((ref) => TokenStorage());
@@ -68,6 +69,8 @@ final jobsRepositoryProvider =
     Provider((ref) => JobsRepository(ref.read(apiClientProvider)));
 final servicesRepositoryProvider =
     Provider((ref) => ServicesRepository(ref.read(apiClientProvider)));
+final assistantRepositoryProvider =
+    Provider((ref) => AssistantRepository(ref.read(apiClientProvider)));
 
 // ─── Savat holati (badge + checkout uchun) ────────────────────────────────────
 class CartController extends StateNotifier<Cart> {

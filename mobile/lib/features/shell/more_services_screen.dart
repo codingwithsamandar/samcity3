@@ -6,6 +6,7 @@ class MoreServicesScreen extends StatelessWidget {
   const MoreServicesScreen({super.key});
 
   static const _items = [
+    _ServiceItem(Icons.smart_toy_outlined, 'AI yordamchi', "Eng yaqin joyni toping", '/assistant', Color(0xFF34D399)),
     _ServiceItem(Icons.location_city, 'Joylar', "To'yxona, restoran, salon", '/venues', Color(0xFF34D399)),
     _ServiceItem(Icons.work_outline, 'Ish e\'lonlari', 'Vakansiya va rezyume', '/jobs', Color(0xFFCAA23A)),
     _ServiceItem(Icons.groups_outlined, 'Mahalla', "So'rovnoma va yordam", '/community', Color(0xFF22D3EE)),
