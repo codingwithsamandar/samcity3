@@ -400,36 +400,92 @@
   }
 
   // ── Ovozli javob (Text-to-Speech) ──
+  // O'zbekcha ovoz brauzerlarda deyarli yo'q. Shu sabab o'zbek LOTIN matnini
+  // mavjud eng mos ovozga moslaymiz:
+  //   • uz ovozi bo'lsa — to'g'ridan-to'g'ri;
+  //   • bo'lmasa TURKCHA ovoz (imlo/tovush o'zbekchaga juda yaqin) — matnni turk imlosiga o'giramiz;
+  //   • u ham bo'lmasa RUSCHA ovoz — matnni kirillga o'giramiz (talaffuz ancha to'g'ri bo'ladi).
   var TTS = window.speechSynthesis;
   var speakBtn = document.getElementById('samAiSpeak');
-  function applySpeakBtn() { if (speakBtn) speakBtn.classList.toggle('on', speakOn); }
-  function stripForSpeech(t) {
-    // Emoji va bezak belgilarini olib tashlaymiz — ular ovozda g'alati eshitiladi
+  var uzVoice = null, ttsMode = 'default';
+
+  function pickVoice() {
+    var vs = TTS ? (TTS.getVoices() || []) : [];
+    var uz = vs.find(function (v) { return /uz/i.test(v.lang || '') || /uzbek/i.test(v.name || ''); });
+    var tr = vs.find(function (v) { return /^tr(-|$)/i.test(v.lang || '') || /turk|türk/i.test(v.name || ''); });
+    var az = vs.find(function (v) { return /^az(-|$)/i.test(v.lang || ''); });
+    var ru = vs.find(function (v) { return /^ru(-|$)/i.test(v.lang || ''); });
+    if (uz) { uzVoice = uz; ttsMode = 'uz'; }
+    else if (tr) { uzVoice = tr; ttsMode = 'tr'; }
+    else if (az) { uzVoice = az; ttsMode = 'tr'; }   // ozarbayjon ham turkiy — turk imlosi mos keladi
+    else if (ru) { uzVoice = ru; ttsMode = 'ru'; }
+    else { uzVoice = null; ttsMode = 'default'; }
+  }
+  if (TTS) { pickVoice(); try { TTS.onvoiceschanged = pickVoice; } catch (e) {} }
+
+  function stripEmoji(t) {
+    // Faqat emoji/bezak — apostrof (o'/g') SAQLANADI (o'girishda kerak)
     return String(t || '')
       .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️●•·]/gu, ' ')
-      .replace(/[«»"']/g, ' ').replace(/\s+/g, ' ').trim();
+      .replace(/[«»"]/g, ' ').replace(/\s+/g, ' ').trim();
   }
+  function apo(s) { return s.replace(/[ʻʼ‘’`´]/g, "'"); }
+
+  function latinToTurkish(s) {
+    s = apo(s.toLowerCase());
+    return s.replace(/o'/g, 'ö').replace(/g'/g, 'ğ')
+            .replace(/sh/g, 'ş').replace(/ch/g, 'ç')
+            .replace(/x/g, 'h').replace(/q/g, 'k').replace(/j/g, 'c').replace(/w/g, 'v')
+            .replace(/'/g, '').replace(/\s+/g, ' ').trim();
+  }
+  function latinToCyrillic(s) {
+    s = apo(' ' + s.toLowerCase() + ' ');
+    s = s.replace(/o'/g, 'о').replace(/g'/g, 'г')
+         .replace(/sh/g, 'ш').replace(/ch/g, 'ч')
+         .replace(/yo/g, 'ё').replace(/yu/g, 'ю').replace(/ya/g, 'я').replace(/ye/g, 'е')
+         .replace(/ng/g, 'нг');
+    var m = { a:'а', b:'б', c:'к', d:'д', e:'э', f:'ф', g:'г', h:'х', i:'и', j:'дж',
+              k:'к', l:'л', m:'м', n:'н', o:'о', p:'п', q:'к', r:'р', s:'с', t:'т',
+              u:'у', v:'в', w:'в', x:'х', y:'й', z:'з' };
+    var out = '';
+    for (var i = 0; i < s.length; i++) { var c = s[i]; out += (m[c] !== undefined ? m[c] : c); }
+    return out.replace(/'/g, '').replace(/\s+/g, ' ').trim();
+  }
+
   function speak(text) {
     if (!speakOn || !TTS) return;
-    var clean = stripForSpeech(text);
+    if (ttsMode === 'default') pickVoice();   // ovozlar keyin yuklangan bo'lishi mumkin
+    var clean = stripEmoji(text);
     if (!clean) return;
+    var out = clean, lang = 'uz-UZ', voice = null;
+    if (/[а-яё]/i.test(clean)) {                 // Ruscha javob — o'z holicha o'qiladi
+      lang = 'ru-RU'; voice = (ttsMode === 'ru') ? uzVoice : null;
+    } else if (ttsMode === 'uz') {
+      voice = uzVoice; lang = (uzVoice && uzVoice.lang) || 'uz-UZ';
+    } else if (ttsMode === 'tr') {
+      out = latinToTurkish(clean); voice = uzVoice; lang = (uzVoice && uzVoice.lang) || 'tr-TR';
+    } else if (ttsMode === 'ru') {
+      out = latinToCyrillic(clean); voice = uzVoice; lang = (uzVoice && uzVoice.lang) || 'ru-RU';
+    } else {                                       // hech qanday mos ovoz yo'q — turk imlosi bilan urinib ko'ramiz
+      out = latinToTurkish(clean); lang = 'tr-TR';
+    }
     try {
       TTS.cancel();
-      var u = new SpeechSynthesisUtterance(clean);
-      // Kirill harflari bo'lsa — ruscha, aks holda o'zbek (bo'lmasa brauzer defaulti)
-      u.lang = /[а-яё]/i.test(clean) ? 'ru-RU' : 'uz-UZ';
-      u.rate = 1; u.pitch = 1;
+      var u = new SpeechSynthesisUtterance(out);
+      if (voice) u.voice = voice;
+      u.lang = lang; u.rate = 0.96; u.pitch = 1;
       TTS.speak(u);
     } catch (e) {}
   }
   function stopSpeak() { try { if (TTS) TTS.cancel(); } catch (e) {} }
+  function applySpeakBtn() { if (speakBtn) speakBtn.classList.toggle('on', speakOn); }
 
   if (!TTS) { if (speakBtn) speakBtn.style.display = 'none'; }
   else if (speakBtn) {
     speakBtn.addEventListener('click', function () {
       speakOn = !speakOn; applySpeakBtn(); persist();
       if (!speakOn) stopSpeak();
-      else addMsg("🔊 Ovozli javob yoqildi. Endi javoblarni ovoz bilan o'qib beraman.", 'bot');
+      else { addMsg("🔊 Ovozli javob yoqildi.", 'bot'); speak("Ovozli javob yoqildi"); }
     });
   }
 
