@@ -55,6 +55,7 @@ from .jobs_views import JobListView, ResumeListView
 from .service_views import (
     ProvidersListView, CreateServicePaymentView,
 )
+from .assistant_views import AssistantChatView
 
 app_name = 'api'
 
@@ -162,6 +163,8 @@ urlpatterns = [
     path('resumes/', ResumeListView.as_view(), name='resumes'),
     path('service/providers/', ProvidersListView.as_view(), name='service-providers'),
     path('service/pay/', CreateServicePaymentView.as_view(), name='service-pay'),
+    # ── AI yordamchi (mobil Flutter ilova) ──
+    path('assistant/chat/', AssistantChatView.as_view(), name='assistant-chat'),
     path('', include(router.urls)),
     # Hujjat (OpenAPI / Swagger)
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

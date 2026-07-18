@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "AI yordamchi" %} — SamCity{% endblock %}
+
+{% block content %}
+<div class="container-narrow" style="text-align:center;padding-top:3rem;">
+  <div style="width:88px;height:88px;border-radius:26px;margin:0 auto 1.4rem;display:grid;place-items:center;
+              font-size:2.6rem;color:#fff;background:linear-gradient(140deg,var(--accent),var(--violet));
+              box-shadow:0 16px 36px rgba(53,81,209,.32);">🤖</div>
+  <h1 style="font-size:1.9rem;">{% trans "SamCity AI yordamchi" %}</h1>
+  <p style="color:var(--text2);max-width:560px;margin:.8rem auto 2rem;font-size:1.02rem;">
+    {% trans "Menga tabiiy tilda savol bering — men eng yaqin dorixona, shifoxona, bank yoki restoranni topib beraman, taksi, do'kon va e'lonlar bo'yicha yordam beraman." %}
+  </p>
+  <button type="button" class="btn btn-accent btn-lg" onclick="document.getElementById('samAiFab').click();">
+    💬 {% trans "Suhbatni boshlash" %}
+  </button>
+
+  <div class="grid-3" style="margin-top:3rem;text-align:left;">
+    <div class="card card-pad">
+      <div style="font-size:1.8rem;">💊</div>
+      <h3 style="margin:.5rem 0 .3rem;font-size:1.05rem;">{% trans "Eng yaqin joylar" %}</h3>
+      <p style="color:var(--text2);font-size:.9rem;">{% trans "«Menga eng yaqin dorixonani ko'rsat» — masofa bilan topib beradi." %}</p>
+    </div>
+    <div class="card card-pad">
+      <div style="font-size:1.8rem;">🚗</div>
+      <h3 style="margin:.5rem 0 .3rem;font-size:1.05rem;">{% trans "Xizmatlar" %}</h3>
+      <p style="color:var(--text2);font-size:.9rem;">{% trans "Taksi, yetkazib berish, e'lonlar va ish o'rinlari bo'yicha yo'naltiradi." %}</p>
+    </div>
+    <div class="card card-pad">
+      <div style="font-size:1.8rem;">📍</div>
+      <h3 style="margin:.5rem 0 .3rem;font-size:1.05rem;">{% trans "Joylashuv" %}</h3>
+      <p style="color:var(--text2);font-size:.9rem;">{% trans "Ruxsat bersangiz, aynan sizga eng yaqin variantlarni ko'rsatadi." %}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

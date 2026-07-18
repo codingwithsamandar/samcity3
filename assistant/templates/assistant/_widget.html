@@ -1,0 +1,433 @@
+{% load i18n %}
+{% comment %}
+   SamCity AI yordamchi — suzuvchi chat widget (har sahifada base.html orqali).
+   Tashqi kutubxonasiz (vanilla JS). Sayt CSS o'zgaruvchilaridan foydalanadi —
+   light/dark rejimga avtomatik moslashadi.
+   Xususiyatlar: ovozli kirish (Web Speech), boy joy kartalari (qo'ng'iroq,
+   yo'nalish, ochiq/yopiq, reyting, piyoda vaqti), suhbatni davom ettirish.
+   Eslatma: ko'p qatorli sharh uchun comment tegi ishlatiladi (bitta qatorlik emas).
+{% endcomment %}
+<div id="samAi" aria-live="polite">
+  <form id="samAiCsrf" style="display:none">{% csrf_token %}</form>
+
+  {# ── Suzuvchi tugma (FAB) ── #}
+  <button id="samAiFab" type="button" aria-label="{% trans 'AI yordamchi' %}" title="{% trans 'AI yordamchi' %}">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
+         stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a2 2 0 0 1 2 2v1h1a4 4 0 0 1 4 4v1a2 2 0 0 1 0 4v1a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-1a2 2 0 0 1 0-4V9a4 4 0 0 1 4-4h1V4a2 2 0 0 1 2-2z"/>
+      <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M2 12h1M21 12h1"/>
+    </svg>
+    <span class="sam-ai-pulse"></span>
+    <span class="sam-ai-fab-badge">AI</span>
+  </button>
+
+  {# ── Chat oynasi ── #}
+  <div id="samAiPanel" role="dialog" aria-label="{% trans 'AI yordamchi' %}">
+    <div class="sam-ai-head">
+      <div class="sam-ai-head-l">
+        <span class="sam-ai-avatar">🤖</span>
+        <div>
+          <div class="sam-ai-title">{% trans "SamCity yordamchi" %}</div>
+          <div class="sam-ai-sub"><span class="sam-ai-dot"></span>{% trans "Onlayn · sizga yordamga tayyor" %}</div>
+        </div>
+      </div>
+      <div class="sam-ai-head-r">
+        <button id="samAiClear" type="button" title="{% trans 'Suhbatni tozalash' %}" aria-label="{% trans 'Suhbatni tozalash' %}">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/>
+          </svg>
+        </button>
+        <button id="samAiClose" type="button" aria-label="{% trans 'Yopish' %}">✕</button>
+      </div>
+    </div>
+
+    <div id="samAiBody" class="sam-ai-body"></div>
+
+    <div id="samAiChips" class="sam-ai-chips">
+      <button type="button" class="sam-ai-chip" data-q="Eng yaqin dorixona qayerda">💊 {% trans "Dorixona" %}</button>
+      <button type="button" class="sam-ai-chip" data-q="Eng yaqin shifoxona">🏥 {% trans "Shifoxona" %}</button>
+      <button type="button" class="sam-ai-chip" data-q="Yaqin bank">🏦 {% trans "Bank" %}</button>
+      <button type="button" class="sam-ai-chip" data-q="Yaqin restoran">🍽️ {% trans "Restoran" %}</button>
+      <button type="button" class="sam-ai-chip" data-q="Taksi chaqirish">🚗 {% trans "Taksi" %}</button>
+    </div>
+
+    <form id="samAiForm" class="sam-ai-input">
+      <button id="samAiGeo" type="button" title="{% trans 'Joylashuvni ulash' %}" aria-label="{% trans 'Joylashuvni ulash' %}">📍</button>
+      <input id="samAiText" type="text" autocomplete="off" placeholder="{% trans 'Savolingizni yozing…' %}" maxlength="1000">
+      <button id="samAiMic" type="button" title="{% trans 'Gapirib ayting' %}" aria-label="{% trans 'Ovozli kirish' %}">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/>
+        </svg>
+      </button>
+      <button type="submit" id="samAiSend" aria-label="{% trans 'Yuborish' %}">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<style>
+  #samAi { --sam-ai-fg: var(--text, #1a1f2b); }
+  #samAiFab {
+    position: fixed; left: 20px; bottom: 22px; z-index: 96;
+    width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(140deg, var(--accent, #3551d1), var(--violet, #7a5af8));
+    color: #fff; display: grid; place-items: center;
+    box-shadow: 0 10px 30px rgba(53,81,209,.45); transition: transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .22s;
+  }
+  #samAiFab:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 18px 40px rgba(53,81,209,.55); }
+  #samAiFab:active { transform: scale(.95); }
+  #samAiFab svg { animation: samAiFloat 3.5s ease-in-out infinite; }
+  @keyframes samAiFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  .sam-ai-pulse { position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+    box-shadow: 0 0 0 0 rgba(122,90,248,.5); animation: samAiPulse 2.6s ease-out infinite; }
+  @keyframes samAiPulse { 0% { box-shadow: 0 0 0 0 rgba(122,90,248,.45); } 70%,100% { box-shadow: 0 0 0 18px rgba(122,90,248,0); } }
+  .sam-ai-fab-badge { position: absolute; top: -3px; right: -3px; background: var(--gold, #e6a817); color: #3a2a05;
+    font-size: .6rem; font-weight: 800; padding: 1px 5px; border-radius: 100px; letter-spacing: .03em;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+
+  #samAiPanel {
+    position: fixed; left: 20px; bottom: 92px; z-index: 97;
+    width: min(390px, calc(100vw - 40px)); height: min(580px, calc(100vh - 130px));
+    background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0);
+    border-radius: 24px; box-shadow: 0 28px 70px rgba(16,24,40,.3);
+    display: none; flex-direction: column; overflow: hidden;
+    opacity: 0; transform: translateY(18px) scale(.96); transform-origin: bottom left;
+    transition: opacity .24s, transform .24s cubic-bezier(.2,.9,.3,1);
+  }
+  #samAiPanel.open { display: flex; opacity: 1; transform: none; }
+
+  .sam-ai-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+    padding: .9rem 1rem; color: #fff; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--accent, #3551d1), var(--violet, #7a5af8) 75%, var(--accent-d, #2a3fa5)); }
+  .sam-ai-head::after { content: ""; position: absolute; inset: 0;
+    background: radial-gradient(120% 90% at 85% 0%, rgba(255,255,255,.22), transparent 55%); }
+  .sam-ai-head-l { display: flex; align-items: center; gap: .6rem; position: relative; z-index: 1; }
+  .sam-ai-avatar { width: 42px; height: 42px; border-radius: 13px; background: rgba(255,255,255,.2);
+    display: grid; place-items: center; font-size: 1.4rem; flex: none; }
+  .sam-ai-title { font-weight: 800; font-size: 1rem; line-height: 1.1; }
+  .sam-ai-sub { font-size: .73rem; opacity: .95; display: flex; align-items: center; gap: .35rem; margin-top: 2px; }
+  .sam-ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 7px #4ade80; animation: samAiBreathe 2s ease-in-out infinite; }
+  @keyframes samAiBreathe { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .sam-ai-head-r { display: flex; align-items: center; gap: .35rem; position: relative; z-index: 1; }
+  #samAiClose, #samAiClear { background: rgba(255,255,255,.18); border: none; color: #fff; cursor: pointer;
+    width: 33px; height: 33px; border-radius: 10px; font-size: 1rem; flex: none; display: grid; place-items: center;
+    transition: background .15s; }
+  #samAiClose:hover, #samAiClear:hover { background: rgba(255,255,255,.32); }
+
+  .sam-ai-body { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .7rem;
+    background: var(--bg-soft, #f6f8fb); scrollbar-width: thin; }
+  .sam-ai-msg { max-width: 86%; padding: .68rem .9rem; border-radius: 16px; font-size: .9rem; line-height: 1.5;
+    white-space: pre-line; word-wrap: break-word; animation: samAiIn .32s cubic-bezier(.2,.8,.3,1); }
+  @keyframes samAiIn { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+  .sam-ai-msg.bot { align-self: flex-start; background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0);
+    color: var(--sam-ai-fg); border-bottom-left-radius: 5px; box-shadow: 0 2px 8px rgba(16,24,40,.05); }
+  .sam-ai-msg.user { align-self: flex-end; color: #fff; border-bottom-right-radius: 5px;
+    background: linear-gradient(135deg, var(--accent, #3551d1), var(--accent-d, #2a3fa5)); }
+
+  .sam-ai-cards { align-self: stretch; display: flex; flex-direction: column; gap: .55rem;
+    animation: samAiIn .38s cubic-bezier(.2,.8,.3,1); }
+  .sam-ai-card { background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0); border-radius: 15px;
+    padding: .7rem .8rem; transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .sam-ai-card:hover { border-color: var(--accent, #3551d1); box-shadow: 0 6px 18px rgba(53,81,209,.12); transform: translateY(-1px); }
+  .sam-ai-card-top { display: flex; gap: .65rem; align-items: flex-start; text-decoration: none; color: var(--sam-ai-fg); }
+  .sam-ai-card .ci { font-size: 1.5rem; flex: none; line-height: 1.1; }
+  .sam-ai-card .cc { flex: 1; min-width: 0; }
+  .sam-ai-card .ct { font-weight: 750; font-size: .9rem; color: var(--sam-ai-fg); line-height: 1.25; }
+  .sam-ai-card .cs { font-size: .77rem; color: var(--text2, #5b6678); margin-top: 1px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .sam-ai-meta { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+  .sam-ai-tag { font-size: .69rem; font-weight: 700; padding: .16rem .5rem; border-radius: 100px; display: inline-flex; align-items: center; gap: .2rem; }
+  .sam-ai-tag.dist { color: var(--accent-d, #2a3fa5); background: var(--accent-l, #eef1fe); }
+  .sam-ai-tag.walk { color: var(--text2, #5b6678); background: var(--surface2, #f1f4f9); }
+  .sam-ai-tag.open { color: #0a7a54; background: rgba(14,159,110,.14); }
+  .sam-ai-tag.closed { color: #c0353a; background: rgba(229,72,77,.13); }
+  .sam-ai-tag.rate { color: #9a6b00; background: rgba(230,168,23,.16); }
+  .sam-ai-cardbtns { display: flex; gap: .4rem; margin-top: .6rem; }
+  .sam-ai-cardbtn { flex: 1; text-align: center; text-decoration: none; font-size: .77rem; font-weight: 700;
+    padding: .42rem .5rem; border-radius: 10px; border: 1px solid var(--border2, #d5dbe8);
+    color: var(--text2, #5b6678); background: var(--bg-soft, #f6f8fb); transition: all .15s; }
+  .sam-ai-cardbtn.primary { background: var(--accent-l, #eef1fe); color: var(--accent-d, #2a3fa5); border-color: transparent; }
+  .sam-ai-cardbtn:hover { border-color: var(--accent, #3551d1); color: var(--accent, #3551d1); }
+  .sam-ai-cardbtn.primary:hover { background: var(--accent, #3551d1); color: #fff; }
+
+  .sam-ai-actions { align-self: stretch; display: flex; flex-wrap: wrap; gap: .4rem; animation: samAiIn .4s ease; }
+  .sam-ai-action { text-decoration: none; font-size: .8rem; font-weight: 650; padding: .46rem .82rem; border-radius: 100px;
+    background: var(--accent-l, #eef1fe); color: var(--accent-d, #2a3fa5); border: 1px solid transparent; cursor: pointer;
+    transition: background .15s, color .15s; }
+  .sam-ai-action:hover { background: var(--accent, #3551d1); color: #fff; }
+
+  .sam-ai-typing { align-self: flex-start; display: flex; gap: 4px; padding: .72rem .95rem;
+    background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0); border-radius: 16px; border-bottom-left-radius: 5px; }
+  .sam-ai-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text3, #9aa4b6); animation: samAiBlink 1.2s infinite ease-in-out; }
+  .sam-ai-typing span:nth-child(2) { animation-delay: .2s; } .sam-ai-typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes samAiBlink { 0%,80%,100% { opacity: .3; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+
+  .sam-ai-chips { display: flex; gap: .4rem; padding: .5rem .75rem; overflow-x: auto; scrollbar-width: none;
+    border-top: 1px solid var(--border, #e4e8f0); background: var(--surface, #fff); }
+  .sam-ai-chips::-webkit-scrollbar { display: none; }
+  .sam-ai-chip { flex: none; font-size: .78rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+    padding: .42rem .72rem; border-radius: 100px; border: 1px solid var(--border2, #d5dbe8);
+    background: var(--bg-soft, #f6f8fb); color: var(--text2, #5b6678); transition: all .15s; }
+  .sam-ai-chip:hover { border-color: var(--accent, #3551d1); color: var(--accent, #3551d1); transform: translateY(-1px); }
+
+  .sam-ai-input { display: flex; align-items: center; gap: .4rem; padding: .6rem .7rem;
+    border-top: 1px solid var(--border, #e4e8f0); background: var(--surface, #fff); }
+  #samAiGeo, #samAiMic { flex: none; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 1.1rem;
+    border: 1px solid var(--border2, #d5dbe8); background: var(--bg-soft, #f6f8fb); color: var(--text2, #5b6678);
+    display: grid; place-items: center; transition: all .15s; }
+  #samAiGeo:hover, #samAiMic:hover { border-color: var(--accent, #3551d1); color: var(--accent, #3551d1); }
+  #samAiGeo.on { background: var(--accent-l, #eef1fe); border-color: var(--accent, #3551d1); color: var(--accent-d, #2a3fa5); }
+  #samAiMic.listening { background: #fde8e8; border-color: var(--red, #e5484d); color: var(--red, #e5484d); animation: samAiMicPulse 1.1s ease-out infinite; }
+  @keyframes samAiMicPulse { 0% { box-shadow: 0 0 0 0 rgba(229,72,77,.4); } 70%,100% { box-shadow: 0 0 0 10px rgba(229,72,77,0); } }
+  #samAiText { flex: 1; min-width: 0; border: 1px solid var(--border2, #d5dbe8); border-radius: 12px;
+    padding: .6rem .8rem; font-size: .92rem; font-family: inherit; background: var(--surface, #fff); color: var(--sam-ai-fg);
+    outline: none; transition: border-color .15s; }
+  #samAiText:focus { border-color: var(--accent, #3551d1); }
+  #samAiSend { flex: none; width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent, #3551d1), var(--violet, #7a5af8)); color: #fff;
+    display: grid; place-items: center; transition: filter .15s, transform .1s; }
+  #samAiSend:hover { filter: brightness(1.08); } #samAiSend:active { transform: scale(.94); }
+  #samAiSend:disabled { opacity: .5; cursor: default; }
+
+  @media (max-width: 720px) {
+    #samAiFab { left: 14px; bottom: 88px; width: 54px; height: 54px; }
+    #samAiPanel { left: 10px; right: 10px; width: auto; bottom: 84px; height: min(72vh, calc(100vh - 150px)); }
+    #samAiMic { display: grid; }
+  }
+  [data-theme="dark"] .sam-ai-body { background: var(--bg-soft, #0b0f17); }
+  [data-theme="dark"] #samAiMic.listening { background: rgba(229,72,77,.18); }
+</style>
+
+<script>
+(function () {
+  var root = document.getElementById('samAi');
+  if (!root) return;
+  var fab = document.getElementById('samAiFab'), panel = document.getElementById('samAiPanel');
+  var closeBtn = document.getElementById('samAiClose'), body = document.getElementById('samAiBody');
+  var form = document.getElementById('samAiForm'), input = document.getElementById('samAiText');
+  var sendBtn = document.getElementById('samAiSend'), geoBtn = document.getElementById('samAiGeo');
+  var micBtn = document.getElementById('samAiMic'), chips = document.getElementById('samAiChips');
+
+  var CHAT_URL = "{% url 'assistant:chat' %}";
+  var ci = root.querySelector('input[name="csrfmiddlewaretoken"]');
+  var CSRF = ci ? ci.value : '';
+
+  var opened = false, loc = null, history = [], busy = false;
+  // Suhbat konteksti: davom ettirish ("yana") va follow-up ("birinchisining telefoni") uchun
+  var ctx = { last_category: null, offset: 0, last_cards: null };
+
+  // ── Suhbat saqlanuvchanligi (sahifa almashsa ham yo'qolmaydi) ──
+  var STORE_KEY = 'samAiState_v1';
+  var convo = [];          // [{t:'msg',who,text}|{t:'cards',cards}|{t:'actions',actions}]
+  var replaying = false;   // saqlangan suhbatni qayta chizayotganda true (yozib qo'ymaslik uchun)
+
+  function persist() {
+    if (replaying) return;
+    try {
+      sessionStorage.setItem(STORE_KEY, JSON.stringify({
+        convo: convo.slice(-120), open: panel.classList.contains('open'),
+        loc: loc, ctx: ctx, history: history.slice(-20), opened: opened
+      }));
+    } catch (e) {}
+  }
+
+  function restore() {
+    var raw;
+    try { raw = sessionStorage.getItem(STORE_KEY); } catch (e) { return false; }
+    if (!raw) return false;
+    var st; try { st = JSON.parse(raw); } catch (e) { return false; }
+    if (!st || !st.convo || !st.convo.length) return false;
+    ctx = st.ctx || ctx; loc = st.loc || null; history = st.history || [];
+    opened = true;
+    if (loc) { geoBtn.classList.add('on'); geoBtn.title = 'Joylashuv ulandi'; }
+    replaying = true;
+    st.convo.forEach(function (ev) {
+      if (ev.t === 'msg') addMsg(ev.text, ev.who);
+      else if (ev.t === 'cards') addCards(ev.cards);
+      else if (ev.t === 'actions') addActions(ev.actions);
+    });
+    replaying = false;
+    convo = st.convo;
+    if (st.open) { panel.classList.add('open'); setTimeout(function () { input.focus(); }, 120); }
+    return true;
+  }
+
+  function scrollDown() { body.scrollTop = body.scrollHeight; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function addMsg(text, who) {
+    var d = document.createElement('div');
+    d.className = 'sam-ai-msg ' + who; d.textContent = text;
+    body.appendChild(d); scrollDown();
+    if (!replaying) { convo.push({ t: 'msg', who: who, text: text }); persist(); }
+    return d;
+  }
+
+  function stars(r) {
+    var full = Math.round(r), s = '';
+    for (var i = 0; i < 5; i++) s += (i < full ? '★' : '☆');
+    return s;
+  }
+
+  function addCards(cards) {
+    if (!cards || !cards.length) return;
+    var wrap = document.createElement('div'); wrap.className = 'sam-ai-cards';
+    cards.forEach(function (c) {
+      var el = document.createElement('div'); el.className = 'sam-ai-card';
+      var meta = '';
+      if (c.distance) meta += '<span class="sam-ai-tag dist">📍 ' + esc(c.distance) + '</span>';
+      if (c.walk) meta += '<span class="sam-ai-tag walk">' + esc(c.walk) + '</span>';
+      if (c.open === true) meta += '<span class="sam-ai-tag open">● Ochiq</span>';
+      else if (c.open === false) meta += '<span class="sam-ai-tag closed">● Yopiq</span>';
+      if (c.rating) meta += '<span class="sam-ai-tag rate">' + stars(c.rating) + ' ' + esc(c.rating) + '</span>';
+
+      var btns = '<a class="sam-ai-cardbtn primary" href="' + esc(c.url) + '">Batafsil</a>';
+      if (c.route_url) btns += '<a class="sam-ai-cardbtn" href="' + esc(c.route_url) + '" target="_blank" rel="noopener">🧭 Yo\'nalish</a>';
+      if (c.phone) btns += '<a class="sam-ai-cardbtn" href="tel:' + esc(c.phone.replace(/[^0-9+]/g, '')) + '">☎ Qo\'ng\'iroq</a>';
+
+      el.innerHTML =
+        '<a class="sam-ai-card-top" href="' + esc(c.url) + '">' +
+          '<span class="ci">' + esc(c.icon || '📍') + '</span>' +
+          '<span class="cc"><span class="ct">' + esc(c.title) + '</span>' +
+          '<span class="cs">' + esc(c.subtitle) + '</span></span>' +
+        '</a>' +
+        (meta ? '<div class="sam-ai-meta">' + meta + '</div>' : '') +
+        '<div class="sam-ai-cardbtns">' + btns + '</div>';
+      wrap.appendChild(el);
+    });
+    body.appendChild(wrap); scrollDown();
+    if (!replaying) { convo.push({ t: 'cards', cards: cards }); persist(); }
+  }
+
+  function addActions(actions) {
+    if (!actions || !actions.length) return;
+    var wrap = document.createElement('div'); wrap.className = 'sam-ai-actions';
+    actions.forEach(function (a) {
+      var el;
+      if (a.q) { el = document.createElement('button'); el.type = 'button';
+        el.addEventListener('click', function () { send(a.q); }); }
+      else { el = document.createElement('a'); el.href = a.url || '#'; }
+      el.className = 'sam-ai-action'; el.textContent = a.label || '';
+      wrap.appendChild(el);
+    });
+    body.appendChild(wrap); scrollDown();
+    if (!replaying) { convo.push({ t: 'actions', actions: actions }); persist(); }
+  }
+
+  function showTyping() {
+    var d = document.createElement('div'); d.className = 'sam-ai-typing'; d.id = 'samAiTyping';
+    d.innerHTML = '<span></span><span></span><span></span>'; body.appendChild(d); scrollDown();
+  }
+  function hideTyping() { var t = document.getElementById('samAiTyping'); if (t) t.remove(); }
+
+  function greet() {
+    var h = new Date().getHours();
+    var t = h < 5 ? 'Xayrli tun' : h < 11 ? 'Xayrli tong' : h < 18 ? 'Xayrli kun' : 'Xayrli kech';
+    addMsg(t + "! 👋 Men SamCity yordamchisiman. Eng yaqin dorixona, shifoxona, bank " +
+           "yoki restoranni topib beraman, taksi va do'konlar bo'yicha yordam beraman.\n\n" +
+           "Savolingizni yozing yoki 🎤 tugmasi bilan gapiring.", 'bot');
+  }
+  function openPanel() { panel.classList.add('open'); if (!opened) { opened = true; greet(); }
+    persist(); setTimeout(function () { input.focus(); }, 220); }
+  function closePanel() { panel.classList.remove('open'); persist(); }
+
+  function clearConvo() {
+    convo = []; history = [];
+    ctx = { last_category: null, offset: 0, last_cards: null };
+    try { sessionStorage.removeItem(STORE_KEY); } catch (e) {}
+    body.innerHTML = ''; opened = true; greet(); persist();
+  }
+
+  fab.addEventListener('click', function () { panel.classList.contains('open') ? closePanel() : openPanel(); });
+  closeBtn.addEventListener('click', closePanel);
+  var clearBtn = document.getElementById('samAiClear');
+  if (clearBtn) clearBtn.addEventListener('click', clearConvo);
+
+  // ── Geolokatsiya ──
+  function requestGeo(cb) {
+    if (!navigator.geolocation) { if (cb) cb(false); return; }
+    navigator.geolocation.getCurrentPosition(
+      function (p) { loc = { lat: p.coords.latitude, lng: p.coords.longitude };
+        geoBtn.classList.add('on'); geoBtn.title = 'Joylashuv ulandi'; persist(); if (cb) cb(true); },
+      function () { if (cb) cb(false); },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 });
+  }
+  geoBtn.addEventListener('click', function () {
+    requestGeo(function (ok) {
+      addMsg(ok ? "📍 Joylashuvingiz ulandi. Endi «eng yaqin ...» deb so'rang."
+                : "Joylashuvni ololmadim. Brauzer ruxsatini tekshiring.", 'bot');
+    });
+  });
+
+  // ── Ovozli kirish (Web Speech API) ──
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null, listening = false;
+  var voiceLangs = ['uz-UZ', 'ru-RU'], voiceLangIdx = 0;
+  if (!SR) { micBtn.style.display = 'none'; }
+  else {
+    micBtn.addEventListener('click', function () {
+      if (listening) { try { rec.stop(); } catch (e) {} return; }
+      try {
+        rec = new SR(); rec.lang = voiceLangs[voiceLangIdx];
+        rec.interimResults = false; rec.maxAlternatives = 1;
+        rec.onstart = function () { listening = true; micBtn.classList.add('listening'); input.placeholder = 'Tinglayapman…'; };
+        rec.onresult = function (e) { var t = e.results[0][0].transcript; input.value = t; setTimeout(function () { send(t); }, 150); };
+        rec.onerror = function (e) {
+          // uz-UZ qo'llab-quvvatlanmasa — ruscha bilan qayta urinamiz
+          if (e.error === 'language-not-supported' && voiceLangIdx < voiceLangs.length - 1) { voiceLangIdx++; }
+        };
+        rec.onend = function () { listening = false; micBtn.classList.remove('listening'); input.placeholder = "{% trans 'Savolingizni yozing…' %}"; };
+        rec.start();
+      } catch (e) { listening = false; micBtn.classList.remove('listening'); }
+    });
+  }
+
+  // ── Xabar yuborish ──
+  function send(text) {
+    if (busy || !text || !text.trim()) return;
+    busy = true; sendBtn.disabled = true;
+    addMsg(text, 'user'); history.push({ role: 'user', content: text });
+    input.value = ''; showTyping();
+
+    fetch(CHAT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ message: text, location: loc, history: history, context: ctx })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        hideTyping();
+        var reply = (res && res.reply) || 'Kechirasiz, javob berolmadim.';
+        addMsg(reply, 'bot'); history.push({ role: 'assistant', content: reply });
+        addCards(res && res.cards); addActions(res && res.actions);
+        // Suhbat kontekstini yangilaymiz ("yana" va follow-up uchun)
+        if (res) {
+          if (res.category) { ctx.last_category = res.category; ctx.offset = res.next_offset || 0; }
+          else if (res.intent !== 'llm' && res.intent !== 'followup') { ctx.last_category = null; ctx.offset = 0; }
+          // Follow-up bitta karta qaytaradi — to'liq ro'yxatni saqlab qolamiz
+          if (res.cards && res.cards.length && res.intent !== 'followup') { ctx.last_cards = res.cards; }
+        }
+        persist();
+      })
+      .catch(function () { hideTyping(); addMsg("Ulanishda xatolik. Qayta urinib ko'ring.", 'bot'); })
+      .finally(function () { busy = false; sendBtn.disabled = false; input.focus(); });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
+  chips.addEventListener('click', function (e) {
+    var b = e.target.closest('.sam-ai-chip'); if (b) send(b.getAttribute('data-q'));
+  });
+
+  // Saqlangan suhbatni tiklaymiz (sahifa almashgan bo'lsa — o'sha joyidan davom etadi)
+  restore();
+
+  // Ruxsat oldindan berilgan bo'lsa — joylashuvni jimgina olamiz
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' })
+      .then(function (s) { if (s.state === 'granted' && !loc) requestGeo(); }).catch(function () {});
+  }
+})();
+</script>

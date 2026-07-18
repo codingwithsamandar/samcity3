@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'api',
     'sms',
     'telegrambot',
+    'assistant',
 ]
 
 MIDDLEWARE = [

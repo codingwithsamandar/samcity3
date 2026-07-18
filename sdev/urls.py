@@ -14,6 +14,7 @@ urlpatterns = [
     path('booking/', include('booking.urls')),
     path('notifications/', include('notifications.urls')),
     path('map/', include('places.urls')),
+    path('ai/', include('assistant.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     # ── Mobil REST API (Flutter ilova) ──
     path('api/', include('api.urls', namespace='api')),
