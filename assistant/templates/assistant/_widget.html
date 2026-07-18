@@ -32,6 +32,14 @@
         </div>
       </div>
       <div class="sam-ai-head-r">
+        <button id="samAiSpeak" type="button" title="{% trans 'Ovozli javob' %}" aria-label="{% trans 'Ovozli javobni yoqish/o‘chirish' %}">
+          <svg class="spk-on" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/>
+          </svg>
+          <svg class="spk-off" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m23 9-6 6M17 9l6 6"/>
+          </svg>
+        </button>
         <button id="samAiClear" type="button" title="{% trans 'Suhbatni tozalash' %}" aria-label="{% trans 'Suhbatni tozalash' %}">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/>
@@ -112,10 +120,15 @@
   .sam-ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 7px #4ade80; animation: samAiBreathe 2s ease-in-out infinite; }
   @keyframes samAiBreathe { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
   .sam-ai-head-r { display: flex; align-items: center; gap: .35rem; position: relative; z-index: 1; }
-  #samAiClose, #samAiClear { background: rgba(255,255,255,.18); border: none; color: #fff; cursor: pointer;
+  #samAiClose, #samAiClear, #samAiSpeak { background: rgba(255,255,255,.18); border: none; color: #fff; cursor: pointer;
     width: 33px; height: 33px; border-radius: 10px; font-size: 1rem; flex: none; display: grid; place-items: center;
     transition: background .15s; }
-  #samAiClose:hover, #samAiClear:hover { background: rgba(255,255,255,.32); }
+  #samAiClose:hover, #samAiClear:hover, #samAiSpeak:hover { background: rgba(255,255,255,.32); }
+  #samAiSpeak.on { background: rgba(255,255,255,.42); }
+  #samAiSpeak .spk-off { display: block; }
+  #samAiSpeak .spk-on { display: none; }
+  #samAiSpeak.on .spk-off { display: none; }
+  #samAiSpeak.on .spk-on { display: block; }
 
   .sam-ai-body { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .7rem;
     background: var(--bg-soft, #f6f8fb); scrollbar-width: thin; }
@@ -215,7 +228,7 @@
   var ci = root.querySelector('input[name="csrfmiddlewaretoken"]');
   var CSRF = ci ? ci.value : '';
 
-  var opened = false, loc = null, history = [], busy = false;
+  var opened = false, loc = null, history = [], busy = false, speakOn = false;
   // Suhbat konteksti: davom ettirish ("yana") va follow-up ("birinchisining telefoni") uchun
   var ctx = { last_category: null, offset: 0, last_cards: null };
 
@@ -229,7 +242,7 @@
     try {
       sessionStorage.setItem(STORE_KEY, JSON.stringify({
         convo: convo.slice(-120), open: panel.classList.contains('open'),
-        loc: loc, ctx: ctx, history: history.slice(-20), opened: opened
+        loc: loc, ctx: ctx, history: history.slice(-20), opened: opened, speak: speakOn
       }));
     } catch (e) {}
   }
@@ -241,7 +254,7 @@
     var st; try { st = JSON.parse(raw); } catch (e) { return false; }
     if (!st || !st.convo || !st.convo.length) return false;
     ctx = st.ctx || ctx; loc = st.loc || null; history = st.history || [];
-    opened = true;
+    opened = true; speakOn = !!st.speak;
     if (loc) { geoBtn.classList.add('on'); geoBtn.title = 'Joylashuv ulandi'; }
     replaying = true;
     st.convo.forEach(function (ev) {
@@ -333,9 +346,10 @@
   }
   function openPanel() { panel.classList.add('open'); if (!opened) { opened = true; greet(); }
     persist(); setTimeout(function () { input.focus(); }, 220); }
-  function closePanel() { panel.classList.remove('open'); persist(); }
+  function closePanel() { panel.classList.remove('open'); stopSpeak(); persist(); }
 
   function clearConvo() {
+    stopSpeak();
     convo = []; history = [];
     ctx = { last_category: null, offset: 0, last_cards: null };
     try { sessionStorage.removeItem(STORE_KEY); } catch (e) {}
@@ -385,6 +399,40 @@
     });
   }
 
+  // ── Ovozli javob (Text-to-Speech) ──
+  var TTS = window.speechSynthesis;
+  var speakBtn = document.getElementById('samAiSpeak');
+  function applySpeakBtn() { if (speakBtn) speakBtn.classList.toggle('on', speakOn); }
+  function stripForSpeech(t) {
+    // Emoji va bezak belgilarini olib tashlaymiz — ular ovozda g'alati eshitiladi
+    return String(t || '')
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️●•·]/gu, ' ')
+      .replace(/[«»"']/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function speak(text) {
+    if (!speakOn || !TTS) return;
+    var clean = stripForSpeech(text);
+    if (!clean) return;
+    try {
+      TTS.cancel();
+      var u = new SpeechSynthesisUtterance(clean);
+      // Kirill harflari bo'lsa — ruscha, aks holda o'zbek (bo'lmasa brauzer defaulti)
+      u.lang = /[а-яё]/i.test(clean) ? 'ru-RU' : 'uz-UZ';
+      u.rate = 1; u.pitch = 1;
+      TTS.speak(u);
+    } catch (e) {}
+  }
+  function stopSpeak() { try { if (TTS) TTS.cancel(); } catch (e) {} }
+
+  if (!TTS) { if (speakBtn) speakBtn.style.display = 'none'; }
+  else if (speakBtn) {
+    speakBtn.addEventListener('click', function () {
+      speakOn = !speakOn; applySpeakBtn(); persist();
+      if (!speakOn) stopSpeak();
+      else addMsg("🔊 Ovozli javob yoqildi. Endi javoblarni ovoz bilan o'qib beraman.", 'bot');
+    });
+  }
+
   // ── Xabar yuborish ──
   function send(text) {
     if (busy || !text || !text.trim()) return;
@@ -402,6 +450,7 @@
         hideTyping();
         var reply = (res && res.reply) || 'Kechirasiz, javob berolmadim.';
         addMsg(reply, 'bot'); history.push({ role: 'assistant', content: reply });
+        speak(reply);
         addCards(res && res.cards); addActions(res && res.actions);
         // Suhbat kontekstini yangilaymiz ("yana" va follow-up uchun)
         if (res) {
@@ -429,6 +478,7 @@
 
   // Saqlangan suhbatni tiklaymiz (sahifa almashgan bo'lsa — o'sha joyidan davom etadi)
   restore();
+  applySpeakBtn();
 
   // Ruxsat oldindan berilgan bo'lsa — joylashuvni jimgina olamiz
   if (navigator.permissions && navigator.permissions.query) {
