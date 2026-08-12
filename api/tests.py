@@ -17,6 +17,10 @@ from rest_framework.test import APIClient
 from main.models import User, OTPCode
 from notifications.models import Notification, notify
 from delivery.models import Store, Product, Cart
+from unittest import skipUnless
+
+from django.conf import settings
+
 from taxi.models import Taxist, Route
 from booking.models import Venue, VenueBooking
 
@@ -206,6 +210,8 @@ class DeliveryAPITests(TestCase):
 
 
 # ─────────────────────────── Taxi ───────────────────────────
+# Taksi arxivlangan — endpointlar ro'yxatga olinmagan, testlar o'tkazib yuboriladi.
+@skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
 class TaxiAPITests(TestCase):
     def setUp(self):
         cache.clear()

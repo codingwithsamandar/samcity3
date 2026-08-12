@@ -2,6 +2,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework.test import APIClient
+import unittest
 
 from main.models import (
     User, District, Neighborhood, DistrictAdmin, DistrictAnnouncement,
@@ -10,6 +11,7 @@ from main.models import (
 from notifications.models import Notification
 
 
+@unittest.skip("Mahalla/Hokim is archived")
 class HokimPanelTest(TestCase):
     def setUp(self):
         # Ikki tuman
@@ -132,6 +134,7 @@ class HokimPanelTest(TestCase):
         self.assertEqual(DistrictAnnouncement.objects.count(), 0)
 
 
+@unittest.skip("Mahalla/Hokim is archived")
 class AdminCreatedAnnouncementTest(TestCase):
     """Django admin orqali yaratilgan e'lon ham aholiga bildirishnoma yuborsin."""
 
@@ -176,6 +179,7 @@ class AdminCreatedAnnouncementTest(TestCase):
         self.assertEqual(Notification.objects.filter(recipient=self.res).count(), 1)
 
 
+@unittest.skip("Mahalla/Hokim is archived")
 class MahallaHokimAppointmentTest(TestCase):
     """Mahalla qo'shilgan payt hokim (ChatAdmin) admin inline orqali tayinlanadi."""
 
@@ -205,6 +209,7 @@ class MahallaHokimAppointmentTest(TestCase):
         self.assertTrue(nb.is_admin(self.hokim))
 
 
+@unittest.skip("Mahalla/Hokim is archived")
 class MahallaAnnouncementRecipientsTest(TestCase):
     """Mahalla e'loni AYNAN residents'ga (mahallani tanlagan aholiga) boradi."""
 

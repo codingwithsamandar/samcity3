@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SamCity — Investor Deck</title>
+<style>
+:root{
+  --navy:#0B1F3A; --navy-2:#12315C; --ink:#0D1B2A; --body:#354A61;
+  --muted:#6B8199; --line:#DFE7EF; --bg:#F4F7FA; --card:#FFFFFF;
+  --accent:#0E9F8E; --accent-2:#F5A623; --danger:#D9534F; --ok:#1E9E5A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Segoe UI",-apple-system,"Inter",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--body);-webkit-font-smoothing:antialiased}
+
+.deck{scroll-snap-type:y mandatory;height:100vh;overflow-y:scroll}
+.slide{scroll-snap-align:start;width:100%;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:40px 24px}
+.canvas{width:100%;max-width:1180px;aspect-ratio:16/9;background:var(--card);
+  border-radius:18px;box-shadow:0 18px 50px rgba(11,31,58,.13);
+  padding:44px 56px 0;position:relative;overflow:hidden;
+  display:flex;flex-direction:column}
+.canvas.dark{background:linear-gradient(150deg,#0B1F3A 0%,#123055 55%,#0E9F8E 190%);color:#E8F1F8}
+.num{position:absolute;right:24px;bottom:14px;font-size:11px;color:var(--muted);
+  letter-spacing:.09em;font-weight:600;z-index:3}
+.canvas.dark .num{color:rgba(255,255,255,.45)}
+.tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:11px}
+h1{font-size:52px;line-height:1.08;color:var(--ink);font-weight:800;letter-spacing:-.02em}
+h2{font-size:32px;line-height:1.15;color:var(--ink);font-weight:800;
+  letter-spacing:-.015em;margin-bottom:5px}
+.canvas.dark h1,.canvas.dark h2{color:#fff}
+.sub{font-size:15px;color:var(--muted);margin-bottom:20px;max-width:860px;line-height:1.5}
+.canvas.dark .sub{color:rgba(255,255,255,.72)}
+p{line-height:1.55}
+
+/* takeaway band */
+.takeaway{
+  margin:0 -56px;padding:13px 56px;background:#0B1F3A;color:#fff;
+  font-size:13px;line-height:1.45;display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+}
+.takeaway .lb{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--accent-2);
+  text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(255,255,255,.25);
+  padding-right:12px}
+.canvas.dark .takeaway{background:rgba(255,255,255,.1)}
+
+.body-area{flex:1;display:flex;flex-direction:column;justify-content:center;
+  min-height:0;padding-bottom:14px}
+
+.grid{display:grid;gap:15px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+.card{background:#FBFCFE;border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.card h3{font-size:15px;color:var(--ink);font-weight:750;margin-bottom:6px;line-height:1.3}
+.card p{font-size:12.8px;color:var(--body)}
+.card .ico{font-size:18px;margin-bottom:6px;display:block}
+.card.accent{border-left:3px solid var(--accent)}
+.card.warn{border-left:3px solid var(--accent-2)}
+.card.bad{border-left:3px solid var(--danger)}
+.card.good{border-left:3px solid var(--ok)}
+
+/* jamoa a'zosi rasmi — rasm bo'lmasa bosh harflar ko'rinadi */
+.ava{position:relative;width:54px;height:54px;border-radius:11px;overflow:hidden;
+  background:#E4ECF4;display:flex;align-items:center;justify-content:center;
+  margin-bottom:10px;flex-shrink:0}
+.ava span{font-size:18px;font-weight:800;color:#6B8199;letter-spacing:.03em}
+.ava img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 28%}
+.ava::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--accent)}
+.ava.amber::after{background:var(--accent-2)}
+.contacts{margin:9px 0 9px;padding-bottom:9px;border-bottom:1px solid var(--line);
+  font-size:11px;line-height:1.55}
+.contacts .tgl{color:var(--accent);font-weight:750;display:block}
+.contacts .tgl.amber{color:var(--accent-2)}
+.contacts .ig{color:var(--muted);display:block;font-size:10.5px}
+.contacts .tel{color:var(--ink);font-weight:700;display:block}
+
+.stat{background:#FBFCFE;border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;text-align:center}
+.stat .v{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.02em;line-height:1.1}
+.stat .l{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+.canvas.dark .stat{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
+.canvas.dark .stat .v{color:#fff}
+.canvas.dark .stat .l{color:rgba(255,255,255,.65)}
+
+ul.clean{list-style:none}
+ul.clean li{position:relative;padding-left:20px;margin-bottom:9px;font-size:14px;line-height:1.5}
+ul.clean li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;
+  border-radius:2px;background:var(--accent)}
+ul.clean li b{color:var(--ink);font-weight:700}
+.canvas.dark ul.clean li{color:rgba(255,255,255,.85)}
+.canvas.dark ul.clean li b{color:#fff}
+ul.clean.amber li::before{background:var(--accent-2)}
+ul.clean.red li::before{background:var(--danger)}
+ul.clean.green li::before{background:var(--ok)}
+
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{text-align:left;padding:9px 12px;background:#F2F6FA;color:var(--navy);font-weight:750;
+  font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--line)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td b{color:var(--ink)}
+.canvas.dark th{background:rgba(255,255,255,.09);color:#fff;border-color:rgba(255,255,255,.2)}
+.canvas.dark td{border-color:rgba(255,255,255,.13);color:rgba(255,255,255,.85)}
+.canvas.dark td b{color:#fff}
+
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;
+  font-weight:750;white-space:nowrap}
+.pill.ok{background:#E3F5EB;color:#137445}
+.pill.mid{background:#FDF1DC;color:#9A6608}
+.pill.no{background:#FBE7E7;color:#A6322F}
+
+.note{margin-top:12px;font-size:11.5px;color:var(--muted);border-left:3px solid var(--line);
+  padding-left:11px;line-height:1.5}
+.canvas.dark .note{color:rgba(255,255,255,.62);border-color:rgba(255,255,255,.25)}
+
+.kpi-row{display:flex;gap:11px;flex-wrap:wrap;margin-top:16px}
+.kpi{background:rgba(14,159,142,.09);border:1px solid rgba(14,159,142,.28);
+  border-radius:8px;padding:8px 13px;font-size:12.5px;color:var(--navy);font-weight:650}
+
+.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:17px}
+.phase{border-top:4px solid var(--accent);padding-top:12px}
+.phase:nth-child(2){border-color:var(--accent-2)}
+.phase:nth-child(3){border-color:var(--navy-2)}
+.phase .when{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px}
+.phase h3{font-size:16px;color:var(--ink);margin-bottom:8px;font-weight:750}
+.phase li{font-size:12.6px;margin-bottom:6px}
+
+.fill{background:#FFFBF0;border:1px dashed var(--accent-2);color:#8A5D00;
+  border-radius:8px;padding:10px 13px;font-size:12px;line-height:1.5}
+.big-quote{font-size:25px;line-height:1.42;color:var(--ink);font-weight:650;max-width:930px}
+.canvas.dark .big-quote{color:#fff}
+
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch}
+.vs .col{padding:15px 18px}
+.vs .old{background:#FBECEC;border-radius:10px 0 0 10px}
+.vs .new{background:#E9F7F4;border-radius:0 10px 10px 0}
+.vs .mid{width:38px;background:var(--navy);display:flex;align-items:center;
+  justify-content:center;color:#fff;font-size:13px;font-weight:800}
+.vs h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:9px}
+.vs .old h4{color:#A6322F}
+.vs .new h4{color:#137445}
+.vs li{font-size:12.7px;margin-bottom:7px;list-style:none;line-height:1.45}
+
+.nav{position:fixed;right:18px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:6px;z-index:50}
+.nav a{width:8px;height:8px;border-radius:50%;background:#C4D2DF;transition:.2s}
+.nav a:hover,.nav a.on{background:var(--accent);transform:scale(1.4)}
+.hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+  background:rgba(11,31,58,.86);color:#fff;font-size:11.5px;padding:6px 14px;
+  border-radius:20px;z-index:50}
+.pdfbtn{position:fixed;right:16px;top:16px;z-index:60;background:var(--accent);color:#fff;
+  border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;
+  padding:11px 18px;border-radius:9px;box-shadow:0 4px 14px rgba(14,159,142,.35)}
+.pdfbtn:hover{background:#0C8A7B}
+
+@page{size:297mm 167mm;margin:0}
+@media print{
+  body{background:#fff}
+  .deck{height:auto;overflow:visible;display:block}
+  .nav,.hint,.pdfbtn{display:none!important}
+  .slide{min-height:0;height:167mm;padding:0;page-break-after:always;break-after:page}
+  .canvas{width:297mm;height:167mm;max-width:none;aspect-ratio:auto;border-radius:0;
+    box-shadow:none;padding:30px 38px 0}
+  .takeaway{margin:0 -38px;padding:11px 38px;font-size:11.5px}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h1{font-size:40px}h2{font-size:25px}
+  .sub{font-size:13px;margin-bottom:14px}
+  .card p,ul.clean li{font-size:11.8px}
+  .stat .v{font-size:22px}
+  table{font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="nav" id="nav"></div>
+<button class="pdfbtn" onclick="window.print()">⬇ PDF sifatida saqlash</button>
+<div class="hint">← → tugmalari bilan varaqlang · PDF uchun yuqoridagi tugmani bosing</div>
+
+<div class="deck" id="deck">
+
+<!-- 01 · COVER -->
+<section class="slide"><div class="canvas dark">
+  <div class="body-area">
+    <div class="tag" style="color:var(--accent-2)">Pre-seed · Validatsiya va pilot bosqichi · 2026</div>
+    <h1>SamCity</h1>
+    <p style="font-size:24px;line-height:1.4;margin-top:16px;color:rgba(255,255,255,.9);max-width:900px;font-weight:400">
+      Kichik tumanlar uchun shahar xizmatlari platformasi.<br>
+      Birinchi maqsad — <b style="color:var(--accent-2);font-weight:700">Shofirkonda modelni isbotlash</b>,
+      keyin boshqa tumanlarga ko'chirish.
+    </p>
+    <div class="kpi-row" style="margin-top:30px">
+      <div class="kpi" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff">Mahsulot qurilgan</div>
+      <div class="kpi" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff">Bosqich: pilot oldi</div>
+      <div class="kpi" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff">So'rov: $15 000</div>
+      <div class="kpi" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff">Yoshlar Ventures</div>
+    </div>
+  </div>
+  <div class="takeaway" style="background:rgba(255,255,255,.1)">
+    <span class="lb">Investor uchun</span>
+    <span>Bu <b>product-market fit</b> da'vosi emas. Bu — tayyor mahsulotni bitta tumanda sinovdan o'tkazish taklifi.</span>
+  </div>
+  <div class="num">01</div>
+</div></section>
+
+<!-- 02 · MUAMMO -->
+<section class="slide"><div class="canvas">
+  <div class="tag">01 · Muammo</div>
+  <h2>Shofirkonda kundalik xizmatlar tizimsiz ishlaydi</h2>
+  <p class="sub">Bu bir marta uchraydigan muammo emas — har kuni, har xonadonda takrorlanadi. Aynan shuning uchun u biznes imkoniyati.</p>
+  <div class="body-area">
+    <div class="grid g3">
+      <div class="card bad">
+        <span class="ico">👨‍👩‍👧</span>
+        <h3>Aholi zarar ko'radi</h3>
+        <ul class="clean red" style="margin-top:8px">
+          <li>Taksi uchun qo'ng'iroq — narx oldindan noma'lum</li>
+          <li>Do'konda katalog yo'q — nima bor, qancha turadi bilinmaydi</li>
+          <li>To'yxona, salon broni og'zaki — chalkashadi</li>
+          <li>Mahallaga murojaat — javob qachon kelishi noma'lum</li>
+        </ul>
+      </div>
+      <div class="card bad">
+        <span class="ico">🏪</span>
+        <h3>Mahalliy biznes zarar ko'radi</h3>
+        <ul class="clean red" style="margin-top:8px">
+          <li>Yangi mijozga chiqishning yo'li yo'q</li>
+          <li>Reklama = ko'chadagi banner yoki tanish orqali</li>
+          <li>Buyurtmalar Telegramda tartibsiz — yo'qoladi</li>
+          <li>Kim, nima sotib olganini bilmaydi — takroriy savdo yo'q</li>
+        </ul>
+      </div>
+      <div class="card bad">
+        <span class="ico">🏛️</span>
+        <h3>Mahalla va hokimiyat zarar ko'radi</h3>
+        <ul class="clean red" style="margin-top:8px">
+          <li>Aholiga xabar yetkazish kanali yo'q</li>
+          <li>Murojaatlar qog'ozda, holati kuzatilmaydi</li>
+          <li>Qaysi muammo qanchalik keng — o'lchanmaydi</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card"><h3>Nega bu muhim — takrorlanish</h3><p>Ovqat, mahsulot, transport, to'lov — haftada bir necha marta. Yuqori chastota = odat = barqaror biznes.</p></div>
+      <div class="card"><h3>Nega bu muhim — masshtab</h3><p>O'zbekistonda <b>200 dan ortiq tuman</b> aynan shu holatda. Shofirkon — birinchi namuna, oxirgisi emas.</p></div>
+      <div class="card"><h3>Nega buni hech kim hal qilmaydi</h3><p>Yirik o'yinchilar uchun kichik tuman iqtisodiy jihatdan qiziq emas. Mahalliy o'yinchida esa texnologiya yo'q.</p></div>
+    </div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Muammo <b>real, kundalik va takrorlanadigan</b> — va uni hal qilishga hozircha na yirik, na mahalliy o'yinchi kirmoqda.</span>
+  </div>
+  <div class="num">02</div>
+</div></section>
+
+<!-- 03 · YECHIM -->
+<section class="slide"><div class="canvas">
+  <div class="tag">02 · Yechim</div>
+  <h2>Har bir muammo uchun bitta aniq yechim</h2>
+  <p class="sub">Sodda til bilan: SamCity — tumandagi barcha xizmatlarni bitta ilovaga yig'adi va ularni ko'rinadigan, o'lchanadigan qiladi.</p>
+  <div class="body-area">
+    <table>
+      <tr>
+        <th style="width:36%">Bugungi holat</th>
+        <th style="width:44%">SamCity nima qiladi</th>
+        <th style="width:20%">Kim yutadi</th>
+      </tr>
+      <tr>
+        <td>Taksi chaqirish uchun qo'ng'iroq, narx noma'lum</td>
+        <td><b>Ilovadan taksi chaqirasiz.</b> Narx oldindan ko'rinadi, mashina xaritada, haydovchining bahosi bor</td>
+        <td>Yo'lovchi + haydovchi</td>
+      </tr>
+      <tr>
+        <td>Do'konda katalog yo'q, buyurtma Telegramda</td>
+        <td><b>Do'konning mahsulotlari narxi bilan ko'rinadi.</b> Savatga solasiz, buyurtma beriladi, yetkazilishi kuzatiladi</td>
+        <td>Xaridor + do'kon</td>
+      </tr>
+      <tr>
+        <td>Bron og'zaki — ikki marta bron, kelmay qolish</td>
+        <td><b>Bo'sh vaqtni ko'rib bron qilasiz.</b> Oldindan to'lov bor — kelmay qolish kamayadi</td>
+        <td>Mijoz + joy egasi</td>
+      </tr>
+      <tr>
+        <td>Mahallaga murojaat — javob qachon kelishi noma'lum</td>
+        <td><b>Murojaat holati ko'rinadi:</b> yuborildi → ko'rilmoqda → hal qilindi. Rais va hokim panelidan javob beradi</td>
+        <td>Fuqaro + mahalla</td>
+      </tr>
+      <tr>
+        <td>Biznes reklama qila olmaydi</td>
+        <td><b>O'z mahallasidagi odamlarga xabar yuboradi.</b> Kim ko'rgani va kim buyurtma berganini ko'radi</td>
+        <td>Mahalliy biznes</td>
+      </tr>
+    </table>
+    <p style="font-size:13px;color:var(--ink);font-weight:750;margin:14px 0 10px">Va ularni bir-biriga bog'laydigan to'rtta qatlam:</p>
+    <div class="grid g4">
+      <div class="card accent"><span class="ico">🔍</span><h3>Yagona qidiruv</h3>
+        <p>Bitta qidiruv oynasi: do'kon, mahsulot, joy, e'lon, ish o'rni. Foydalanuvchi nima izlayotganini aniq bilmasa ham topadi.</p></div>
+      <div class="card accent"><span class="ico">🗺️</span><h3>Xarita</h3>
+        <p>16 toifadagi joy — dorixona, shifoxona, bank, maktab. Masofa, piyoda vaqti, <b>ochiq yoki yopiqligi</b> va yo'nalish bilan.</p></div>
+      <div class="card accent"><span class="ico">🏘️</span><h3>Mahalla</h3>
+        <p>Rais e'lonlari, murojaat kuzatuvi, so'rovnoma, yordam markazi. <b>Boshqa hech qayerda yo'q</b> — bizning tarqatish kanalimiz.</p></div>
+      <div class="card warn"><span class="ico">🤖</span><h3>AI yordamchi</h3>
+        <p>O'zbek tilida savol berasiz: <i>"eng yaqin ochiq dorixona qayerda?"</i> Javob masofa, piyoda vaqti va yo'nalish bilan — <b>ovozli ham</b>.</p></div>
+    </div>
+    <div class="note"><b>AI yordamchi bugun javob beradi.</b> Keyingi bosqich — amalni ham bajarsin: «taksi chaqir», «non buyurtma qil». Ovoz bilan boshqariladigan shahar yordamchisi — bu bizning uzoq muddatli farqimiz.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Yechim <b>mavhum emas</b>: har bir muammoga bitta aniq funksiya to'g'ri keladi va ularning hammasi allaqachon yozilgan.</span>
+  </div>
+  <div class="num">03</div>
+</div></section>
+
+<!-- 04 · NEGA ODAMLAR -->
+<section class="slide"><div class="canvas">
+  <div class="tag">03 · Foydalanuvchi</div>
+  <h2>Nega odam Telegram o'rniga SamCity'ni ochadi</h2>
+  <p class="sub">Bu deck'dagi eng muhim savol. Bizning haqiqiy raqibimiz Yandex emas — <b>bepul Telegram va telefon qo'ng'irog'i</b>.</p>
+  <div class="body-area">
+    <div class="vs">
+      <div class="col old">
+        <h4>Telegram / qo'ng'iroq bilan</h4>
+        <ul>
+          <li>Har do'kon — alohida kanal. Qaysi birida bor, izlash kerak</li>
+          <li>Narx yozilmagan yoki eskirgan — so'rash kerak</li>
+          <li>Buyurtma xabarlar orasida yo'qoladi</li>
+          <li>Kim yetkazayotgani va qachon kelishi noma'lum</li>
+          <li>Sifat kafolati yo'q — shikoyat qiladigan joy yo'q</li>
+          <li>Narx solishtirib bo'lmaydi</li>
+        </ul>
+      </div>
+      <div class="mid">→</div>
+      <div class="col new">
+        <h4>SamCity bilan</h4>
+        <ul>
+          <li><b>Hamma do'kon bitta ro'yxatda</b> — qidiruv bilan topiladi</li>
+          <li><b>Narx har doim ko'rinadi</b> va solishtiriladi</li>
+          <li><b>Buyurtma tarixi saqlanadi</b> — nima olganingiz yozilgan</li>
+          <li><b>Yetkazuvchi xaritada</b> — qachon kelishi ko'rinadi</li>
+          <li><b>Baho va sharh</b> — kimga ishonish mumkinligi bilinadi</li>
+          <li><b>Mahalla xabarlari</b> ham shu yerda — boshqa joyda yo'q</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g4" style="margin-top:16px">
+      <div class="card accent"><h3>Kunlik sabab</h3><p>Oziq-ovqat va mahsulot buyurtmasi — eng tez-tez takrorlanadigan ehtiyoj.</p></div>
+      <div class="card accent"><h3>Haftalik sabab</h3><p>Taksi, dorixona, bron — muntazam, lekin har kun emas.</p></div>
+      <div class="card accent"><h3>Oylik sabab</h3><p>Kommunal, kurs va bog'cha to'lovi — qaytarib bo'lmaydigan odat.</p></div>
+      <div class="card accent"><h3>Doimiy sabab</h3><p>Mahalla e'lonlari va murojaat — <b>faqat bizda bor</b>, alternativasi yo'q.</p></div>
+    </div>
+    <div class="note"><b>Halol chegara:</b> biz odamlar Telegramdan voz kechadi demaymiz. Biz <b>do'kon topish, narx solishtirish va buyurtmani kuzatish</b> uchun kelishini kutamiz. Aynan shu farazni pilotda tekshiramiz.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Biz raqibni to'g'ri aniqlaganmiz va foydalanuvchi uchun <b>aniq, o'lchanadigan afzallik</b> taklif qilamiz — shior emas.</span>
+  </div>
+  <div class="num">04</div>
+</div></section>
+
+<!-- 05 · NEGA BIZNESLAR -->
+<section class="slide"><div class="canvas">
+  <div class="tag">04 · Biznes tomoni</div>
+  <h2>Nega do'kon platformaga qo'shiladi — va nega keyin to'laydi</h2>
+  <p class="sub">Marketplace'da eng qiyin tomon — supply. Shuning uchun biznes uchun qiymat birinchi kundan aniq bo'lishi kerak.</p>
+  <div class="body-area">
+    <div class="grid g2" style="gap:20px;align-items:start">
+      <div>
+        <div style="background:#E9F7F4;border:1px solid rgba(14,159,142,.3);border-radius:10px;padding:9px 13px;margin-bottom:11px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent);text-transform:uppercase">Nega qo'shiladi — birinchi 3 oy bepul</div>
+        </div>
+        <ul class="clean">
+          <li><b>Yangi mijoz oqimi.</b> Do'kon o'z mahallasidan tashqaridagi xaridorlarga ko'rinadi — bugun bu imkoniyat umuman yo'q</li>
+          <li><b>Tayyor raqamli vitrina.</b> Katalogda 153 mahsulot allaqachon rasmi va nomi bilan turibdi — do'kon nol ish qiladi</li>
+          <li><b>Buyurtmalar bir joyda.</b> Telegram xabarlari o'rniga tartibli ro'yxat, holati bilan</li>
+          <li><b>Obunachilarga xabar.</b> Kanal qurish shart emas — "yangi mahsulot keldi" xabari mijozga boradi</li>
+          <li><b>Onboarding'ni biz qilamiz.</b> Katalogni biz kiritamiz, rasmini biz olamiz</li>
+        </ul>
+      </div>
+      <div>
+        <div style="background:#FDF4E3;border:1px solid rgba(245,166,35,.4);border-radius:10px;padding:9px 13px;margin-bottom:11px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#9A6608;text-transform:uppercase">Nega 3 oydan keyin to'laydi</div>
+        </div>
+        <div class="card warn" style="margin-bottom:11px">
+          <h3>To'lov mantig'i juda sodda</h3>
+          <p style="font-size:13.5px">Obuna — <b>oyiga 100 000 so'm</b>. O'rtacha chek 25 000 so'm, do'konning marjasi ~20% ≈ 5 000 so'm.</p>
+          <p style="margin-top:8px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px">
+            Obuna o'zini qoplashi uchun kerak: <b style="color:var(--accent)">oyiga 20 ta qo'shimcha buyurtma</b> — ya'ni kuniga bittadan kam.</p>
+          <p style="margin-top:8px;font-size:13px;color:var(--muted)">Agar biz shuni bera olmasak, do'kon to'lamaydi va to'lamasligi ham kerak. Pilotning asosiy tekshiruvi — aynan shu.</p>
+        </div>
+        <div class="card accent"><h3>Bosqichma-bosqich narx</h3>
+          <p>1–3 oy bepul → 4-oydan obuna. Do'kon qiymatni <b>ko'rgandan keyin</b> to'laydi, va'daga emas.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Bizda supply'ni jalb qilishning <b>aniq mantig'i</b> bor va obuna narxi <b>do'konning foydasiga bog'langan</b> — havodan olinmagan.</span>
+  </div>
+  <div class="num">05</div>
+</div></section>
+
+<!-- 06 · BIZNES MODEL -->
+<section class="slide"><div class="canvas">
+  <div class="tag">05 · Biznes model</div>
+  <h2>Daromad beshta manbadan keladi</h2>
+  <p class="sub">Ikkitasi bugun texnik jihatdan tayyor, uchtasi pilot davomida yoqiladi. Hech biri hali real pul keltirmagan — buni ochiq aytamiz.</p>
+  <div class="body-area">
+    <table>
+      <tr>
+        <th style="width:22%">Daromad manbai</th>
+        <th style="width:18%">Kim to'laydi</th>
+        <th style="width:20%">Qancha</th>
+        <th style="width:26%">Nima uchun to'laydi</th>
+        <th style="width:14%">Holati</th>
+      </tr>
+      <tr>
+        <td><b>Biznes obunasi</b></td><td>Do'kon, kafe, salon</td>
+        <td>100 000 so'm / oy</td>
+        <td>Doimiy mijoz oqimi va raqamli vitrina</td>
+        <td><span class="pill mid">Pilotda</span></td>
+      </tr>
+      <tr>
+        <td><b>Yetkazib berish komissiyasi</b></td><td>Do'kon</td>
+        <td>Buyurtmadan <b>8%</b></td>
+        <td>Yangi buyurtma — o'z mijozidan emas, bizdan kelgan</td>
+        <td><span class="pill mid">Pilotda</span></td>
+      </tr>
+      <tr>
+        <td><b>Taksi komissiyasi</b></td><td>Haydovchi / xizmat</td>
+        <td>Safardan <b>5–7%</b></td>
+        <td>Bo'sh vaqtda qo'shimcha buyurtma oqimi</td>
+        <td><span class="pill mid">Pilotda</span></td>
+      </tr>
+      <tr>
+        <td><b>Reklama</b></td><td>Mahalliy biznes</td>
+        <td>Kampaniya bo'yicha</td>
+        <td>Aniq mahalla va yosh guruhiga xabar yuborish</td>
+        <td><span class="pill ok">Tayyor</span></td>
+      </tr>
+      <tr>
+        <td><b>Premium listing</b></td><td>Do'kon, taksist, joy</td>
+        <td>Oylik to'lov</td>
+        <td>Ro'yxatda yuqorida turish — ko'proq ko'rinish</td>
+        <td><span class="pill ok">Tayyor</span></td>
+      </tr>
+    </table>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card accent"><h3>Pilot bosqichida (0–12 oy)</h3><p>Asosiy e'tibor obuna va yetkazib berish komissiyasiga. Maqsad — <b>daromad hajmi emas, to'lovga tayyorlikni isbotlash</b>.</p></div>
+      <div class="card accent"><h3>Kengayish bosqichida</h3><p>Komissiya asosiy oqimga aylanadi — u har bir yangi tumanda avtomatik takrorlanadi.</p></div>
+      <div class="card warn"><h3>Halol ogohlantirish</h3><p>Bu narxlarning hech biri hali bozorda tekshirilmagan. Pilotning birinchi vazifasi — <b>haqiqiy narxni topish</b>.</p></div>
+    </div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Daromad modeli <b>tushunarli va takrorlanadigan</b>, lekin biz uni isbotlangan deb ko'rsatmayapmiz — bu pilotning maqsadi.</span>
+  </div>
+  <div class="num">06</div>
+</div></section>
+
+<!-- 07 · HOZIRGI HOLAT -->
+<section class="slide"><div class="canvas dark">
+  <div class="tag" style="color:var(--accent-2)">06 · Hozirgi holat</div>
+  <h2>Nima qurilgan va nima hali isbotlanmagan</h2>
+  <p class="sub">Bu slaydda hech narsani bo'yamaymiz. Investor baribir bilib oladi — o'zimiz aytganimiz kuchliroq.</p>
+  <div class="body-area">
+    <div class="grid g2" style="gap:20px;align-items:start">
+      <div class="card" style="background:rgba(30,158,90,.14);border-color:rgba(30,158,90,.35);border-left:3px solid var(--ok)">
+        <h3 style="color:#5FD79A">Qurilgan va ishlaydi</h3>
+        <ul class="clean green" style="margin-top:9px">
+          <li><b>Yetkazib berish</b> — do'kon, katalog, savat, buyurtma, kuryer</li>
+          <li><b>Taksi</b> — haydovchi, marshrut, safar, jonli kuzatuv</li>
+          <li><b>Bron</b> — joy, xizmat, usta, vaqt tanlash, oldindan to'lov</li>
+          <li><b>Mahalla</b> — rais va hokim paneli, murojaat, so'rovnoma</li>
+          <li><b>To'lov</b> — Payme va Click ulanishi yozilgan</li>
+          <li><b>Ikkala platforma</b> — veb sayt va mobil ilova</li>
+        </ul>
+      </div>
+      <div class="card" style="background:rgba(217,83,79,.14);border-color:rgba(217,83,79,.35);border-left:3px solid var(--danger)">
+        <h3 style="color:#FF8F8B">Hali isbotlanmagan</h3>
+        <ul class="clean red" style="margin-top:9px">
+          <li><b>Foydalanuvchi yo'q</b> — hozircha real foydalanuvchi bazasi yig'ilmagan</li>
+          <li><b>Daromad yo'q</b> — birorta ham real tranzaksiya o'tmagan</li>
+          <li><b>Hech kim to'lashga rozi bo'lmagan</b> — obuna narxi sinovdan o'tmagan</li>
+          <li><b>Supply yig'ish sinalmagan</b> — do'kon onboarding jarayoni amalda tekshirilmagan</li>
+          <li><b>Retention noma'lum</b> — odamlar qaytib keladimi, bilmaymiz</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)">
+        <h3 style="color:#fff">Bosqichimiz nomi</h3>
+        <p style="color:rgba(255,255,255,.8)"><b style="color:var(--accent-2)">Pilot oldi.</b> Mahsulot bosqichidan chiqdik, bozor bosqichiga hali kirmadik.</p></div>
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)">
+        <h3 style="color:#fff">Nima uchun bu yaxshi xabar</h3>
+        <p style="color:rgba(255,255,255,.8)">Ko'p startap bu bosqichga yetish uchun 12 oy va katta byudjet sarflaydi. Biz uni allaqachon o'tganmiz.</p></div>
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)">
+        <h3 style="color:#fff">Nima uchun bu risk</h3>
+        <p style="color:rgba(255,255,255,.8)">Qurilgan mahsulot — bozor bor degani emas. Aynan shu noaniqlikni yopish uchun kelganmiz.</p></div>
+    </div>
+  </div>
+  <div class="takeaway" style="background:rgba(255,255,255,.1)">
+    <span class="lb">Investor uchun</span>
+    <span>Founder <b>o'z holatini xolis baholaydi</b> va traksiya yo'qligini yashirmaydi — bu ishonchli hamkorlikning birinchi sharti.</span>
+  </div>
+  <div class="num">07</div>
+</div></section>
+
+<!-- 08 · JAMOA -->
+<section class="slide"><div class="canvas">
+  <div class="tag">07 · Jamoa</div>
+  <h2>Loyihani kim quradi</h2>
+  <p class="sub">To'rt kishilik jamoa. Barchamiz Shofirkon bilan bog'liqmiz — bozorni tashqaridan emas, ichkaridan bilamiz.</p>
+  <div class="body-area">
+    <div class="grid g4">
+      <div class="card warn">
+        <div class="ava amber"><img src="team_photos/samandar.jpg" alt="" onerror="this.remove()"><span>HS</span></div>
+        <h3 style="font-size:15.5px">Hayitov Samandar</h3>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--accent-2);text-transform:uppercase;margin:-2px 0 8px">Founder &amp; Project Manager · 17 yosh</div>
+        <div class="contacts">
+          <span class="tgl amber">@just_khayitov</span>
+          <span class="ig">insta: just_khayitovv</span>
+          <span class="tel">+998 88 715 25 11</span>
+        </div>
+        <p>Backend va frontend dasturchi. Loyiha asoschisi — arxitektura va asosiy kod uning qo'lida.</p>
+      </div>
+      <div class="card accent">
+        <div class="ava"><img src="team_photos/abror.jpg" alt="" onerror="this.remove()"><span>A</span></div>
+        <h3 style="font-size:15.5px">Abrorbek</h3>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:-2px 0 8px">Project Manager · 28 yosh</div>
+        <div class="contacts">
+          <span class="tel">+998 50 087 64 02</span>
+        </div>
+        <p>Flutter mutaxassisi. Shofirkondagi IT markazda dasturlashdan <b>dars beradi</b> — mahalliy jamiyatda tayyor tarmoq.</p>
+      </div>
+      <div class="card accent">
+        <div class="ava"><img src="team_photos/bekzod.jpg" alt="" onerror="this.remove()"><span>BB</span></div>
+        <h3 style="font-size:15.5px">Beknazarov Bekzod</h3>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:-2px 0 8px">Dasturchi · 17 yosh</div>
+        <div class="contacts">
+          <span class="tgl">@beknazarovbehzod</span>
+          <span class="ig">insta: beknzarov</span>
+          <span class="tel">+998 93 454 83 16</span>
+        </div>
+        <p>Frontend dasturchi. Ilgari <b>2 ta startap qurgan</b>; ulardan biri <b>1 000+ foydalanuvchi</b> jalb qilgan.</p>
+      </div>
+      <div class="card accent">
+        <div class="ava"><img src="team_photos/ozodbek.jpg" alt="" onerror="this.remove()"><span>GO</span></div>
+        <h3 style="font-size:15.5px">G'ulomov Ozodbek</h3>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:-2px 0 8px">Marketolog · 20 yosh</div>
+        <div class="contacts">
+          <span class="tgl">@just_ozodbek</span>
+          <span class="ig">insta: just_ozodbek</span>
+          <span class="tel">+998 97 369 80 81</span>
+        </div>
+        <p>SMM mutaxassisi. Foydalanuvchi jalb qilish va mahalliy marketing uchun javobgar.</p>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card"><h3>Mahalliy jamoa</h3><p>Do'kon egalari va mahalla faollari bilan aloqa — begona uchun bu eng qiyin qism, biz uchun kundalik holat.</p></div>
+      <div class="card"><h3>To'liq qamrov</h3><p>Backend, mobil, frontend va marketing — to'rttasi ham ichkarida. Pilotni boshlash uchun tashqaridan hech kim yollash shart emas.</p></div>
+      <div class="card"><h3>Startap tajribasi</h3><p>Jamoada ilgari startap qurgan va <b>1 000+ foydalanuvchi jalb qilgan</b> a'zo bor — foydalanuvchi yig'ish nazariya emas.</p></div>
+    </div>
+    <div class="note"><b>Ochiq aytamiz:</b> jamoa yosh va bizda savdo hamda operatsion boshqaruv tajribasi yetishmaydi. Aynan shu yo'nalishda mentorlik so'raymiz — 11-slaydga qarang.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Jamoa <b>to'liq va mahalliy</b>: mahsulotni qurish ham, birinchi mijozlarni yig'ish ham ichki kuch bilan bajariladi.</span>
+  </div>
+  <div class="num">08</div>
+</div></section>
+
+<!-- 09 · 12 OYLIK REJA -->
+<section class="slide"><div class="canvas">
+  <div class="tag">08 · Keyingi 12 oy</div>
+  <h2>Uch bosqich, har birida o'lchanadigan maqsad</h2>
+  <p class="sub">Reja "ishlaymiz" degan so'zdan iborat emas — har bosqichning chiqish mezoni bor.</p>
+  <div class="body-area">
+    <div class="timeline">
+      <div class="phase">
+        <div class="when">0–3 oy · Ishga tushirish</div>
+        <h3>Shofirkonda start</h3>
+        <ul class="clean">
+          <li>SMS va to'lov ulanishi jonlashtiriladi</li>
+          <li>Ilova Play Market'ga chiqariladi</li>
+          <li><b>30–40 do'kon va biznes</b> ulanadi</li>
+          <li><b>3–5 mahalla raisi</b> bilan kelishuv</li>
+          <li>3–5 kuryer va 10+ taksist jalb qilinadi</li>
+        </ul>
+        <div style="margin-top:9px;padding:9px 11px;background:#F2F6FA;border-radius:8px;font-size:12.5px">
+          <b>Chiqish mezoni:</b> 500 ro'yxatdan o'tgan foydalanuvchi, kuniga 10+ real buyurtma</div>
+      </div>
+      <div class="phase">
+        <div class="when">3–6 oy · Isbotlash</div>
+        <h3>Model ishlaydimi?</h3>
+        <ul class="clean amber">
+          <li>Komissiya va obuna to'lovi yoqiladi</li>
+          <li><b>Birinchi to'lovchi bizneslar</b> — kamida 10 ta</li>
+          <li>Retention o'lchanadi: D7 va D30</li>
+          <li>Qaysi modul ishlayotgani aniqlanadi, qolgani susaytiriladi</li>
+          <li>Yetkazib berish jarayoni sozlanadi</li>
+        </ul>
+        <div style="margin-top:9px;padding:9px 11px;background:#FDF7EA;border-radius:8px;font-size:12.5px">
+          <b>Chiqish mezoni:</b> 1 500 foydalanuvchi, D30 ≥ 20%, birinchi real daromad</div>
+      </div>
+      <div class="phase">
+        <div class="when">6–12 oy · Ko'chirish</div>
+        <h3>Takrorlanadimi?</h3>
+        <ul class="clean">
+          <li>Shofirkon natijalari hujjatlashtiriladi — playbook</li>
+          <li><b>Ikkinchi tumanga kirish</b> (mezonlar bajarilsa)</li>
+          <li>Birinchi tuman xarajatini qoplash darajasiga chiqarish</li>
+          <li>Keyingi raund uchun real raqamli deck</li>
+        </ul>
+        <div style="margin-top:9px;padding:9px 11px;background:#EEF3F9;border-radius:8px;font-size:12.5px">
+          <b>Chiqish mezoni:</b> 2 tumanda faoliyat, takrorlanadigan onboarding modeli</div>
+      </div>
+    </div>
+    <div class="note"><b>Muhim shart:</b> agar 3–6 oyda bizneslar to'lashdan bosh tortsa yoki retention past bo'lsa — biz ikkinchi tumanga <b>kengaymaymiz</b>. Model tuzatiladi yoki o'zgartiriladi. Kengayish avtomatik emas, mezonga bog'liq.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Reja <b>mezonlarga bog'langan</b> — founder yomon natijani ko'rsa to'xtashga tayyor, bu kapitalni tejaydi.</span>
+  </div>
+  <div class="num">09</div>
+</div></section>
+
+<!-- 09 · NEGA INVESTITSIYA -->
+<section class="slide"><div class="canvas dark">
+  <div class="tag" style="color:var(--accent-2)">09 · Nega investitsiya kerak</div>
+  <h2>Pul mahsulot uchun emas — bozor uchun</h2>
+  <p class="sub">Bu deck'dagi eng muhim ajratish. Ko'p startap kapitalni qurish uchun so'raydi; bizda qurilgan qism allaqachon tugagan.</p>
+  <div class="body-area">
+    <div class="grid g2" style="gap:22px;align-items:start">
+      <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)">
+        <h3 style="color:rgba(255,255,255,.55)">Investitsiya BUNGA ketmaydi</h3>
+        <ul class="clean" style="margin-top:9px">
+          <li style="color:rgba(255,255,255,.55)">Mahsulot qurish — <b style="color:rgba(255,255,255,.75)">tugallangan</b></li>
+          <li style="color:rgba(255,255,255,.55)">Dizayn va arxitektura — <b style="color:rgba(255,255,255,.75)">tugallangan</b></li>
+          <li style="color:rgba(255,255,255,.55)">To'lov integratsiyasi — <b style="color:rgba(255,255,255,.75)">yozilgan</b></li>
+          <li style="color:rgba(255,255,255,.55)">Mobil ilova — <b style="color:rgba(255,255,255,.75)">yozilgan</b></li>
+        </ul>
+        <p style="margin-top:12px;color:rgba(255,255,255,.6);font-size:12.5px">Bu bosqich jamoa tomonidan tashqi kapitalsiz bosib o'tilgan.</p>
+      </div>
+      <div class="card" style="background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.42);border-left:3px solid var(--accent-2)">
+        <h3 style="color:var(--accent-2)">Investitsiya AYNAN BUNGA ketadi</h3>
+        <ul class="clean amber" style="margin-top:9px">
+          <li><b>Foydalanuvchi yig'ish</b> — birinchi 1 500 odamni ilovaga olib kelish</li>
+          <li><b>Bizneslarni ulash</b> — 40 do'konni shaxsan onboard qilish, katalogini kiritish</li>
+          <li><b>Yetkazib berish infratuzilmasi</b> — kuryerlar, ularning ish haqi va jihozi</li>
+          <li><b>Marketing</b> — mahalla kanallari, flayer, birinchi buyurtma rag'bati</li>
+          <li><b>Pilotni tezlashtirish</b> — 12 oyda emas, 6 oyda javob olish</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)">
+      <p style="color:rgba(255,255,255,.88);font-size:14.5px">
+        <b style="color:#fff">Boshqacha aytganda:</b> siz mahsulot qurilishiga emas, <b style="color:var(--accent-2)">tayyor mahsulotning bozorda ishlashini tekshirishga</b> investitsiya qilasiz.
+        Bu — startap hayotidagi eng arzon va eng aniq javob olinadigan bosqich.
+      </p>
+    </div>
+  </div>
+  <div class="takeaway" style="background:rgba(255,255,255,.1)">
+    <span class="lb">Investor uchun</span>
+    <span>Kapital <b>texnik riskka emas, bozor riskiga</b> yo'naltiriladi — va bu riskning javobi 6 oyda ma'lum bo'ladi.</span>
+  </div>
+  <div class="num">10</div>
+</div></section>
+
+<!-- 10 · $15,000 REJASI -->
+<section class="slide"><div class="canvas">
+  <div class="tag">10 · Mablag'dan foydalanish</div>
+  <h2>$15 000 — har bir dollarning natijasi bilan</h2>
+  <p class="sub">Bu xarajatlar ro'yxati emas. Har bir yo'nalish yonida u nima keltirishi kerakligi yozilgan.</p>
+  <div class="body-area">
+    <table>
+      <tr>
+        <th style="width:26%">Yo'nalish</th>
+        <th style="width:12%">Summa</th>
+        <th style="width:34%">Nimaga sarflanadi</th>
+        <th style="width:28%">Kutilayotgan natija (KPI)</th>
+      </tr>
+      <tr>
+        <td><b>Marketing va foydalanuvchi yig'ish</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$5 000</b></td>
+        <td>Mahalla kanallari, flayer va QR, birinchi buyurtma rag'bati, lokal Telegram reklama</td>
+        <td><b>1 500 ro'yxatdan o'tgan</b><br>500+ haftalik faol foydalanuvchi</td>
+      </tr>
+      <tr>
+        <td><b>Yetkazib berish infratuzilmasi</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$2 500</b></td>
+        <td>3–5 kuryer bilan ishlash, ularning to'lovi, sumka va jihoz, marshrut sinovlari</td>
+        <td><b>Kuniga 30+ buyurtma</b> bajarish quvvati<br>O'rtacha yetkazish &lt; 45 daqiqa</td>
+      </tr>
+      <tr>
+        <td><b>Biznes onboarding</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$2 000</b></td>
+        <td>Do'konlarga borish, katalogni kiritish, mahsulot rasmini olish, o'qitish</td>
+        <td><b>40 biznes ulangan</b><br>10+ to'lovchi obunachi (4-oydan)</td>
+      </tr>
+      <tr>
+        <td><b>Server va infratuzilma</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$1 500</b></td>
+        <td>Server, domen, SMS paketi, to'lov shlyuzi ulanishi, Play Market hisobi</td>
+        <td><b>12 oy uzluksiz ishlash</b><br>Ilova do'konda mavjud</td>
+      </tr>
+      <tr>
+        <td><b>Jamoa stipendiyasi</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$2 000</b></td>
+        <td>Founder boshqa ishga chalg'imasdan loyihaga to'liq vaqt ajratishi</td>
+        <td><b>100% vaqt loyihaga</b><br>Pilotni 12 oy o'rniga 6 oyda yakunlash</td>
+      </tr>
+      <tr>
+        <td><b>Zaxira fondi</b></td>
+        <td><b style="color:var(--accent);font-size:14px">$2 000</b></td>
+        <td>Kutilmagan xarajat, pilot muddatini uzaytirish, model o'zgarsa qayta sinov</td>
+        <td><b>Rejadan chetga chiqilsa to'xtab qolmaslik</b></td>
+      </tr>
+      <tr style="background:#F2F6FA">
+        <td><b>JAMI</b></td><td><b style="font-size:15px;color:var(--navy)">$15 000</b></td>
+        <td><b>12 oylik pilot dasturi</b></td>
+        <td><b>Shofirkonda model ishlaydimi — aniq javob</b></td>
+      </tr>
+    </table>
+    <div class="note">Har chorakda investorga hisobot: sarflangan mablag', erishilgan KPI va keyingi chorak rejasi. Mezon bajarilmasa — sabab va tuzatish rejasi bilan.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Har bir dollar <b>aniq natijaga bog'langan</b> va hisobot tartibi oldindan belgilangan — pul qayerga ketgani ko'rinib turadi.</span>
+  </div>
+  <div class="num">11</div>
+</div></section>
+
+<!-- 11 · QANDAY YORDAM -->
+<section class="slide"><div class="canvas">
+  <div class="tag">11 · Yordam</div>
+  <h2>Bizga puldan tashqari nima kerak</h2>
+  <p class="sub">Ochig'ini aytamiz: ba'zi yo'nalishlarda pul emas, <b>eshik ochish</b> ko'proq qiymat beradi.</p>
+  <div class="body-area">
+    <div class="grid g3">
+      <div class="card accent"><span class="ico">🎓</span><h3>Mentorlik</h3>
+        <p>Jamoa texnik va marketing tomonda kuchli, lekin savdo hamda operatsion boshqaruvda tajribasi kam. Marketplace birlik iqtisodiyoti bo'yicha maslahat — eng katta bo'shliqni yopadi.</p></div>
+      <div class="card accent"><span class="ico">🤝</span><h3>Mahalliy bizneslarga kirish</h3>
+        <p>Birinchi 20–30 do'kon eng qiyini. Tanishtiruv orqali kirish bu jarayonni oylardan haftalarga qisqartiradi.</p></div>
+      <div class="card accent"><span class="ico">🏛️</span><h3>Hamkorliklar va pilot</h3>
+        <p>Mahalla va tuman darajasidagi rasmiy qo'llab-quvvatlash — eng arzon va eng ishonchli tarqatish kanalimizni ochadi.</p></div>
+      <div class="card accent"><span class="ico">📣</span><h3>PR va media</h3>
+        <p>"Birinchi raqamli tuman" hikoyasi bepul foydalanuvchi jalb qiladi va keyingi tumanlarga kirishda ishonch yaratadi.</p></div>
+      <div class="card accent"><span class="ico">🚀</span><h3>Keyingi investorlar</h3>
+        <p>Pilot natijalari chiqqach, seed bosqichidagi investorlar bilan tanishtirish — 12 oylik maqsadimiz.</p></div>
+      <div class="card warn"><span class="ico">⚖️</span><h3>Huquqiy va moliyaviy</h3>
+        <p>To'lov agenti maqomi, soliq va shartnoma tuzilmasi bo'yicha yo'l-yo'riq — kichik jamoada bu eng ko'p vaqt oladigan qism.</p></div>
+    </div>
+    <div class="note">Loyiha investitsiyasiz ham davom etadi. Ammo yuqoridagi yordam <b>tezlikni bir necha barobar oshiradi</b> — va bu bozorda tezlik asosiy himoya vositasi.</div>
+  </div>
+  <div class="takeaway">
+    <span class="lb">Investor uchun</span>
+    <span>Founder <b>o'z kuchsiz tomonlarini biladi</b> va yordamni aniq nuqtalarda so'raydi — bu boshqarish oson hamkorlik degani.</span>
+  </div>
+  <div class="num">12</div>
+</div></section>
+
+<!-- 12 · YAKUNIY -->
+<section class="slide"><div class="canvas dark">
+  <div class="tag" style="color:var(--accent-2)">12 · Yakuniy fikr</div>
+  <div class="body-area">
+    <p class="big-quote" style="margin-bottom:26px">
+      Biz investitsiyani <span style="color:rgba(255,255,255,.55)">mahsulot qurish</span> uchun emas,
+      <span style="color:var(--accent-2)">Shofirkonda modelni isbotlash</span> uchun qidirmoqdamiz.<br><br>
+      Agar model ishlasa — uni <span style="color:var(--accent-2)">200 dan ortiq tumanga</span> ko'chirish mumkin bo'ladi.
+    </p>
+    <div class="grid g3" style="margin-bottom:22px">
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);border-left:3px solid var(--ok)">
+        <h3 style="color:#fff">Nima tayyor</h3>
+        <p style="color:rgba(255,255,255,.78)">To'liq ishlaydigan mahsulot — veb va mobil, to'lov va xarita bilan. Bu bosqich kapitalsiz bosib o'tilgan.</p></div>
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);border-left:3px solid var(--accent-2)">
+        <h3 style="color:#fff">Nima tekshiriladi</h3>
+        <p style="color:rgba(255,255,255,.78)">Odamlar foydalanadimi, bizneslar to'laydimi, model bitta tumanda o'zini qoplaydimi.</p></div>
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16);border-left:3px solid var(--accent)">
+        <h3 style="color:#fff">Nima so'ralmoqda</h3>
+        <p style="color:rgba(255,255,255,.78)"><b style="color:var(--accent-2)">$15 000</b> + mentorlik + mahalliy bizneslarga va hokimiyatga kirish.</p></div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.2);padding-top:18px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:21px;font-weight:800;color:#fff">Hayitov Samandar</div>
+        <div style="font-size:12.5px;color:var(--accent-2);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:3px">Founder · SamCity · 4 kishilik jamoa</div>
+      </div>
+      <div class="fill" style="background:rgba(245,166,35,.14);border-color:var(--accent-2);color:#fff">
+        +998 88 715 25 11 · @just_khayitov · insta: just_khayitovv<br>
+        <span style="color:var(--accent-2)">Jonli demo tayyor — 10 daqiqada butun mahsulotni ko'rsataman.</span>
+      </div>
+    </div>
+  </div>
+  <div class="takeaway" style="background:rgba(255,255,255,.1)">
+    <span class="lb">Investor uchun</span>
+    <span>Bu <b>past xarajatli, aniq muddatli va aniq javobli</b> tajriba — natijasi 6–12 oyda ma'lum bo'ladi.</span>
+  </div>
+  <div class="num">13</div>
+</div></section>
+
+</div>
+
+<script>
+(function(){
+  var deck=document.getElementById('deck'),
+      slides=Array.prototype.slice.call(document.querySelectorAll('.slide')),
+      nav=document.getElementById('nav');
+  slides.forEach(function(s,i){
+    var a=document.createElement('a');a.href='#';a.title='Slayd '+(i+1);
+    a.addEventListener('click',function(e){e.preventDefault();go(i);});nav.appendChild(a);});
+  var dots=Array.prototype.slice.call(nav.children),current=0;
+  function go(i){current=Math.max(0,Math.min(slides.length-1,i));
+    slides[current].scrollIntoView({behavior:'smooth'});mark();}
+  function mark(){dots.forEach(function(d,i){d.className=(i===current?'on':'');});}
+  mark();
+  deck.addEventListener('scroll',function(){
+    var i=Math.round(deck.scrollTop/window.innerHeight);
+    if(i!==current){current=i;mark();}});
+  document.addEventListener('keydown',function(e){
+    if(['ArrowRight','ArrowDown','PageDown',' '].indexOf(e.key)>=0){e.preventDefault();go(current+1);}
+    else if(['ArrowLeft','ArrowUp','PageUp'].indexOf(e.key)>=0){e.preventDefault();go(current-1);}
+    else if(e.key==='Home'){e.preventDefault();go(0);}
+    else if(e.key==='End'){e.preventDefault();go(slides.length-1);}});
+  setTimeout(function(){var h=document.querySelector('.hint');
+    if(h){h.style.transition='opacity .6s';h.style.opacity='0';
+      setTimeout(function(){h.style.display='none';},700);}},6000);
+})();
+</script>
+</body>
+</html>

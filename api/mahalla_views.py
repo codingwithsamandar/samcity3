@@ -241,3 +241,21 @@ class ComplaintStatusView(APIView):
             except Exception:
                 pass
         return Response(CitizenRequestSerializer(req, context={'request': request}).data)
+
+
+# ─── ARCHIVE MAHALLA API FEATURE ───────────────────────────────────────────
+# Mahalla bo'limi arxivlanganligi sababli barcha API view'larni 403 bilan to'sib qo'yamiz.
+from django.http import JsonResponse
+
+class _ArchivedAPIView(APIView):
+    def dispatch(self, request, *args, **kwargs):
+        return JsonResponse({'detail': "Mahalla bo'limi arxivlangan va vaqtincha faol emas."}, status=403)
+
+MahallaListView = _ArchivedAPIView
+MahallaDetailView = _ArchivedAPIView
+AnnouncementCreateView = _ArchivedAPIView
+HokimPanelView = _ArchivedAPIView
+DistrictAnnounceView = _ArchivedAPIView
+ComplaintListCreateView = _ArchivedAPIView
+ComplaintStatusView = _ArchivedAPIView
+

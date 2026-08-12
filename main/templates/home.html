@@ -130,11 +130,14 @@
         <strong style="display:block;margin-bottom:.25rem;">Ish topish</strong>
         <span style="color:var(--text2);font-size:.85rem;">Vakansiyalar va rezyumeler — ish beruvchi yoki ishchi</span>
       </a>
+      {# Taksi arxivlangan — TAXI_ENABLED=True bo'lsa qaytadi #}
+      {% if TAXI_ENABLED %}
       <a href="{% url 'taxi:home' %}" class="card card-pad" style="text-decoration:none;color:inherit;border:1px solid var(--border);">
         <div style="font-size:1.6rem;margin-bottom:.5rem;">🚕</div>
         <strong style="display:block;margin-bottom:.25rem;">Taksi & yetkazish</strong>
         <span style="color:var(--text2);font-size:.85rem;">Taksi — yo'lovchi tashish. Yetkazish — do'kondan mahsulot</span>
       </a>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -178,14 +181,13 @@
       <p>Kundalik hayotingizni osonlashtiradigan barcha xizmatlar bir joyda jamlangan.</p>
     </div>
     <div class="svc-grid">
-      <a href="{% url 'taxi:home' %}" class="svc-card reveal"><div class="svc-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div><h3>Taksi</h3><p>Tez buyurtma va shaffof narx.</p><span class="svc-go">Buyurtma <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      {% if TAXI_ENABLED %}<a href="{% url 'taxi:home' %}" class="svc-card reveal"><div class="svc-ic g-gold"><svg class="ic"><use href="#i-car"/></svg></div><h3>Taksi</h3><p>Tez buyurtma va shaffof narx.</p><span class="svc-go">Buyurtma <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>{% endif %}
       <a href="{% url 'delivery:store_list' %}" class="svc-card reveal" data-reveal-delay="60"><div class="svc-ic g-green"><svg class="ic"><use href="#i-bike"/></svg></div><h3>Yetkazish</h3><p>Do'konlar, ovqat va savat.</p><span class="svc-go">Ko'rish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
       <a href="{% url 'venue_list' %}" class="svc-card reveal" data-reveal-delay="120"><div class="svc-ic g-violet"><svg class="ic"><use href="#i-building"/></svg></div><h3>Joylar</h3><p>To'yxona va zallarni bron qiling.</p><span class="svc-go">Bron <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
       <a href="{% url 'payments:home' %}" class="svc-card reveal" data-reveal-delay="180"><div class="svc-ic g-indigo"><svg class="ic"><use href="#i-card"/></svg></div><h3>To'lovlar</h3><p>Kommunal va boshqa to'lovlar.</p><span class="svc-go">To'lash <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
       <a href="{% url 'job_list' %}" class="svc-card reveal"><div class="svc-ic g-rose"><svg class="ic"><use href="#i-briefcase"/></svg></div><h3>Ish</h3><p>Vakansiyalar va rezyumelar.</p><span class="svc-go">Topish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
-      <a href="{% url 'mahalla_home' %}" class="svc-card reveal" data-reveal-delay="60"><div class="svc-ic g-cyan"><svg class="ic"><use href="#i-chat"/></svg></div><h3>Mahalla</h3><p>Mahalla e'lonlari, so'rovnomalar va xizmatlar.</p><span class="svc-go">Kirish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
-      <a href="{% url 'places:map' %}" class="svc-card reveal" data-reveal-delay="120"><div class="svc-ic g-slate"><svg class="ic"><use href="#i-map"/></svg></div><h3>Xarita</h3><p>Joylar va yo'nalishlar.</p><span class="svc-go">Ochish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
-      <a href="{% url 'places:tourism_list' %}" class="svc-card reveal" data-reveal-delay="180"><div class="svc-ic g-amber"><svg class="ic"><use href="#i-star"/></svg></div><h3>Sayohat</h3><p>Diqqatga sazovor joylar.</p><span class="svc-go">Kashf et <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'places:map' %}" class="svc-card reveal" data-reveal-delay="60"><div class="svc-ic g-slate"><svg class="ic"><use href="#i-map"/></svg></div><h3>Xarita</h3><p>Joylar va yo'nalishlar.</p><span class="svc-go">Ochish <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
+      <a href="{% url 'places:tourism_list' %}" class="svc-card reveal" data-reveal-delay="120"><div class="svc-ic g-amber"><svg class="ic"><use href="#i-star"/></svg></div><h3>Sayohat</h3><p>Diqqatga sazovor joylar.</p><span class="svc-go">Kashf et <svg class="ic"><use href="#i-arrow-right"/></svg></span></a>
     </div>
   </div>
 </section>

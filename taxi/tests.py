@@ -1,4 +1,7 @@
 """Taxi testlari — taksist ro'yxati, trip yaratish, egalik ruxsati."""
+from unittest import skipUnless
+
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -23,6 +26,7 @@ class TaxiSetup(TestCase):
             passenger_price=120000, delivery_price=60000)
 
 
+@skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
 class TaxistListTests(TaxiSetup):
     def test_taxist_list_public_read(self):
         # IsAuthenticatedOrReadOnly — anonim o'qiy oladi
@@ -31,6 +35,7 @@ class TaxistListTests(TaxiSetup):
         self.assertIn('results', resp.data)
 
 
+@skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
 class TripTests(TaxiSetup):
     def _book(self, client):
         return client.post(reverse('api:trip-list'),

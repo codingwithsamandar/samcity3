@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'feature_flags.dart';
 import 'providers.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/otp_screen.dart';
@@ -60,16 +61,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/store/:id',
         builder: (_, st) => StoreDetailScreen(id: st.pathParameters['id']!),
       ),
-      GoRoute(
-        path: '/taxist/:id',
-        builder: (_, st) => TaxistDetailScreen(id: st.pathParameters['id']!),
-      ),
-      GoRoute(path: '/trips', builder: (_, __) => const MyTripsScreen()),
+      // ── Taksi arxivlangan (kTaxiEnabled) — marshrutlar ro'yxatga olinmaydi,
+      // deep-link bilan ham ochilmaydi.
+      if (kTaxiEnabled)
+        GoRoute(
+          path: '/taxist/:id',
+          builder: (_, st) => TaxistDetailScreen(id: st.pathParameters['id']!),
+        ),
+      if (kTaxiEnabled)
+        GoRoute(path: '/trips', builder: (_, __) => const MyTripsScreen()),
       GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
       GoRoute(path: '/orders', builder: (_, __) => const MyOrdersScreen()),
       GoRoute(path: '/my-stores', builder: (_, __) => const MyStoresScreen()),
       GoRoute(path: '/courier', builder: (_, __) => const CourierDashboardScreen()),
-      GoRoute(path: '/taxist-panel', builder: (_, __) => const TaxistPanelScreen()),
+      if (kTaxiEnabled)
+        GoRoute(path: '/taxist-panel', builder: (_, __) => const TaxistPanelScreen()),
       GoRoute(path: '/venues', builder: (_, __) => const VenuesScreen()),
       GoRoute(
         path: '/venue/:id',

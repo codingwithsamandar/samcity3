@@ -18,6 +18,7 @@ Yaratadi (taxminan):
     ~24 marketplace e'loni
     yuzlab sharh/baho (rating ko'rinishi uchun)
 """
+from django.conf import settings
 import random
 from datetime import date, timedelta
 
@@ -93,13 +94,16 @@ class Command(BaseCommand):
 
         self._seed_places(citizens)
         self._seed_delivery(owners, citizens)
-        self._seed_taxi(citizens)
+        # Taksi arxivlangan — demo taksist/marshrut yaratilmaydi.
+        if settings.TAXI_ENABLED:
+            self._seed_taxi(citizens)
         self._seed_venues(owners, citizens)
         self._seed_providers()
         self._seed_ads(citizens)
         # ── Avval demo'siz qolgan funksiyalar ──
         self._seed_community(citizens)
-        self._seed_taxi_trips(citizens)
+        if settings.TAXI_ENABLED:
+            self._seed_taxi_trips(citizens)
         self._seed_delivery_drivers(citizens)
         self._seed_service_payments(citizens)
         self._seed_engagement(citizens)

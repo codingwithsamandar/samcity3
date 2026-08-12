@@ -122,6 +122,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'notifications.context_processors.notifications',
+                'main.context_processors.feature_flags',
             ],
         },
     },
@@ -217,13 +218,24 @@ TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
 
-# Sayt 3 tilda: o'zbek (asosiy), rus, ingliz.
+# ─── KO'P TILLILIK (ARXIVLANGAN) ─────────────────────────────────────────────
+# False bo'lsa sayt FAQAT o'zbek tilida: til almashtirgich yashiriladi va
+# set_language faqat 'uz' ni qabul qiladi (ru/en ga o'tib bo'lmaydi).
+# `locale/ru/` va `locale/en/` tarjimalari (.po/.mo) JOYIDA qoladi — flagni
+# True qilish bilan uchala til qaytadi, hech narsa qayta tarjima qilinmaydi.
+# Qayta yoqish: .env'ga  MULTILANG_ENABLED=True
+MULTILANG_ENABLED = env_bool('MULTILANG_ENABLED', False)
+
 from django.utils.translation import gettext_lazy as _
-LANGUAGES = [
-    ('uz', _('Oʻzbekcha')),
-    ('ru', _('Русский')),
-    ('en', _('English')),
-]
+if MULTILANG_ENABLED:
+    # Sayt 3 tilda: o'zbek (asosiy), rus, ingliz.
+    LANGUAGES = [
+        ('uz', _('Oʻzbekcha')),
+        ('ru', _('Русский')),
+        ('en', _('English')),
+    ]
+else:
+    LANGUAGES = [('uz', _('Oʻzbekcha'))]
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # Leading slash is required so {% static %} resolves correctly on every URL path.
@@ -480,6 +492,47 @@ SMS_PLAYMOBILE_FROM = os.environ.get('SMS_PLAYMOBILE_FROM', '3700')
 # Cart/Order infratuzilmasi to'liq ishlaydi — keyingi bosqichda shu flag True
 # qilinadi va checkout foydalanuvchiga ochiladi.
 DELIVERY_CART_ENABLED = env_bool('DELIVERY_CART_ENABLED', False)
+
+# ─── TAKSI MODULI: FOYDALANUVCHILAR UCHUN YOPIQ (ARXIVLANGAN) ────────────────
+# False bo'lsa taksi foydalanuvchiga BUTUNLAY ko'rinmaydi va ochilmaydi:
+#   · /taxi/... veb sahifalari ulanmaydi (404)
+#   · /api/taxi/... REST endpointlari ro'yxatga olinmaydi
+#   · ws/taxi/... WebSocket marshrutlari yoqilmaydi
+#   · navbar / asosiy sahifa / dashboard havolalari, PWA yorliqlari yashiriladi
+#   · xaritada onlayn taksistlar nuqtalari chizilmaydi
+# Kod va baza jadvallari JOYIDA qoladi (delivery/payments shablonlari
+# `taxi_extras` templatetag'idan foydalanadi, shu sabab app INSTALLED_APPS'da
+# qoldi). Admin panelda staff uchun modellar ko'rinishda qoladi.
+# Qayta yoqish: .env'ga  TAXI_ENABLED=True
+TAXI_ENABLED = env_bool('TAXI_ENABLED', False)
+
+# ─── AI ASISTENT: TASHQI E'LON QIDIRUVI (OLX va h.k.) ────────────────────────
+# AI asistent faqat sayt ichidagi e'lonlar bilan cheklanmasin. Saytda natija kam
+# bo'lsa yoki foydalanuvchi so'rasa — tashqi saytlardan (hozircha OLX.uz)
+# qo'shimcha e'lonlar keltiriladi. To'liq o'chirish uchun False qiling.
+ASSISTANT_EXTERNAL_SEARCH_ENABLED = env_bool('ASSISTANT_EXTERNAL_SEARCH_ENABLED', True)
+# Saytda shu sondan KAM e'lon topilsa — tashqi qidiruv avtomatik yoqiladi.
+ASSISTANT_EXTERNAL_MIN_LOCAL = int(os.environ.get('ASSISTANT_EXTERNAL_MIN_LOCAL', '4'))
+# Bitta tashqi so'rov uchun timeout (sekund) — asistent javobini kutdirmaslik uchun.
+ASSISTANT_EXTERNAL_TIMEOUT = float(os.environ.get('ASSISTANT_EXTERNAL_TIMEOUT', '4'))
+# Yoqilgan providerlar (vergul bilan). Tasdiqlangan ishlaydiganlar:
+#   olx      — umumiy marketplace (JSON API)
+#   uybor    — ko'chmas mulk (JSON API)
+#   avtoelon — avtomobil (HTML)
+# Tayyor turgani, lekin O'CHIQ (assistant/external/pending.py): elon, sof, havas,
+# zoon, anons — API tasdiqlangач bu ro'yxatga kalitini qo'shsangiz yoqiladi.
+ASSISTANT_EXTERNAL_PROVIDERS = os.environ.get(
+    'ASSISTANT_EXTERNAL_PROVIDERS', 'olx,uybor,avtoelon').strip()
+# ISH (vakansiya) providerlari — jobs domeni. Tasdiqlangan ishlaydiganlar:
+#   hh        — HH.uz rasmiy API
+#   olx_jobs  — OLX «Ish» bo'limi (offers API)
+# Tayyor turgani, lekin O'CHIQ (assistant/external/jobs_pending.py): ishonch,
+# osonish, ish, rezume, jobs, ishga, bandlik — API tasdiqlangач qo'shing.
+ASSISTANT_EXTERNAL_JOB_PROVIDERS = os.environ.get(
+    'ASSISTANT_EXTERNAL_JOB_PROVIDERS', 'hh,olx_jobs').strip()
+# Testlarda tashqi qidiruv o'chiq — tarmoqqa chiqmaslik uchun (deterministik).
+if 'test' in _sys.argv:
+    ASSISTANT_EXTERNAL_SEARCH_ENABLED = False
 
 # ─── TELEGRAM OTP (demo/dev — SMS o'rniga Telegram orqali kod) ────────────────
 # @BotFather'dan olingan token. Bo'sh bo'lsa — Telegram kanali o'chiq bo'ladi

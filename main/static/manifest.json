@@ -30,16 +30,15 @@
       "description": "Barcha e'lonlarni ko'rish"
     },
     {
-      "name": "Taksi",
-      "url": "/taxi/",
-      "description": "Taksi buyurtma berish"
-    },
-    {
       "name": "Yetkazish",
       "url": "/delivery/",
       "description": "Do'konlardan buyurtma berish"
     }
   ],
   "screenshots": [],
-  "categories": ["lifestyle", "shopping", "utilities"]
+  "categories": [
+    "lifestyle",
+    "shopping",
+    "utilities"
+  ]
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/providers.dart';
 
 /// Profil ekrani — foydalanuvchi ma'lumoti va chiqish.
@@ -120,14 +121,17 @@ class ProfileScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/venue-manage'),
                       ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.local_taxi,
-                            color: Color(0xFFCAA23A)),
-                        title: const Text('Sayohatlarim (taksi)'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/trips'),
-                      ),
+                      // Taksi arxivlangan — kTaxiEnabled=true bo'lsa qaytadi.
+                      if (kTaxiEnabled) ...[
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(Icons.local_taxi,
+                              color: Color(0xFFCAA23A)),
+                          title: const Text('Sayohatlarim (taksi)'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/trips'),
+                        ),
+                      ],
                       const Divider(height: 1),
                       ListTile(
                         leading: const Icon(Icons.delivery_dining,
@@ -137,15 +141,18 @@ class ProfileScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/courier'),
                       ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.local_taxi,
-                            color: Color(0xFFCAA23A)),
-                        title: const Text('Haydovchi paneli'),
-                        subtitle: const Text('Taksist: marshrut va narxlaringiz'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/taxist-panel'),
-                      ),
+                      if (kTaxiEnabled) ...[
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(Icons.local_taxi,
+                              color: Color(0xFFCAA23A)),
+                          title: const Text('Haydovchi paneli'),
+                          subtitle:
+                              const Text('Taksist: marshrut va narxlaringiz'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/taxist-panel'),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -153,14 +160,7 @@ class ProfileScreen extends ConsumerWidget {
                 Card(
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: const Icon(Icons.groups, color: Color(0xFF34D399)),
-                        title: const Text('Mahalla'),
-                        subtitle: const Text("So'rovnomalar va yordam markazi"),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/community'),
-                      ),
-                      const Divider(height: 1),
+
                       ListTile(
                         leading: const Icon(Icons.map, color: Color(0xFF22D3EE)),
                         title: const Text('Xarita'),

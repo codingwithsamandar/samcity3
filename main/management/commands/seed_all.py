@@ -12,7 +12,6 @@ class Command(BaseCommand):
         steps = [
             ('migrate',        "Migratsiyalar (baza jadvallari)", {}),
             ('demo_data',      "E'lonlar, ish e'lonlari, rezyumelar", {}),
-            ('seed_taxi',      "Taksi xizmatlari va taksistlar", {}),
             ('seed_delivery',  "Yetkazib berish do'konlari", {}),
             ('seed_payments',  "To'lov muassasalari", {}),
             ('seed_booking',   "Joylar va bronlar", {}),
@@ -33,6 +32,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"  ! {cmd}: {e}"))
 
         self.stdout.write(self.style.SUCCESS(
-            "\nHammasi tayyor! Sahifalar: / (e'lonlar), /taxi/, /delivery/, "
+            "\nHammasi tayyor! Sahifalar: / (e'lonlar), /delivery/, "
             "/payments/, /booking/, /jobs/, /mahalla/"
         ))

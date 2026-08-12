@@ -9,7 +9,6 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('', include('main.urls')),
     path('delivery/', include('delivery.urls', namespace='delivery')),
-    path('taxi/', include('taxi.urls', namespace='taxi')),
     path('payments/', include('payments.urls', namespace='payments')),
     path('booking/', include('booking.urls')),
     path('notifications/', include('notifications.urls')),
@@ -19,6 +18,10 @@ urlpatterns = [
     # ── Mobil REST API (Flutter ilova) ──
     path('api/', include('api.urls', namespace='api')),
 ]
+
+# ── Taksi arxivlangan: yo'llar faqat TAXI_ENABLED=True bo'lsa ulanadi ────────
+if settings.TAXI_ENABLED:
+    urlpatterns.append(path('taxi/', include('taxi.urls', namespace='taxi')))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

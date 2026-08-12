@@ -6,12 +6,15 @@ tayanadigan qismlarni (eng yaqin joy) qamrab oladi.
 
 import json
 
+from unittest import skipUnless
+
+from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase, Client
 from django.urls import reverse, NoReverseMatch
 
-from . import engine, knowledge, views
-from .models import UnansweredQuery, record_unanswered
+from .. import engine, knowledge, views
+from ..models import UnansweredQuery, record_unanswered
 
 
 class DetectCategoryTests(TestCase):
@@ -52,14 +55,35 @@ class DetectCategoryTests(TestCase):
 
 
 class IntentTests(TestCase):
-    def test_taxi_intent(self):
-        res = engine.handle("menga taksi kerak")
-        self.assertEqual(res['intent'], 'taxi')
-        self.assertTrue(res['actions'])
+    @skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
+    def test_taxi_call_retreats_to_agent(self):
+        # «taksi kerak» — CHAQIRISH amali → engine chekinadi (agent taxi hal qiladi)
+        self.assertEqual(engine.handle("menga taksi kerak")['intent'], 'unknown')
 
-    def test_delivery_intent(self):
-        res = engine.handle("ovqat yetkazib berish")
-        self.assertEqual(res['intent'], 'delivery')
+    def test_taxi_search_stays_engine(self):
+        # «taksi qayerda» — qidiruv (harakatsiz) → engine (o'zgarmaydi)
+        res = engine.handle("taksi bo'limi qayerda")
+        self.assertNotEqual(res['intent'], 'unknown')
+
+    @skipUnless(not settings.TAXI_ENABLED, "taksi yoqilgan")
+    def test_taxi_requests_report_disabled(self):
+        # Taksi arxivlangan — har qanday taksi so'rovi xizmat yopiqligini aytadi
+        # va agentga uzatilmaydi (agentda ham taxi tool yo'q).
+        for q in ("menga taksi kerak", "taksi chaqir", "taksistlarni ko'rsat"):
+            res = engine.handle(q)
+            self.assertEqual(res['intent'], 'taxi_disabled', q)
+            self.assertNotIn('taxi', ' '.join(
+                a.get('url', '') for a in res.get('actions', [])))
+
+    def test_delivery_action_retreats_to_agent(self):
+        # «ovqat yetkazib berish» — yetkazib berish AMALI → engine chekinadi
+        # (agent delivery hal qiladi). PROMPT_12: ACTION_INTENT_WORDS ga delivery
+        # iboralari qo'shildi, shu bois endi 'delivery' emas, 'unknown' qaytadi.
+        self.assertEqual(engine.handle("ovqat yetkazib berish")['intent'], 'unknown')
+
+    def test_delivery_howto_stays_engine(self):
+        # «yetkazib berish qanday ishlaydi» — HOW-TO → engine/KB (agentga ketmaydi)
+        self.assertNotEqual(engine.is_action_intent("yetkazib berish qanday ishlaydi"), True)
 
     def test_ads_intent(self):
         res = engine.handle("mashina sotib olaman")
@@ -185,8 +209,15 @@ class KnowledgeBaseTests(TestCase):
     def test_mahalla(self):
         self.assertEqual(self._kb_id("mahalla bo'limi nima"), 'mahalla')
 
+    @skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
     def test_become_taxist(self):
         self.assertEqual(self._kb_id("taksist bo'lish uchun nima qilay"), 'become_taxist')
+
+    @skipUnless(not settings.TAXI_ENABLED, "taksi yoqilgan")
+    def test_taxi_kb_hidden_when_archived(self):
+        # Taksi arxivlangan — KB taksi javoblarini bermaydi (havolalar yo'q).
+        self.assertIsNone(self._kb_id("taksist bo'lish uchun nima qilay"))
+        self.assertIsNone(self._kb_id("taksi qanday buyurtma qilaman"))
 
     def test_book_venue(self):
         self.assertEqual(self._kb_id("to'yxona qanday bron qilaman"), 'book_venue')
@@ -217,6 +248,10 @@ class KnowledgeBaseTests(TestCase):
         Bu test URL nomidagi har qanday xatoni (typo) darhol ushlaydi.
         """
         for entry in knowledge.KB:
+            # Taksi arxivlangan — /taxi/ yo'llari ulanmagan, bu yozuvlar
+            # javob sifatida ham qaytarilmaydi (knowledge.answer chetlab o'tadi).
+            if not settings.TAXI_ENABLED and entry['id'] in knowledge.TAXI_KB_IDS:
+                continue
             for label, urlname in entry['actions']:
                 try:
                     reverse(urlname)
@@ -432,12 +467,16 @@ class RealDataSearchTests(TestCase):
         self.assertEqual(res['intent'], 'jobs')
         self.assertTrue(any('Dasturchi' in c['title'] for c in res['cards']))
 
-    def test_venues_search_lists_active(self):
+    def test_booking_action_retreats_to_agent(self):
+        """«zal bron qilish» — HARAKAT niyati → engine chekinadi (PROMPT_9).
+
+        Ilgari engine booking branchи venue kartalarини ko'rsatardi va agentни
+        soya qilardi. Endi engine 'unknown' qaytaradi → service agentga uzatadi.
+        """
         from booking.models import Venue
         Venue.objects.create(owner=self.u, name='Diyor toyxona', is_active=True)
         res = engine.handle("zal bron qilish")
-        self.assertEqual(res['intent'], 'booking')
-        self.assertTrue(res['cards'])
+        self.assertEqual(res['intent'], 'unknown')
 
 
 class MobileApiTests(TestCase):

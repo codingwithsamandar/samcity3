@@ -19,6 +19,8 @@ import difflib
 import math
 import re
 
+from django.conf import settings
+
 
 # ─── Xarita markazi (foydalanuvchi joylashuvi bo'lmasa — shu ishlatiladi) ─────
 CENTER = (40.1156, 64.5036)  # Shofirkon shahri markazi (places/views.py bilan bir xil)
@@ -83,10 +85,13 @@ CATEGORY_KEYWORDS = {
     'restaurant':   ['restoran', 'kafe', 'oshxona', 'choyxona', 'ресторан', 'кафе',
                      'restaurant', 'cafe', 'ovqatlanish', 'taomnoma', 'fastfud'],
     'hotel':        ['mehmonxona', 'гостиница', 'отель', 'hotel', 'hostel'],
-    'wedding':      ['toyxona', 'свадьба', 'wedding'],
+    'wedding':      ['toyxona', 'свадьба', 'wedding', "to'y qil", 'zal band',
+                     "to'yxona kerak", 'toy zali'],
     'school':       ['maktab', 'школа', 'school', 'litsey'],
     'kindergarten': ['bogcha', 'детсад', 'садик', 'kindergarten', 'yasli'],
-    'barber':       ['sartarosh', 'soch oldirish', 'парикмахер', 'barber'],
+    'barber':       ['sartarosh', 'sartaroshxona', 'soch oldirish', 'soch ol',
+                     'soch kes', 'soch qildir', 'soch oldir', 'sochimni oldir',
+                     'парикмахер', 'barber'],
     'government':   ['hokimlik', 'hokimiyat', 'davlat', 'mahkama', 'администрация',
                      'хокимият', 'idora', 'fuqarolar yig'],
     'organization': ['tashkilot', 'ofis', 'kompaniya', 'офис', 'организация', 'office'],
@@ -122,13 +127,90 @@ TAXI_WORDS = ['taksi', 'taxi', 'такси', 'mashina chaqir', 'moshina chaqir',
 DELIVERY_WORDS = ['yetkaz', 'dostavka', 'доставка', 'dokon', 'магазин', 'market',
                   'buyurtma ber', 'zakaz', 'mahsulot', 'oziq-ovqat', 'produkt',
                   'delivery', 'savat']
-ADS_WORDS = ['elon', 'sotib olaman', 'sotaman', 'sotib ber', 'sotuv',
+# ⚠️ 'sotuv' OLIB TASHLANDI — u «sotuvchi» (kasb) bilan noto'g'ri mos kelib,
+# ish qidiruvини e'lonlar bo'limiga yuborardi. «sotuvda» aniqroq (sotuvchi'ga
+# tushmaydi). 'sotaman' esa ACTION_INTENT'да → agent hal qiladi.
+ADS_WORDS = ['elon', 'sotib olaman', 'sotaman', 'sotib ber', 'sotuvda',
              'ijaraga', 'ijara', 'объявлен', 'куплю', 'продам', 'e lon',
              'marketplace', 'mashina sotib', 'uy sotib']
 JOB_WORDS = ['ish topish', 'ish kerak', 'ish orni', 'vakansiya', 'vacancy',
              'работа', 'вакансия', 'rezyume', 'resume', 'ishga joylash']
 BOOKING_WORDS = ['bron', 'band qil', 'joy band', 'бронир', 'booking', 'zal band',
                  'stol band']
+
+# ── HARAKAT (amal) NIYATI ─────────────────────────────────────────────────────
+# «bron qil», «buyurtma qil», «yozib qo'y», «soch oldir» — bu JOY TOPISH emas,
+# biror ishni BAJARISH. Bunday so'rovда engine chekinadi (intent='unknown') va
+# agent (booking/delivery) hal qiladi. Aks holда category (barber/restaurant)
+# yoki delivery/booking branchи agentни SOYA qiladi (PROMPT_9 ildizи).
+# ⚠️ BOOKING_WORDS qayta ishlatiladi (bron/band qil) + kengaytiriladi.
+ACTION_INTENT_WORDS = BOOKING_WORDS + [
+    'joy bron', 'yozib qoy', 'yozib ber', 'sartaroshga yozil',
+    'buyurtma', 'zakaz', 'order',
+    'soch oldir', 'oldirmoqchi',
+    # delivery (buyurtма/yetkazib berish AMALI — «do'kon qayerda» search'i emas)
+    # «somsa yetkazib bering», «lavash olib keling», «ovqat yetkaz» → agent.
+    'yetkazib ber', 'yetkaz', 'olib kel', 'olib keling',
+    # taxi (chaqirish amali — «taksi qayerda» search'i emas)
+    'taksi chaqir', 'taksi kerak', 'taksi buyur',
+    # booking: to'yxona/zal KUNLIK bron amali. ⚠️ Faqat «kerak/bron» bilan —
+    # yolg'iz «toyxona» qo'shilsa «to'yxona qayerda» (manzil so'rovi) ham
+    # agentga ketib, bepul places branch'ini soya qilardi.
+    'toyxona kerak', 'toyxona bron', 'toyxona band', 'zal kerak', 'zal bron',
+    # ads (YANGI e'lon joylash — «sotib olaman» search'i emas)
+    'elon joylash', 'elon joylashtir', 'elon qosh', 'sotaman', 'sotmoqchiman',
+    # jobs (joylash / xodim qidirish amali)
+    'vakansiya joylash', 'xodim kerak', 'ishchi kerak', 'rezyume joylash',
+    'ish eloni joylash',
+    # community (murojaat / ovoz)
+    'murojaat', 'shikoyat', 'ariza yoz', 'ovoz ber', 'ovoz beraman',
+]
+# «Qanday bron qilaman» kabi HOW-TO savol — bu AMAL emas, ma'lumot so'rovi.
+# Gate'ga tushmasin: KB/FAQ javob bersin, «qanday joy bron qilaman» agentга ketmasin.
+HOWTO_WORDS = ['qanday', 'qanaqa', 'qandoq', 'qay tarz', 'how']
+
+
+def is_action_intent(message):
+    """Harakat (amal) niyatimi — bron/buyurtma/yozib qo'y/soch oldir.
+
+    HOW-TO savol («qanday bron qilaman») — amal EMAS, False qaytaradi.
+    `service.build_response` va `handle()` shu bo'yicha agentga chekinadi.
+    """
+    qn = _norm(message)
+    return _contains_any(qn, ACTION_INTENT_WORDS) and not _contains_any(qn, HOWTO_WORDS)
+
+
+# Mahalla (community) bo'limi — engine'да alohida branch yo'q, KB yoki fallback'ga
+# tushadi. Bu so'rovlar agent (community) tomonidан hal qilinsin.
+_COMMUNITY_WORDS = ['murojaat', 'shikoyat', 'so rovnoma', 'sorovnoma',
+                    'ovoz ber', 'ovoz berish', 'obodonlashtir', 'raisga',
+                    'hokimga', 'mahalla xabar']
+
+
+def is_community_query(message):
+    """Mahalla xizmatlari so'rovimi — murojaat, so'rovnoma, mahalla e'lonlari."""
+    qn = _norm(message)
+    if _contains_any(qn, _COMMUNITY_WORDS):
+        return True
+    # «mahalla e'lonlari», «mahallamdagi xabarlar»
+    if 'mahalla' in qn and ('elon' in qn or 'xabar' in qn or 'yangilik' in qn):
+        return True
+    return False
+
+
+# account (o'z profilи/tarixи) — engine'да branch yo'q, ba'zилари KB/FAQ'ga
+# tushib agentні soya qiladi (masalan «profilим» → faq). Bularни agent (account)
+# hal qilsin.
+_ACCOUNT_WORDS = ['buyurtmalarim', 'buyurtmalarimni', 'bronlarim', 'bronlarimni',
+                  'safarlarim', 'safarlarimni', 'elonlarim', 'elonlarimni',
+                  'profilim', 'profilimni', 'mening profilim',
+                  'ismimni', 'ismni ozgartir', 'ismni uzgartir']
+
+
+def is_account_query(message):
+    """O'z profilи/tarixи so'rovimi — buyurtmalarим, bronlarим, profilим, ism o'zgart."""
+    qn = _norm(message)
+    return _contains_any(qn, _ACCOUNT_WORDS)
 POPULAR_WORDS = ['mashhur', 'ommabop', 'eng yaxshi joy', 'top joy', 'nima korsam',
                  'korsa arzigulik', 'reyting baland', 'yaxshi joylar', 'zor joylar',
                  'qiziqarli joy', 'mashxur']
@@ -602,6 +684,28 @@ def handle(message, location=None, context=None):
                       reply="Savolingizni yozing — masalan: «Menga eng yaqin dorixonani ko'rsat».")
         return result
 
+    # ── HARAKAT NIYATI → engine CHEKINADI (agent hal qiladi) ──────────────────
+    # «bron qil», «buyurtma qil», «soch oldir» — category (barber/restaurant) yoki
+    # delivery/booking branchи ushlab, agentни soya qilmasin. intent='unknown'
+    # qoladi → service.build_response agentга uzatadi. «eng yaqin sartaroshxona»
+    # (harakatsiz) o'zgarmaydi; «qanday bron qilaman» (HOW-TO) KB'ga o'tadi.
+    # Taksi ARXIVLANGAN — «taksi chaqir», «taksi kerak» kabi AMAL so'rovlari
+    # agentga chekinmasin (agentda ham taxi tool yo'q). Foydalanuvchiga xizmat
+    # yopiqligi darhol aytiladi — mavhum «tushunmadim» javobi o'rniga.
+    if not settings.TAXI_ENABLED and _contains_any(qn, TAXI_WORDS):
+        from . import knowledge
+        result.update(
+            intent='taxi_disabled',
+            reply=("🚧 Taksi xizmati hozircha o'chirilgan. Yetkazib berish, joy "
+                   "bron qilish va boshqa bo'limlar ishlayapti — nima kerakligini "
+                   "yozing, yordam beraman."),
+            actions=knowledge.overview_actions(),
+        )
+        return result
+
+    if is_action_intent(message):
+        return result
+
     category = detect_category(qn)
     is_continue = _contains_any(qn, CONTINUE_WORDS)
     offset = 0
@@ -703,6 +807,8 @@ def handle(message, location=None, context=None):
     # "e'lon qanday joylayman", "do'kon ochish", "kommunal to'lov" kabi savollar.
     # Joy topishdan keyin, umumiy xizmat yorliqlaridan oldin tekshiriladi.
     from . import knowledge
+    # Taksi arxivlangan bo'lsa `knowledge.answer()` taksi yozuvlarini o'zi
+    # chetlab o'tadi (TAXI_KB_IDS) — bu yerda qo'shimcha filtr kerak emas.
     kb = knowledge.answer(qn)
     if kb:
         actions = []
@@ -716,6 +822,8 @@ def handle(message, location=None, context=None):
         return result
 
     # ── 2) TAKSI ──────────────────────────────────────────────────────────────
+    # Taksi arxivlangan bo'lsa bu yergacha yetib kelmaydi — yuqoridagi
+    # TAXI_ENABLED tekshiruvi barcha taksi so'rovlarini ushlab qoladi.
     if _contains_any(qn, TAXI_WORDS):
         result.update(
             intent='taxi',

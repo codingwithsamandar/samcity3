@@ -901,11 +901,11 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
       <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
       <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
       <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
-      <a href="{% url 'taxi:home' %}" {% if '/taxi' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-car"/></svg>{% trans "Taksi" %}</a>
+      {# Taksi arxivlangan — TAXI_ENABLED=True bo'lsa qaytadi (main.context_processors) #}
+      {% if TAXI_ENABLED %}<a href="{% url 'taxi:home' %}" {% if '/taxi' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-car"/></svg>{% trans "Taksi" %}</a>{% endif %}
       <a href="{% url 'venue_list' %}" {% if '/booking' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>{% trans "Joylar" %}</a>
       <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
       <a href="{% url 'delivery:store_list' %}" {% if request.path == '/delivery/' %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>{% trans "Yetkazish" %}</a>
-      <a href="{% url 'mahalla_home' %}" {% if '/mahalla' in request.path or 'chat' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-building"/></svg>{% trans "Mahalla" %}</a>
     </div>
     <div class="nav-auth">
       <a href="{% url 'global_search' %}" class="btn btn-ghost" title="{% trans 'Qidiruv' %}" aria-label="{% trans 'Qidiruv' %}"><svg class="ic"><use href="#i-search"/></svg></a>
@@ -918,6 +918,8 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
       </a>
       {% endif %}
       {% get_current_language as CUR_LANG %}
+      {# Ko'p tillilik arxivlangan — MULTILANG_ENABLED=True bo'lsa qaytadi #}
+      {% if MULTILANG_ENABLED %}
       <form action="{% url 'set_language' %}" method="post" class="lang-switch hide-sm">{% csrf_token %}
         <input name="next" type="hidden" value="{{ request.get_full_path }}">
         <select name="language" onchange="this.form.submit()" aria-label="Til / Язык / Language" title="Til / Язык / Language">
@@ -927,6 +929,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
           {% endfor %}
         </select>
       </form>
+      {% endif %}
       <button class="theme-toggle" id="themeToggle" title="{% trans "Mavzu o'zgartirish" %}" aria-label="Dark/Light mode">
         <span class="icon-sun">☀️</span>
         <span class="icon-moon">🌙</span>
@@ -985,6 +988,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     <button type="button" class="mm-close" aria-label="{% trans 'Yopish' %}" onclick="document.getElementById('mobileMenu').style.display='none'"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
 
+  {% if MULTILANG_ENABLED %}
   <div class="mm-label">{% trans "Til / Язык / Language" %}</div>
   <form action="{% url 'set_language' %}" method="post" class="lang-switch" style="width:100%;padding:.4rem 0;">{% csrf_token %}
     <input name="next" type="hidden" value="{{ request.get_full_path }}">
@@ -996,16 +1000,16 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     </select>
   </form>
   <div class="mm-divider"></div>
+  {% endif %}
 
   <div class="mm-label">{% trans "Bo'limlar" %}</div>
   <a href="{% url 'home' %}"><svg class="ic"><use href="#i-home"/></svg> {% trans "Bosh sahifa" %}</a>
   <a href="{% url 'all_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> {% trans "E'lonlar" %}</a>
   <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> {% trans "Ish" %}</a>
-  <a href="{% url 'taxi:home' %}"><svg class="ic"><use href="#i-car"/></svg> {% trans "Taksi" %}</a>
+  {% if TAXI_ENABLED %}<a href="{% url 'taxi:home' %}"><svg class="ic"><use href="#i-car"/></svg> {% trans "Taksi" %}</a>{% endif %}
   <a href="{% url 'delivery:store_list' %}"><svg class="ic"><use href="#i-bike"/></svg> {% trans "Yetkazish" %}</a>
   <a href="{% url 'venue_list' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Joylar" %}</a>
   <a href="{% url 'places:map' %}"><svg class="ic"><use href="#i-map"/></svg> {% trans "Xarita" %}</a>
-  <a href="{% url 'mahalla_home' %}"><svg class="ic"><use href="#i-building"/></svg> {% trans "Mahalla" %}</a>
   <div class="mm-divider"></div>
   {% if user.is_authenticated %}
     <div class="mm-label">{% trans "Hisob" %}</div>
@@ -1050,7 +1054,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   </div>
   <div class="foot-links">
     <a href="{% url 'all_ads' %}">{% trans "E'lonlar" %}</a>
-    <a href="{% url 'taxi:home' %}">{% trans "Taksi" %}</a>
+    {% if TAXI_ENABLED %}<a href="{% url 'taxi:home' %}">{% trans "Taksi" %}</a>{% endif %}
     <a href="{% url 'delivery:store_list' %}">{% trans "Yetkazish" %}</a>
     <a href="{% url 'venue_list' %}">{% trans "Joylar" %}</a>
     <a href="{% url 'places:map' %}">{% trans "Xarita" %}</a>

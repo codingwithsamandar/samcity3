@@ -166,6 +166,52 @@
   .sam-ai-cardbtn:hover { border-color: var(--accent, #3551d1); color: var(--accent, #3551d1); }
   .sam-ai-cardbtn.primary:hover { background: var(--accent, #3551d1); color: #fff; }
 
+  /* ── Tanlanadigan karta (card_list) — butun karta tugma ── */
+  button.sam-ai-card.sam-ai-pick { width: 100%; text-align: left; cursor: pointer; font: inherit; }
+  .sam-ai-card.sam-ai-pick .sam-ai-card-top { width: 100%; align-items: center; }
+  .sam-ai-pickarrow { margin-left: auto; font-weight: 800; color: var(--accent, #3551d1); flex: none;
+    transition: transform .15s; }
+  .sam-ai-card.sam-ai-pick:hover .sam-ai-pickarrow { transform: translateX(3px); }
+
+  /* ── Mahsulot to'ri (product_grid) ── */
+  .sam-ai-grid { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: .55rem;
+    animation: samAiIn .38s cubic-bezier(.2,.8,.3,1); }
+  .sam-ai-prod { background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0);
+    border-radius: 15px; padding: .55rem; display: flex; flex-direction: column; gap: .35rem; }
+  .sam-ai-prod .pi { height: 74px; border-radius: 11px; background: var(--surface2, #f1f4f9) center/cover no-repeat;
+    display: grid; place-items: center; font-size: 1.7rem; }
+  .sam-ai-prod .pt { font-weight: 700; font-size: .82rem; line-height: 1.2; color: var(--sam-ai-fg);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sam-ai-prod .pp { font-weight: 800; font-size: .84rem; color: var(--accent-d, #2a3fa5); margin-top: auto; }
+  .sam-ai-cardbtn.padd { flex: none; cursor: pointer; border: none; font: inherit; }
+
+  /* ── Tasdiq kartasi (confirm_payment) ── */
+  .sam-ai-confirm { align-self: stretch; background: var(--surface, #fff); border: 1px solid var(--border, #e4e8f0);
+    border-radius: 16px; padding: .85rem .95rem; animation: samAiIn .4s ease; }
+  .sam-ai-confirm.busy { opacity: .6; pointer-events: none; }
+  .sam-ai-confirm.done { border-color: #0a7a54; }
+  .sam-ai-confirm.cancelled { opacity: .7; }
+  .sam-ai-confirm .ch { font-weight: 800; font-size: .9rem; margin-bottom: .5rem; color: var(--sam-ai-fg); }
+  .sam-ai-confirm .cr { display: flex; justify-content: space-between; font-size: .84rem; padding: .2rem 0;
+    color: var(--text2, #5b6678); }
+  .sam-ai-confirm .cr.ct { border-top: 1px dashed var(--border2, #d5dbe8); margin-top: .3rem; padding-top: .45rem;
+    font-weight: 800; font-size: .95rem; color: var(--sam-ai-fg); }
+  .sam-ai-confirm .cn { font-size: .78rem; color: var(--text2, #5b6678); margin-top: .45rem; }
+  .sam-ai-confirm .cb { display: flex; gap: .5rem; margin-top: .7rem; }
+  .sam-ai-confirm-yes, .sam-ai-confirm-no { flex: 1; padding: .6rem; border-radius: 11px; font-weight: 750;
+    font-size: .85rem; cursor: pointer; border: none; transition: filter .15s, transform .1s; }
+  .sam-ai-confirm-yes { background: linear-gradient(135deg, #0a9d6e, #0a7a54); color: #fff; }
+  .sam-ai-confirm-no { background: var(--surface2, #f1f4f9); color: var(--text2, #5b6678);
+    border: 1px solid var(--border2, #d5dbe8); }
+  .sam-ai-confirm-yes:hover { filter: brightness(1.07); } .sam-ai-confirm-yes:active { transform: scale(.97); }
+  .sam-ai-confirm-yes:disabled, .sam-ai-confirm-no:disabled { opacity: .5; cursor: default; }
+
+  /* ── Ovozli rejim holati (mic tugmasi SPEAKING'da yashil pulsatsiya) ── */
+  #samAi[data-state="SPEAKING"] #samAiMic { border-color: #0a9d6e; color: #0a9d6e; }
+  #samAi[data-state="SPEAKING"] .sam-ai-dot { background: #4ade80; box-shadow: 0 0 7px #4ade80; }
+  #samAi[data-state="THINKING"] .sam-ai-dot { background: var(--gold, #e6a817); box-shadow: 0 0 7px var(--gold, #e6a817); }
+  #samAi[data-state="LISTENING"] .sam-ai-dot { background: var(--red, #e5484d); box-shadow: 0 0 7px var(--red, #e5484d); }
+
   .sam-ai-actions { align-self: stretch; display: flex; flex-wrap: wrap; gap: .4rem; animation: samAiIn .4s ease; }
   .sam-ai-action { text-decoration: none; font-size: .8rem; font-weight: 650; padding: .46rem .82rem; border-radius: 100px;
     background: var(--accent-l, #eef1fe); color: var(--accent-d, #2a3fa5); border: 1px solid transparent; cursor: pointer;
@@ -226,10 +272,13 @@
 
   var CHAT_URL = "{% url 'assistant:chat' %}";
   var TTS_URL = "{% url 'assistant:tts' %}";
+  var STT_URL = "{% url 'assistant:stt' %}";
   var ci = root.querySelector('input[name="csrfmiddlewaretoken"]');
   var CSRF = ci ? ci.value : '';
   var currentAudio = null;   // server TTS audiosi
   var serverTTS = null;      // null=noma'lum, true=bor, false=yo'q (brauzerga qaytamiz)
+  var sttServer = false;     // server STT (Mohir) bormi — probe aniqlaydi (default: brauzer)
+  var speakSeq = 0;          // oqimli TTS avlodi — eski jumlalarni bekor qilish uchun
 
   var opened = false, loc = null, history = [], busy = false, speakOn = false;
   // Suhbat konteksti: davom ettirish ("yana") va follow-up ("birinchisining telefoni") uchun
@@ -264,6 +313,7 @@
       if (ev.t === 'msg') addMsg(ev.text, ev.who);
       else if (ev.t === 'cards') addCards(ev.cards);
       else if (ev.t === 'actions') addActions(ev.actions);
+      else if (ev.t === 'ui') renderUI(ev.ui);
     });
     replaying = false;
     convo = st.convo;
@@ -274,6 +324,28 @@
   function scrollDown() { body.scrollTop = body.scrollHeight; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ── Ovozli rejim holatlari: IDLE / LISTENING / THINKING / SPEAKING ──
+  var subEl = root.querySelector('.sam-ai-sub');
+  var STATE_TXT = {
+    IDLE: "Onlayn · sizga yordamga tayyor", LISTENING: "🎤 Tinglayapman…",
+    THINKING: "💭 O'ylayapman…", SPEAKING: "🔊 Javob beryapman…"
+  };
+  function setState(s) {
+    root.setAttribute('data-state', s || 'IDLE');
+    if (subEl) subEl.innerHTML = '<span class="sam-ai-dot"></span>' + (STATE_TXT[s] || STATE_TXT.IDLE);
+    // Sessiya tinglash: AI o'ylab/gapirayotganda mikrofon O'Z ovozini eshitmasin
+    // (aks holda AI javobini yangi buyruq deb qabul qiladi — cheksiz aylanish).
+    if (sessionListen) {
+      if (s === 'THINKING' || s === 'SPEAKING') {
+        // AI o'ylayapti/gapiryapti — mikrofonni BUTUNLAY to'xtatamiz (o'z ovozini
+        // yozib olmasin). Natijani e'tiborsiz qoldirish YETARLI EMAS edi.
+        if (!micMuted) { micMuted = true; clearTimeout(silenceTimer); pauseRec(); }
+      } else if (micMuted) {                       // IDLE/LISTENING — AI tugadi, yana yoqamiz
+        micMuted = false; resumeRec();
+      }
+    }
+  }
 
   function addMsg(text, who) {
     var d = document.createElement('div');
@@ -340,6 +412,148 @@
   }
   function hideTyping() { var t = document.getElementById('samAiTyping'); if (t) t.remove(); }
 
+  // ── Agent UI direktivalarini chizish (card_list / product_grid / confirm_payment / text) ──
+  // Agent `ui` qaytaradi (engine `cards` dan farqli). Har element bosilsa —
+  // uni tanlagani haqida xabar yuboriladi (selection.py [TANLOV] bilan yechadi).
+  function som(v) { return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + " so'm"; }
+
+  function renderUI(ui) {
+    if (!ui || !ui.type) return;
+    if (!replaying) { convo.push({ t: 'ui', ui: ui }); persist(); }
+    if (ui.type === 'card_list') return uiCardList(ui);
+    if (ui.type === 'product_grid') return uiProductGrid(ui);
+    if (ui.type === 'link_list') return uiLinkList(ui);
+    if (ui.type === 'confirm_payment') return uiConfirmPayment(ui);
+    if (ui.type === 'confirm') return uiConfirm(ui);
+    if (ui.type === 'text' && ui.body) return addMsg(ui.body, 'bot');
+  }
+
+  // Ma'lumot ro'yxati (e'lon, ish, taksist) — havola/qo'ng'iroq tugmali, tanlanmaydi.
+  function uiLinkList(ui) {
+    var wrap = document.createElement('div'); wrap.className = 'sam-ai-cards';
+    (ui.items || []).forEach(function (it) {
+      var el = document.createElement('div'); el.className = 'sam-ai-card';
+      var tags = (it.tags || []).map(function (t) {
+        return '<span class="sam-ai-tag walk">' + esc(t) + '</span>';
+      }).join('');
+      var btns = '';
+      if (it.url) btns += '<a class="sam-ai-cardbtn primary" href="' + esc(it.url) + '">Batafsil</a>';
+      if (it.phone) btns += '<a class="sam-ai-cardbtn" href="tel:' + esc(String(it.phone).replace(/[^0-9+]/g, '')) + '">☎ Qo\'ng\'iroq</a>';
+      el.innerHTML =
+        '<div class="sam-ai-card-top">' +
+          '<span class="ci">' + esc(it.icon || '📄') + '</span>' +
+          '<span class="cc"><span class="ct">' + esc(it.title) + '</span>' +
+          (it.subtitle ? '<span class="cs">' + esc(it.subtitle) + '</span>' : '') + '</span>' +
+        '</div>' +
+        (tags ? '<div class="sam-ai-meta">' + tags + '</div>' : '') +
+        (btns ? '<div class="sam-ai-cardbtns">' + btns + '</div>' : '');
+      wrap.appendChild(el);
+    });
+    body.appendChild(wrap); scrollDown();
+  }
+
+  // Pulsiz tasdiq (e'lon joylash, murojaat, taksi) — confirm_payment uslubiда,
+  // lekin summa o'rniga matn qatorlari (label: value).
+  function uiConfirm(ui) {
+    var el = document.createElement('div'); el.className = 'sam-ai-confirm';
+    var rows = (ui.lines || []).map(function (l) {
+      return '<div class="cr"><span>' + esc(l.label) + '</span><span>' + esc(l.value) + '</span></div>';
+    }).join('');
+    el.innerHTML =
+      '<div class="ch">✅ ' + esc(ui.title || 'Tasdiqlash') + '</div>' +
+      rows +
+      (ui.note ? '<div class="cn">📝 ' + esc(ui.note) + '</div>' : '') +
+      '<div class="cb">' +
+        '<button type="button" class="sam-ai-confirm-yes">' + esc(ui.confirm_label || 'Tasdiqlash ✅') + '</button>' +
+        '<button type="button" class="sam-ai-confirm-no">' + esc(ui.cancel_label || 'Bekor qilish') + '</button>' +
+      '</div>';
+    var yes = el.querySelector('.sam-ai-confirm-yes'), no = el.querySelector('.sam-ai-confirm-no');
+    yes.addEventListener('click', function () { confirmAction(ui.action_url, el, yes, no, true); });
+    no.addEventListener('click', function () { confirmAction(ui.cancel_url, el, yes, no, false); });
+    body.appendChild(el); scrollDown();
+  }
+
+  // Element bosilsa nima yuborish — nomi bo'yicha (selection nom/alias bilan yechadi)
+  function selectMsg(item) { return (item.title || '') + " ni tanladim"; }
+
+  function uiCardList(ui) {
+    var wrap = document.createElement('div'); wrap.className = 'sam-ai-cards';
+    (ui.items || []).forEach(function (it) {
+      var el = document.createElement('button'); el.type = 'button'; el.className = 'sam-ai-card sam-ai-pick';
+      el.innerHTML =
+        '<span class="sam-ai-card-top">' +
+          '<span class="ci">' + esc(it.image ? '🏪' : '📍') + '</span>' +
+          '<span class="cc"><span class="ct">' + esc(it.title) + '</span>' +
+          (it.subtitle ? '<span class="cs">' + esc(it.subtitle) + '</span>' : '') + '</span>' +
+          '<span class="sam-ai-pickarrow">→</span>' +
+        '</span>';
+      el.addEventListener('click', function () { send(selectMsg(it)); });
+      wrap.appendChild(el);
+    });
+    body.appendChild(wrap); scrollDown();
+  }
+
+  function uiProductGrid(ui) {
+    var wrap = document.createElement('div'); wrap.className = 'sam-ai-grid';
+    (ui.items || []).forEach(function (it) {
+      var el = document.createElement('div'); el.className = 'sam-ai-prod';
+      var img = it.image
+        ? '<span class="pi" style="background-image:url(' + esc(it.image) + ')"></span>'
+        : '<span class="pi pi-ph">🍽️</span>';
+      el.innerHTML =
+        img +
+        '<span class="pt">' + esc(it.title) + '</span>' +
+        (it.price ? '<span class="pp">' + som(it.price) + '</span>' : '') +
+        '<button type="button" class="sam-ai-cardbtn primary padd">➕ Savatga</button>';
+      el.querySelector('.padd').addEventListener('click', function () {
+        send((it.title || '') + " ni savatga qo'sh");
+      });
+      wrap.appendChild(el);
+    });
+    body.appendChild(wrap); scrollDown();
+  }
+
+  function uiConfirmPayment(ui) {
+    var el = document.createElement('div'); el.className = 'sam-ai-confirm';
+    var rows = (ui.lines || []).map(function (l) {
+      return '<div class="cr"><span>' + esc(l.label) + '</span><span>' + som(l.amount) + '</span></div>';
+    }).join('');
+    el.innerHTML =
+      '<div class="ch">🧾 Buyurtma tasdig\'i</div>' +
+      rows +
+      '<div class="cr ct"><span>Jami</span><span>' + som(ui.total) + '</span></div>' +
+      (ui.note ? '<div class="cn">📝 ' + esc(ui.note) + '</div>' : '') +
+      '<div class="cb">' +
+        '<button type="button" class="sam-ai-confirm-yes">' + esc(ui.confirm_label || 'Tasdiqlash ✅') + '</button>' +
+        '<button type="button" class="sam-ai-confirm-no">' + esc(ui.cancel_label || 'Bekor qilish') + '</button>' +
+      '</div>';
+    var yes = el.querySelector('.sam-ai-confirm-yes'), no = el.querySelector('.sam-ai-confirm-no');
+    yes.addEventListener('click', function () { confirmAction(ui.action_url, el, yes, no, true); });
+    no.addEventListener('click', function () { confirmAction(ui.cancel_url, el, yes, no, false); });
+    body.appendChild(el); scrollDown();
+  }
+
+  // Tasdiq/bekor — /ai/confirm/<id>/ yoki /ai/cancel/<id>/ ga POST (CSRF bilan)
+  function confirmAction(url, card, yes, no, isConfirm) {
+    if (!url) return;
+    yes.disabled = true; no.disabled = true;
+    card.classList.add('busy');
+    fetch(url, { method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (res) {
+        card.classList.remove('busy');
+        card.classList.add(isConfirm ? 'done' : 'cancelled');
+        var reply = (res && res.reply) || (isConfirm ? 'Bajarildi ✅' : 'Bekor qilindi.');
+        addMsg(reply, 'bot'); history.push({ role: 'assistant', content: reply });
+        speakStreaming(reply); persist();
+      })
+      .catch(function () {
+        yes.disabled = false; no.disabled = false; card.classList.remove('busy');
+        addMsg("Amalni yakunlab bo'lmadi. Qayta urinib ko'ring.", 'bot');
+      });
+  }
+
   function greet() {
     var h = new Date().getHours();
     var t = h < 5 ? 'Xayrli tun' : h < 11 ? 'Xayrli tong' : h < 18 ? 'Xayrli kun' : 'Xayrli kech';
@@ -380,25 +594,160 @@
     });
   });
 
-  // ── Ovozli kirish (Web Speech API) ──
+  // ── Ovozli kirish ──
+  // Ikki yo'l: (1) server STT (Mohir) — sttServer=true bo'lsa MediaRecorder audio
+  // yuboradi; (2) brauzer Web Speech — default. Probe /ai/stt/ dagi
+  // X-STT-Available sarlavhasini o'qib qaysi yo'l ekanini aniqlaydi. Mohir
+  // ulangач widget O'ZGARMAYDI — probe '1' qaytaradi va (1)-yo'l yoqiladi.
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null, listening = false;
   var voiceLangs = ['uz-UZ', 'ru-RU'], voiceLangIdx = 0;
-  if (!SR) { micBtn.style.display = 'none'; }
-  else {
+  var mediaRec = null, mediaChunks = [];
+  // ── Sessiya tinglash: qizil tugma bosilsa doim tinglaydi; 1 daqiqa jimlikda o'chadi ──
+  var sessionListen = false, micMuted = false, silenceTimer = null;
+  var SILENCE_MS = 60000;               // 1 daqiqa gapirilmasa — sessiya tugaydi
+  var canMic = !!SR || !!(navigator.mediaDevices && window.MediaRecorder);
+  if (!canMic) { micBtn.style.display = 'none'; }
+
+  // Server STT bor-yo'qligini bir marta tekshiramiz (bo'sh POST → 204 + sarlavha)
+  function probeSTT() {
+    fetch(STT_URL, { method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest',
+                 'Content-Type': 'application/octet-stream' }, body: new Blob() })
+      .then(function (r) { sttServer = (r.headers.get('X-STT-Available') === '1'); })
+      .catch(function () { sttServer = false; });
+  }
+
+  function micStop() {
+    if (mediaRec && mediaRec.state === 'recording') { try { mediaRec.stop(); } catch (e) {} }
+    if (rec) { try { rec.stop(); } catch (e) {} }
+  }
+  function micIdle() {
+    listening = false; micBtn.classList.remove('listening');
+    input.placeholder = "{% trans 'Savolingizni yozing…' %}";
+    if (root.getAttribute('data-state') === 'LISTENING') setState('IDLE');
+  }
+
+  // (2) Brauzer Web Speech — interim (jonli) natija bilan
+  function startWebSpeech() {
+    if (!SR) { micIdle(); return; }
+    try {
+      rec = new SR(); rec.lang = voiceLangs[voiceLangIdx];
+      rec.interimResults = true; rec.maxAlternatives = 1;
+      rec.onstart = function () { listening = true; micBtn.classList.add('listening');
+        setState('LISTENING'); input.placeholder = 'Tinglayapman…'; };
+      rec.onresult = function (e) {
+        var full = '', done = '';
+        for (var i = 0; i < e.results.length; i++) {
+          var tr = e.results[i][0].transcript;
+          full += tr; if (e.results[i].isFinal) done += tr;
+        }
+        input.value = full;                         // jonli ko'rinadi (kutish sezilmaydi)
+        if (done.trim()) { var t = done.trim(); micStop(); setTimeout(function () { send(t); }, 60); }
+      };
+      rec.onerror = function (e) {
+        if (e.error === 'language-not-supported' && voiceLangIdx < voiceLangs.length - 1) voiceLangIdx++;
+      };
+      rec.onend = micIdle;
+      rec.start();
+    } catch (e) { micIdle(); }
+  }
+
+  // (1) Server STT (Mohir) — audio yozib /ai/stt/ ga yuboradi
+  function startServerSTT() {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      mediaChunks = [];
+      mediaRec = new MediaRecorder(stream);
+      mediaRec.ondataavailable = function (e) { if (e.data && e.data.size) mediaChunks.push(e.data); };
+      mediaRec.onstart = function () { listening = true; micBtn.classList.add('listening');
+        setState('LISTENING'); input.placeholder = 'Tinglayapman… (yakunlash uchun 🎤 bosing)'; };
+      mediaRec.onstop = function () {
+        try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+        micIdle();
+        var blob = new Blob(mediaChunks, { type: mediaRec.mimeType || 'audio/webm' });
+        setState('THINKING');
+        fetch(STT_URL, { method: 'POST',
+          headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest',
+                     'Content-Type': blob.type || 'audio/webm' }, body: blob })
+          .then(function (r) { if (r.status === 200) return r.json();
+            if (r.status === 204) sttServer = false; return null; })
+          .then(function (j) {
+            if (j && j.text) { input.value = j.text; send(j.text); }
+            else { setState('IDLE'); startWebSpeech(); }   // server tanimadi → brauzer
+          })
+          .catch(function () { setState('IDLE'); });
+      };
+      mediaRec.start();
+    }).catch(function () { micIdle(); startWebSpeech(); });   // mikrofon ruxsati yo'q
+  }
+
+  // ── Sessiya tinglash: qizil tugma → doim tinglaydi; 1 daqiqa jimlikda o'chadi ──
+  function armSilence() {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(function () { stopSession(); }, SILENCE_MS);
+  }
+  // AI gapirganda mikrofonni to'xtatamiz (o'z ovozini eshitmasin).
+  function pauseRec() {
+    if (rec) { try { rec.onend = null; rec.stop(); } catch (e) {} rec = null; }
+  }
+  // AI tugagach yana yoqamiz — tail/echo tushmasligi uchun ozgina kechikish bilan.
+  function resumeRec() {
+    armSilence();
+    setTimeout(function () { if (sessionListen && !micMuted && !rec) startSessionRec(); }, 400);
+  }
+  function startSession() {
+    sessionListen = true; micMuted = false;
+    micBtn.classList.add('listening');
+    startSessionRec();
+    armSilence();
+  }
+  function startSessionRec() {
+    if (!SR || !sessionListen) return;
+    try {
+      rec = new SR(); rec.lang = voiceLangs[voiceLangIdx];
+      rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+      rec.onstart = function () {
+        listening = true; micBtn.classList.add('listening');
+        if (!micMuted) { setState('LISTENING'); input.placeholder = 'Tinglayapman…'; }
+      };
+      rec.onresult = function (e) {
+        if (micMuted) return;                 // AI gapiryapti — o'z ovozini yutmaymiz
+        armSilence();                         // gapirdi — 1 daqiqa jimlik taymeri qayta boshlanadi
+        var full = '', done = '';
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          var tr = e.results[i][0].transcript;
+          full += tr; if (e.results[i].isFinal) done += tr;
+        }
+        if (done.trim()) { input.value = ''; send(done.trim()); }   // yuborildi, tinglash DAVOM etadi
+        else { input.value = full; }          // jonli interim ko'rinadi
+      };
+      rec.onerror = function (e) {
+        if (e.error === 'language-not-supported' && voiceLangIdx < voiceLangs.length - 1) voiceLangIdx++;
+      };
+      rec.onend = function () {
+        rec = null;
+        // Brauzer davriy to'xtatadi — sessiya davom etsa (va AI gapirmayotgan
+        // bo'lsa) qayta ishga tushiramiz. AI gapirsa (micMuted) — resumeRec yoqadi.
+        if (sessionListen && !micMuted) { setTimeout(function () { if (sessionListen && !micMuted && !rec) startSessionRec(); }, 250); }
+        else if (!sessionListen) { micIdle(); }
+      };
+      rec.start();
+    } catch (e) { if (sessionListen) setTimeout(startSessionRec, 400); }
+  }
+  function stopSession() {
+    sessionListen = false; micMuted = false;
+    clearTimeout(silenceTimer);
+    if (rec) { try { rec.onend = null; rec.stop(); } catch (e) {} }
+    micIdle();
+  }
+
+  if (canMic) {
     micBtn.addEventListener('click', function () {
-      if (listening) { try { rec.stop(); } catch (e) {} return; }
-      try {
-        rec = new SR(); rec.lang = voiceLangs[voiceLangIdx];
-        rec.interimResults = false; rec.maxAlternatives = 1;
-        rec.onstart = function () { listening = true; micBtn.classList.add('listening'); input.placeholder = 'Tinglayapman…'; };
-        rec.onresult = function (e) { var t = e.results[0][0].transcript; input.value = t; setTimeout(function () { send(t); }, 150); };
-        rec.onerror = function (e) {
-          // uz-UZ qo'llab-quvvatlanmasa — ruscha bilan qayta urinamiz
-          if (e.error === 'language-not-supported' && voiceLangIdx < voiceLangs.length - 1) { voiceLangIdx++; }
-        };
-        rec.onend = function () { listening = false; micBtn.classList.remove('listening'); input.placeholder = "{% trans 'Savolingizni yozing…' %}"; };
-        rec.start();
-      } catch (e) { listening = false; micBtn.classList.remove('listening'); }
+      if (sessionListen) { stopSession(); return; }   // yoniq bo'lsa — o'chiramiz
+      if (listening) { micStop(); return; }
+      stop();                                          // barge-in: gapirish javobni to'xtatadi
+      if (SR) startSession();                          // brauzer: DOIM tinglash sessiyasi
+      else if (sttServer) startServerSTT();            // (SR yo'q) Mohir: bir martalik yozib-yuborish
+      else startWebSpeech();
     });
   }
 
@@ -478,13 +827,19 @@
       var u = new SpeechSynthesisUtterance(out);
       if (voice) u.voice = voice;
       u.lang = lang; u.rate = 0.96; u.pitch = 1;
+      u.onend = function () { if (root.getAttribute('data-state') === 'SPEAKING') setState('IDLE'); };
+      u.onerror = u.onend;
       TTS.speak(u);
     } catch (e) {}
   }
+  // TTS'ni to'xtatadi (barge-in shunga ulanadi: gapirish boshlansa chaqiriladi).
   function stopSpeak() {
+    speakSeq++;                         // oqimli TTS navbatini bekor qiladi
     try { if (TTS) TTS.cancel(); } catch (e) {}
     try { if (currentAudio) { currentAudio.pause(); currentAudio = null; } } catch (e) {}
   }
+  // Barge-in uchun ochiq nom (kelgusi bo'lak). Hozir mic bosilganda chaqiriladi.
+  function stop() { stopSpeak(); if (root.getAttribute('data-state') === 'SPEAKING') setState('IDLE'); }
 
   // Server (bulut) TTS'ni sinaydi — tayyor o'zbek audiosini ijro etadi.
   // 204/xato bo'lsa cb(false) → brauzer ovoziga qaytamiz. Bir marta o'chiq deb
@@ -522,6 +877,97 @@
     speakServer(clean, function (ok) { if (!ok) browserSpeak(text); });
   }
 
+  // ── Oqimli TTS (T11) — jumla-jumla, producer/consumer ──
+  // Butun matnni kutmasdan: 1-jumla audiosi kelishi bilan yangraydi, 2-jumla
+  // shu payt tayyorlanadi. Uzun javobda ~1.5s tejaydi.
+  //
+  // O'zbekcha jumla ajratish (llm.py bilan bir xil mantiq): "35 000" (probelli
+  // son), "8.5 km" (o'nlik), "soat 14.30" (vaqt), "va h.k." (qisqartma),
+  // "t.me/samcity" (havola) — bo'linmasin.
+  var ABBREV = ['va h.k', 'h.k', 'v.b', 'sh.k', 'va b'];
+  function splitSentences(text) {
+    text = String(text || '');
+    var out = [], start = 0, re = /([.!?…]+)(\s+|$)/g, m;
+    while ((m = re.exec(text)) !== null) {
+      var seg = text.slice(start, m.index + m[1].length).trim();
+      if (!seg) { start = re.lastIndex; continue; }
+      var low = seg.toLowerCase().replace(/\.+$/, '').trim();
+      var isAbbr = ABBREV.some(function (a) { return low.slice(-a.length) === a; });
+      if (isAbbr) continue;            // qisqartma — bo'linmaydi
+      out.push(seg); start = re.lastIndex;
+    }
+    var tail = text.slice(start).trim();
+    if (tail) out.push(tail);
+    return out;
+  }
+
+  // Bitta jumla audiosini server'dan oladi (Promise<Blob|null>). 204/xato → null.
+  function fetchTTS(sentence) {
+    return fetch(TTS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ text: sentence })
+    }).then(function (r) {
+      if (r.status === 204 || !r.ok) { serverTTS = false; return null; }
+      serverTTS = true; return r.blob();
+    }).catch(function () { serverTTS = false; return null; });
+  }
+
+  // onReveal (ixtiyoriy) — matnni EKRANGA chiqaradigan funksiya. Berilsa, matn
+  // AYNAN birinchi audio yangrash oldidan chiqariladi — shunda ovoz bilan matn
+  // BIR PAYTDA ko'rinadi. Har bir chiqish yo'lida reveal() chaqiriladi — matn
+  // hech qachon ko'rinmasdan qolmaydi (ovoz kelmasa ham).
+  function speakStreaming(text, t0, onReveal) {
+    var revealed = false;
+    function reveal() { if (!revealed) { revealed = true; if (onReveal) onReveal(); } }
+
+    if (!speakOn) { reveal(); setState('IDLE'); return; }
+    var clean = stripEmoji(text);
+    if (!clean) { reveal(); setState('IDLE'); return; }
+    stopSpeak();
+    var mySeq = ++speakSeq;           // eski oqim bekor bo'lsin
+    setState('SPEAKING');
+
+    // Server TTS o'chiq deb aniqlangan bo'lsa — brauzer ovozi (darrov) + matn.
+    if (serverTTS === false) { reveal(); browserSpeak(text); markFirstAudio(t0); return; }
+
+    var sentences = splitSentences(clean);
+    if (!sentences.length) { reveal(); setState('IDLE'); return; }
+
+    // Producer: har jumla audiosini oldindan tayyorlaydi (bittadan oldinga).
+    var jobs = sentences.map(function () { return null; });
+    function ensure(i) { if (i < jobs.length && !jobs[i]) jobs[i] = fetchTTS(sentences[i]); }
+    ensure(0); ensure(1);
+
+    // Consumer: navbat bilan yangratadi; joriysi yangrayotganda keyingisi tayyor.
+    var firstDone = false;
+    (function playFrom(i) {
+      if (mySeq !== speakSeq) { reveal(); return; }   // yangi javob keldi — matnni baribir ko'rsat
+      if (i >= sentences.length) { reveal(); if (mySeq === speakSeq) setState('IDLE'); return; }
+      ensure(i); ensure(i + 1);
+      jobs[i].then(function (blob) {
+        if (mySeq !== speakSeq) { reveal(); return; }
+        if (!blob) {                                // server bu jumlaga audio bermadi
+          if (i === 0 && serverTTS === false) { reveal(); browserSpeak(text); markFirstAudio(t0); return; }
+          if (i === 0) reveal();                    // 1-jumlaga audio yo'q — matnni kutdirmaymiz
+          return playFrom(i + 1);
+        }
+        var url = URL.createObjectURL(blob);
+        currentAudio = new Audio(url);
+        currentAudio.onended = function () { try { URL.revokeObjectURL(url); } catch (e) {} playFrom(i + 1); };
+        currentAudio.onerror = function () { try { URL.revokeObjectURL(url); } catch (e) {} playFrom(i + 1); };
+        reveal();                                   // ← matn AYNAN shu payt (ovoz bilan birga) chiqadi
+        currentAudio.play().catch(function () {});
+        if (!firstDone) { firstDone = true; markFirstAudio(t0); }
+      });
+    })(0);
+  }
+
+  function markFirstAudio(t0) {
+    if (t0 == null) return;
+    console.log('[SamAI] javob→birinchi audio: ' + Math.round(performance.now() - t0) + ' ms');
+  }
+
   function applySpeakBtn() { if (speakBtn) speakBtn.classList.toggle('on', speakOn); }
 
   // Tugma doim ko'rinadi: brauzer ovozi bo'lmasa ham server (bulut) ovozi ishlashi mumkin.
@@ -538,31 +984,53 @@
     if (busy || !text || !text.trim()) return;
     busy = true; sendBtn.disabled = true;
     addMsg(text, 'user'); history.push({ role: 'user', content: text });
-    input.value = ''; showTyping();
+    input.value = ''; setState('THINKING'); showTyping();
+    var t0 = performance.now();   // kechikish o'lchovi: so'rov → javob
 
     fetch(CHAT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-      body: JSON.stringify({ message: text, location: loc, history: history, context: ctx })
+      body: JSON.stringify({ message: text, location: loc, history: history, context: ctx, voice: speakOn })
     })
       .then(function (r) { return r.json(); })
       .then(function (res) {
         hideTyping();
+        var dtReply = Math.round(performance.now() - t0);
+        console.log('[SamAI] so\'rov→javob: ' + dtReply + ' ms');
+
         var reply = (res && res.reply) || 'Kechirasiz, javob berolmadim.';
-        addMsg(reply, 'bot'); history.push({ role: 'assistant', content: reply });
-        speak(reply);
-        addCards(res && res.cards); addActions(res && res.actions);
-        // Suhbat kontekstini yangilaymiz ("yana" va follow-up uchun)
+        history.push({ role: 'assistant', content: reply });
+
+        // Suhbat kontekstini DARROV yangilaymiz ("yana"/follow-up server uchun).
         if (res) {
           if (res.category) { ctx.last_category = res.category; ctx.offset = res.next_offset || 0; }
-          else if (res.intent !== 'llm' && res.intent !== 'followup') { ctx.last_category = null; ctx.offset = 0; }
-          // Follow-up bitta karta qaytaradi — to'liq ro'yxatni saqlab qolamiz
+          else if (res.intent !== 'llm' && res.intent !== 'followup' && res.intent !== 'agent') {
+            ctx.last_category = null; ctx.offset = 0;
+          }
           if (res.cards && res.cards.length && res.intent !== 'followup') { ctx.last_cards = res.cards; }
         }
-        persist();
+
+        // Javobning VIZUAL qismi (matn + kartalar + amallar).
+        function renderVisual() {
+          addMsg(reply, 'bot');
+          renderUI(res && res.ui);                   // agent UI direktivasi
+          addCards(res && res.cards);                // engine joy kartalari
+          addActions(res && res.actions);
+          persist();
+        }
+
+        // ── MATN VA OVOZ BIR PAYTDA ──
+        // Ovoz yoqiq va server (Aisha) ovozi ishlayotganda: matn ovoz tayyor
+        // bo'lguncha KUTADI, keyin ikkovi birga chiqadi (speakStreaming reveal).
+        // Ovoz o'chiq / brauzer ovozi (darrov) bo'lsa: matn darrovbir chiqadi.
+        if (res && res.silent) { renderVisual(); setState('IDLE'); }
+        else if (speakOn && serverTTS !== false) { speakStreaming(reply, t0, renderVisual); }
+        else { renderVisual(); speakStreaming(reply, t0); }
       })
-      .catch(function () { hideTyping(); addMsg("Ulanishda xatolik. Qayta urinib ko'ring.", 'bot'); })
-      .finally(function () { busy = false; sendBtn.disabled = false; input.focus(); });
+      .catch(function () { hideTyping(); setState('IDLE');
+        addMsg("Ulanishda xatolik. Qayta urinib ko'ring.", 'bot'); })
+      .finally(function () { busy = false; sendBtn.disabled = false;
+        if (!listening) input.focus(); });
   }
 
   form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
@@ -579,6 +1047,8 @@
   // Saqlangan suhbatni tiklaymiz (sahifa almashgan bo'lsa — o'sha joyidan davom etadi)
   restore();
   applySpeakBtn();
+  setState('IDLE');
+  if (canMic) probeSTT();   // server STT (Mohir) bor-yo'qligini bir marta aniqlaymiz
 
   // Ruxsat oldindan berilgan bo'lsa — joylashuvni jimgina olamiz
   if (navigator.permissions && navigator.permissions.query) {

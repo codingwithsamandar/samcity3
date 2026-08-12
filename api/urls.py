@@ -2,6 +2,7 @@
 SamCity mobil API marshrutlari.
 Barchasi `/api/` prefiksi ostida (sdev/urls.py da ulanadi).
 """
+from django.conf import settings
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -23,11 +24,6 @@ from .courier_views import (
     CourierDashboardView, CourierRegisterView, CourierProfileView,
     CourierAvailableView, CourierAcceptView, CourierReleaseView,
     CourierOrderStatusView,
-)
-from .taxi_views import (
-    TaxiServiceViewSet, TaxistViewSet, TripViewSet,
-    TaxistMeView, TaxistRegisterView, TaxistOnlineToggleView,
-    TaxistRouteCreateView, TaxistRouteDeleteView,
 )
 from .chat_store_views import (
     StoreChatStartView, StoreChatThreadView, StoreChatListView,
@@ -55,7 +51,10 @@ from .jobs_views import JobListView, ResumeListView
 from .service_views import (
     ProvidersListView, CreateServicePaymentView,
 )
-from .assistant_views import AssistantChatView, AssistantTTSView
+from .assistant_views import (
+    AssistantChatView, AssistantTTSView, AssistantSTTView,
+    AssistantConfirmView, AssistantCancelView,
+)
 
 app_name = 'api'
 
@@ -63,9 +62,25 @@ router = DefaultRouter()
 router.register('ads', AdViewSet, basename='ad')
 router.register('stores', StoreViewSet, basename='store')
 router.register('orders', OrderViewSet, basename='order')
-router.register('taxi/services', TaxiServiceViewSet, basename='taxi-service')
-router.register('taxi/taxists', TaxistViewSet, basename='taxist')
-router.register('taxi/trips', TripViewSet, basename='trip')
+
+# ── Taksi arxivlangan: endpointlar faqat TAXI_ENABLED=True bo'lsa ochiladi ───
+taxi_patterns = []
+if settings.TAXI_ENABLED:
+    from .taxi_views import (
+        TaxiServiceViewSet, TaxistViewSet, TripViewSet,
+        TaxistMeView, TaxistRegisterView, TaxistOnlineToggleView,
+        TaxistRouteCreateView, TaxistRouteDeleteView,
+    )
+    router.register('taxi/services', TaxiServiceViewSet, basename='taxi-service')
+    router.register('taxi/taxists', TaxistViewSet, basename='taxist')
+    router.register('taxi/trips', TripViewSet, basename='trip')
+    taxi_patterns = [
+        path('taxi/me/', TaxistMeView.as_view(), name='taxist-me'),
+        path('taxi/me/register/', TaxistRegisterView.as_view(), name='taxist-register'),
+        path('taxi/me/online/', TaxistOnlineToggleView.as_view(), name='taxist-online'),
+        path('taxi/me/routes/', TaxistRouteCreateView.as_view(), name='taxist-route-create'),
+        path('taxi/me/routes/<uuid:route_id>/', TaxistRouteDeleteView.as_view(), name='taxist-route-delete'),
+    ]
 router.register('booking/venues', VenueViewSet, basename='venue')
 router.register('booking/bookings', VenueBookingViewSet, basename='venue-booking')
 
@@ -116,12 +131,8 @@ urlpatterns = [
     path('courier/orders/<uuid:order_id>/accept/', CourierAcceptView.as_view(), name='courier-accept'),
     path('courier/orders/<uuid:order_id>/release/', CourierReleaseView.as_view(), name='courier-release'),
     path('courier/orders/<uuid:order_id>/status/', CourierOrderStatusView.as_view(), name='courier-order-status'),
-    # ── Taksi haydovchi (taksist) mobil paneli ──
-    path('taxi/me/', TaxistMeView.as_view(), name='taxist-me'),
-    path('taxi/me/register/', TaxistRegisterView.as_view(), name='taxist-register'),
-    path('taxi/me/online/', TaxistOnlineToggleView.as_view(), name='taxist-online'),
-    path('taxi/me/routes/', TaxistRouteCreateView.as_view(), name='taxist-route-create'),
-    path('taxi/me/routes/<uuid:route_id>/', TaxistRouteDeleteView.as_view(), name='taxist-route-delete'),
+    # ── Taksi haydovchi (taksist) mobil paneli — arxivlangan (TAXI_ENABLED) ──
+    *taxi_patterns,
     # ── To'yxona/joy egasi — bron boshqaruvi (mobil) ──
     path('booking/manage/', VenueOwnerBookingsView.as_view(), name='venue-owner-bookings'),
     path('booking/manage/<uuid:booking_id>/<str:action>/', VenueOwnerBookingActionView.as_view(), name='venue-owner-action'),
@@ -166,6 +177,11 @@ urlpatterns = [
     # ── AI yordamchi (mobil Flutter ilova) ──
     path('assistant/chat/', AssistantChatView.as_view(), name='assistant-chat'),
     path('assistant/tts/', AssistantTTSView.as_view(), name='assistant-tts'),
+    path('assistant/stt/', AssistantSTTView.as_view(), name='assistant-stt'),
+    path('assistant/confirm/<uuid:action_id>/', AssistantConfirmView.as_view(),
+         name='assistant-confirm'),
+    path('assistant/cancel/<uuid:action_id>/', AssistantCancelView.as_view(),
+         name='assistant-cancel'),
     path('', include(router.urls)),
     # Hujjat (OpenAPI / Swagger)
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

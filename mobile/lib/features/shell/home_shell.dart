@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/providers.dart';
 import '../ads/ads_list_screen.dart';
 import '../taxi/taxists_screen.dart';
@@ -21,6 +22,15 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
+/// Bitta pastki navigatsiya tabi.
+class _Tab {
+  const _Tab(this.icon, this.selectedIcon, this.label, this.build);
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final Widget Function() build;
+}
+
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
   NotifSocket? _notifSocket;
@@ -28,16 +38,27 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   StreamSubscription<Uri>? _deepLinkSub;
   final _lazyScreens = <int, Widget>{};
 
+  /// Tablar ro'yxati. Taksi arxivlangan (kTaxiEnabled=false) — o'sha tab
+  /// ro'yxatga qo'shilmaydi, qolgan indekslar avtomatik siljiydi.
+  static final List<_Tab> _tabs = [
+    _Tab(Icons.sell_outlined, Icons.sell, "E'lonlar",
+        () => const AdsListScreen()),
+    if (kTaxiEnabled)
+      _Tab(Icons.local_taxi_outlined, Icons.local_taxi, 'Taksi',
+          () => const TaxistsScreen()),
+    _Tab(Icons.delivery_dining_outlined, Icons.delivery_dining, 'Yetkazish',
+        () => const StoresScreen()),
+    _Tab(Icons.holiday_village_outlined, Icons.holiday_village, 'Mahalla',
+        () => const MahallaScreen()),
+    _Tab(Icons.apps_outlined, Icons.apps, "Ko'proq",
+        () => const MoreServicesScreen()),
+    _Tab(Icons.person_outline, Icons.person, 'Profil',
+        () => const ProfileScreen()),
+  ];
+
   Widget _screenAt(int i) {
-    return _lazyScreens.putIfAbsent(i, () => switch (i) {
-          0 => const AdsListScreen(),
-          1 => const TaxistsScreen(),
-          2 => const StoresScreen(),
-          3 => const MahallaScreen(),
-          4 => const MoreServicesScreen(),
-          5 => const ProfileScreen(),
-          _ => const SizedBox.shrink(),
-        });
+    return _lazyScreens.putIfAbsent(
+        i, () => i < _tabs.length ? _tabs[i].build() : const SizedBox.shrink());
   }
 
   @override
@@ -98,36 +119,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: List.generate(6, (i) => _screenAt(i)),
+        children: List.generate(_tabs.length, (i) => _screenAt(i)),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-              icon: Icon(Icons.sell_outlined),
-              selectedIcon: Icon(Icons.sell),
-              label: "E'lonlar"),
-          NavigationDestination(
-              icon: Icon(Icons.local_taxi_outlined),
-              selectedIcon: Icon(Icons.local_taxi),
-              label: 'Taksi'),
-          NavigationDestination(
-              icon: Icon(Icons.delivery_dining_outlined),
-              selectedIcon: Icon(Icons.delivery_dining),
-              label: 'Yetkazish'),
-          NavigationDestination(
-              icon: Icon(Icons.holiday_village_outlined),
-              selectedIcon: Icon(Icons.holiday_village),
-              label: 'Mahalla'),
-          NavigationDestination(
-              icon: Icon(Icons.apps_outlined),
-              selectedIcon: Icon(Icons.apps),
-              label: "Ko'proq"),
-          NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profil'),
+        destinations: [
+          for (final t in _tabs)
+            NavigationDestination(
+                icon: Icon(t.icon),
+                selectedIcon: Icon(t.selectedIcon),
+                label: t.label),
         ],
       ),
     );

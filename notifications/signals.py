@@ -95,10 +95,14 @@ except Exception:
 #  TAXI TRIP — yangi so'rov haydovchiga
 # ─────────────────────────────────────────────────────────────────────────────
 try:
+    from django.conf import settings as _settings
     from taxi.models import Trip
 
     @receiver(post_save, sender=Trip)
     def _trip_post(sender, instance, created, **kwargs):
+        # Taksi arxivlangan — yo'llar ulanmagani uchun reverse() qilinmaydi.
+        if not _settings.TAXI_ENABLED:
+            return
         if created and instance.taxist and instance.taxist.user_id:
             notify(
                 instance.taxist.user,

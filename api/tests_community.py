@@ -2,6 +2,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
+import unittest
 
 from main.models import User, Poll, PollOption, PollVote, HelpRequest, JobAd, ResumeAd
 from payments.models import Provider
@@ -12,6 +13,7 @@ def make_user(phone):
 
 
 # ─────────────────────── So'rovnomalar ───────────────────────
+@unittest.skip("Mahalla is archived")
 class PollApiTests(TestCase):
     def setUp(self):
         self.user = make_user('+998934000001')
@@ -50,6 +52,7 @@ class PollApiTests(TestCase):
 
 
 # ─────────────────────── Yordam markazi ───────────────────────
+@unittest.skip("Mahalla is archived")
 class HelpApiTests(TestCase):
     def setUp(self):
         self.user = make_user('+998934000010')

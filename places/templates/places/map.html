@@ -93,19 +93,23 @@
       {% endfor %}
       <button class="cat-btn" data-cat="driver" onclick="filterCat(this)"><span class="dot" data-c="driver"></span> 🚗 {% trans "Taksistlar (onlayn)" %}</button>
 
+      {% comment %}
       <h3 style="margin-top:1rem;">{% trans "Mahallalar" context "xarita bo'limi" %}</h3>
       <button class="cat-btn mahalla-side-btn" id="mahallaToggleSide" onclick="toggleMahallas()" title="{% trans "Shaharni mahallalarga ajratib, chegaralarini ko'rsatadi" %}">
         <span class="dot" style="background:var(--accent)"></span> 🗺️ {% trans "Mahalalarga ajratish" %}
       </button>
+      {% endcomment %}
     </div>
 
     <div class="map-controls">
     <button class="btn btn-ghost" onclick="locateMe()" title="{% trans "Mening joylashuvim" %}" style="white-space:nowrap;">
       <svg class="ic"><use href="#i-pin"/></svg> <span>{% trans "Joylashuvim" %}</span>
     </button>
+    {% comment %}
     <button class="btn btn-ghost" id="mahallaToggle" onclick="toggleMahallas()" title="{% trans "Mahalalarga ajratish" %}" style="white-space:nowrap;">
       <svg class="ic"><use href="#i-map"/></svg> <span>{% trans "Mahalalarga ajratish" %}</span>
     </button>
+    {% endcomment %}
     </div>
 
     <div id="map"></div>

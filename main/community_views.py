@@ -624,3 +624,32 @@ def citizen_request_status(request, req_id):
                 pass
             messages.success(request, "Murojaat yangilandi.")
     return redirect('mahalla_detail', pk=neighborhood.pk)
+
+
+# ─── ARCHIVE MAHALLA FEATURE ───────────────────────────────────────────────
+# Mahalla bo'limi arxivlanganligi sababli barcha view'larni bosh sahifaga yo'naltiramiz.
+def _archived_view(request, *args, **kwargs):
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    messages.error(request, "Mahalla bo'limi arxivlangan va vaqtincha faol emas.")
+    return redirect('home')
+
+hokim_panel = _archived_view
+district_announce = _archived_view
+poll_list = _archived_view
+poll_create = _archived_view
+poll_detail = _archived_view
+poll_vote = _archived_view
+poll_comment = _archived_view
+help_list = _archived_view
+help_create = _archived_view
+help_detail = _archived_view
+help_volunteer = _archived_view
+help_status = _archived_view
+mahalla_home = _archived_view
+mahalla_select = _archived_view
+mahalla_detail = _archived_view
+announcement_create = _archived_view
+citizen_request_create = _archived_view
+citizen_request_status = _archived_view
+

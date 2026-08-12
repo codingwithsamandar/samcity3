@@ -222,7 +222,6 @@ class _QuickServices extends StatelessWidget {
       (Icons.work_outline, 'Ish', '/jobs'),
       (Icons.location_city_outlined, 'Joylar', '/venues'),
       (Icons.receipt_long_outlined, 'To\'lovlar', '/service-payments'),
-      (Icons.groups_outlined, 'Mahalla', '/community'),
     ];
     return SizedBox(
       height: 44,

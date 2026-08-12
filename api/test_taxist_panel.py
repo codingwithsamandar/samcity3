@@ -4,6 +4,10 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from main.models import User
+from unittest import skipUnless
+
+from django.conf import settings
+
 from taxi.models import TaxiService, Taxist, Route, Trip
 
 
@@ -11,6 +15,8 @@ def make_user(phone):
     return User.objects.create_user(phone=phone, password='Test12345!', is_active=True)
 
 
+# Taksi arxivlangan — taksist paneli API'si yopiq, testlar o'tkazib yuboriladi.
+@skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
 class TaxistPanelTests(TestCase):
     def setUp(self):
         self.svc = TaxiService.objects.create(

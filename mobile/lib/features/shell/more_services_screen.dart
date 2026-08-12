@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/feature_flags.dart';
+
 /// Qo'shimcha xizmatlar — bottom nav "Ko'proq" tabi.
 class MoreServicesScreen extends StatelessWidget {
   const MoreServicesScreen({super.key});
@@ -9,11 +11,12 @@ class MoreServicesScreen extends StatelessWidget {
     _ServiceItem(Icons.smart_toy_outlined, 'AI yordamchi', "Eng yaqin joyni toping", '/assistant', Color(0xFF34D399)),
     _ServiceItem(Icons.location_city, 'Joylar', "To'yxona, restoran, salon", '/venues', Color(0xFF34D399)),
     _ServiceItem(Icons.work_outline, 'Ish e\'lonlari', 'Vakansiya va rezyume', '/jobs', Color(0xFFCAA23A)),
-    _ServiceItem(Icons.groups_outlined, 'Mahalla', "So'rovnoma va yordam", '/community', Color(0xFF22D3EE)),
     _ServiceItem(Icons.receipt_long_outlined, 'To\'lovlar', 'Kommunal, kurs, bog\'cha', '/service-payments', Color(0xFF34D399)),
     _ServiceItem(Icons.map_outlined, 'Xarita', 'Do\'kon va muassasalar', '/map', Color(0xFF22D3EE)),
     _ServiceItem(Icons.event_note_outlined, 'Bronlarim', 'Joy bronlari', '/my-bookings', Color(0xFFCAA23A)),
-    _ServiceItem(Icons.local_taxi_outlined, 'Sayohatlarim', 'Taksi tarixi', '/trips', Color(0xFF69748A)),
+    // Taksi arxivlangan — kTaxiEnabled=true bo'lsa qaytadi.
+    if (kTaxiEnabled)
+      _ServiceItem(Icons.local_taxi_outlined, 'Sayohatlarim', 'Taksi tarixi', '/trips', Color(0xFF69748A)),
     _ServiceItem(Icons.shopping_bag_outlined, 'Buyurtmalarim', 'Yetkazish buyurtmalari', '/orders', Color(0xFF34D399)),
     _ServiceItem(Icons.storefront_outlined, 'Do\'konlarim', 'Biznes paneli', '/my-stores', Color(0xFF22D3EE)),
   ];

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load taxi_extras %}
+{% load taxi_extras delivery_extras %}
 {% block title %}Haydovchi paneli — SamCity{% endblock %}
 
 {% block extra_css %}
@@ -17,7 +17,11 @@
   .call-link{display:inline-flex;align-items:center;gap:.35rem;min-height:44px;padding:0 .7rem;
     border-radius:100px;background:var(--accent-l);color:var(--accent);font-weight:700;text-decoration:none;}
   .call-link:hover{background:var(--accent);color:#fff;}
+  /* Yetkazish manzili xaritada — kuryer matnni o'qib emas, nuqtani ko'rib boradi. */
+  .dest-map{height:210px;border-radius:12px;border:1px solid var(--border);margin-top:.7rem;z-index:1;}
+  .no-point{margin-top:.7rem;font-size:.82rem;color:var(--text3);}
 </style>
+{% include '_map_assets.html' %}
 {% endblock %}
 
 {% block content %}
@@ -74,7 +78,21 @@
       </div>
       <span class="badge badge-gold">{{ o.get_status_display }}</span>
     </div>
+
+    {# ── Yetkazish manzili: xarita + navigator ────────────────────────────
+       Koordinata bo'lsa (mijoz checkout'da xaritadan nuqta tanlagan) — shu
+       yerda chiziladi. Bo'lmasa faqat matnli manzil bo'yicha navigator
+       havolasi beriladi: eski buyurtmalarda lat/lng bo'sh. #}
+    {% if o|has_point %}
+    <div class="dest-map" id="destMap{{ forloop.counter }}"
+         data-lat="{{ o.latitude|stringformat:'s' }}" data-lng="{{ o.longitude|stringformat:'s' }}"
+         data-address="{{ o.address|default:'Yetkazish manzili' }}"></div>
+    {% elif o.address %}
+    <div class="no-point">📍 Aniq nuqta belgilanmagan — manzil matni bo'yicha yo'l ko'rsatiladi.</div>
+    {% endif %}
     <div class="o-actions">
+      {% nav_url o as nav %}
+      {% if nav %}<a href="{{ nav }}" target="_blank" rel="noopener" class="btn btn-outline"><svg class="ic"><use href="#i-map"/></svg> Yo'l ko'rsatish</a>{% endif %}
       {% if o.status == 'assigned' %}
       <form method="post" action="{% url 'delivery:driver_order_status' o.id %}" class="js-once">{% csrf_token %}<input type="hidden" name="status" value="on_the_way"><button class="btn btn-accent"><svg class="ic"><use href="#i-bike"/></svg> Yo'lga chiqdim</button></form>
       <form method="post" action="{% url 'delivery:order_release' o.id %}" class="js-once" data-confirm="Buyurtmadan voz kechasizmi? U boshqa kuryerlarga ochiladi.">{% csrf_token %}<button class="btn btn-outline">Voz kechish</button></form>
@@ -154,6 +172,32 @@ function bindOnce(root) {
   });
 }
 bindOnce();
+</script>
+
+<script>
+/* Faol buyurtmalarning yetkazish manzilini xaritada ko'rsatadi.
+   Kuryerning o'z joylashuvi olinsa — u ham qo'shiladi va xarita ikkalasini
+   qamrab oladi, ya'ni "qayerdan qayerga" bir qarashda ko'rinadi. */
+(function () {
+  if (typeof SamMap === 'undefined' || typeof L === 'undefined') return;
+  document.querySelectorAll('.dest-map').forEach(function (el) {
+    var lat = parseFloat(el.dataset.lat), lng = parseFloat(el.dataset.lng);
+    if (isNaN(lat) || isNaN(lng)) { el.style.display = 'none'; return; }
+    var map = SamMap.init(el.id, { center: [lat, lng], zoomLevel: 15, fullscreen: false });
+    var dest = L.marker([lat, lng]).addTo(map);
+    dest.bindPopup('📍 ' + (el.dataset.address || 'Yetkazish manzili')).openPopup();
+    // Kuryerning joylashuvi — ixtiyoriy, ruxsat bermasa xarita baribir ishlaydi.
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var me = [pos.coords.latitude, pos.coords.longitude];
+        L.circleMarker(me, { radius: 8, color: '#fff', weight: 2.5,
+                             fillColor: '#2f7cf6', fillOpacity: 1 })
+          .addTo(map).bindPopup('Siz');
+        map.fitBounds(L.latLngBounds([me, [lat, lng]]).pad(0.25));
+      }, function () {}, { enableHighAccuracy: true, timeout: 8000 });
+    }
+  });
+})();
 </script>
 
 {% if not blocked %}

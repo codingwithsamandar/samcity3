@@ -38,7 +38,7 @@
     <div class="onboard-steps">
       <a href="{% url 'all_ads' %}" class="onboard-step"><strong>🛒 E'lonlar</strong><span>Mahsulot soting yoki xarid qiling</span></a>
       <a href="{% url 'job_list' %}" class="onboard-step"><strong>💼 Ish</strong><span>Vakansiya yoki rezyume joylang</span></a>
-      <a href="{% url 'taxi:home' %}" class="onboard-step"><strong>🚕 Taksi</strong><span>Marshrut bo'yicha taksi chaqiring</span></a>
+      {% if TAXI_ENABLED %}<a href="{% url 'taxi:home' %}" class="onboard-step"><strong>🚕 Taksi</strong><span>Marshrut bo'yicha taksi chaqiring</span></a>{% endif %}
       <a href="{% url 'delivery:store_list' %}" class="onboard-step"><strong>🛵 Yetkazish</strong><span>Do'kondan mahsulot buyurtma qiling</span></a>
       <a href="{% url 'venue_list' %}" class="onboard-step"><strong>🏛 Joylar</strong><span>To'y zali yoki sport maydonini bron qiling</span></a>
       <a href="{% url 'ad_create' %}" class="onboard-step"><strong>📢 E'lon berish</strong><span>Birinchi e'loningizni joylashtiring</span></a>
@@ -57,6 +57,8 @@
       {% empty %}<div class="dash-empty">Hali buyurtma yo'q. <a href="{% url 'delivery:store_list' %}" style="color:var(--accent);">Buyurtma bering →</a></div>{% endfor %}
     </div>
 
+    {# Taksi arxivlangan — kartochka TAXI_ENABLED=True bo'lsa qaytadi #}
+    {% if TAXI_ENABLED %}
     <div class="dash-card">
       <h2><span class="ht"><span class="hic g-gold"><svg class="ic"><use href="#i-car"/></svg></span> Taksi sayohatlar</span> <a href="{% url 'taxi:my_trips' %}">Barchasi →</a></h2>
       {% for t in trips %}
@@ -66,6 +68,7 @@
       </a>
       {% empty %}<div class="dash-empty">Hali sayohat yo'q. <a href="{% url 'taxi:home' %}" style="color:var(--accent);">Taksi chaqirish →</a></div>{% endfor %}
     </div>
+    {% endif %}
 
     <div class="dash-card">
       <h2><span class="ht"><span class="hic g-violet"><svg class="ic"><use href="#i-building"/></svg></span> Joy bronlari</span> <a href="{% url 'my_venue_bookings' %}">Barchasi →</a></h2>

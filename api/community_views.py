@@ -230,3 +230,21 @@ class HelpListView(APIView):
         )
         return Response(HelpSerializer(req, context={'request': request}).data,
                         status=status.HTTP_201_CREATED)
+
+
+# ─── ARCHIVE COMMUNITY API FEATURE ─────────────────────────────────────────
+# Mahalla bo'limi (polls va help requests) arxivlanganligi sababli barcha API view'larni to'samiz.
+from django.http import JsonResponse
+
+class _ArchivedAPIView(APIView):
+    def dispatch(self, request, *args, **kwargs):
+        return JsonResponse({'detail': "Mahalla bo'limi arxivlangan va vaqtincha faol emas."}, status=403)
+
+def _archived_api_func(request, *args, **kwargs):
+    return JsonResponse({'detail': "Mahalla bo'limi arxivlangan va vaqtincha faol emas."}, status=403)
+
+PollListView = _ArchivedAPIView
+HelpListView = _ArchivedAPIView
+poll_comments = _archived_api_func
+poll_vote = _archived_api_func
+

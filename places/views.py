@@ -77,20 +77,14 @@ def _point_in_polygon(lat, lng, ring):
 
 def neighborhood_detail(request, pk):
     """Bitta mahalla — chegarasi "bitta xarita" sifatida, ichidagi joylar bilan."""
-    from main.models import Neighborhood
-    neighborhood = get_object_or_404(Neighborhood, pk=pk)
-    return render(request, 'places/neighborhood_detail.html', {
-        'neighborhood': neighborhood,
-        'categories': CATEGORY_CHOICES,
-        'boundary_json': safe_json(neighborhood.boundary or []),
-        'centroid_json': safe_json(neighborhood.centroid()),
-    })
+    from django.http import Http404
+    raise Http404("Mahalla bo'limi arxivlangan.")
 
 
 def neighborhood_places_geojson(request, pk):
     """Berilgan mahalla chegarasi ichidagi faol joylar (server tomonida hisoblanadi)."""
-    from main.models import Neighborhood
-    neighborhood = get_object_or_404(Neighborhood, pk=pk)
+    from django.http import Http404
+    raise Http404("Mahalla bo'limi arxivlangan.")
     ring = neighborhood.boundary or []
 
     items = []
@@ -220,7 +214,14 @@ def _delivery_points():
 
 
 def _taxi_points():
-    """Onlayn (joylashuvi bor) taksistlarni xarita nuqtalariga aylantiradi."""
+    """Onlayn (joylashuvi bor) taksistlarni xarita nuqtalariga aylantiradi.
+
+    Taksi moduli arxivlangan — TAXI_ENABLED=False bo'lsa xaritada taksist
+    nuqtalari chizilmaydi (havolalar ham reverse qilinmaydi).
+    """
+    from django.conf import settings as _settings
+    if not _settings.TAXI_ENABLED:
+        return []
     try:
         from taxi.models import Taxist
     except Exception:

@@ -5,6 +5,7 @@ from django.contrib.auth import login, authenticate
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.conf import settings as _django_settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
 import random
@@ -1235,7 +1236,9 @@ def dashboard(request):
     u = request.user
     return render(request, 'dashboard.html', {
         'orders': u.delivery_orders.prefetch_related('items')[:10],
-        'trips': u.taxi_trips.select_related('taxist')[:10],
+        # Taksi arxivlangan — TAXI_ENABLED=False bo'lsa sayohatlar so'ralmaydi.
+        'trips': (u.taxi_trips.select_related('taxist')[:10]
+                  if _django_settings.TAXI_ENABLED else []),
         'venue_bookings': u.venue_bookings.select_related('venue')[:10],
         'stores': u.stores.select_related('category').all(),
         'venues': u.venues.all(),

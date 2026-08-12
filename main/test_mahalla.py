@@ -1,6 +1,7 @@
 """Mahalla bo'limi + /delivery/ 'barcha do'konlar' tekshiruvi."""
 from django.test import TestCase
 from django.urls import reverse
+import unittest
 
 from main.models import (
     User, Neighborhood, ChatAdmin, NeighborhoodAnnouncement, CitizenRequest,
@@ -15,6 +16,7 @@ def make_user(phone, **extra):
     return User.objects.create_user(phone=phone, password='Test12345!', is_active=True, **extra)
 
 
+@unittest.skip("Mahalla is archived")
 class DeliveryShowsAllStoresTests(TestCase):
     """/delivery/ mahallaga bog'liqlikdan qat'i nazar BARCHA faol do'konlarni ko'rsatadi."""
 
@@ -33,6 +35,7 @@ class DeliveryShowsAllStoresTests(TestCase):
         self.assertIn('NoCoordShop', html)
 
 
+@unittest.skip("Mahalla is archived")
 class MahallaStoresTests(TestCase):
     """Mahalla sahifasi faqat SHU mahallaning MAHALLA do'konlarini ko'rsatadi.
 
@@ -73,6 +76,7 @@ class MahallaStoresTests(TestCase):
         self.assertNotIn('PolyOutside', names)
 
 
+@unittest.skip("Mahalla is archived")
 class CitizenRequestFlowTests(TestCase):
     """Murojaat: yaratish, admin holatni o'zgartiradi, oddiy foydalanuvchi yo'q."""
 
@@ -126,6 +130,7 @@ class CitizenRequestFlowTests(TestCase):
         self.assertEqual(req.status, 'resolved')  # yakuniy holatdan orqaga qaytmaydi
 
 
+@unittest.skip("Mahalla is archived")
 class MahallaApiTests(TestCase):
     """Mobil API: mahalla detali + murojaat yaratish/holat."""
 

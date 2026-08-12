@@ -296,14 +296,25 @@ KB = [
 ]
 
 
+# Taksi moduli arxivlangan bo'lsa (settings.TAXI_ENABLED=False) shu KB
+# yozuvlari javob sifatida berilmaydi — engine.py shu ro'yxatga qaraydi.
+TAXI_KB_IDS = ('order_taxi', 'become_taxist')
+
+
 def answer(qn):
     """Normallashtirilgan matn bo'yicha eng mos KB yozuvini qaytaradi (yoki None).
 
     Ball = mos kelgan kalit iboralar uzunliklari yig'indisi. Eng uzun/aniq
     moslik yutadi. Ball past bo'lsa (tasodifiy qisqa moslik) — None.
     """
+    from django.conf import settings
+    taxi_off = not settings.TAXI_ENABLED
     best, best_score = None, 0
     for entry in KB:
+        # Taksi arxivlangan — bu yozuvlar javob sifatida qaytarilmaydi
+        # (havolalari reverse qilinmaydi, xizmat ham yopiq).
+        if taxi_off and entry['id'] in TAXI_KB_IDS:
+            continue
         score = 0
         for k in entry['keywords']:
             kn = _norm(k)
@@ -317,12 +328,18 @@ def answer(qn):
 
 
 def overview_actions():
-    """«Nimalar qila olasan?» uchun asosiy bo'limlarga tez havolalar."""
-    return [
+    """«Nimalar qila olasan?» uchun asosiy bo'limlarga tez havolalar.
+
+    Taksi arxivlangan bo'lsa — taksi yorlig'i ko'rsatilmaydi.
+    """
+    from django.conf import settings
+    items = [
         {'label': "📢 E'lon joylash", 'q': "e'lon qanday joylayman"},
-        {'label': '🚕 Taksi', 'q': 'taksi qanday chaqiraman'},
         {'label': "🛒 Do'kon ochish", 'q': "do'kon qanday ochaman"},
         {'label': '💳 To\'lovlar', 'q': 'kommunal to\'lovni qanday to\'layman'},
         {'label': '🏘️ Mahalla', 'q': 'mahalla bo\'limi nima'},
         {'label': '📅 Joy bron', 'q': "to'yxona qanday bron qilaman"},
     ]
+    if settings.TAXI_ENABLED:
+        items.insert(1, {'label': '🚕 Taksi', 'q': 'taksi qanday chaqiraman'})
+    return items
