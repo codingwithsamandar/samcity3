@@ -26,8 +26,7 @@ class DriverEarningsTests(TestCase):
         self.customer = make_user('+998936000001')
         self.driver_user = make_user('+998936000002')
         self.driver = DeliveryDriver.objects.create(
-            user=self.driver_user, full_name='Kuryer', phone='+998936000002',
-        )
+            user=self.driver_user, full_name='Kuryer', phone='+998936000002', status='approved')
         self.client.force_login(self.driver_user)
 
     def test_delivered_at_set_on_driver_delivered(self):

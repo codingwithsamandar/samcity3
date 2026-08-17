@@ -147,7 +147,6 @@ class Ad(models.Model):
     contact_phone = models.CharField(max_length=20, blank=True)
     contact_telegram = models.CharField(max_length=100, blank=True)
     contact_instagram = models.CharField(max_length=100, blank=True)
-    contact_facebook = models.CharField(max_length=100, blank=True)
     sold_at = models.DateTimeField(blank=True, null=True)
     contact_count = models.PositiveIntegerField(default=0, verbose_name='Kontakt ko\'rishlar')
     # Task 23 FIX: venue_booking_enabled field (migration 0007 da bor, models.py dan tushib qolgan)
@@ -854,6 +853,9 @@ class AdInquiry(models.Model):
     ad = models.ForeignKey(Ad, on_delete=models.CASCADE, related_name='inquiries')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ad_inquiries')
     message = models.TextField()
+    # Egasi (sotuvchi) markaziy "Kelgan savollar" bo'limida ko'rgan/ko'rmagani.
+    # O'qilmaganlar soni badge sifatida ko'rsatiladi.
+    is_read = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

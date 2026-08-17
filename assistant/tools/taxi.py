@@ -26,8 +26,7 @@ def _som(v):
 
 @tool(
     section='taxi', action='find_taxists',
-    description="Faol taksistlarни ko'rsatadi (ism, mashina, telefon). Foydalanuvchi "
-                "to'g'ridan-to'g'ri qo'ng'iroq qilib chaqirishi mumkin.",
+    description="Faol taksistlar (ism, mashina, telefon) — o'zi qo'ng'iroq qiladi.",
     params={},
 )
 def find_taxists(ctx, **_):
@@ -54,11 +53,8 @@ def find_taxists(ctx, **_):
 
 @tool(
     section='taxi', action='list_routes',
-    description="AB marshrutlarни (qayerdan qayerga, narxi bilan) ko'rsatadi. "
-                "Manzil berilsa (masalan «Buxoro») shu bo'yicha filtrlaydi.",
-    params={
-        'destination': ('str', False, "qayerga (masalan «Buxoro», «bozor») — ixtiyoriy"),
-    },
+    description="AB marshrutlar (qayerdan qayerga, narxi).",
+    params={'destination': ('str', False, "qayerga, masalan «Buxoro»")},
 )
 def list_routes(ctx, destination=''):
     from taxi.models import Route
@@ -89,9 +85,8 @@ def list_routes(ctx, destination=''):
 
 @tool(
     section='taxi', action='propose_trip',
-    description="Tanlangан marshrut bo'yicha taksi buyurtmasини tasdiqqa tayyorlaydi. "
-                "list_routes'даги route ID'sини ber.",
-    params={'route_id': ('str', True, "marshrut ID (list_routes natijasidan)")},
+    description="Marshrut bo'yicha taksi buyurtmasini tasdiqqa tayyorlaydi.",
+    params={'route_id': ('str', True, "list_routes natijasidagi ID")},
     mutating=True,
     auth_required=True,
 )

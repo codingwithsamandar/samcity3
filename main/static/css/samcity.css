@@ -144,9 +144,11 @@
 .kpi .kpi-trend.down { background: var(--red-l); color: var(--red); }
 
 /* ── LISTING / OBJECT CARD (ads, venues, places, products) ──── */
-.lcard { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-  box-shadow: var(--shadow-xs); transition: transform .2s cubic-bezier(.2,.8,.3,1), box-shadow .2s, border-color .2s; display: flex; flex-direction: column; }
-.lcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: #cfd8ee; }
+/* Ro'yxat kartasi: og'ir ramka+soya o'rniga rasm yaqinligi va bo'sh joy tuzilma beradi.
+   Bitta nozik chegara qoladi; ko'tarilish o'rniga rasm zoom + chegara rangi javob beradi. */
+.lcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  box-shadow: none; transition: border-color .2s, box-shadow .2s; display: flex; flex-direction: column; }
+.lcard:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); }
 .lcard .lc-media { position: relative; aspect-ratio: 16/10; background: var(--surface2); overflow: hidden; }
 .lcard .lc-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
 .lcard:hover .lc-media img { transform: scale(1.05); }
@@ -154,9 +156,9 @@
 .lcard .lc-media .lc-fav { position: absolute; top: .6rem; right: .6rem; width: 34px; height: 34px; border-radius: 50%;
   background: rgba(255,255,255,.92); display: grid; place-items: center; color: var(--text2); box-shadow: var(--shadow-sm); }
 .lcard .lc-body { padding: 1rem 1.1rem 1.15rem; flex: 1; display: flex; flex-direction: column; gap: .35rem; }
-.lcard .lc-title { font-weight: 700; font-size: 1rem; color: var(--text); line-height: 1.3; }
+.lcard .lc-title { font-weight: 600; font-size: 1rem; color: var(--text); line-height: 1.35; }
 .lcard .lc-sub { color: var(--text2); font-size: .85rem; display: flex; align-items: center; gap: .3rem; }
-.lcard .lc-price { font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 1.15rem; color: var(--text); margin-top: auto; }
+.lcard .lc-price { font-family: 'Plus Jakarta Sans'; font-weight: 750; font-size: 1.15rem; color: var(--text); margin-top: auto; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .lcard .lc-price small { font-weight: 500; color: var(--text3); font-size: .78rem; }
 
 /* media placeholder when no image */
@@ -1336,3 +1338,714 @@ form textarea, form select:not(.seg) {
   z-index: 1;
 }
 
+
+/* ============================================================
+   DESIGN v2 — gradientlarni tekislash (emerald brend)
+   Oxirgi stylesheet bo'lgani uchun bu blok yuqoridagi va base.html
+   dagi qoidalarni bosadi. Gradient endi bezak emas: qattiq rang
+   default, gradient faqat chuqurlik kerak bo'lgan katta yuzalarda
+   va bitta rang oilasi ichida ishlatiladi.
+   ============================================================ */
+
+/* Brend belgilari va avatarlar — qattiq emerald */
+.hero-trust .avatars span,
+.tcard .who .av,
+.avatar,
+.logo-mark,
+.foot-in .brand .logo-mark { background: var(--accent); }
+
+/* Hero sarlavhasidagi urg'u — gradient o'rniga qattiq emerald.
+   Kontrast (qora ↔ emerald) ierarxiyani gradientdan kuchliroq beradi. */
+.hero h1 .grad { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--accent); }
+
+/* Katta dekorativ yuzalar — bitta rang oilasi ichida (kamalak emas) */
+.hero-stage { background: linear-gradient(155deg, var(--accent), var(--accent-d)); }
+.auth-aside { background: linear-gradient(155deg, var(--accent), var(--accent-d)); }
+
+/* Yakuniy CTA — qattiq chuqur emerald. Sahifadagi eng to'yingan rang,
+   shuning uchun ko'z avtomatik shu yerga tushadi. */
+.cta-band { background: var(--accent-d); box-shadow: none; }
+
+/* Dekorativ orblar — indigo/oltin emas, brend oilasi */
+.orb-indigo { background: radial-gradient(circle, rgba(14,159,110,.38), transparent 70%); }
+.orb-gold   { background: radial-gradient(circle, rgba(20,184,166,.30), transparent 70%); }
+
+/* Ikonka plitalari — indigo soya qoldig'i o'rniga neytral */
+.svc-card .svc-ic { box-shadow: var(--shadow-sm); }
+.svc-card .svc-ic::after { display: none; }
+.g-indigo { background: var(--violet); box-shadow: var(--shadow-sm); }
+
+/* Bo'lim sarlavhalari — 800 emas 700 (base.html tipografik shkalasiga mos) */
+.section-head h2 { font-weight: 700; }
+
+/* Emerald matn rollari — AA kontrast uchun --accent-d (5.08:1),
+   --accent (3.41:1) faqat ikonka/chegara kabi UI elementlarida qoladi. */
+.svc-card .svc-go, .see-all, .info-row a, .tl-step.active .lbl { color: var(--accent-d); }
+
+/* Ikonka plitalari — tekis, qattiq rang. Rang endi toifani bildiradi
+   (semantik), gradient esa hech qanday ma'no bermay bezak bo'lib qolgandi. */
+.g-gold   { background: var(--gold);   box-shadow: none; }
+.g-green  { background: var(--green);  box-shadow: none; }
+.g-violet { background: var(--violet); box-shadow: none; }
+.g-rose   { background: var(--red);    box-shadow: none; }
+.g-cyan   { background: var(--teal);   box-shadow: none; }
+.g-amber  { background: var(--amber);  box-shadow: none; }
+.g-slate  { background: var(--surface2); color: var(--text); box-shadow: none; }
+
+/* ============================================================
+   DESIGN v3 — INTIZOM: 90% neytral, 10% emerald
+   Yo'nalish: "premium mahalliy raqamli shahar", AI-startap emas.
+   Dekorativ rang yo'q. Rang faqat ma'no tashiganda ishlatiladi.
+   ============================================================ */
+
+
+/* ── IKONKA PLITALARI: bitta izchil ishlov ───────────────── */
+/* Avval 8 xil dekorativ rang bor edi — ular hech qanday ma'no bermasdi.
+   Endi hammasi bir xil: neytral yuza + emerald shakl. */
+.g-gold, .g-green, .g-violet, .g-indigo, .g-rose, .g-cyan, .g-amber, .g-slate, .g-blue {
+  background: var(--surface2); color: var(--accent-d); box-shadow: none; }
+
+/* Xarita pinlari — bitta oila, chuqurlik shaffoflik bilan beriladi */
+.mp-pin { background: var(--accent-d) !important; color: #fff; box-shadow: none; }
+.mp-pin:nth-of-type(3) { opacity: .72; }
+.mp-pin:nth-of-type(4) { opacity: .52; }
+
+/* Bo'lim fonlari — sokin */
+.section-soft { background: var(--bg); }
+
+
+
+/* Avval sahifada 16 ta pill shakl bor edi (chiplar, eyebrow, badge).
+   Pill "tugma" degan signal beradi — filtr va yorliqlar tugma emas. */
+
+/* Hero havolalari — fon yo'q (spetsifiklik: dark bloklardan yuqori) */
+
+
+
+/* ============================================================
+   v4 — YAGONA PILL TIZIMI va HERO SILLIQLASH
+   Oldin loyihada uch xil "hab" bor edi: .chip (hero/filtr),
+   .filter-pill va .status-tab (modul sahifalarida) — uchtasi
+   uch xil ko'rinardi. Endi bittasi. Bu blok fayl oxirida
+   turgani uchun avvalgi barcha ta'riflarni bekor qiladi.
+   ============================================================ */
+
+.chip, .filter-pill, .status-tab {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem .95rem; border-radius: 100px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); font-size: .85rem; font-weight: 600;
+  white-space: nowrap; cursor: pointer; transition: all .15s;
+  box-shadow: none; text-decoration: none;
+}
+.chip:hover, .filter-pill:hover, .status-tab:hover {
+  border-color: var(--accent); color: var(--accent);
+}
+/* Faol holat — to'liq yashil fon + to'q matn (ikkala temada ham o'qiladi) */
+.chip.active, .filter-pill.active, .status-tab.active {
+  background: var(--accent); border-color: var(--accent); color: #04130d;
+}
+.chip .ic, .filter-pill .ic, .status-tab .ic { width: 1.05em; height: 1.05em; }
+
+/* Qorong'i temada ham bir xil — eski dark override'larni bekor qiladi */
+[data-theme="dark"] .chip,
+[data-theme="dark"] .filter-pill,
+[data-theme="dark"] .status-tab {
+  background: var(--surface2); border-color: var(--border); color: var(--text2);
+}
+[data-theme="dark"] .chip.active,
+[data-theme="dark"] .filter-pill.active,
+[data-theme="dark"] .status-tab.active {
+  background: var(--accent); border-color: var(--accent); color: #04130d;
+}
+/* 24-satrdagi eski `color: #fff !important` shimini bekor qilamiz —
+   yashil fonda oq matn kontrasti past edi. */
+.filter-pill.active, .status-tab.active { color: #04130d !important; }
+
+/* Chip qatori — mobilda gorizontal skroll, o'ralib ketmaydi */
+.chip-row {
+  display: flex; gap: .55rem; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none; flex-wrap: nowrap;
+}
+.chip-row::-webkit-scrollbar { display: none; }
+
+/* ── Hero: bitta ustun, markazlashgan ─────────────────────── */
+/* O'ng paneldagi bo'sh to'r qutisi olib tashlandi (home.html). */
+.hero-visual, .hero-stage, .hero-pin, .float-card { display: none !important; }
+.hero .hero-copy { display: flex; flex-direction: column; align-items: center; }
+.hero .hero-search { margin-inline: auto; width: 100%; }
+.hero .chip-row { justify-content: flex-start; max-width: 100%; }
+.hero .hero-trust { justify-content: center; }
+.hero p.lead { margin-inline: auto; }
+/* Markazda turganda chiplar sig'sa — markazga, sig'masa skroll boshidan */
+@media (min-width: 561px) { .hero .chip-row { justify-content: center; } }
+
+/* Hero bilan keyingi bo'lim orasida nafas */
+.hero { padding-bottom: 0; }
+.hero + .section, .hero + .section-sm { padding-top: 3.5rem; }
+
+/* Faol pill matni — base.html va eski shimlarda `#fff` bor edi:
+   yashil fonda oq matn ~1.9:1 (o'qilmaydi). To'q matn ~11:1 beradi.
+   Raqobatchi ta'riflar bir nechta faylda bo'lgani uchun !important. */
+.chip.active, .filter-pill.active, .status-tab.active,
+[data-theme="dark"] .chip.active,
+[data-theme="dark"] .filter-pill.active,
+[data-theme="dark"] .status-tab.active { color: #04130d !important; }
+
+/* Qorong'ida --surface2 va --border bir xil qiymatda edi — chip cheti
+   ko'rinmasdi. Bir pog'ona ochroq chegara shakl beradi. */
+[data-theme="dark"] .chip,
+[data-theme="dark"] .filter-pill,
+[data-theme="dark"] .status-tab { border-color: var(--border2); }
+
+/* ============================================================
+   v5 — QORONG'I PALITRANI BIRLASHTIRISH
+   Muammo: hero yashil-qora (#0B0F0D), qolgan bo'limlar Tailwind
+   slate (#0f172a) — KO'K rangli. Natijada sayt ikki xil dizayndan
+   yamalgandek ko'rinardi. Endi hammasi bitta neytral oila.
+   ============================================================ */
+[data-theme="dark"] {
+  --bg: #0B0F0D; --bg-soft: #0F1513;
+  --surface: #141A17; --surface2: #1C2320; --surface3: #262E2A;
+  --border: #232B27; --border2: #333D38;
+  --text: #F4F6F4; --text2: #AEB8B2; --text3: #828D87;
+}
+
+/* Bo'limlar orasidagi qo'pol oq chiziqlar (2px var(--text)) chok kabi
+   ko'rinardi. Yirik saytlar nozik hairline ishlatadi — ierarxiya
+   tipografiya bilan beriladi, qalin chiziq bilan emas. */
+.sc-path, .sc-mid, .sc-row:first-child, .sc-item:first-child,
+.sc-paths .sc-path:first-child { border-top-width: 1px; border-top-color: var(--border); }
+
+/* Navbar avatari — binafsha gradient qolib ketgandi */
+.avatar, .nav-avatar, .acc-avatar { background: var(--accent) !important; color: #04130d !important; }
+
+/* Reyting/ko'rish nishonlari — to'q sariq o'rniga neytral.
+   Oltin faqat yulduz reytingida ma'noli. */
+.place-card .badge-gold, .tour-card .badge-gold,
+.pl-badge, .views-badge { background: var(--surface2) !important; color: var(--text2) !important; }
+
+
+/* Avval `.hero-search` global qorong'i edi — do'konlar sahifasida
+   oq fonda qora qidiruv paneli chiqib qolgandi. */
+.hero-search {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; box-shadow: none;
+  padding: .4rem .4rem .4rem .95rem; max-width: 520px; gap: .6rem;
+}
+.hero-search .ic { color: var(--text3); }
+.hero-search input { color: var(--text); font-size: 1rem; }
+.hero-search input::placeholder { color: var(--text3); }
+
+
+/* ================================================================
+   SamCity — WARM TRUST (foydalanuvchi tasdiqlagan dizayn, v3–v7)
+   Manba: samcity_home_improved.html
+   Yo'nalish: chuqur teal-cyan aksent + iliq krem neytrallar,
+   YORUG' hero, to'liq yumaloq pill'lar, chegarasiz soyali kartalar.
+   Bloklar asl tartibda — keyingisi oldingisini bekor qiladi.
+   ================================================================ */
+
+
+/* ───────── redesign-v3 ───────── */
+/* ══════════════════════════════════════════════════════════════════
+   REDESIGN v3 — o'ziga xos, iliq, yumaloq, creative
+   Muammolar tuzatildi: qop-qoralik → iliq to'q ko'k-binafsha + jonli
+   aksent rang; to'rtburchaklik → keng radius, doiraviy shakllar;
+   oq rejim dabdalaligi → toza, nafis, gradient-akцent bilan;
+   "junior" tuyg'usi → assimetrik hero, blob shakllar, imzo detallar.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* ── SamCity 2026 — Warm Trust system ─────────────────────────
+     Yo'nalish: issiq neytral + chuqur indigo-teal.
+     Emerald "SaaS" hissidan uzoqlashib, shahar, ishonch va
+     mahalliy hayotga yaqinroq. Gold accent kuchliroq.
+  ──────────────────────────────────────────────────────────── */
+  --bg: #F7F5F2;
+  --bg-soft: #FFFcf8;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --surface3: #E5E0D8;
+  --border: #E0DBD3;
+  --border2: #C9C2B6;
+
+  --text: #1A1612;
+  --text2: #5C534A;
+  --text3: #8A8075;
+
+  /* Primary — deep teal-indigo (ishonchli, kuchli) */
+  --accent: #0E7490;
+  --accent-d: #0C5F75;
+  --accent-l: #E0F2FE;
+  --accent-on-dark: #67E8F9;
+
+  /* Secondary — issiq oltin */
+  --gold: #C2410C;
+  --gold-d: #9A3412;
+  --gold-l: #FFEDD5;
+  --green: #047857;
+  --green-l: #D1FAE5;
+  --green-d: #065F46;
+  --red: #DC2626;
+  --red-l: #FEE2E2;
+  --red-d: #B91C1C;
+  --teal: #0E7490;
+  --violet: #6D28D9;
+  --amber: #D97706;
+  --emer: #0E7490;
+  --emer2: #0C5F75;
+
+  /* Ink family (hero) */
+  --ink-900: #0F172A;
+  --ink-800: #1E293B;
+  --ink-700: #334155;
+  --ink-600: #475569;
+  --on-dark: #F8FAFC;
+  --on-dark-2: #94A3B8;
+  --on-dark-brd: #334155;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+
+  --shadow-xs: 0 1px 2px rgba(26,22,18,.04);
+  --shadow-sm: 0 2px 8px rgba(26,22,18,.05);
+  --shadow: 0 8px 20px rgba(26,22,18,.06);
+  --shadow-lg: 0 18px 36px rgba(26,22,18,.08);
+  --shadow-brand: 0 8px 22px -4px rgba(14,116,144,.28);
+  --ring: 0 0 0 3px rgba(14,116,144,.22);
+}
+[data-theme="dark"]{
+  /* Chuqur tungi ko'k — issiq emas, lekin qora ham emas */
+  --bg: #0B1220;
+  --bg-soft: #0F172A;
+  --surface: #152033;
+  --surface2: #1E2D45;
+  --surface3: #2A3B55;
+  --border: #243247;
+  --border2: #334155;
+
+  --text: #F1F5F9;
+  --text2: #94A3B8;
+  --text3: #64748B;
+
+  --accent: #22D3EE;
+  --accent-d: #67E8F9;
+  --accent-l: rgba(34,211,238,.14);
+  --accent-on-dark: #0B1220;
+
+  --gold: #FB923C;
+  --gold-d: #FDBA74;
+  --gold-l: rgba(251,146,60,.14);
+  --green: #34D399;
+  --green-l: rgba(52,211,153,.14);
+  --green-d: #6EE7B7;
+  --red: #F87171;
+  --red-l: rgba(248,113,113,.14);
+  --red-d: #FCA5A5;
+  --teal: #22D3EE;
+  --violet: #A78BFA;
+  --amber: #FBBF24;
+  --emer: #22D3EE;
+  --emer2: #67E8F9;
+
+  --ink-900: #020617;
+  --ink-800: #0B1220;
+  --ink-700: #1E293B;
+  --ink-600: #334155;
+  --on-dark: #F1F5F9;
+  --on-dark-2: #94A3B8;
+  --on-dark-brd: #243247;
+
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.35);
+  --shadow-sm: 0 3px 10px rgba(0,0,0,.38);
+  --shadow: 0 10px 28px rgba(0,0,0,.42);
+  --shadow-lg: 0 22px 48px rgba(0,0,0,.48);
+  --shadow-brand: 0 8px 24px -4px rgba(34,211,238,.22);
+  --ring: 0 0 0 3px rgba(34,211,238,.28);
+}
+
+body{ letter-spacing:normal; }
+h1,h2,h3,h4{ letter-spacing:-0.02em; }
+
+/* Ambient qatlamlar butunlay olib tashlanmaydi — creative energiya uchun
+   ushlab qolinadi, lekin yumshoq, brend rangida */
+.aurora-bg{ opacity:.5; }
+.aurora-bg span{ filter:blur(90px) saturate(130%); }
+.grain{ opacity:.02; }
+
+/* ── NAV ─────────────────────────────────────────────────────── */
+.nav{ backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  background:rgba(251,250,248,.86); border-bottom:1px solid var(--border); }
+[data-theme="dark"] .nav{ background:rgba(23,20,18,.82); }
+.nav-logo .logo-mark{ background:var(--accent); color:#fff;
+  border-radius:10px; box-shadow:0 4px 12px rgba(37,99,235,.35); }
+.nav-links a{ font-weight:500; color:var(--text2); border-radius:100px; }
+.nav-links a:hover{ background:var(--surface2); color:var(--text); }
+.nav-links a.active{ background:var(--accent-l); color:var(--accent-d); font-weight:650; }
+.nav-cart{ background:var(--accent-l); color:var(--accent-d); border-color:transparent; border-radius:14px; }
+.nav-cart:hover{ background:var(--accent); color:#fff; }
+
+/* ── TUGMALAR — yumaloq, jonli, aniq ierarxiya ──────────────────── */
+.btn{ border-radius:100px; font-weight:650; letter-spacing:-0.01em; transition:all .16s cubic-bezier(.2,.8,.3,1); }
+.btn-accent{ background:#3B5673; color:#fff; box-shadow:0 4px 12px rgba(59,86,115,.24); }
+[data-theme="dark"] .btn-accent{ background:#7C9DC0; color:#111620; box-shadow:0 4px 14px rgba(124,157,192,.2); }
+.btn-accent:hover{ transform:translateY(-2px); box-shadow:0 14px 32px rgba(37,99,235,.32); }
+.btn-gold{ background:var(--gold); color:#fff; box-shadow:0 8px 18px rgba(184,134,46,.28); }
+.btn-gold:hover{ background:var(--gold-d); transform:translateY(-2px); }
+.btn-outline{ background:var(--surface); border:1.5px solid var(--border2); color:var(--text); }
+.btn-outline:hover{ border-color:var(--accent); color:var(--accent-d); background:var(--accent-l); }
+.btn-ghost{ background:var(--surface2); border:1px solid transparent; color:var(--text); }
+.btn-ghost:hover{ background:var(--surface3); }
+.btn-green{ background:var(--green); color:#fff; border-radius:100px; }
+.btn-red{ background:var(--red); color:#fff; box-shadow:0 8px 18px rgba(196,67,58,.22); border-radius:100px; }
+.btn:active{ transform:scale(.97); }
+.btn-sm, .btn-lg{ border-radius:100px; }
+
+/* ── HERO — asimetrik, creative, brend rangi bilan nafas oladi ───── */
+.hero{
+  background:
+    radial-gradient(52% 60% at 6% -6%, rgba(37,99,235,.14), transparent 62%),
+    radial-gradient(46% 50% at 104% 6%, rgba(30,79,203,.10), transparent 58%),
+    var(--bg) !important;
+  padding:5.5rem 0 5rem; overflow:visible;
+}
+[data-theme="dark"] .hero{
+  background:
+    radial-gradient(52% 60% at 6% -6%, rgba(91,141,239,.16), transparent 62%),
+    radial-gradient(46% 50% at 104% 6%, rgba(91,141,239,.12), transparent 58%),
+    var(--bg) !important;
+}
+.hero h1{ font-weight:800; letter-spacing:-0.035em; }
+.hero h1 .grad{ background:none; color:var(--accent); }
+.hero p.lead{ color:var(--text2); font-weight:450; }
+.hero-search{ background:var(--surface); border:1.5px solid var(--border2); box-shadow:var(--shadow);
+  border-radius:100px; }
+.hero-search:focus-within{ border-color:var(--accent); box-shadow:var(--ring), var(--shadow); }
+.hero-stage{ border-radius:32px; box-shadow:var(--shadow-lg);
+  background:var(--accent) !important; }
+.hero-stage::after{ display:block !important; }
+.float-card{ border-radius:20px; box-shadow:var(--shadow-lg); border:1px solid var(--border); }
+.float-card .fc-ic{ border-radius:14px; }
+
+/* ── KARTALAR — yumaloq, mayin chuqurlik, doiraviy ikonka idish ───── */
+.card{ border-radius:22px; border-color:var(--border); box-shadow:var(--shadow-xs); }
+.card:hover{ box-shadow:var(--shadow-lg); border-color:var(--border2); }
+a.card:hover, .card-link:hover{ transform:translateY(-5px); box-shadow:var(--shadow-lg); border-color:transparent; }
+.card-pad{ padding:1.4rem; }
+
+.eyebrow{ background:var(--accent-l); color:var(--accent-d); font-weight:700; border-radius:100px; }
+
+/* Chip / pill — to'liq doiraviy */
+.chip, .filter-pill{ background:var(--surface2); border-color:var(--border); color:var(--text2); border-radius:100px; }
+.chip.active, .filter-pill.active{ background:var(--text); border-color:var(--text); color:var(--bg); }
+
+/* Ikonka konteynerlari — kvadrat emas, doiraviy/yumshoq burchak, gradient bilan jonlantirilgan */
+.fc-ic, .logo-mark, .avatar{ border-radius:16px !important; }
+.nav-account .avatar, .mm-user .avatar{ border-radius:50% !important;
+  background:var(--accent) !important; }
+
+::selection{ background:rgba(37,99,235,.16); color:var(--accent-d); }
+[data-theme="dark"] ::selection{ background:rgba(91,141,239,.24); color:var(--accent); }
+
+
+/* ───────── redesign-v4-content ───────── */
+/* ══════════════════════════════════════════════════════════════════
+   REDESIGN v4 — matn/kartalar zerikarli emas + oq rejim chuqurligi
+   Ranglar to'g'ri edi; muammo — tekis rangli ikonka bloklari, yupqa
+   chiziqlar va tekis "no-image" joy egallovchilar edi. Bu yerda
+   gradient ikonkalar, egri chiziqlar, tipografik kontrast va
+   oq rejimga nozik chuqurlik qo'shiladi.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── SECTION SARLAVHALARI — kattaroq kontrast, aksent urg'u ────── */
+.sc-label{ background:var(--accent-l); color:var(--accent-d); padding:.3rem .7rem; border-radius:100px; }
+.sc-h2{ font-weight:800; letter-spacing:-.035em; }
+.sc-sub{ font-size:1.02rem; }
+
+/* ── BENTO IKONKALAR — endi gradient, soya, hover'da aylanadi ──── */
+.sc-feat{ background:var(--surface); border:1px solid var(--border); border-radius:26px;
+  box-shadow:var(--shadow-xs); transition:box-shadow .25s, transform .25s, border-color .25s; }
+.sc-feat:hover{ box-shadow:var(--shadow-lg); transform:translateY(-4px); border-color:transparent; }
+.sc-feat .ic-wrap{ width:56px; height:56px; border-radius:18px;
+  background:var(--accent); box-shadow:0 6px 16px rgba(62,100,168,.18);
+  transition:transform .3s cubic-bezier(.2,.8,.3,1); }
+.sc-feat:hover .ic-wrap{ transform:rotate(-6deg) scale(1.06); }
+.sc-feat .ic-wrap .ic{ width:28px; height:28px; }
+.sc-feat h3{ font-weight:750; }
+.sc-feat .go{ color:var(--accent-d); }
+
+/* Ikkinchi darajali panel — tekis chiziq o'rniga gradient chiziq */
+.sc-mid{ border-top:none; position:relative; padding-top:1.5rem; }
+.sc-mid::before{ content:""; position:absolute; top:0; left:0; width:56px; height:3px; border-radius:3px;
+  background:linear-gradient(90deg, var(--accent), var(--gold)); }
+.sc-mid .row .ic{ width:40px; height:40px; padding:9px; border-radius:12px; background:var(--accent-l); color:var(--accent-d); box-sizing:border-box; }
+.sc-mid h3{ font-weight:700; }
+
+/* Ro'yxat qatorlari — har biriga rangli doiraviy ikonka idishi */
+.sc-rows{ gap:.15rem; }
+.sc-row{ border-top:none !important; border-bottom:1px solid var(--border); padding:1.05rem .2rem; border-radius:14px; }
+.sc-row:last-child{ border-bottom:none; }
+.sc-row:hover{ background:var(--surface2); padding-left:.7rem; opacity:1; }
+.sc-row .ic{ width:38px; height:38px; padding:9px; border-radius:11px; background:var(--surface2); color:var(--accent-d); box-sizing:border-box; }
+.sc-row:hover .ic{ background:var(--accent-l); }
+.sc-row .nm{ font-weight:650; }
+
+/* ── LISTING KARTALARI — bo'sh gray box o'rniga jonli gradient
+   joy egallovchi + qalqib turuvchi ikonka ──────────────────────── */
+.lcard{ border-radius:22px; }
+.lcard .lc-media{ background:
+  radial-gradient(120% 140% at 15% -10%, rgba(37,99,235,.14), transparent 55%),
+  linear-gradient(155deg, var(--surface2), var(--surface3)); }
+.lcard .lc-media .media-ph{ background:transparent !important; }
+.lcard .lc-media svg.ic{ filter:drop-shadow(0 6px 14px rgba(28,20,12,.14)); }
+.lcard .lc-title{ font-weight:750; letter-spacing:-.01em; }
+.lcard .lc-price{ color:var(--accent-d); }
+.lcard .lc-media .lc-fav{ box-shadow:var(--shadow-sm); }
+
+/* ── OQ REJIM CHUQURLIGI ─────────────────────────────────────────
+   Tekis oq bloklarga qarshi: section-soft'ga nozik tekstura,
+   kartalarga bosinq ammo his qilinadigan soya, chegaralar iliqroq. */
+.section-soft{ background:
+  radial-gradient(60% 70% at 100% 0%, rgba(37,99,235,.05), transparent 60%),
+  radial-gradient(50% 60% at 0% 100%, rgba(30,79,203,.05), transparent 55%),
+  var(--bg-soft); }
+[data-theme="dark"] .section-soft{ background:
+  radial-gradient(60% 70% at 100% 0%, rgba(91,141,239,.06), transparent 60%),
+  radial-gradient(50% 60% at 0% 100%, rgba(91,141,239,.06), transparent 55%),
+  var(--bg-soft); }
+.card, .lcard{ box-shadow:0 1px 2px rgba(28,20,12,.04), 0 8px 20px rgba(28,20,12,.03); }
+[data-theme="dark"] .card, [data-theme="dark"] .lcard{ box-shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.25); }
+
+/* Bo'sh joy va ritm — bo'limlar orasida nafas */
+.section{ padding:5.5rem 0; }
+.section-head h2, .sc-h2{ position:relative; }
+
+
+/* ───────── redesign-v5-contrast-fix ───────── */
+/* ══════════════════════════════════════════════════════════════════
+   REDESIGN v5 — KONTRAST BUG TUZATISH
+   Muammo: original .hero to'q fon uchun mo'ljallangan edi (--on-dark
+   oq matn rangi bilan). Men fonni yorug' qildim-u, matn rangini
+   yangilamadim → oq matn oq fonda, va faol filtr tugmasida
+   qora matn qora fonda. Bu yerda hammasi to'g'irlanadi.
+   ══════════════════════════════════════════════════════════════════ */
+
+.hero, .hero.hero-dark{ color: var(--text) !important; }
+.hero h1, .hero.hero-dark h1{ color: var(--text) !important; }
+.hero h1 .grad{ background:none !important; color:var(--accent) !important; }
+.hero p.lead, .hero.hero-dark p.lead{ color: var(--text2) !important; }
+.hero .eyebrow{ background: var(--accent-l) !important; color: var(--accent-d) !important;
+  padding:.3rem .7rem !important; border-radius:100px !important; }
+.hero-stats .n{ color: var(--text) !important; }
+.hero-stats .lbl{ color: var(--text3) !important; }
+.hero-stats{ border-top-color: var(--border) !important; }
+.hero-stats .hs + .hs{ border-left-color: var(--border) !important; }
+.hero-search input{ color: var(--text) !important; }
+.hero-search input::placeholder{ color: var(--text3) !important; }
+.hero-trust{ color: var(--text2) !important; }
+.hero.hero-dark .chip{ background: var(--surface) !important; border-color: var(--border2) !important; color: var(--text2) !important; }
+.hero.hero-dark .chip:hover{ border-color: var(--accent) !important; color: var(--accent-d) !important; }
+
+/* Faol filtr/status tugmalari — matn rangi endi fonga qarab to'g'ri tanlanadi */
+.chip.active, .filter-pill.active, .status-tab.active{
+  background: var(--text) !important; border-color: var(--text) !important; color: var(--bg) !important; }
+[data-theme="dark"] .chip.active, [data-theme="dark"] .filter-pill.active, [data-theme="dark"] .status-tab.active{
+  background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-on-dark) !important; }
+
+
+/* ───────── redesign-v6-requested ───────── */
+/* ══════════════════════════════════════════════════════════════════
+   REDESIGN v6 — 3 ta aniq talab bo'yicha qayta qurish:
+   1) Hero qidiruv tugmasi — kattaroq, aniqroq, faqat ikonka emas
+   2) Xarita animatsiyasi — sakrab turuvchi pinlar olib tashlandi,
+      buning o'rniga sokin, nafis pulslash
+   3) "Biznes/Yetkazish/Davlat" ro'yxati — tekis chiziqli ro'yxat
+      o'rniga haqiqiy kartalarga aylantirildi
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 1) HERO QIDIRUV TUGMASI */
+.hero-search{ padding:.5rem .5rem .5rem 1.3rem !important; }
+.hero-search .btn-accent{
+  border-radius:100px !important; padding:.85rem 1.6rem !important; font-size:.95rem !important;
+  gap:.55rem !important; box-shadow:0 6px 16px rgba(37,99,235,.3) !important; }
+[data-theme="dark"] .hero-search .btn-accent{ box-shadow:0 6px 18px rgba(91,141,239,.28) !important; }
+
+/* 2) XARITA — sokinlashtirilgan, jonli lekin sakramaydigan pinlar */
+.mp-pin{ animation:none !important; transition:transform .3s ease; }
+.mp-pin:hover{ transform:rotate(45deg) scale(1.12) !important; }
+@keyframes mpPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(37,99,235,.35);} 50%{ box-shadow:0 0 0 10px rgba(37,99,235,0);} }
+.mp-pin{ animation:mpPulse 2.6s ease-in-out infinite !important; }
+.mp-pin:nth-of-type(2){ animation-delay:.5s !important; }
+.mp-pin:nth-of-type(3){ animation-delay:1s !important; }
+.mp-pin:nth-of-type(4){ animation-delay:1.5s !important; }
+.map-preview{ background: var(--surface2) !important; border-radius:26px !important; }
+.map-preview .mp-grid{ opacity:.4 !important; }
+.map-cta{ border-radius:100px !important; box-shadow:var(--shadow-lg) !important; }
+
+/* 3) BIZNES/YETKAZISH/DAVLAT — chiziqli ro'yxat o'rniga kartalar */
+.sc-split-list{ gap:1.1rem; }
+.sc-item{
+  display:grid !important; grid-template-columns:auto 1fr !important; gap:1.1rem !important;
+  padding:1.5rem !important; border:1px solid var(--border) !important; border-top:1px solid var(--border) !important;
+  border-radius:20px !important; background:var(--surface) !important; box-shadow:var(--shadow-xs) !important;
+  transition:box-shadow .2s, transform .2s, border-color .2s; }
+.sc-item:first-child{ border-top:1px solid var(--border) !important; }
+.sc-item:hover{ box-shadow:var(--shadow-lg) !important; transform:translateY(-3px); border-color:transparent !important; }
+.sc-item .ic-box{
+  width:46px !important; height:46px !important; border-radius:14px !important;
+  background:var(--accent) !important; color:#fff !important;
+  box-shadow:0 6px 16px rgba(37,99,235,.25) !important; }
+[data-theme="dark"] .sc-item .ic-box{ background:var(--accent) !important; color:var(--accent-on-dark) !important; }
+.sc-item h3{ font-weight:700 !important; }
+
+
+/* ───────── redesign-v7-fixes ───────── */
+/* ══════════════════════════════════════════════════════════════════
+   REDESIGN v7 — 2 ta tuzatish:
+   1) "106+ foydalanuvchi allaqachon qo'shildi" — oq rejimda ko'rinmas
+      edi (matn qattiq --on-dark rangida qolib ketgan, !important bilan)
+   2) Kartalardagi borderlar olib tashlandi — endi faqat soya bilan
+      ажralib turadi (border emas)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 1) "106+" matni endi to'g'ri rangda */
+.hero-trust b{ color: var(--text) !important; }
+.hero-trust .avatars span{
+  background: linear-gradient(135deg, var(--accent), var(--violet)) !important;
+  border-color: var(--bg) !important; }
+
+/* 2) Borderlar olib tashlandi — faqat soya bilan chuqurlik */
+.card, .lcard, .sc-feat, .sc-item, .float-card{ border-color: transparent !important; }
+.card{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
+.lcard{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
+.sc-feat{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
+.sc-item{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
+[data-theme="dark"] .card, [data-theme="dark"] .lcard, [data-theme="dark"] .sc-feat, [data-theme="dark"] .sc-item{
+  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 12px 26px rgba(0,0,0,.3) !important; }
+.card:hover, .lcard:hover, .sc-feat:hover, .sc-item:hover, a.card:hover, .card-link:hover{
+  border-color: transparent !important; }
+.hero-search{ border-color: transparent !important; }
+.hero-stage{ border-color: transparent !important; }
+.float-card{ border-color: transparent !important; }
+.map-cta, .map-cta:hover{ transform: translateX(-50%) !important; transition: none !important; }
+
+
+/* ───────── samcity-color-refresh-2026 ───────── */
+/* ══════════════════════════════════════════════════════════════
+   FINAL COLOR REFRESH — Warm Trust (Cyan-Teal + Warm neutrals)
+   ══════════════════════════════════════════════════════════════ */
+
+.btn-accent {
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-brand) !important;
+}
+.btn-accent:hover {
+  background: var(--accent-d) !important;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .btn-accent {
+  background: var(--accent) !important;
+  color: #083344 !important;
+  box-shadow: var(--shadow-brand) !important;
+}
+[data-theme="dark"] .btn-accent:hover {
+  background: var(--accent-d) !important;
+  color: #083344 !important;
+}
+
+.nav-logo .logo-mark,
+.foot-in .brand .logo-mark,
+.logo-mark {
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(14,116,144,.30) !important;
+}
+[data-theme="dark"] .nav-logo .logo-mark,
+[data-theme="dark"] .foot-in .brand .logo-mark {
+  color: #083344 !important;
+  box-shadow: 0 4px 16px rgba(34,211,238,.28) !important;
+}
+
+.nav-links a.active {
+  background: var(--accent-l) !important;
+  color: var(--accent-d) !important;
+}
+.chip.active,
+.pagination .current {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+.hero {
+  background:
+    radial-gradient(60% 50% at 12% 0%, rgba(14,116,144,.11), transparent 60%),
+    radial-gradient(50% 45% at 100% 8%, rgba(194,65,12,.06), transparent 55%),
+    linear-gradient(180deg, #F7F5F2, #EFEBE5 65%) !important;
+}
+[data-theme="dark"] .hero {
+  background:
+    radial-gradient(60% 50% at 12% 0%, rgba(34,211,238,.12), transparent 60%),
+    radial-gradient(50% 45% at 100% 8%, rgba(251,146,60,.06), transparent 55%),
+    linear-gradient(180deg, #0B1220, #0F172A 65%) !important;
+}
+
+.cta-band {
+  background: linear-gradient(135deg, #0E7490 0%, #0C5F75 50%, #164E63 100%) !important;
+}
+[data-theme="dark"] .cta-band {
+  background: linear-gradient(135deg, #0E7490 0%, #155E75 55%, #0B1220 100%) !important;
+}
+
+.hero-search .btn-accent,
+[data-theme="dark"] .hero-search .btn-accent {
+  box-shadow: 0 6px 18px rgba(14,116,144,.32) !important;
+}
+.mp-pin {
+  box-shadow: 0 4px 14px rgba(14,116,144,.38) !important;
+  background: var(--accent) !important;
+}
+@keyframes mpPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(14,116,144,.38); }
+  50% { box-shadow: 0 0 0 12px rgba(14,116,144,0); }
+}
+
+::selection { background: rgba(14,116,144,.20) !important; color: var(--accent-d); }
+:focus-visible { outline-color: var(--accent) !important; }
+
+.avatar,
+.hero-trust .avatars span {
+  background: linear-gradient(135deg, #0E7490, #06B6D4) !important;
+  color: #fff !important;
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  border-color: var(--accent) !important;
+  box-shadow: var(--ring) !important;
+}
+
+.nav-cart {
+  background: var(--accent-l) !important;
+  color: var(--accent-d) !important;
+}
+.nav-cart:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+.section-soft { background: var(--bg-soft) !important; }
+
+.g-green { background: linear-gradient(140deg, #10B981, #047857) !important; }
+.g-cyan  { background: linear-gradient(140deg, #22D3EE, #0E7490) !important; }
+.g-gold, .g-amber { background: linear-gradient(140deg, #F97316, #C2410C) !important; }
+
+/* Kirish tekshiruvi: `.hero-stats .lbl` --text3 rangida 3.56:1 berardi
+   (12.8px matn uchun AA 4.5:1 talab qiladi). --text2 ~7:1 beradi —
+   dizayn o'zgarmaydi, faqat o'qilishi yaxshilanadi. */
+.hero-stats .lbl { color: var(--text2) !important; }

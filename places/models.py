@@ -104,6 +104,55 @@ class Place(models.Model):
         return CATEGORY_COLOR.get(self.category, '#f5b942')
 
 
+# Menyusi bo'lishi mantiqiy bo'lgan toifalar — shu joylardagina menyu
+# bo'limi ko'rsatiladi (bankda yoki pochtada menyu ma'nosiz).
+MENU_CATEGORIES = ('restaurant', 'wedding', 'hotel')
+
+MENU_SECTION_CHOICES = [
+    ('salad', _('Salatlar')),
+    ("soup", _("Sho'rvalar")),
+    ('main', _('Asosiy taomlar')),
+    ('grill', _('Kabob / grill')),
+    ('bakery', _('Non va patir')),
+    ('dessert', _('Shirinliklar')),
+    ('drink', _('Ichimliklar')),
+    ('other', _('Boshqa')),
+]
+
+
+class PlaceMenuItem(models.Model):
+    """Restoran/to'yxona/mehmonxona menyusidagi bitta taom.
+
+    Bir joyda saqlanadi, ikki joyda ko'rinadi: xaritadagi joy sahifasida va
+    (joy bron qilinadigan Venue'ga bog'langan bo'lsa) bron sahifasida.
+    """
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='menu_items')
+    section = models.CharField(
+        max_length=20, choices=MENU_SECTION_CHOICES, default='main',
+        db_index=True, verbose_name="Bo'lim")
+    name = models.CharField(max_length=150, verbose_name='Taom nomi')
+    description = models.TextField(blank=True, verbose_name='Tarkibi / tavsif')
+    price = models.BigIntegerField(verbose_name="Narx (so'm)")
+    image = models.ImageField(
+        upload_to='places/menu/%Y/%m/', blank=True, null=True,
+        validators=[validate_file_type], verbose_name='Rasm')
+    is_active = models.BooleanField(default=True, verbose_name="Menyuda ko'rsatilsin")
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'place_menu_items'
+        verbose_name = 'Menyu taomi'
+        verbose_name_plural = 'Menyu taomlari'
+        ordering = ['section', 'order', 'name']
+        indexes = [
+            models.Index(fields=['place', 'is_active'], name='menu_place_active_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.name} — {self.price} so'm"
+
+
 class PlaceImage(models.Model):
     place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='places/gallery/%Y/%m/')

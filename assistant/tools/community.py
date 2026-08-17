@@ -32,8 +32,7 @@ def _neighborhood(ctx):
 
 @tool(
     section='community', action='announcements',
-    description="Mahalla va tuman rasmiy e'lonlarини ko'rsatadi (suv o'chishi, "
-                "yig'ilish, obodonlashtirish va h.k.).",
+    description="Mahalla/tuman rasmiy e'lonlari (suv o'chishi, yig'ilish va h.k.).",
     params={},
     auth_required=True,
 )
@@ -65,12 +64,12 @@ def announcements(ctx, **_):
 
 @tool(
     section='community', action='submit_request',
-    description="Fuqaro murojaati/shikoyatини mahalla raisiga yuboradi (yo'l, suv, "
-                "svet, tozalik muammosi va h.k.). Ma'lumot to'planganда chaqir.",
+    description="Fuqaro murojaatini mahalla raisiga yuboradi (yo'l, suv, svet, "
+                "tozalik). Ma'lumot to'planganda chaqir.",
     params={
         'category': ('str', True, "muammo turi", REQUEST_CATEGORIES),
         'title': ('str', True, "mavzu (qisqa)"),
-        'text': ('str', True, "murojaat matni (muammoni batafsil yozing)"),
+        'text': ('str', True, "murojaat matni"),
     },
     mutating=True,
     auth_required=True,
@@ -120,7 +119,7 @@ def create_request(payload, user):
 
 @tool(
     section='community', action='list_polls',
-    description="Ochiq so'rovnomalar (mahalla ovoz berishlari) va variantlarини ko'rsatadi.",
+    description="Ochiq so'rovnomalar va variantlari.",
     params={},
     auth_required=True,
 )
@@ -163,8 +162,8 @@ def list_polls(ctx, **_):
 
 @tool(
     section='community', action='vote',
-    description="So'rovnomага ovoz beradi. list_polls'даги variant ID'sини ber.",
-    params={'poll_option_id': ('str', True, "variant ID (list_polls natijasidan)")},
+    description="So'rovnomaga ovoz beradi.",
+    params={'poll_option_id': ('str', True, "list_polls natijasidagi variant ID")},
     mutating=True,
     auth_required=True,
 )

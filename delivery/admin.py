@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin, messages
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from main.admin_widgets import LatLngPickerWidget
 from .models import (
@@ -238,12 +239,221 @@ class OrderItemAdmin(admin.ModelAdmin):
     search_fields = ('product_name', 'store_name')
 
 
+# ── KURYER (yetkazib beruvchi) ───────────────────────────────────────────────
+# Kuryerni admin QO'SHA oladi va OLIB TASHLAY oladi. Ikkala amal ham xavfsiz
+# bo'lishi kerak: qo'shishda foydalanuvchini minglab hisob orasidan telefon
+# bo'yicha topish, olib tashlashda esa qo'lida buyurtma turgan kuryerni
+# jimgina o'chirib yubormaslik (Order.driver = SET_NULL — buyurtma hech kimsiz
+# «assigned» holatida qotib qolardi).
+
+class DeliveryDriverForm(forms.ModelForm):
+    class Meta:
+        model = DeliveryDriver
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Majburiylikni olib tashlaymiz: bo'sh qolsa `clean()` foydalanuvchi
+        # hisobidan to'ldiradi (aks holda maydon darajasidagi tekshiruv
+        # clean() ga yetib kelishidan oldin xato beradi).
+        # `status` ham majburiy emas: modelda default bor va admin qo'shganda
+        # `save_model` uni to'ldiradi.
+        if 'status' in self.fields:
+            self.fields['status'].required = False
+        for f in ('full_name', 'phone'):
+            if f in self.fields:
+                self.fields[f].required = False
+        if 'user' in self.fields:
+            self.fields['user'].help_text = (
+                "Telefon yoki ism bo'yicha qidiring. Tanlangan foydalanuvchi "
+                "saytga kirganda kuryer paneli avtomatik ochiladi."
+            )
+
+    def clean(self):
+        data = super().clean()
+        user = data.get('user')
+        # Ism/telefon bo'sh qolsa foydalanuvchi hisobidan to'ldiramiz —
+        # admin uchun faqat foydalanuvchini tanlash kifoya bo'lsin.
+        if user:
+            if not (data.get('full_name') or '').strip():
+                data['full_name'] = (getattr(user, 'name', '') or user.phone)
+            if not (data.get('phone') or '').strip():
+                data['phone'] = user.phone
+        return data
+
+
 @admin.register(DeliveryDriver)
 class DeliveryDriverAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone', 'vehicle_type', 'vehicle_number', 'is_available', 'is_active', 'created_at')
-    list_filter = ('vehicle_type', 'is_available', 'is_active')
-    search_fields = ('full_name', 'phone', 'user__phone')
+    form = DeliveryDriverForm
+    list_display = ('full_name', 'status', 'phone', 'vehicle_type', 'vehicle_number',
+                    'active_orders', 'is_available', 'is_active', 'created_at')
+    # Tasdiq kutayotganlar birinchi ko'rinsin — admin ish oqimi shundan boshlanadi.
+    list_filter = ('status', 'vehicle_type', 'is_available', 'is_active')
+    ordering = ('status', '-created_at')
+    search_fields = ('full_name', 'phone', 'user__phone', 'user__name')
     list_editable = ('is_available', 'is_active')
+    # Foydalanuvchi ro'yxati uzun — oddiy <select> yaroqsiz.
+    autocomplete_fields = ('user',)
+    readonly_fields = ('created_at', 'reviewed_at', 'reviewed_by')
+    actions = ('approve_drivers', 'reject_drivers', 'block_drivers', 'unblock_drivers')
+    fieldsets = (
+        ('Foydalanuvchi', {
+            'fields': ('user', 'full_name', 'phone'),
+            'description': "Ism va telefon bo'sh qoldirilsa — hisobdan olinadi.",
+        }),
+        ('Transport', {'fields': ('vehicle_type', 'vehicle_number')}),
+        ('Tasdiq', {
+            'fields': ('status', 'reject_reason', 'reviewed_at', 'reviewed_by'),
+            'description': "Kuryer FAQAT «Tasdiqlangan» holatda buyurtma ko'radi "
+                           "va oladi. Yangi ariza «Tasdiq kutilmoqda» bo'lib keladi.",
+        }),
+        ('Holat', {
+            'fields': ('is_active', 'is_available', 'created_at'),
+            'description': "«Faol» olib tashlansa kuryer bloklanadi: yangi "
+                           "buyurtma ola olmaydi, lekin qo'lidagisini yakunlaydi.",
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+    @admin.display(description='Qo\'lidagi buyurtma')
+    def active_orders(self, obj):
+        n = self._active_qs(obj).count()
+        return f'{n} ta' if n else '—'
+
+    @staticmethod
+    def _active_qs(driver):
+        from .realtime import ACTIVE_DELIVERY_STATUSES
+        return Order.objects.filter(driver=driver, status__in=ACTIVE_DELIVERY_STATUSES)
+
+    # ── Qo'shish: foydalanuvchi roli ham yangilanadi ────────────────────────
+    def save_model(self, request, obj, form, change):
+        # Admin panelda QO'LDA qo'shilgan kuryer darhol tasdiqlangan hisoblanadi:
+        # tasdiq oqimi o'zini-o'zi ro'yxatga olgan arizachilar uchun.
+        if not change and obj.status == DeliveryDriver.STATUS_PENDING:
+            obj.status = DeliveryDriver.STATUS_APPROVED
+            obj.reviewed_at = timezone.now()
+            obj.reviewed_by = request.user
+        super().save_model(request, obj, form, change)
+        user = obj.user
+        # Rol FAQAT tasdiqlangan kuryerga beriladi. Ilgari har qanday saqlashda
+        # berilardi — ya'ni tasdiqlanmagan ariza ham 'driver' roliga o'tkazardi.
+        # Biznes/admin rolini bosib ketmaymiz: bir odam do'kon egasi ham,
+        # kuryer ham bo'lishi mumkin.
+        if obj.is_approved and getattr(user, 'role', '') == 'user':
+            user.role = 'driver'
+            user.save(update_fields=['role'])
+        if obj.is_approved:
+            self._tell_approved(user)
+
+    # ── Tasdiqlash / rad etish ──────────────────────────────────────────────
+    @staticmethod
+    def _tell_approved(user):
+        try:
+            from notifications.models import notify
+            from django.urls import reverse
+            notify(user, "Kuryerlik arizangiz tasdiqlandi 🛵",
+                   reverse('delivery:driver_dashboard'), 'system')
+        except Exception:
+            pass
+
+    @admin.action(description="✅ Tasdiqlash — kuryer ishlay boshlaydi")
+    def approve_drivers(self, request, queryset):
+        n = 0
+        for driver in queryset.exclude(status=DeliveryDriver.STATUS_APPROVED):
+            driver.approve(by=request.user)
+            self._tell_approved(driver.user)
+            n += 1
+        if n:
+            messages.success(request, f"{n} ta kuryer tasdiqlandi.")
+        else:
+            messages.info(request, "Tanlanganlar allaqachon tasdiqlangan.")
+
+    @admin.action(description="❌ Rad etish — kuryerlik huquqi berilmaydi")
+    def reject_drivers(self, request, queryset):
+        """Qo'lida tugallanmagan buyurtma bo'lganini rad etmaymiz.
+
+        Aks holda buyurtma o'rtada osilib qolardi: kuryer uni yakunlay olmaydi,
+        boshqasi esa qabul qila olmaydi.
+        """
+        busy = self._blocking_orders(queryset)
+        busy_ids = set(busy.values_list('driver_id', flat=True))
+        n = 0
+        for driver in queryset.exclude(status=DeliveryDriver.STATUS_REJECTED):
+            if driver.pk in busy_ids:
+                continue
+            driver.reject(by=request.user)
+            try:
+                from notifications.models import notify
+                notify(driver.user, "Kuryerlik arizangiz rad etildi", '', 'system')
+            except Exception:
+                pass
+            n += 1
+        if n:
+            messages.success(request, f"{n} ta ariza rad etildi.")
+        if busy_ids:
+            messages.warning(
+                request,
+                f"{len(busy_ids)} ta kuryer rad etilmadi: qo'lida tugallanmagan "
+                f"buyurtma bor. Avval ularni boshqa kuryerga o'tkazing.")
+
+    # ── Olib tashlash: qo'lida buyurtma bo'lsa — to'xtatamiz ────────────────
+    def _blocking_orders(self, drivers):
+        from .realtime import ACTIVE_DELIVERY_STATUSES
+        return Order.objects.filter(driver__in=drivers,
+                                    status__in=ACTIVE_DELIVERY_STATUSES)
+
+    def delete_model(self, request, obj):
+        blocked = self._blocking_orders([obj])
+        if blocked.exists():
+            messages.error(
+                request,
+                f"«{obj.full_name}» o'chirilmadi: qo'lida {blocked.count()} ta "
+                f"tugallanmagan buyurtma bor. Avval ularni boshqa kuryerga "
+                f"o'tkazing yoki «Faol» belgisini olib bloklang."
+            )
+            return
+        self._forget_user_role(obj)
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        blocked = self._blocking_orders(queryset)
+        if blocked.exists():
+            messages.error(
+                request,
+                f"O'chirilmadi: tanlangan kuryerlarda {blocked.count()} ta "
+                f"tugallanmagan buyurtma bor. Avval ularni yopish kerak."
+            )
+            return
+        for obj in queryset:
+            self._forget_user_role(obj)
+        super().delete_queryset(request, queryset)
+
+    @staticmethod
+    def _forget_user_role(driver):
+        """Kuryerlik olib tashlanganda 'driver' rolini oddiy foydalanuvchiga qaytarish.
+
+        Taksist bo'lsa rol qoladi — u ham 'driver' roliga tayanadi.
+        """
+        user = driver.user
+        if getattr(user, 'role', '') != 'driver':
+            return
+        if user.taxist_profiles.exists():
+            return
+        user.role = 'user'
+        user.save(update_fields=['role'])
+
+    # ── Ommaviy amallar ─────────────────────────────────────────────────────
+    @admin.action(description="Bloklash (yangi buyurtma bermaslik)")
+    def block_drivers(self, request, queryset):
+        n = queryset.update(is_active=False, is_available=False)
+        self.message_user(request, f'{n} ta kuryer bloklandi.', messages.WARNING)
+
+    @admin.action(description='Blokdan chiqarish')
+    def unblock_drivers(self, request, queryset):
+        n = queryset.update(is_active=True)
+        self.message_user(request, f'{n} ta kuryer blokdan chiqarildi.')
 
 
 # ── STORE UPDATE / SUBSCRIPTION (yangiliklar + bildirishnoma obunasi) ──────────

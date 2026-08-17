@@ -104,7 +104,10 @@ KB = [
     },
     {
         'id': 'open_store',
-        'keywords': ['dokon ochish', 'magazin ochish', 'dokon ochmoqchi', 'savdo dokon',
+        'keywords': ['dokon ochish', 'magazin ochish', 'dokon ochmoqchi',
+                     'dokon ochaman', 'magazin ochaman', 'dokon ochmoqchiman',
+                     'dokon qanday', 'magazin qanday', 'savdo boshlash',
+                     'sotuvchi bolish', 'biznes boshlash', 'savdo dokon',
                      'mahalla dokon', 'oz dokonim', 'dokon royxat'],
         'title': "Do'kon ochish",
         'answer': ("🏪 O'z do'koningizni ochish uchun ariza qoldiring — administrator "
@@ -115,7 +118,8 @@ KB = [
     },
     {
         'id': 'delivery_driver',
-        'keywords': ['kuryer bolish', 'yetkazuvchi bolish', 'delivery haydovchi',
+        'keywords': ['kuryer bolish', 'yetkazuvchi bolish', 'kuryer bolaman',
+                     'kuryer ishlash', 'kuryer qanday', 'yetkazuvchi bolaman', 'delivery haydovchi',
                      'kuryer royxat', 'yetkazuvchi royxat'],
         'title': "Yetkazuvchi (kuryer) bo'lish",
         'answer': ("🏍️ Buyurtmalarni yetkazib ishlashni xohlasangiz, haydovchi "
@@ -128,7 +132,11 @@ KB = [
         # Faqat "qanday bron qilaman?" (qo'llanma) savoli — umumiy bron so'zlari
         # emas. Aks holda haqiqiy to'yxona qidiruvini bosib qo'yardi.
         'keywords': ['qanday bron', 'bron qanday', 'toyxona qanday bron', 'zal qanday band',
-                     'joy qanday band', 'bron qilish tartibi', 'qanday band qilaman'],
+                     'joy qanday band', 'bron qilish tartibi', 'qanday band qilaman',
+                     # Amal niyatlari — bular faqat 3.5-bosqich ZAXIRASIDA
+                     # ishlaydi (engine joy qidiruvini allaqachon o'tkazgan),
+                     # shuning uchun haqiqiy to'yxona qidiruvini bosmaydi.
+                     'band qil', 'band qilmoqchi', 'bron qil', 'bron qilmoqchi'],
         'title': "To'yxona / zal bron qilish",
         'answer': ("📅 To'yxona, restoran yoki zalni sana va vaqtni tanlab bron "
                    "qilasiz. Xizmatlar va xodimlarni ham tanlab, oldindan to'lash "
@@ -137,7 +145,8 @@ KB = [
     },
     {
         'id': 'add_venue',
-        'keywords': ['toyxona qoshish', 'zal qoshish', 'oz joyimni', 'venue qoshish',
+        'keywords': ['toyxona qoshish', 'zal qoshish', 'toyxona qoshaman',
+                     'joy qoshish', 'joy qoshaman', 'toyxona royxat', 'oz joyimni', 'venue qoshish',
                      'joyimni royxat'],
         'title': "O'z to'yxona/zalingizni qo'shish",
         'answer': ("🏛️ Sizda to'yxona yoki zal bo'lsa, uni qo'shib, xizmatlar, "
@@ -299,6 +308,27 @@ KB = [
 # Taksi moduli arxivlangan bo'lsa (settings.TAXI_ENABLED=False) shu KB
 # yozuvlari javob sifatida berilmaydi — engine.py shu ro'yxatga qaraydi.
 TAXI_KB_IDS = ('order_taxi', 'become_taxist')
+# Mahalla bo'limi butunlay arxivlangan (main/community_views.py: _archived_view)
+MAHALLA_KB_IDS = ('mahalla', 'polls', 'help_center', 'citizen_request')
+# To'lovlar PAYMENTS_ENABLED bayrog'iga bog'liq
+PAYMENT_KB_IDS = ('payments', 'utilities')
+
+
+def archived_ids():
+    """Hozir YOPIQ bo'limlarning KB id'lari.
+
+    Bitta manba — `answer()` ham, `engine.suggest()` indeksi ham shundan
+    foydalanadi. Aks holda yopiq bo'lim javob sifatida chiqmasa ham,
+    «balki shuni demoqchimisiz?» taklifida paydo bo'lardi (real hodisa:
+    «somsa buyurtma qilmoqchiman» → «Taksi buyurtma qilish»).
+    """
+    from django.conf import settings
+    ids = set(MAHALLA_KB_IDS)
+    if not settings.TAXI_ENABLED:
+        ids.update(TAXI_KB_IDS)
+    if not getattr(settings, 'PAYMENTS_ENABLED', False):
+        ids.update(PAYMENT_KB_IDS)
+    return ids
 
 
 def answer(qn):
@@ -307,19 +337,29 @@ def answer(qn):
     Ball = mos kelgan kalit iboralar uzunliklari yig'indisi. Eng uzun/aniq
     moslik yutadi. Ball past bo'lsa (tasodifiy qisqa moslik) — None.
     """
-    from django.conf import settings
-    taxi_off = not settings.TAXI_ENABLED
+    skip = archived_ids()
     best, best_score = None, 0
     for entry in KB:
-        # Taksi arxivlangan — bu yozuvlar javob sifatida qaytarilmaydi
-        # (havolalari reverse qilinmaydi, xizmat ham yopiq).
-        if taxi_off and entry['id'] in TAXI_KB_IDS:
+        # Yopiq bo'lim javob sifatida qaytarilmaydi (havolasi ham ishlamaydi).
+        if entry['id'] in skip:
             continue
         score = 0
         for k in entry['keywords']:
             kn = _norm(k)
-            if kn and kn in qn:
-                score += len(kn)
+            if not kn:
+                continue
+            if kn in qn:
+                score += len(kn)              # aniq moslik — to'liq ball
+            else:
+                # ── TOKEN ZAXIRASI ────────────────────────────────────────
+                # Sof substring «dokon ochish» ni «dokon QANDAY ochaman»
+                # ichidan topa olmasdi — orada so'z bor. Natijada foydalanuvchi
+                # yo'l-yo'riq so'raganda «eng yaqin do'kon» qaytardi.
+                # Endi ibora so'zlari matnda TARQOQ holda uchrasa ham hisobga
+                # olinadi (past ball bilan — aniq moslik baribir ustun turadi).
+                toks = [t for t in kn.split() if len(t) >= 3]
+                if len(toks) >= 2 and all(t in qn for t in toks):
+                    score += int(len(kn) * 0.6)
         if score > best_score:
             best, best_score = entry, score
     if best and best_score >= 5:
@@ -327,19 +367,39 @@ def answer(qn):
     return None
 
 
-def overview_actions():
+def overview_actions(user=None):
     """«Nimalar qila olasan?» uchun asosiy bo'limlarga tez havolalar.
 
-    Taksi arxivlangan bo'lsa — taksi yorlig'i ko'rsatilmaydi.
+    Ikki qoida:
+      1. ARXIVLANGAN bo'lim taklif qilinmaydi (mahalla — butunlay; to'lovlar
+         va taksi — bayroq bo'yicha). Aks holda foydalanuvchi bosib, «bo'lim
+         faol emas» xabariga urilardi.
+      2. BIZNES amallari (do'kon ochish, joy qo'shish) faqat do'kon/joy
+         EGASIGA ko'rsatiladi. Oddiy foydalanuvchi o'zi so'ramaguncha
+         bunday takliflarni ko'rmaydi — u xaridor, sotuvchi emas.
+         (So'rasa — KB baribir javob beradi, bu faqat TAKLIF ro'yxati.)
     """
     from django.conf import settings
     items = [
+        {'label': "🛒 Buyurtma berish", 'q': "do'kondan qanday buyurtma beraman"},
         {'label': "📢 E'lon joylash", 'q': "e'lon qanday joylayman"},
-        {'label': "🛒 Do'kon ochish", 'q': "do'kon qanday ochaman"},
-        {'label': '💳 To\'lovlar', 'q': 'kommunal to\'lovni qanday to\'layman'},
-        {'label': '🏘️ Mahalla', 'q': 'mahalla bo\'limi nima'},
         {'label': '📅 Joy bron', 'q': "to'yxona qanday bron qilaman"},
+        {'label': '🗺️ Xarita', 'q': 'xarita nima uchun kerak'},
     ]
     if settings.TAXI_ENABLED:
         items.insert(1, {'label': '🚕 Taksi', 'q': 'taksi qanday chaqiraman'})
+    if getattr(settings, 'PAYMENTS_ENABLED', False):
+        items.append({'label': "💳 To'lovlar", 'q': "kommunal to'lovni qanday to'layman"})
+    if _is_business(user):
+        items.append({'label': "🏪 Do'kon boshqaruvi", 'q': "do'kon qanday ochaman"})
     return items
+
+
+def _is_business(user):
+    """Foydalanuvchining saytda xizmati bormi (do'kon / joy egasi)."""
+    if user is None or not getattr(user, 'is_authenticated', False):
+        return False
+    try:
+        return user.stores.exists() or user.venues.exists()
+    except Exception:
+        return False

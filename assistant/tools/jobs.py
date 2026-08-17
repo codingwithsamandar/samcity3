@@ -74,14 +74,11 @@ def _map_experience(val):
 
 @tool(
     section='jobs', action='search_jobs',
-    description="Ish e'lonlari (vakansiyalar) ichidan qidiradi. Foydalanuvchi ish qidirsa. "
-                "Saytda kam natija bo'lsa yoki foydalanuvchi «internetdan / HH'dan / boshqa "
-                "saytdan qidir» desa — `external=true` bilan tashqi saytlar (HH.uz, OLX) "
-                "ham qo'shiladi.",
+    description="Vakansiya qidiradi. Saytda kam natija bo'lsa yoki «internetdan "
+                "qidir» desa external=true (HH.uz, OLX qo'shiladi).",
     params={
-        'query': ('str', True, "kasb/soha (masalan «dasturchi», «sotuvchi»)"),
-        'external': ('bool', False, "internetdan (HH.uz, OLX va boshqa ish saytlari) "
-                     "ham qidirish. Foydalanuvchi «tashqaridan qidir» desa true qil"),
+        'query': ('str', True, "kasb/soha, masalan «dasturchi»"),
+        'external': ('bool', False, "tashqi saytlardan ham qidirish"),
     },
 )
 def search_jobs(ctx, query, external=None):
@@ -160,9 +157,8 @@ def _job_link_card(j):
 
 @tool(
     section='jobs', action='job_details',
-    description="Bitta vakansiya haqида TO'LIQ ma'lumot: tavsif, maosh, aloqa. "
-                "«u haqида batafsil» deganда — search_jobs'даги job_id ni ber.",
-    params={'job_id': ('str', True, "vakansiya ID'si (search_jobs natijasidan)")},
+    description="Bitta vakansiyaning to'liq ma'lumoti (tavsif, maosh, aloqa).",
+    params={'job_id': ('str', True, "search_jobs natijasidagi ID")},
 )
 def job_details(ctx, job_id):
     from django.core.exceptions import ValidationError
@@ -201,13 +197,10 @@ def job_details(ctx, job_id):
 
 @tool(
     section='jobs', action='search_resumes',
-    description="Rezyumelar (ish izlovchilar) ichidan qidiradi. Ish beruvchi xodim qidirsa. "
-                "Tajriba talab qilinsa (masalan «5 yildan ko'p tajribali») experience bering.",
+    description="Rezyume (ish izlovchi) qidiradi — ish beruvchi xodim qidirsa.",
     params={
-        'query': ('str', True, "kasb/ko'nikma (masalan «haydovchi», «buxgalter»)"),
-        'experience': ('str', False,
-                       "eng kam tajriba: no_exp / 1_year / 1_3 / 3_5 / 5_plus. "
-                       "Berilса SHU va undan YUQORI tajribalilar qaytadi.",
+        'query': ('str', True, "kasb/ko'nikma, masalan «haydovchi»"),
+        'experience': ('str', False, "eng kam tajriba; shu va undan yuqorilar qaytadi",
                        ['no_exp', '1_year', '1_3', '3_5', '5_plus']),
     },
 )
@@ -253,9 +246,8 @@ def search_resumes(ctx, query, experience=None):
 
 @tool(
     section='jobs', action='resume_details',
-    description="Bitta rezyume haqида TO'LIQ ma'lumot: tajriba, ko'nikma, aloqa. "
-                "«u haqида batafsil» deganда — search_resumes'даги resume_id ni ber.",
-    params={'resume_id': ('str', True, "rezyume ID'si (search_resumes natijasidan)")},
+    description="Bitta rezyumening to'liq ma'lumoti (tajriba, ko'nikma, aloqa).",
+    params={'resume_id': ('str', True, "search_resumes natijasidagi ID")},
 )
 def resume_details(ctx, resume_id):
     from django.core.exceptions import ValidationError
@@ -295,11 +287,10 @@ def resume_details(ctx, resume_id):
 
 @tool(
     section='jobs', action='post_job',
-    description="YANGI ish e'loni (vakansiya) joylaydi. Ma'lumot to'planganда chaqir: "
-                "lavozim, kompaniya, tavsif.",
+    description="YANGI vakansiya joylaydi. Ma'lumot to'planganda chaqir.",
     params={
-        'title': ('str', True, "lavozim (masalan «Sotuvchi kerak»)"),
-        'company': ('str', True, "kompaniya/tashkilot nomi"),
+        'title': ('str', True, "lavozim"),
+        'company': ('str', True, "kompaniya nomi"),
         'description': ('str', True, "ish tavsifi"),
         'salary_min': ('int', False, "eng kam maosh (so'm)"),
         'salary_max': ('int', False, "eng ko'p maosh (so'm)"),
@@ -357,12 +348,12 @@ def create_job(payload, user):
 
 @tool(
     section='jobs', action='post_resume',
-    description="YANGI rezyume joylaydi (ish izlovchi uchun). Ma'lumot to'planganда chaqir.",
+    description="YANGI rezyume joylaydi (ish izlovchi uchun).",
     params={
-        'title': ('str', True, "kasb/mavzu (masalan «Haydovchi ishini qidiraman»)"),
-        'about': ('str', True, "o'zingiz haqingizda qisqacha"),
+        'title': ('str', True, "kasb/mavzu"),
+        'about': ('str', True, "o'zi haqida qisqacha"),
         'skills': ('str', False, "ko'nikmalar"),
-        'salary_min': ('int', False, "kutilayotган eng kam maosh"),
+        'salary_min': ('int', False, "kutilayotgan eng kam maosh"),
         'phone': ('str', False, "aloqa telefoni"),
     },
     mutating=True,
@@ -407,8 +398,7 @@ def create_resume(payload, user):
 
 @tool(
     section='jobs', action='my_resumes',
-    description="Foydalanuvchining O'Z rezyumelarini ko'rsatadi. «rezyumelarim», "
-                "«mening rezyumem» degan so'rovда shuni chaqiring.",
+    description="Foydalanuvchining O'Z rezyumelari («rezyumelarim»).",
     params={},
     auth_required=True,
 )
@@ -438,8 +428,7 @@ def my_resumes(ctx, **_):
 
 @tool(
     section='jobs', action='my_jobs',
-    description="Foydalanuvchining O'Z joylagan vakansiyalarini ko'rsatadi. "
-                "«vakansiyalarim», «mening e'lonlarim (ish)» degan so'rovда.",
+    description="Foydalanuvchining O'Z vakansiyalari («vakansiyalarim»).",
     params={},
     auth_required=True,
 )

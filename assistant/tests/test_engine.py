@@ -203,11 +203,16 @@ class KnowledgeBaseTests(TestCase):
     def test_open_store(self):
         self.assertEqual(self._kb_id("do'kon ochmoqchiman"), 'open_store')
 
+    @skipUnless(getattr(settings, 'PAYMENTS_ENABLED', False),
+                "to'lovlar arxivlangan (PAYMENTS_ENABLED=False)")
     def test_payments(self):
         self.assertEqual(self._kb_id("kommunal to'lovni qanday to'layman"), 'payments')
 
-    def test_mahalla(self):
-        self.assertEqual(self._kb_id("mahalla bo'limi nima"), 'mahalla')
+    def test_mahalla_archived_not_answered(self):
+        """Mahalla bo'limi arxivlangan — KB uni javob sifatida QAYTARMASLIGI kerak.
+
+        Aks holda yordamchi ishlamaydigan bo'limga havola berardi."""
+        self.assertIsNone(self._kb_id("mahalla bo'limi nima"))
 
     @skipUnless(settings.TAXI_ENABLED, "taksi arxivlangan (TAXI_ENABLED=False)")
     def test_become_taxist(self):

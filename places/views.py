@@ -12,8 +12,12 @@ from django.db.models import Q, F, Count
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 
-from .models import Place, PlaceImage, PlaceReview, PlaceFavorite, CATEGORY_CHOICES
-from main.utils import validate_file_type, safe_json
+from .models import (
+    Place, PlaceImage, PlaceReview, PlaceFavorite, PlaceMenuItem,
+    CATEGORY_CHOICES, MENU_SECTION_CHOICES, MENU_CATEGORIES,
+)
+from main.utils import validate_file_type, safe_json, clean_image
+from .search import score as search_score, search_places
 
 # Single source of truth for the map center (Shofirkon shahri markazi).
 CENTER = (40.1156, 64.5036)
@@ -172,6 +176,11 @@ def places_geojson(request):
     qs = Place.objects.filter(is_active=True)
     if category:
         qs = qs.filter(category=category)
+    # Menyusi bor joylarni BIR so'rovda aniqlaymiz — har popup uchun alohida
+    # so'rov (N+1) bo'lmasin.
+    with_menu = set(
+        PlaceMenuItem.objects.filter(is_active=True)
+        .values_list('place_id', flat=True).distinct())
     data = [{
         'id': p.id, 'name': p.localized_name, 'category': p.category,
         'cat': p.get_category_display(), 'icon': p.icon, 'color': p.color,
@@ -180,6 +189,7 @@ def places_geojson(request):
         'image': (p.image.url if p.image else ''),
         'desc': (p.localized_description[:140] if p.localized_description else ''),
         'url': reverse('places:place_detail', args=[p.id]),
+        'has_menu': p.id in with_menu,
     } for p in qs]
 
     # ── Super-app qatlamlari: delivery do'konlari + onlayn taksistlar ──
@@ -187,6 +197,9 @@ def places_geojson(request):
     if not category:
         data += _delivery_points()
         data += _taxi_points()
+    # `if` dan TASHQARIDA: bron joylari "Barchasi" da ham, toifa filtrida
+    # (masalan "Sartaroshxonalar") ham ko'rinishi kerak.
+    data += _booking_points(category)
     return JsonResponse({'places': data})
 
 
@@ -240,6 +253,47 @@ def _taxi_points():
     return out
 
 
+
+def _booking_points(category=''):
+    """Bron qilinadigan joylar (booking.Venue) — xaritada ko'rsatiladi.
+
+    Faqat koordinatasi bor va Place'ga BOG'LANMAGAN venue'lar (bog'langanlari
+    allaqachon Place sifatida chiqadi — dublikat bo'lmasligi uchun).
+    """
+    try:
+        from booking.models import Venue
+    except Exception:
+        return []
+    ICONS = {
+        'wedding': ('💍', '#db2777'), 'restaurant': ('🍽️', '#d97706'),
+        'barber': ('💈', '#0d9488'), 'gym': ('🏋️', '#4f46e5'),
+        'cafe': ('☕', '#b45309'), 'beauty': ('💅', '#ec4899'),
+        'other': ('📍', '#3551d1'),
+    }
+    qs = Venue.objects.filter(
+        is_active=True, place__isnull=True,
+        latitude__isnull=False, longitude__isnull=False,
+    )
+    if category:
+        qs = qs.filter(venue_type=category)
+    out = []
+    for v in qs:
+        icon, color = ICONS.get(v.venue_type, ('📍', '#3551d1'))
+        hours = ''
+        if v.working_hours_start and v.working_hours_end:
+            hours = f'{v.working_hours_start:%H:%M}–{v.working_hours_end:%H:%M}'
+        out.append({
+            'id': f'venue-{v.pk}', 'name': v.name, 'category': v.venue_type,
+            'cat': v.get_venue_type_display(), 'icon': icon, 'color': color,
+            'lat': v.latitude, 'lng': v.longitude, 'address': v.address,
+            'phone': v.phone, 'hours': hours,
+            'image': (v.image.url if v.image else ''),
+            'desc': (v.description[:140] if v.description else ''),
+            'url': reverse('venue_detail', args=[v.pk]),
+            'book': True,
+        })
+    return out
+
 # ── Directory ────────────────────────────────────────────────────────────────
 def place_list(request, category=None):
     category = category or request.GET.get('category', '')
@@ -288,7 +342,26 @@ def place_detail(request, pk):
         'place': place, 'images': place.images.all(), 'nearby': nearby,
         'reviews': reviews, 'my_review': my_review, 'is_favorite': is_favorite,
         'avg_rating': place.avg_rating, 'review_count': place.review_count,
+        'menu_sections': grouped_menu(place),
+        'has_menu_support': place.category in MENU_CATEGORIES,
     })
+
+
+def grouped_menu(place, include_hidden=False):
+    """Menyuni bo'limlar bo'yicha guruhlaydi: [(bo'lim nomi, [taomlar]), ...].
+
+    Bo'sh bo'limlar tushib qoladi, tartib MENU_SECTION_CHOICES bo'yicha.
+    """
+    qs = place.menu_items.all()
+    if not include_hidden:
+        qs = qs.filter(is_active=True)
+    items = list(qs)
+    out = []
+    for key, label in MENU_SECTION_CHOICES:
+        rows = [i for i in items if i.section == key]
+        if rows:
+            out.append((label, rows))
+    return out
 
 
 @login_required(login_url='/login/')
@@ -433,22 +506,37 @@ def my_favorite_places(request):
 def nearby(request):
     lat = _ffloat(request.GET.get('lat'))
     lng = _ffloat(request.GET.get('lng'))
+    q = request.GET.get('q', '').strip()
     groups = None
+    matches = None
     if lat is not None and lng is not None:
+        places = Place.objects.filter(is_active=True)
         scored = sorted(
             ((p, round(_haversine(lat, lng, p.latitude, p.longitude), 2))
-             for p in Place.objects.filter(is_active=True)),
+             for p in places),
             key=lambda x: x[1],
         )
-        STORE = {'delivery_store', 'furniture', 'electronics'}
-        SERVICE = {'pharmacy', 'hospital', 'bank', 'post', 'government', 'organization'}
-        groups = {
-            'all': scored[:10],
-            'stores': [x for x in scored if x[0].category in STORE][:6],
-            'tourist': [x for x in scored if x[0].category == 'tourist'][:6],
-            'services': [x for x in scored if x[0].category in SERVICE][:6],
-        }
-    return render(request, 'places/nearby.html', {'groups': groups, 'lat': lat, 'lng': lng})
+        if q:
+            # Qidiruv — nom (uz/ru/en), manzil va toifa bo'yicha, kirill/lotin
+            # va xato yozuvga chidamli (places.search). Natija baribir MASOFA
+            # bo'yicha tartiblangan: "yaqinimda" ma'nosi saqlanadi. Toifa
+            # guruhlari qidiruvda ortiqcha — ko'rsatilmaydi.
+            matches = [x for x in scored if search_score(
+                q, x[0].name, x[0].name_ru, x[0].name_en, x[0].address,
+                x[0].get_category_display())][:30]
+        else:
+            STORE = {'delivery_store', 'furniture', 'electronics'}
+            SERVICE = {'pharmacy', 'hospital', 'bank', 'post', 'government', 'organization'}
+            groups = {
+                'all': scored[:10],
+                'stores': [x for x in scored if x[0].category in STORE][:6],
+                'tourist': [x for x in scored if x[0].category == 'tourist'][:6],
+                'services': [x for x in scored if x[0].category in SERVICE][:6],
+            }
+    return render(request, 'places/nearby.html', {
+        'groups': groups, 'matches': matches, 'q': q, 'lat': lat, 'lng': lng,
+        'has_location': lat is not None and lng is not None,
+    })
 
 
 # ── CRUD ─────────────────────────────────────────────────────────────────────
@@ -539,3 +627,101 @@ def place_delete(request, pk):
         messages.success(request, "Joy o'chirildi.")
         return redirect('places:place_list')
     return render(request, 'places/place_confirm_delete.html', {'place': place})
+
+
+# ── Menyu boshqaruvi (joy egasi / admin) ─────────────────────────────
+def _own_place(request, pk):
+    """Joy — faqat egasi yoki admin uchun; aks holda None."""
+    place = get_object_or_404(Place, pk=pk)
+    if request.user.is_staff or place.owner_id == request.user.id:
+        return place
+    return None
+
+
+@login_required(login_url='/login/')
+def place_menu(request, pk):
+    """Menyu boshqaruvi sahifasi — taom qo'shish va ro'yxat."""
+    place = _own_place(request, pk)
+    if place is None:
+        messages.error(request, "Bu joy menyusini boshqarish huquqingiz yo'q.")
+        return redirect('places:place_detail', pk=pk)
+    return render(request, 'places/place_menu.html', {
+        'place': place,
+        'menu_sections': grouped_menu(place, include_hidden=True),
+        'sections': MENU_SECTION_CHOICES,
+    })
+
+
+@login_required(login_url='/login/')
+@require_POST
+def menu_item_add(request, pk):
+    place = _own_place(request, pk)
+    if place is None:
+        messages.error(request, "Ruxsat yo'q.")
+        return redirect('places:place_detail', pk=pk)
+
+    name = request.POST.get('name', '').strip()
+    try:
+        price = int(str(request.POST.get('price', '')).replace(' ', ''))
+    except ValueError:
+        price = -1
+    if not name or price < 0:
+        messages.error(request, "Taom nomi va narxi to'g'ri kiritilishi shart.")
+        return redirect('places:place_menu', pk=pk)
+
+    section = request.POST.get('section', 'main')
+    if section not in dict(MENU_SECTION_CHOICES):
+        section = 'main'
+
+    item = PlaceMenuItem(
+        place=place, name=name, price=price, section=section,
+        description=request.POST.get('description', '').strip())
+    image = request.FILES.get('image')
+    if image:
+        try:
+            item.image = clean_image(image)
+        except Exception as e:
+            messages.error(request, f"Rasm: {e}")
+            return redirect('places:place_menu', pk=pk)
+    item.save()
+    messages.success(request, "Taom menyuga qo'shildi. ✅")
+    return redirect('places:place_menu', pk=pk)
+
+
+@login_required(login_url='/login/')
+@require_POST
+def menu_item_delete(request, item_id):
+    item = get_object_or_404(PlaceMenuItem.objects.select_related('place'), pk=item_id)
+    if not (request.user.is_staff or item.place.owner_id == request.user.id):
+        messages.error(request, "Ruxsat yo'q.")
+        return redirect('places:place_detail', pk=item.place_id)
+    place_pk = item.place_id
+    item.delete()
+    messages.success(request, "Taom o'chirildi.")
+    return redirect('places:place_menu', pk=place_pk)
+
+
+# ── Xarita qidiruvi (AJAX) ──────────────────────────────────────
+def search_api(request):
+    """Joy qidiruvi — nom, manzil, toifa; kirill/lotin va xato yozuvga chidamli.
+
+    Ilgari xarita mijoz tomonida `name.includes()` bilan qidirardi: manzilni
+    ko'rmasdi, kirillcha yozuvni topmasdi, bitta harf xato bo'lsa bo'sh
+    qaytarardi. Endi bitta manba — `places.search`.
+    """
+    q = request.GET.get('q', '').strip()
+    if not q:
+        return JsonResponse({'results': [], 'query': q})
+
+    qs = Place.objects.filter(is_active=True)
+    cat = request.GET.get('category', '').strip()
+    if cat:
+        qs = qs.filter(category=cat)
+
+    rows = search_places(qs, q, limit=40)
+    return JsonResponse({'query': q, 'results': [{
+        'id': p.id, 'name': p.localized_name, 'category': p.category,
+        'cat': p.get_category_display(), 'icon': p.icon, 'color': p.color,
+        'lat': p.latitude, 'lng': p.longitude, 'address': p.address,
+        'url': reverse('places:place_detail', args=[p.id]),
+    } for p, _ in rows]})

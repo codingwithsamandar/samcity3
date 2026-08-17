@@ -14,6 +14,10 @@ Dasturchi tool yozadi, lekin uni «xavfsiz» qilishni UNUTA olmaydi — chunki:
 Bo'lim-tool modeli: LLM ga 90 ta emas, 12 ta tool beriladi. Har bo'lim bitta
 funksiya, ichida `action` parametri (enum bilan cheklangan). Bu modelni
 adashtirmaydi va prompt keshini barqaror saqlaydi.
+
+Sxema hajmi: `tools_for()` so'rovga qarab faqat kerakli bo'limlarni beradi
+(to'liq sxema ~3200 token va u HAR BIR LLM chaqiruvida ketadi). Tanlash
+noaniq bo'lsa — to'liq sxema qaytadi, ya'ni agent hech qachon toolsiz qolmaydi.
 """
 
 from dataclasses import dataclass, field
@@ -219,81 +223,206 @@ def param_parts(spec_tuple):
     return ptype, required, desc, enum
 
 
-def build_llm_tools():
-    """12 ta bo'lim uchun JSON Schema (OpenAI `tools`) qaytaradi.
+# `action` tavsifining sarlavhasi. Belgilarni bir marta tushuntiramiz — keyin
+# har amalda «tasdiq talab qiladi», «majburiy: ...» so'zlarini takrorlamaymiz
+# (78 ta amal × 12 token = bekorga ketgan kontekst).
+_ACTION_HEADER = ("Bajariladigan amal. Satr ko'rinishi «• amal [majburiy "
+                  "parametrlar]: vazifasi», ⚠️ = tasdiq talab qiladi:\n")
+
+
+def _section_schema(section, actions):
+    """Bitta bo'lim uchun OpenAI `tools` elementini quradi."""
+    # ⚠️ Amallar ro'yxati ATAYLAB funksiya tavsifida EMAS, `action`
+    # parametrining tavsifida. Aks holda model amallar ro'yxatini
+    # «chaqiriladigan funksiyalar» deb tushunib, `name` ga bo'lim o'rniga
+    # amal nomini yozadi (Groq buni server tomonda rad etadi:
+    # "attempted to call tool 'find_nearest' which was not in request.tools").
+    action_lines, seen_params = [], {}
+    for aname in sorted(actions.keys()):
+        spec = actions[aname]
+        tag = '⚠️' if spec.mutating else ''
+        req = [p for p, s in spec.params.items() if param_parts(s)[1]]
+        req_txt = f" [{', '.join(req)}]" if req else ''
+        action_lines.append(f"• {aname}{tag}{req_txt}: {spec.description}")
+
+        for pname, pspec in spec.params.items():
+            ptype, _required, pdesc, penum = param_parts(pspec)
+            # Bir nomdagi parametr turli amallarda uchrasa — birlashtiramiz.
+            # Tavsif bir xil bo'lsa MATN TAKRORLANMAYDI, faqat amal nomi
+            # qo'shiladi: «[post_job, post_resume] aloqa telefoni».
+            if pname not in seen_params:
+                seen_params[pname] = {
+                    'type': _TYPE_TO_JSON.get(ptype, 'string'),
+                    # tavsif → uni talab qiladigan amallar (tartib barqaror)
+                    '_descs': {pdesc: [aname]},
+                    # Sxemadagi enum — prozadagi ko'rsatmadan ancha kuchli:
+                    # modelning o'zbekcha so'z («dorixona») uzatishini to'xtatadi.
+                    '_enum': list(penum or []),
+                }
+            else:
+                prop = seen_params[pname]
+                prop['_descs'].setdefault(pdesc, []).append(aname)
+                if penum:
+                    prop['_enum'] = sorted(set(prop['_enum']) | set(penum))
+
+    properties = {
+        'action': {
+            'type': 'string',
+            'enum': sorted(actions.keys()),
+            'description': _ACTION_HEADER + "\n".join(action_lines),
+        }
+    }
+    for pname, prop in seen_params.items():
+        out = {'type': prop['type'],
+               'description': "; ".join(f"[{', '.join(anames)}] {desc}"
+                                        for desc, anames in prop['_descs'].items())}
+        if prop['_enum']:
+            out['enum'] = prop['_enum']
+        properties[pname] = out
+
+    return {
+        'type': 'function',
+        'function': {
+            'name': section,
+            # Qisqa va aniq — model «bu funksiyaning nomi» deb adashmasin.
+            'description': (
+                f"{SECTION_DESC.get(section, section)}\n"
+                f"FUNKSIYA NOMI HAR DOIM '{section}' — amal `action` parametrida."),
+            'parameters': {
+                'type': 'object',
+                'properties': properties,
+                'required': ['action'],
+                'additionalProperties': False,
+            },
+        },
+    }
+
+
+def build_llm_tools(sections=None):
+    """Bo'limlar uchun JSON Schema (OpenAI `tools`) qaytaradi.
 
     Har bo'lim bitta funksiya. `action` — shu bo'limdagi amallar `enum`i (majburiy).
     Qolgan parametrlar birlashtiriladi; qaysi amalga qaysi kerakligi tavsifda
     ko'rsatiladi (JSON Schema amal bo'yicha shartli majburiylikni qo'llab-quvvatlamaydi).
 
-    ⚠️ Bu ro'yxat STATIK — har so'rovda bir xil. Shu tufayli prompt keshiga tushadi.
+    `sections=None` — HAMMASI (eski xatti-harakat). Ro'yxat berilsa faqat o'shalar
+    qaytadi (`select_sections` ni qarang): butun sxema ~3 ming token, bitta so'rovga
+    esa odatda 2-3 bo'lim yetadi.
+
+    ⚠️ Tartib HAR DOIM `SECTIONS` bo'yicha — bir xil to'plam bir xil JSON beradi,
+    ya'ni prompt keshi bo'lim to'plami darajasida saqlanadi.
     """
+    allow = None if sections is None else set(sections)
     tools = []
     for section in SECTIONS:
+        if allow is not None and section not in allow:
+            continue
         actions = {k[1]: v for k, v in _TOOLS.items() if k[0] == section}
         if not actions:
             continue
-
-        # ⚠️ Amallar ro'yxati ATAYLAB funksiya tavsifida EMAS, `action`
-        # parametrining tavsifida. Aks holda model amallar ro'yxatini
-        # «chaqiriladigan funksiyalar» deb tushunib, `name` ga bo'lim o'rniga
-        # amal nomini yozadi (Groq buni server tomonda rad etadi:
-        # "attempted to call tool 'find_nearest' which was not in request.tools").
-        action_lines, seen_params = [], {}
-        for aname in sorted(actions.keys()):
-            spec = actions[aname]
-            tag = ' (⚠️ tasdiq talab qiladi)' if spec.mutating else ''
-            req = [p for p, s in spec.params.items() if param_parts(s)[1]]
-            req_txt = f" — majburiy: {', '.join(req)}" if req else ''
-            action_lines.append(f"• {aname}{tag}: {spec.description}{req_txt}")
-
-            for pname, pspec in spec.params.items():
-                ptype, _required, pdesc, penum = param_parts(pspec)
-                # Bir nomdagi parametr turli amallarda uchrasa — birlashtiramiz.
-                if pname not in seen_params:
-                    prop = {
-                        'type': _TYPE_TO_JSON.get(ptype, 'string'),
-                        'description': f"[{aname}] {pdesc}",
-                    }
-                    if penum:
-                        # Sxemadagi enum — prozadagi ko'rsatmadan ancha kuchli:
-                        # modelning o'zbekcha so'z («dorixona») uzatishini to'xtatadi.
-                        prop['enum'] = penum
-                    seen_params[pname] = prop
-                else:
-                    seen_params[pname]['description'] += f"; [{aname}] {pdesc}"
-                    if penum:
-                        merged = seen_params[pname].get('enum', []) + list(penum)
-                        seen_params[pname]['enum'] = sorted(set(merged))
-
-        properties = {
-            'action': {
-                'type': 'string',
-                'enum': sorted(actions.keys()),
-                'description': ("Bajariladigan amal. Faqat quyidagilardan biri:\n"
-                                + "\n".join(action_lines)),
-            }
-        }
-        properties.update(seen_params)
-
-        tools.append({
-            'type': 'function',
-            'function': {
-                'name': section,
-                # Qisqa va aniq — model «bu funksiyaning nomi» deb adashmasin.
-                'description': (
-                    f"{SECTION_DESC.get(section, section)}\n"
-                    f"FUNKSIYA NOMI HAR DOIM '{section}'. Bajariladigan amal "
-                    f"funksiya nomi EMAS — u `action` parametrida beriladi."),
-                'parameters': {
-                    'type': 'object',
-                    'properties': properties,
-                    'required': ['action'],
-                    'additionalProperties': False,
-                },
-            },
-        })
+        tools.append(_section_schema(section, actions))
     return tools
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  BO'LIM TANLASH — so'rovga qarab faqat keraklisini yuborish
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Nega: butun sxema ~3 ming token, va u HAR BIR LLM chaqiruvida ketadi (agent
+# halqasi 5 qadamgacha). Bitta so'rovga esa deyarli har doim 1-2 bo'lim yetadi
+# («sartaroshxona bron qil» → booking). Tanlash EVRISTIK, shuning uchun ikki
+# xavfsizlik qoidasi bor:
+#
+#   1. HECH NARSA topilmasa — HAMMA bo'lim yuboriladi. Kam tokenli, lekin
+#      kerakli tool'siz qolgan agent — yomonroq: u tool o'rniga TO'QIB javob
+#      berishga o'tadi. Shubhada har doim ko'proq tomonga og'amiz.
+#   2. places ↔ delivery HAR DOIM birga ketadi. Ular orasidagi chegara
+#      («qayerda?» ↔ «sotib olaman») modelning eng ko'p adashadigan joyi;
+#      bittasini olib qo'yish adashishni tuzatmaydi — yashiradi.
+#
+# O'zaklar (qo'shimchasiz) yoziladi: «dorixona/dorixonani/dorixonaga» → 'dorixon'.
+_SECTION_HINTS = {
+    'places': ('qayer', 'manzil', 'yaqin', 'dorixon', 'aptek', 'shifoxon',
+               'kasalxon', 'poliklinik', 'bankomat', 'maktab', "bog'ch", 'bogch',
+               'pochta', 'hokimiy', 'idora', 'mehmonxon', 'muzey', 'yo\'l ko\'rsat',
+               'qanday bor', 'qayerda'),
+    'delivery': ('ovqat', 'yeyish', 'och qol', 'taom', 'lavash', 'somsa', 'pitsa',
+                 'burger', 'kabob', 'shashlik', "do'kon", 'dokon', 'magazin',
+                 'mahsulot', 'savat', 'buyurtma', 'yetkaz', 'dostavka',
+                 'sotib ol', 'olib kel', 'non ', 'suv ', 'sut ', 'meva'),
+    'taxi': ('taksi', 'taxi', 'haydovchi', 'marshrut', 'safar', 'olib bor'),
+    'booking': ('bron', 'band qil', 'sartaroshxon', 'soch ol', 'soch qir',
+                'salon', "go'zallik", 'gozallik', 'restoran', 'kafe', 'stol',
+                "to'yxon", 'toyxon', 'zal ', 'navbat', 'usta', 'yozil'),
+    'ads': ("e'lon", 'elon', 'sotaman', 'sotiladi', 'olx', 'kvartira', 'ijara',
+            'velosiped', 'avtomobil', 'mashina sot', 'arzon'),
+    'jobs': ('ish qidir', 'ish top', 'ish bor', 'ishga', 'vakansiy', 'rezyume',
+             'rezume', 'xodim', 'ishchi kerak', 'maosh', 'oylik', 'lavozim',
+             'hh.uz', 'kasb'),
+    'community': ('mahalla', 'rais', 'murojaat', 'shikoyat', "so'rovnoma",
+                  'sorovnoma', 'ovoz ber', "yig'ilish", 'svet', 'chiroq',
+                  'tozalik', 'obodonlash', 'gaz '),
+    'account': ('profil', 'ismim', 'mening ism', 'buyurtmalarim', 'bronlarim',
+                "e'lonlarim", 'elonlarim', 'sozlama', 'hisobim', 'raqamim',
+                'safarlarim'),
+}
+
+# Chegarasi eng sirg'aluvchan juftlik — bittasi tanlansa ikkinchisi ham ketadi.
+_COMPANIONS = {'places': ('delivery',), 'delivery': ('places',)}
+
+
+def _normalize(text):
+    """Kalit so'z qidirish uchun matnni bir ko'rinishga keltiradi."""
+    s = (text or '').lower()
+    for ch in ('ʻ', 'ʼ', '‘', '’', '`', '´'):
+        s = s.replace(ch, "'")
+    return ' ' + ' '.join(s.split()) + ' '
+
+
+def select_sections(message, task=None, history=None):
+    """So'rovga tegishli bo'lim nomlarini qaytaradi (`build_llm_tools` uchun).
+
+    Topa olmasa — HAMMASI (`SECTIONS`). Ya'ni bu funksiya faqat ARZONLASHTIRADI,
+    agentning imkoniyatini kamaytirmaydi: noaniq holatda eski (to'liq) xatti-
+    harakat qaytadi.
+
+    task — faol vazifa: uning `goal`i bo'lim nomi (`selection.create` shunday
+    yozadi), demak yarim qolgan oqim davom etsin («ha», «birinchisini» kabi
+    kalit so'zsiz javoblarda YAGONA ishonchli ishora shu).
+    """
+    text = _normalize(message)
+    # Oxirgi 2 navbat ham qo'shiladi: «ikkinchisini» degan javobda mavzu
+    # faqat oldingi gapda qoladi.
+    for h in (history or [])[-2:]:
+        if isinstance(h, dict) and h.get('content'):
+            text += _normalize(h['content'])
+
+    chosen = {s for s, hints in _SECTION_HINTS.items()
+              if any(h in text for h in hints)}
+
+    goal = getattr(task, 'goal', '') or ''
+    if goal in SECTIONS:
+        chosen.add(goal)
+
+    if not chosen:
+        return list(SECTIONS)
+
+    for s in list(chosen):
+        chosen.update(_COMPANIONS.get(s, ()))
+    # Tartib har doim SECTIONS bo'yicha — bir xil to'plam bir xil sxema (kesh).
+    return [s for s in SECTIONS if s in chosen]
+
+
+def tools_for(message, task=None, history=None):
+    """So'rovga mos LLM tool sxemasi. Agent shuni chaqiradi.
+
+    Tanlangan bo'limlarda bitta ham ro'yxatdan o'tgan amal bo'lmasa (masalan
+    `taxi` topildi, lekin TAXI_ENABLED=False — modul umuman import qilinmagan),
+    to'liq sxemaga qaytamiz: LLM ga BO'SH tool ro'yxati berish eng yomon variant
+    — model tool o'rniga javobni to'qishga o'tadi.
+    """
+    tools = build_llm_tools(select_sections(message, task=task, history=history))
+    return tools or build_llm_tools()
 
 
 # ═══════════════════════════════════════════════════════════════════════════

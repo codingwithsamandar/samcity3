@@ -113,14 +113,17 @@ class ProfileScreen extends ConsumerWidget {
                         onTap: () => context.push('/my-venues'),
                       ),
                       const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.event_available,
-                            color: Color(0xFF34D399)),
-                        title: const Text('Bronlarni boshqarish'),
-                        subtitle: const Text('Joy egasi: kelgan bronlar'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('/venue-manage'),
-                      ),
+                      // Faqat joy egasiga ko'rinadi — egasi bo'lmaganga "kelgan
+                      // bronlar" boshqaruvi bo'sh va chalkash edi.
+                      if (user.isVenueOwner)
+                        ListTile(
+                          leading: const Icon(Icons.event_available,
+                              color: Color(0xFF34D399)),
+                          title: const Text('Bronlarni boshqarish'),
+                          subtitle: const Text('Joy egasi: kelgan bronlar'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/venue-manage'),
+                        ),
                       // Taksi arxivlangan — kTaxiEnabled=true bo'lsa qaytadi.
                       if (kTaxiEnabled) ...[
                         const Divider(height: 1),
@@ -146,9 +149,9 @@ class ProfileScreen extends ConsumerWidget {
                         ListTile(
                           leading: const Icon(Icons.local_taxi,
                               color: Color(0xFFCAA23A)),
-                          title: const Text('Haydovchi paneli'),
+                          title: const Text('Taksist paneli'),
                           subtitle:
-                              const Text('Taksist: marshrut va narxlaringiz'),
+                              const Text('Marshrut va narxlaringiz'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/taxist-panel'),
                         ),

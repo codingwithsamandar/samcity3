@@ -15,15 +15,31 @@
   @media (max-width: 820px) { #map { height: 70vh; min-height: 440px; } }
 
   /* Floating glass sidebar */
-  .map-side { position: absolute; top: 16px; left: 16px; width: 300px; max-width: calc(100% - 32px);
-    z-index: 500; border-radius: var(--radius); padding: 1.1rem; max-height: calc(80vh - 32px); overflow: auto;
+  .map-side { position: absolute; top: 74px; left: 16px; width: 300px; max-width: calc(100% - 32px);
+    z-index: 20; border-radius: var(--radius); padding: 1.1rem; max-height: calc(80vh - 90px); overflow: auto;
     background: rgba(255,255,255,.82); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
     border: 1px solid rgba(255,255,255,.7); box-shadow: var(--shadow-xl); }
+  [data-theme="dark"] .map-side { background: rgba(30,41,59,.88); border-color: rgba(71,85,105,.75); }
+  [data-theme="dark"] .mahalla-label span { background: rgba(30,41,59,.9); border-color: rgba(71,85,105,.8); color: var(--text); }
   .map-side h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); margin: .25rem 0 .7rem; }
   .map-search { display: flex; align-items: center; gap: .5rem; background: var(--surface); border: 1px solid var(--border2);
     border-radius: 100px; padding: .55rem .9rem; margin-bottom: 1rem; box-shadow: var(--shadow-xs); }
   .map-search .ic { color: var(--text3); flex: none; }
   .map-search input { border: none; outline: none; font-family: inherit; font-size: .9rem; width: 100%; background: transparent; color: var(--text); }
+
+  /* Ko'zga tashlanadigan qidiruv — xarita ustida, tepa-markazda (yon paneldan
+     alohida). Avval kichkina bo'lib yon panel burchagida yashiringan edi. */
+  /* Eni yon panel (.map-side) bilan BIR XIL — ikkalasi chap chetda ustma-ust
+     turadi, turli kenglik bo'lsa qadama bo'lib ko'rinadi. */
+  .map-searchbar { position: absolute; top: 16px; left: 16px;
+    z-index: 30; width: 300px; max-width: calc(100% - 32px);
+    display: flex; align-items: center; gap: .6rem;
+    background: var(--surface); border: 1px solid var(--border2); border-radius: 100px;
+    padding: .7rem 1.1rem; box-shadow: var(--shadow-xl); }
+  .map-searchbar .ic { color: var(--accent); flex: none; width: 20px; height: 20px; }
+  .map-searchbar input { border: none; outline: none; font-family: inherit; font-size: 1rem;
+    width: 100%; background: transparent; color: var(--text); }
+  .map-searchbar input::placeholder { color: var(--text3); }
   .cat-btn { display: flex; align-items: center; gap: .6rem; width: 100%; text-align: left; background: transparent; border: 1px solid transparent;
     color: var(--text2); border-radius: 11px; padding: .55rem .7rem; font-size: .88rem; cursor: pointer; margin-bottom: .2rem; font-family: inherit; font-weight: 550; transition: all .14s;
     min-height: 44px; /* tap target */ }
@@ -32,9 +48,47 @@
   .cat-btn .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(0,0,0,.04); }
 
   /* Floating controls */
-  .map-controls { position: absolute; top: 16px; right: 16px; z-index: 500; display: flex; flex-direction: column; gap: .5rem; }
+  .map-controls { position: absolute; top: 16px; right: 16px; z-index: 20; display: flex; flex-direction: column; gap: .5rem; }
   .map-controls .btn { box-shadow: var(--shadow-lg); }
-  .map-fab { position: absolute; bottom: 18px; right: 16px; z-index: 500; }
+  /* Zoom tugmalari standart holda chap-yuqorida turib qidiruv paneli bilan
+     to'qnashardi — o'ng tarafga, boshqaruv tugmalari tagiga o'tkazildi. */
+  #map .leaflet-top.leaflet-left { left: auto; right: 0; top: 92px; }
+  #map .leaflet-top.leaflet-left .leaflet-control { margin-left: 0; margin-right: 16px; }
+  /* Leaflet standart boshqaruvlari oq fon + och kulrang chegara bilan keladi —
+     qorong'i xarita ustida oq quti bo'lib turardi. Sahifa uslubiga moslaymiz. */
+  #map .leaflet-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,.28);
+    /* Leaflet ba'zi qoidalarni !important bilan beradi — background-clip
+       bo'lmasa chekkalarda oq chiziq qolib ketadi. */
+    background-clip: padding-box;
+  }
+  #map .leaflet-bar a,
+  #map .leaflet-bar a:link,
+  #map .leaflet-bar a:visited {
+    background: var(--surface); color: var(--text);
+    width: 38px; height: 38px; line-height: 38px;
+    font-size: 19px; font-weight: 700;
+    border: none; border-bottom: 1px solid var(--border);
+    text-align: center; text-decoration: none;
+  }
+  #map .leaflet-bar a:last-child { border-bottom: none; }
+  #map .leaflet-bar a:hover,
+  #map .leaflet-bar a:focus { background: var(--surface2); color: var(--accent); }
+  #map .leaflet-bar a.leaflet-disabled { background: var(--surface); color: var(--text3); opacity: .5; }
+  /* To'liq ekran tugmasi — u `a.leaflet-bar` (bar ICHIDA emas, o'zi bar),
+     shuning uchun yuqoridagi `.leaflet-bar a` qoidalari unga tegmaydi. */
+  #map a.sam-fs-btn,
+  #map a.sam-fs-btn:link,
+  #map a.sam-fs-btn:visited {
+    display: block; width: 38px; height: 38px; line-height: 38px;
+    background: var(--surface); color: var(--text);
+    font-size: 17px; text-align: center; text-decoration: none;
+    margin-bottom: .5rem;
+  }
+  #map a.sam-fs-btn:hover { background: var(--surface2); color: var(--accent); }
+  .map-fab { position: absolute; bottom: 18px; right: 16px; z-index: 20; }
 
   /* Premium Leaflet popups */
   .leaflet-popup-content-wrapper { border-radius: 16px !important; box-shadow: var(--shadow-xl) !important; border: 1px solid var(--border); padding: 2px; }
@@ -49,8 +103,9 @@
 
   /* Mobile: sidebar stacks ABOVE map */
   @media (max-width: 560px) {
-    /* map-shell becomes a flex column so map-side goes on top */
-    .map-shell { display: flex; flex-direction: column; overflow: visible; border-radius: var(--radius); }
+    /* map-shell becomes a flex column so search + sidebar go on top */
+    .map-shell { display: flex; flex-direction: column; overflow: visible; border-radius: var(--radius); gap: .5rem; }
+    .map-searchbar { position: static; transform: none; width: 100%; left: auto; }
     .map-side { position: static; width: 100%; max-width: none; max-height: 55vh; overflow-y: auto;
       border-radius: var(--radius); margin-bottom: 0; }
     #map { height: 55vh; min-height: 320px; border-radius: 0 0 var(--radius) var(--radius); }
@@ -81,11 +136,11 @@
   </div>
 
   <div class="map-shell">
+    <div class="map-searchbar">
+      <svg class="ic"><use href="#i-search"/></svg>
+      <input type="text" id="placeSearch" placeholder="{% trans "Joy nomini qidiring..." %}">
+    </div>
     <div class="map-side">
-      <div class="map-search">
-        <svg class="ic"><use href="#i-search"/></svg>
-        <input type="text" id="placeSearch" placeholder="{% trans "Joy nomini qidiring..." %}">
-      </div>
       <h3>{% trans "Toifalar" %}</h3>
       <button class="cat-btn on" data-cat="" onclick="filterCat(this)"><span class="dot" style="background:var(--gold)"></span> {% trans "Barchasi" %}</button>
       {% for key, label in categories %}
@@ -130,6 +185,8 @@ window.addEventListener('error', function(e){ if(!map){ mapErr('JS xato: ' + (e.
 if(window.SamMap){document.querySelectorAll('.cat-btn .dot[data-c]').forEach(d=>{d.style.background=SamMap.colorFor(d.dataset.c);});}
 
 let map=null, layer=null, ALL=[], meMarker=null, curCat='{{ active_cat }}', curSearch='';
+// null = qidiruv yo'q; massiv = server qaytargan natija (pastda to'ldiriladi)
+var SEARCH_HITS = null;
 if (typeof L === 'undefined' || typeof window.SamMap === 'undefined') {
   var why = [];
   if (typeof L === 'undefined') why.push("Leaflet (L) yuklanmadi — CDN/internet bloklangan bo'lishi mumkin");
@@ -137,7 +194,7 @@ if (typeof L === 'undefined' || typeof window.SamMap === 'undefined') {
   mapErr(why.join('. '));
 } else {
   try {
-    map = SamMap.init('map', { center: [{{ center_lat|unlocalize }}, {{ center_lng|unlocalize }}], zoomLevel: 13 });
+    map = SamMap.init('map', { center: [{{ center_lat|unlocalize }}, {{ center_lng|unlocalize }}], zoomLevel: 11 });
     layer = SamMap.cluster(map);
   } catch (err) {
     map = null;
@@ -158,20 +215,68 @@ function render(cat){
   if(!map || !layer) return;
   curCat = (typeof cat !== 'undefined') ? cat : curCat;
   layer.clearLayers();
-  let items = curCat ? ALL.filter(p=>p.category===curCat) : ALL;
-  if(curSearch){ items = items.filter(p => (p.name||'').toLowerCase().includes(curSearch)); }
+  // Qidiruv faol bo'lsa — natija SERVERDAN keladi (places:search_api):
+  // transliteratsiya (kirill/lotin), manzil va toifa bo'yicha, xato yozuvga
+  // chidamli. Mijozdagi eski `name.includes()` bularning hech birini
+  // qila olmasdi.
+  let items = SEARCH_HITS !== null
+    ? SEARCH_HITS
+    : (curCat ? ALL.filter(p=>p.category===curCat) : ALL);
   const pts=[];
-  items.forEach(p=>{ SamMap.placeMarker(p).addTo(layer); pts.push([p.lat,p.lng]); });
-  if(pts.length){try{map.fitBounds(pts,{padding:[60,60],maxZoom:15});}catch(e){}}
+  // Marker HAMMASI chiziladi, lekin fitBounds uchun faqat xarita chegarasidagi
+  // nuqtalar hisobga olinadi: bazadagi bitta xato koordinata (masalan 41,65 —
+  // tumandan ~100km narida) butun xaritani eng uzoq masshtabga tortib,
+  // ko'cha ham, marker ham ko'rinmaydigan holga keltirardi.
+  const lim = map.options.maxBounds;
+  items.forEach(p=>{
+    SamMap.placeMarker(p).addTo(layer);
+    if(!lim || lim.contains([p.lat,p.lng])) pts.push([p.lat,p.lng]);
+  });
+  if(pts.length){try{map.fitBounds(pts,{padding:[60,60],maxZoom:11});}catch(e){}}
 }
 function filterCat(btn){
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  render(btn.dataset.cat||'');
+  curCat = btn.dataset.cat || '';
+  // Qidiruv ochiq bo'lsa toifa filtri server so'rovida hisobga olinadi.
+  const q = document.getElementById('placeSearch').value.trim();
+  if(q){ runSearch(q); } else { render(curCat); }
 }
+var searchTimer = null, searchSeq = 0;
+var searchUrl = "{% url 'places:search_api' %}";
+
+function runSearch(q){
+  if(!q){ SEARCH_HITS = null; setSearchNote(''); render(); return; }
+  const seq = ++searchSeq;
+  const url = searchUrl + '?q=' + encodeURIComponent(q) + (curCat ? '&category=' + encodeURIComponent(curCat) : '');
+  fetch(url).then(r=>r.json()).then(d=>{
+    // Kech kelgan javob yangisini bosib ketmasin.
+    if(seq !== searchSeq) return;
+    SEARCH_HITS = d.results || [];
+    setSearchNote(SEARCH_HITS.length
+      ? SEARCH_HITS.length + ' ta natija'
+      : 'Hech narsa topilmadi');
+    render();
+  }).catch(()=>{ setSearchNote('Qidiruvda xatolik'); });
+}
+
+function setSearchNote(text){
+  let el = document.getElementById('searchNote');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'searchNote';
+    el.style.cssText = 'font-size:.78rem;color:var(--text3);white-space:nowrap;';
+    document.querySelector('.map-searchbar').appendChild(el);
+  }
+  el.textContent = text;
+}
+
 document.getElementById('placeSearch').addEventListener('input', function(){
-  curSearch = this.value.trim().toLowerCase();
-  render();
+  const q = this.value.trim();
+  curSearch = q.toLowerCase();
+  clearTimeout(searchTimer);
+  // 250ms — har bosilgan harfga so'rov yubormaslik uchun.
+  searchTimer = setTimeout(function(){ runSearch(q); }, 250);
 });
 if(map){
   fetch("{% url 'places:geojson' %}").then(r=>r.json()).then(d=>{ALL=d.places;render('{{ active_cat }}');

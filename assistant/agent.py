@@ -47,8 +47,6 @@ def run(message, ctx, history=None):
     if not ctx.is_authenticated:
         return None
 
-    tools = registry.build_llm_tools()
-
     # Faol vazifa — unda ekrandagi oxirgi ro'yxat (last_ui_ref) saqlanadi.
     # Chaqiruvchi bog'lamagan bo'lsa o'zimiz topamiz: busiz model oldingi
     # navbatda ko'rsatilgan store_id/product_id larni bila olmaydi.
@@ -60,6 +58,11 @@ def run(message, ctx, history=None):
             ctx.task = task
         except Exception:
             task = None
+
+    # Sxemadan faqat shu so'rovga tegishli bo'limlar. Noaniq bo'lsa
+    # `select_sections` HAMMASINI qaytaradi — ya'ni imkoniyat kamaymaydi,
+    # faqat odatdagi so'rov arzonlashadi (~3000 → ~500-900 token).
+    tools = registry.tools_for(message, task=task, history=history)
 
     messages = prompts.build_messages(message, ctx=ctx, task=task,
                                       history=history, voice=ctx.voice)

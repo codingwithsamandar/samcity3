@@ -286,6 +286,8 @@ class OrderSerializer(serializers.ModelSerializer):
     # Pickup buyurtmalari uchun holat nomi boshqacha (olib ketish atamalari).
     progress_label = serializers.CharField(read_only=True)
     can_confirm_pickup = serializers.BooleanField(source='can_customer_confirm_pickup', read_only=True)
+    # Kuryer eshik oldida qancha naqd olishini ilova hisoblab o'tirmasin.
+    cash_to_collect = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Order
@@ -293,7 +295,8 @@ class OrderSerializer(serializers.ModelSerializer):
                   'subtotal', 'delivery_fee', 'total', 'status', 'status_display',
                   'progress_label', 'fulfillment_type', 'pickup_at',
                   'ready_for_pickup_at', 'customer_confirmed_at', 'can_confirm_pickup',
-                  'payment_method', 'payment_status', 'card_last4', 'card_brand',
+                  'payment_method', 'payment_status', 'cash_to_collect',
+                  'card_last4', 'card_brand',
                   'items', 'created_at')
 
 

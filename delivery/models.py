@@ -573,7 +573,10 @@ class Order(models.Model):
         ('preparing', 'Tayyorlanmoqda'),
         ('ready', 'Tayyor'),
         ('assigned', 'Haydovchi biriktirildi'),
-        ('picked_up', 'Olib ketildi'),
+        # «Olib ketildi» edi — mijoz uchun chalkash: u o'zi olib ketganday
+        # tuyulardi. Bu holat endi har bir yetkazish buyurtmasida ko'rinadi
+        # (kuryer uni chetlab o'tolmaydi), shuning uchun nomi aniqlashtirildi.
+        ('picked_up', "Kuryer do'kondan oldi"),
         ('on_the_way', "Yo'lda"),
         ('delivered', 'Yetkazildi'),
         ('cancelled', 'Bekor qilingan'),
@@ -652,6 +655,18 @@ class Order(models.Model):
     def is_pickup(self):
         return self.fulfillment_type == 'pickup'
 
+    @property
+    def cash_to_collect(self):
+        """Kuryer mijozdan olishi kerak bo'lgan naqd summa (0 = to'langan).
+
+        Qoida bitta joyda tursin: kuryer paneli ham, mobil ilova ham shu
+        xossaga tayanadi — aks holda biri "naqd", ikkinchisi "to'langan"
+        deb ko'rsatishi mumkin edi.
+        """
+        if self.payment_method == 'cash' and self.payment_status != 'paid':
+            return int(self.total)
+        return 0
+
     def progress_label(self):
         """Holatning inson uchun nomi — pickup buyurtmalar uchun boshqacha
         (yetkazib berish emas, olib ketish atamalari)."""
@@ -689,8 +704,10 @@ class OrderItem(models.Model):
 # ── DELIVERY DRIVER (yetkazib beruvchi haydovchi) ───────────────────────────────
 
 class DeliveryDriver(models.Model):
+    # 'foot' (piyoda) OLIB TASHLANDI: yetkazib berish uchun transport shart —
+    # piyoda kuryer masofani qoplay olmaydi va taxminiy vaqt real bo'lmaydi.
+    # Mavjud piyoda kuryerlar migratsiyada velosipedga o'tkazildi.
     VEHICLE_CHOICES = [
-        ('foot', '🚶 Piyoda'),
         ('bike', '🚲 Velosiped'),
         ('moto', '🏍️ Mototsikl'),
         ('car', '🚗 Avtomobil'),
@@ -705,6 +722,30 @@ class DeliveryDriver(models.Model):
     vehicle_number = models.CharField(max_length=30, blank=True, verbose_name='Davlat raqami')
     is_available = models.BooleanField(default=True, verbose_name='Bo\'sh (buyurtma qabul qiladi)')
     is_active = models.BooleanField(default=True, verbose_name='Faol')
+
+    # ── Admin tasdig'i ───────────────────────────────────────────────────
+    # Ilgari ariza yuborilishi bilan odam kuryerga aylanardi va darhol
+    # mijozlarning manzili/telefonini ko'ra olardi. Endi admin tasdiqlamaguncha
+    # `pending` holatida turadi va hech qanday buyurtma ko'rmaydi.
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, '⏳ Tasdiq kutilmoqda'),
+        (STATUS_APPROVED, '✅ Tasdiqlangan'),
+        (STATUS_REJECTED, '❌ Rad etilgan'),
+    ]
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING,
+        db_index=True, verbose_name='Tasdiq holati')
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name='Ko\'rib chiqilgan vaqt')
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reviewed_drivers', verbose_name='Kim ko\'rib chiqdi')
+    reject_reason = models.CharField(
+        max_length=300, blank=True, verbose_name='Rad etish sababi',
+        help_text='Rad etilsa arizachiga shu matn ko\'rsatiladi.')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -715,6 +756,41 @@ class DeliveryDriver(models.Model):
 
     def __str__(self):
         return f'{self.full_name} ({self.get_vehicle_type_display()})'
+
+    @property
+    def is_approved(self):
+        return self.status == self.STATUS_APPROVED
+
+    @property
+    def can_work(self):
+        """Buyurtma ko'rish/olishga haqlimi: tasdiqlangan VA bloklanmagan."""
+        return self.is_approved and self.is_active
+
+    def approve(self, by=None):
+        """Admin tasdiqlaydi — shundan keyingina foydalanuvchi 'driver' roliga o'tadi."""
+        from django.utils import timezone
+        self.status = self.STATUS_APPROVED
+        self.reviewed_at = timezone.now()
+        self.reviewed_by = by
+        self.reject_reason = ''
+        self.save(update_fields=['status', 'reviewed_at', 'reviewed_by', 'reject_reason'])
+        user = self.user
+        if user.role == 'user':
+            user.role = 'driver'
+            user.save(update_fields=['role'])
+
+    def reject(self, by=None, reason=''):
+        """Admin rad etadi. Rol berilmaydi; berilgan bo'lsa qaytarib olinadi."""
+        from django.utils import timezone
+        self.status = self.STATUS_REJECTED
+        self.reviewed_at = timezone.now()
+        self.reviewed_by = by
+        self.reject_reason = (reason or '')[:300]
+        self.save(update_fields=['status', 'reviewed_at', 'reviewed_by', 'reject_reason'])
+        user = self.user
+        if user.role == 'driver':
+            user.role = 'user'
+            user.save(update_fields=['role'])
 
     @property
     def avg_rating(self):
@@ -832,8 +908,12 @@ ORDER_TRANSITIONS = {
     'accepted': {'preparing', 'cancelled'},
     'preparing': {'ready', 'cancelled'},
     'ready': {'assigned', 'cancelled'},
-    # ready = haydovchi voz kechdi; picked_up = do'kondan oldi
-    'assigned': {'picked_up', 'on_the_way', 'ready', 'cancelled'},
+    # ready = haydovchi voz kechdi; picked_up = do'kondan oldi.
+    # `on_the_way` ATAYLAB yo'q: kuryer mahsulotni do'kondan olmasdan
+    # "yo'ldaman" deb belgilay olmasligi kerak — mijoz kuryer bo'sh qo'l bilan
+    # yo'lga chiqqanini bilmay kutib qolardi. Yagona yo'l: assigned →
+    # picked_up → on_the_way.
+    'assigned': {'picked_up', 'ready', 'cancelled'},
     'picked_up': {'on_the_way', 'delivered', 'cancelled'},
     'on_the_way': {'delivered', 'cancelled'},
     'delivered': set(),

@@ -170,3 +170,100 @@ class ParamErrorUnitTests(TestCase):
         cleaned = registry.validate_params(spec, {'x': '7', 'y': 5})
         self.assertEqual(cleaned['x'], 7)
         self.assertEqual(cleaned['y'], '5')  # str ga majburlanadi
+
+
+class SectionSelectionTests(TestCase):
+    """So'rovga qarab faqat kerakli bo'limlarni yuborish (token tejash).
+
+    Asosiy shart: tanlash HECH QACHON agentni imkoniyatsiz qoldirmasin —
+    noaniqlikda to'liq sxemaga qaytadi.
+    """
+
+    def test_keyword_picks_one_section(self):
+        self.assertEqual(registry.select_sections('Sartaroshxona bron qil'),
+                         ['booking'])
+
+    def test_jobs_keywords(self):
+        self.assertEqual(registry.select_sections('Ish qidiryapman, dasturchi'),
+                         ['jobs'])
+
+    def test_places_and_delivery_always_travel_together(self):
+        """Chegarasi eng sirg'aluvchan juftlik — bittasi tanlansa ikkalasi ketadi."""
+        for msg in ('Eng yaqin dorixona qayerda?', 'Lavash yeyishni xohlayman'):
+            picked = registry.select_sections(msg)
+            self.assertIn('places', picked, msg)
+            self.assertIn('delivery', picked, msg)
+
+    def test_unknown_message_falls_back_to_all(self):
+        self.assertEqual(registry.select_sections('Salom'), list(registry.SECTIONS))
+
+    def test_active_task_keeps_its_section(self):
+        """«ha, tasdiqla» da kalit so'z yo'q — yagona ishora faol vazifa."""
+        class _Task:
+            goal = 'booking'
+        self.assertEqual(registry.select_sections('Ha, tasdiqla', task=_Task()),
+                         ['booking'])
+
+    def test_history_gives_context(self):
+        picked = registry.select_sections(
+            'ikkinchisini', history=[{'role': 'user', 'content': 'lavash topib ber'}])
+        self.assertIn('delivery', picked)
+
+    def test_order_is_stable_for_cache(self):
+        a = registry.select_sections('vakansiya va sartaroshxona')
+        b = registry.select_sections('sartaroshxona va vakansiya')
+        self.assertEqual(a, b)
+        self.assertEqual(a, [s for s in registry.SECTIONS if s in a])
+
+    def test_build_llm_tools_filters(self):
+        names = {t['function']['name']
+                 for t in registry.build_llm_tools(['booking', 'jobs'])}
+        self.assertEqual(names, {'booking', 'jobs'})
+
+    def test_build_llm_tools_without_arg_is_unchanged(self):
+        self.assertEqual(len(registry.build_llm_tools(None)),
+                         len(registry.build_llm_tools()))
+
+    def test_tools_for_never_returns_empty(self):
+        """Tanlangan bo'limda amal bo'lmasa (o'chirilgan modul) — to'liq sxema."""
+        self.assertTrue(registry.tools_for('Buxoroga taksi kerak'))
+        self.assertTrue(registry.tools_for('Salom'))
+
+    def test_tools_for_is_a_subset_of_full_schema(self):
+        full = {t['function']['name'] for t in registry.build_llm_tools()}
+        picked = {t['function']['name']
+                  for t in registry.tools_for('Sartaroshxona bron qil')}
+        self.assertTrue(picked.issubset(full))
+        self.assertTrue(picked)
+
+
+class SchemaCompactnessTests(TestCase):
+    """Sxema qisqartirildi — qayta shishib ketmasin (har token har chaqiruvda ketadi)."""
+
+    def _chars(self, tools):
+        import json
+        return len(json.dumps(tools, ensure_ascii=False))
+
+    def test_full_schema_stays_small(self):
+        # ~3200 token (4 belgi ≈ 1 token). Boshlang'ich holat ~4000 edi.
+        self.assertLess(self._chars(registry.build_llm_tools()), 14000)
+
+    def test_repeated_param_description_is_not_duplicated(self):
+        """Bir xil tavsif takrorlanmaydi — amal nomlari bitta qavsga yig'iladi."""
+        fn = [t['function'] for t in registry.build_llm_tools(['jobs'])][0]
+        phone = fn['parameters']['properties']['phone']['description']
+        self.assertEqual(phone.count('aloqa telefoni'), 1)
+        self.assertIn('post_job', phone)
+        self.assertIn('post_resume', phone)
+
+    def test_mutating_actions_are_still_marked(self):
+        """Qisqartirish tasdiq belgisini yo'qotmasin — bu xavfsizlik ishorasi."""
+        desc = [t['function'] for t in registry.build_llm_tools(['delivery'])][0][
+            'parameters']['properties']['action']['description']
+        self.assertIn('tasdiq talab qiladi', desc)   # sarlavhadagi izoh
+        self.assertIn('propose_order⚠️', desc)
+
+    def test_required_params_still_listed_per_action(self):
+        desc = [t['function'] for t in registry.build_llm_tools(['delivery'])][0][
+            'parameters']['properties']['action']['description']
+        self.assertIn('propose_order⚠️ [address]', desc)

@@ -32,17 +32,12 @@ CATEGORY_ENUM = sorted(engine.VALID_CATEGORIES)
 
 @tool(
     section='places', action='find_nearest',
-    description="Eng yaqin joyning MANZILINI topadi (dorixona, shifoxona, bank, "
-                "maktab, davlat idorasi). Faqat «qayerda?» savoliga javob — "
-                "bu yerda hech narsa sotib olinmaydi va buyurtma qilinmaydi. "
-                "Ovqat/mahsulot olish kerak bo'lsa delivery.find_store ishlating.",
+    description="Eng yaqin joyning MANZILINI topadi. Faqat «qayerda?» savoliga "
+                "javob — bu yerda hech narsa sotib olinmaydi va buyurtma "
+                "qilinmaydi; ovqat/mahsulot kerak bo'lsa delivery.find_store.",
     params={
-        'category': ('str', True,
-                     "joy toifasi — INGLIZCHA kalit: pharmacy=dorixona, "
-                     "hospital=shifoxona, bank=bank/bankomat, restaurant=restoran/kafe, "
-                     "wedding=to'yxona, school=maktab, kindergarten=bog'cha",
-                     CATEGORY_ENUM),
-        'limit': ('int', False, "nechta ko'rsatilsin (standart 4, eng ko'pi 10)"),
+        'category': ('str', True, "joy toifasi (inglizcha kalit)", CATEGORY_ENUM),
+        'limit': ('int', False, "nechta (standart 4, eng ko'pi 10)"),
         'open_now': ('bool', False, "faqat hozir ochiq joylar"),
     },
 )

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Kuryerlik arizasi — SamCity{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:640px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% elif 'info' in m.tags %}info{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags or 'warning' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header"><h1>Kuryerlik arizasi</h1></div>
+
+  <div class="card card-pad" style="text-align:center;padding:2.5rem 1.5rem;">
+    {% if driver.status == 'rejected' %}
+      <div style="font-size:2.6rem;margin-bottom:.6rem;">❌</div>
+      <h2 style="font-size:1.2rem;margin-bottom:.5rem;">Arizangiz rad etildi</h2>
+      {% if driver.reject_reason %}
+      <p style="color:var(--text2);max-width:440px;margin:0 auto 1rem;line-height:1.6;">{{ driver.reject_reason }}</p>
+      {% endif %}
+      <p style="color:var(--text3);font-size:.88rem;">Savollaringiz bo'lsa administratorga murojaat qiling.</p>
+    {% else %}
+      <div style="font-size:2.6rem;margin-bottom:.6rem;">⏳</div>
+      <h2 style="font-size:1.2rem;margin-bottom:.5rem;">Arizangiz ko'rib chiqilmoqda</h2>
+      <p style="color:var(--text2);max-width:460px;margin:0 auto 1.2rem;line-height:1.6;">
+        Admin ma'lumotlaringizni tekshirgach kuryer paneli ochiladi va buyurtmalarni
+        qabul qila boshlaysiz. Tasdiqlanganda sizga xabar keladi.
+      </p>
+    {% endif %}
+
+    <div style="background:var(--surface2);border-radius:12px;padding:.9rem 1.1rem;
+                text-align:left;max-width:340px;margin:0 auto;">
+      <div style="color:var(--text3);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.35rem;">Ariza ma'lumotlari</div>
+      <div style="font-weight:650;">{{ driver.full_name }}</div>
+      <div style="color:var(--text2);font-size:.88rem;">{{ driver.phone }}</div>
+      <div style="color:var(--text3);font-size:.84rem;margin-top:.2rem;">
+        {{ driver.get_vehicle_type_display }}{% if driver.vehicle_number %} · {{ driver.vehicle_number }}{% endif %}
+      </div>
+    </div>
+
+    {% if blocked %}
+    <div class="flash flash-error" style="margin-top:1.2rem;text-align:left;"><svg class="ic"><use href="#i-x"/></svg>
+      Hisobingiz bloklangan.
+    </div>
+    {% endif %}
+
+    <div style="margin-top:1.4rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'delivery:driver_profile' %}" class="btn btn-ghost btn-sm">Ma'lumotlarni tahrirlash</a>
+      <a href="{% url 'home' %}" class="btn btn-outline btn-sm">Bosh sahifa</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

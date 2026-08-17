@@ -26,7 +26,7 @@
     <p>Joylashuvingizga eng yaqin joylar va xizmatlar</p>
   </div>
 
-  {% if not groups %}
+  {% if not has_location %}
   <div class="card" style="padding:2.5rem 1.5rem;text-align:center;">
     <div class="empty-state" style="padding:0 0 1rem;">
       <div class="icon"><svg class="ic"><use href="#i-pin"/></svg></div>
@@ -46,8 +46,32 @@
     </div>
   </div>
   {% else %}
+  <form method="get" action="{% url 'places:nearby' %}" class="map-search" style="margin-bottom:1.2rem;">
+    <input type="hidden" name="lat" value="{{ lat|unlocalize }}">
+    <input type="hidden" name="lng" value="{{ lng|unlocalize }}">
+    <svg class="ic"><use href="#i-search"/></svg>
+    <input type="search" name="q" value="{{ q }}" placeholder="Nomi, manzili yoki toifasi bo'yicha qidiring…">
+    {% if q %}<a href="{% url 'places:nearby' %}?lat={{ lat|unlocalize }}&lng={{ lng|unlocalize }}" class="btn btn-ghost btn-sm" title="Tozalash"><svg class="ic"><use href="#i-x"/></svg></a>{% endif %}
+    <button class="btn btn-accent btn-sm">Qidirish</button>
+  </form>
+
   <div id="nmap"></div>
 
+  {% if q %}
+  <div class="sec-t"><svg class="ic"><use href="#i-search"/></svg> "{{ q }}" — {{ matches|length }} ta natija</div>
+  {% for p, d in matches %}
+  <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
+    <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">&middot; {{ p.get_category_display }}</span></span>
+    <span class="km">{{ d }} km</span>
+  </a>
+  {% empty %}
+  <div class="card card-pad" style="text-align:center;color:var(--text2);">
+    <p style="font-weight:600;margin-bottom:.3rem;">Hech narsa topilmadi</p>
+    <p style="font-size:.88rem;">Boshqa so'z bilan qidirib ko'ring yoki <a href="{% url 'places:nearby' %}?lat={{ lat|unlocalize }}&lng={{ lng|unlocalize }}" style="color:var(--accent);">barcha yaqin joylarni</a> ko'ring.</p>
+  </div>
+  {% endfor %}
+
+  {% else %}
   <div class="sec-t"><svg class="ic"><use href="#i-pin"/></svg> Eng yaqin 10 ta</div>
   {% for p, d in groups.all %}
   <a href="{% url 'places:place_detail' p.pk %}" class="near-row" style="color:inherit;">
@@ -74,11 +98,13 @@
     <span class="nm"><span style="font-size:1.15rem;">{{ p.icon }}</span> {{ p.localized_name }} <span style="color:var(--text3);font-size:.82rem;font-weight:500;">· {{ p.get_category_display }}</span></span><span class="km">{{ d }} km</span></a>
   {% empty %}<p style="color:var(--text2);">Yaqinda xizmat topilmadi.</p>{% endfor %}
 
+  {% endif %}
+
   <div style="margin-top:1.4rem;"><a href="{% url 'places:nearby' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-clock"/></svg> Qayta aniqlash</a></div>
   {% endif %}
 </div>
 
-{% if not groups %}
+{% if not has_location %}
 <script>
 var pickMap=null, pickMarker=null, picked=null;
 
@@ -92,7 +118,7 @@ function showPicker(){
   // shuning uchun tugmani display bilan yashiramiz.
   document.getElementById('pickToggle').style.display='none';
   // Init yashirilgandan keyin: Leaflet yopiq konteynerni 0×0 deb o'lchaydi.
-  pickMap=SamMap.init('pmap',{ zoomLevel:14, fullscreen:false });
+  pickMap=SamMap.init('pmap',{ zoomLevel:11, fullscreen:false });
   pickMap.on('click',function(e){ setPicked(e.latlng); });
   wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -133,7 +159,7 @@ function detectLocation(){
 
 {% if groups %}
 <script>
-const nm=SamMap.init('nmap', { center: [{{ lat|unlocalize }}, {{ lng|unlocalize }}], zoomLevel: 14 });
+const nm=SamMap.init('nmap', { center: [{{ lat|unlocalize }}, {{ lng|unlocalize }}], zoomLevel: 11 });
 L.marker([{{ lat|unlocalize }}, {{ lng|unlocalize }}]).addTo(nm).bindPopup("📍 Siz shu yerdasiz").openPopup();
 const COLORS={furniture:'#b45309',electronics:'#2563eb',tourist:'#9333ea',government:'#475569',organization:'#0891b2',post:'#ea580c',bank:'#15803d',pharmacy:'#dc2626',hospital:'#e11d48',hotel:'#7c3aed',wedding:'#db2777',restaurant:'#d97706',delivery_store:'#059669'};
 const NP=[{% for p, d in groups.all %}{lat:{{ p.latitude|unlocalize }},lng:{{ p.longitude|unlocalize }},c:'{{ p.category }}',n:"{{ p.localized_name|escapejs }}"},{% endfor %}];

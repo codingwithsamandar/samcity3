@@ -19,23 +19,68 @@
     help: '#3551d1', emergency: '#e5484d', event: '#7a5af8', driver: '#e0a52e',
   };
 
-  // Uy raqamlarisiz, lekin boy xarita — masshtabga qarab ikki Yandex qatlami:
-  //   z<=15 chizma  — ko'cha/mahalla nomlari, do'kon-maktab; raqamlar YO'Q
-  //   z>=16 sputnik — raqamsiz haqiqiy tasvir; z21 gacha yaqinlashadi
-  // Yandex chizmasi raqamlarni aynan z16 dan chizadi, sputnikda esa umuman
-  // yozuv yo'q — shuning uchun almashish nuqtasi 15/16.
-  var TILE_SCHEME = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU';
-  var TILE_SAT = 'https://core-sat.maps.yandex.net/tiles?l=sat&v=3.1000.0&x={x}&y={y}&z={z}';
-  var SCHEME_MAX_ZOOM = 15;   // bundan yuqorida raqamlar chiqadi → sputnikka o'tamiz
-  var SAT_MAX_NATIVE = 19;    // sputnikning eng chuqur haqiqiy plitkasi
-  var MAX_ZOOM = 21;          // z20-21 sputnik tasviri cho'ziladi (biroz xira)
-  var ATTR = '© Yandex';
+  // ── Plitka manbalari ─────────────────────────────────────────────────
+  // Manba serverdan keladi (settings.MAP_TILE_PROVIDER), default — 'yandex'.
+  //
+  // LITSENZIYA OGOHLANTIRISHI: 'yandex' varianti Yandex plitkalarini
+  // to'g'ridan-to'g'ri chaqiradi. Bu ularning foydalanish shartlariga zid —
+  // istalgan payt bloklanishi yoki huquqiy talab kelib chiqishi mumkin.
+  // U ataylab tanlangan, chunki O'zbekistonda OpenStreetMap ma'lumoti kam
+  // (Shofirkon markazi, z16: Yandex 12.4% detal, OSM asosidagilar 3.2%).
+  // Litsenziyali variantga o'tish uchun .env da bitta qator yetarli:
+  //   MAP_TILE_PROVIDER=maptiler + MAP_TILE_KEY=<kalit>
+  //
+  // Har provayder:
+  //   base       — asos qatlam
+  //   baseMax    — shu zoomgacha base; undan keyin sat (0 = almashinuv yo'q)
+  //   sat        — yaqinlashtirilganda ishlatiladigan sputnik (ixtiyoriy)
+  //   labels     — base ustidagi yozuv qatlami (ixtiyoriy)
+  //   crs3395    — Yandex proyeksiyasi (proj4leaflet kerak)
+  var PROVIDERS = {
+    // Avvalgi (asl) ko'rinish: z<=15 chizma — ko'cha/mahalla nomlari bilan,
+    // z>=16 sputnik — chizma bu yerdan uy raqamlarini chizgani uchun.
+    yandex: {
+      base: 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU',
+      // Sputnik qatlami YO'Q: ilgari z16 dan sputnik tasviriga o'tilardi
+      // (chizma u yerdan uy raqamlarini chizgani uchun), ammo natijada
+      // xarita yaqinlashtirilganda uy tomlari suratiga aylanib qolardi.
+      // Endi barcha masshtablarda chizma — ko'cha va yo'llar chiziq bo'lib
+      // ko'rinadi. Evazi: z16+ da uy raqamlari chiqadi.
+      baseMax: 0, maxNative: 19,
+      crs3395: true,
+      attr: '&copy; Yandex',
+    },
+    // Kalitsiz, ODbL. Ko'cha nomlari bor, ammo bino ma'lumoti kam.
+    osm: {
+      base: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      baseMax: 0, maxNative: 19,
+      attr: '&copy; OpenStreetMap hissadorlari',
+    },
+    // Kalit bilan. Sputnik + ko'cha nomlari ustma-ust.
+    maptiler: {
+      base: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key={key}',
+      labels: 'https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.png?key={key}',
+      baseMax: 0, maxNative: 20,
+      attr: '&copy; MapTiler &copy; OpenStreetMap hissadorlari',
+    },
+    // Kalit bilan. satellite-streets: sputnik + yo'l/nomlar bitta uslubda.
+    mapbox: {
+      base: 'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token={key}',
+      baseMax: 0, maxNative: 20,
+      attr: '&copy; Mapbox &copy; OpenStreetMap hissadorlari',
+    },
+  };
 
-  // Shofirkon tumani + ~10km atrofi. Xarita shu chegaradan tashqariga surilmaydi
-  // va juda uzoqlashtirib bo'lmaydi (minZoom). (10km ≈ 0.09° lat, 0.117° lng @40°N)
-  var SHOFIRKON_BOUNDS = [[39.985, 64.331], [40.246, 64.676]];
+  var PROVIDER = PROVIDERS[CFG.tileProvider] || PROVIDERS.yandex;
+  var TILE_KEY = CFG.tileKey || '';
+  var MAX_ZOOM = 21;
+
+  function tileUrl(tpl) {
+    return tpl ? tpl.replace('{key}', encodeURIComponent(TILE_KEY)) : null;
+  }
 
   // Yandex EPSG:3395 CRS — bir marta yaratib keshlaymiz (proj4leaflet kerak).
+  // CRS'siz Yandex plitkalarida markerlar ~21km siljib ketadi.
   var _yandexCRS = null;
   function yandexCRS() {
     if (_yandexCRS) return _yandexCRS;
@@ -54,6 +99,11 @@
     return _yandexCRS;
   }
 
+  // Shofirkon tumani + ~10km atrofi. Xarita shu chegaradan tashqariga surilmaydi
+  // va juda uzoqlashtirib bo'lmaydi (minZoom). (10km ≈ 0.09° lat, 0.117° lng @40°N)
+  var SHOFIRKON_BOUNDS = [[39.985, 64.331], [40.246, 64.676]];
+
+
   function init(elId, opts) {
     var bounds = opts.maxBounds === null ? null : (opts.maxBounds || SHOFIRKON_BOUNDS);
     var mapOpts = {
@@ -64,17 +114,36 @@
       minZoom: opts.minZoom || (bounds ? 11 : undefined),
       maxZoom: MAX_ZOOM
     };
-    // Yandex plitkalari EPSG:3395 da — CRS'siz markerlar ~21km siljib ketadi.
-    var crs = yandexCRS();
-    if (crs) mapOpts.crs = crs;
-    var map = L.map(elId, mapOpts).setView(opts.center || CENTER, opts.zoomLevel || 13);
-    // minZoom/maxZoom qatlam darajasida — Leaflet mos kelmagan qatlam plitkalarini
-    // umuman so'ramaydi, shu bois raqamli chizma z16+ da hech qachon yuklanmaydi.
-    L.tileLayer(TILE_SCHEME, { maxZoom: SCHEME_MAX_ZOOM, attribution: ATTR }).addTo(map);
-    L.tileLayer(TILE_SAT, {
-      minZoom: SCHEME_MAX_ZOOM + 1, maxNativeZoom: SAT_MAX_NATIVE,
-      maxZoom: MAX_ZOOM, attribution: ATTR
+    // Yandex plitkalari EPSG:3395 da; qolgan manbalar standart EPSG:3857 da.
+    if (PROVIDER.crs3395) {
+      var crs = yandexCRS();
+      if (crs) mapOpts.crs = crs;
+    }
+    var map = L.map(elId, mapOpts).setView(opts.center || CENTER, opts.zoomLevel || 11);
+
+    // Asos qatlam. baseMax > 0 bo'lsa — shu zoomdan keyin sputnikka o'tadi
+    // (Yandex chizmasi z16 dan uy raqamlarini chizgani uchun shunday).
+    L.tileLayer(tileUrl(PROVIDER.base), {
+      maxZoom: PROVIDER.baseMax || MAX_ZOOM,
+      maxNativeZoom: PROVIDER.maxNative,
+      attribution: PROVIDER.attr
     }).addTo(map);
+
+    if (PROVIDER.sat) {
+      L.tileLayer(tileUrl(PROVIDER.sat), {
+        minZoom: (PROVIDER.baseMax || 0) + 1,
+        maxNativeZoom: PROVIDER.satMaxNative, maxZoom: MAX_ZOOM,
+        attribution: PROVIDER.attr
+      }).addTo(map);
+    }
+
+    // Ko'cha nomlari asos ustida (provayderda alohida qatlam bo'lsa).
+    if (PROVIDER.labels) {
+      L.tileLayer(tileUrl(PROVIDER.labels), {
+        maxZoom: MAX_ZOOM, maxNativeZoom: PROVIDER.maxNative
+      }).addTo(map);
+    }
+
     if (opts.fullscreen !== false) addFullscreen(map, elId);
     // Tile/layout race: recalc size after the container settles.
     setTimeout(function () { map.invalidateSize(); }, 400);
@@ -87,7 +156,10 @@
       onAdd: function () {
         var btn = L.DomUtil.create('a', 'leaflet-bar');
         btn.href = '#'; btn.title = "To'liq ekran";
-        btn.style.cssText = 'width:34px;height:34px;line-height:34px;text-align:center;background:#fff;font-size:18px;';
+        // Fon/rang CSS'da (sahifa mavzusiga mos). Ilgari bu yerda inline
+        // 'background:#fff' bor edi — inline uslub CSS'ni bosib, tugma
+        // qorong'i xarita ustida oq quti bo'lib turardi.
+        btn.className = 'leaflet-bar sam-fs-btn';
         btn.innerHTML = '⤢';
         L.DomEvent.on(btn, 'click', function (e) {
           L.DomEvent.preventDefault(e);
@@ -124,7 +196,13 @@
     if (p.address) html += '<div style="font-size:.82rem;color:#5b6678;margin-top:.2rem;">📍 ' + esc(p.address) + '</div>';
     if (p.phone) html += '<div style="font-size:.82rem;color:#5b6678;">📞 ' + esc(p.phone) + '</div>';
     if (p.hours) html += '<div style="font-size:.82rem;color:#5b6678;">🕒 ' + esc(p.hours) + '</div>';
-    if (p.url) html += '<a href="' + p.url + '" style="display:block;text-align:center;margin-top:.65rem;background:#0ea371;color:#fff;padding:.5rem .8rem;border-radius:9px;font-weight:700;font-size:.84rem;">To\'liq ma\'lumot →</a>';
+    if (p.has_menu) html += '<div style="font-size:.82rem;color:#0ea371;font-weight:700;margin-top:.3rem;">🍽️ Menyu bor</div>';
+    if (p.url) {
+      // Bron joylari (booking.Venue) uchun tugma — "Bron qilish".
+      var _btn = p.book ? 'Bron qilish →'
+        : (p.has_menu ? 'Menyu va ma\'lumot →' : 'To\'liq ma\'lumot →');
+      html += '<a href="' + p.url + '" style="display:block;text-align:center;margin-top:.65rem;background:#0ea371;color:#fff;padding:.5rem .8rem;border-radius:9px;font-weight:700;font-size:.84rem;">' + _btn + '</a>';
+    }
     html += '</div>';
     // maxHeight: mobil xaritada balandlik cheklangan (55vh); rasm+matn+tugma
     // konteynerdan oshib ketsa, Leaflet uni overflow:hidden bilan yuqoridan

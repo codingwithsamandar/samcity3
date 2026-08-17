@@ -266,7 +266,12 @@ def verify_otp(request):
                 return redirect('register')
             user.is_active = True
             user.save(update_fields=['is_active'])
-            login(request, user)
+            # OTP tasdiqlandi — parol tekshirilmaydi, shuning uchun `authenticate()`
+            # chaqirilmaydi va `user.backend` o'rnatilmagan bo'ladi. Bir nechta
+            # AUTHENTICATION_BACKENDS sozlangani uchun Django qaysi backend
+            # ishlatilganini o'zi aniqlay olmaydi va ValueError beradi —
+            # backend'ni ANIQ ko'rsatish SHART.
+            login(request, user, backend='main.auth_backends.PhoneModelBackend')
             request.session.pop('pending_phone', None)
             messages.success(request, "Ro'yxatdan o'tish muvaffaqiyatli yakunlandi!")
             return redirect('profile')
@@ -279,10 +284,30 @@ def verify_otp(request):
     return render(request, 'registration/verify_otp.html', {'phone': phone})
 
 
+def _post_login_target(user):
+    """Kirishdan keyin qayerga tushadi — roliga qarab.
+
+    Kuryer uchun bosh sahifa/profil emas, ish paneli: u saytga e'lon o'qish
+    uchun emas, buyurtma olish uchun kiradi (main/roles.py).
+    """
+    from .roles import is_courier
+    return 'delivery:driver_dashboard' if is_courier(user) else 'profile'
+
+
+@login_required
+def after_login(request):
+    """LOGIN_REDIRECT_URL manzili — rolga qarab taqsimlaydi.
+
+    `/accounts/login/` (django.contrib.auth.urls) o'z view'iga ega va bizning
+    `user_login` mantig'idan o'tmaydi; yagona taqsimlagich shu yerda.
+    """
+    return redirect(_post_login_target(request.user))
+
+
 @ratelimit('login', limit=10, window=300, methods=('POST',))
 def user_login(request):
     if request.user.is_authenticated:
-        return redirect('profile')
+        return redirect(_post_login_target(request.user))
 
     if request.method == 'POST':
         phone = request.POST.get('phone') or request.POST.get('username')
@@ -294,7 +319,7 @@ def user_login(request):
 
         if user is not None:
             login(request, user)
-            return redirect('profile')
+            return redirect(_post_login_target(user))
         else:
             logger.warning("Failed login: phone=%s ip=%s", phone, request.META.get('REMOTE_ADDR'))
             messages.error(request, "Telefon raqami yoki parol xato.")
@@ -400,15 +425,23 @@ def ad_detail(request, pk):
     is_favorite = False
     if request.user.is_authenticated:
         is_favorite = AdFavorite.objects.filter(ad=ad, user=request.user).exists()
+    # Egasi — kelgan barcha savollarni, xaridor esa FAQAT o'zi yozganlarini
+    # ko'radi (ilgari xaridorga hech narsa ko'rsatilmasdi, shu bois o'z
+    # xabarini o'chirish ham imkonsiz edi).
     inquiries = None
-    if request.user.is_authenticated and request.user.id == ad.user_id:
-        inquiries = ad.inquiries.select_related('sender')
+    my_inquiries = None
+    if request.user.is_authenticated:
+        if request.user.id == ad.user_id:
+            inquiries = ad.inquiries.select_related('sender')
+        else:
+            my_inquiries = ad.inquiries.filter(sender=request.user)
 
     return render(request, 'ad_detail.html', {
         'ad': ad,
         'is_favorite': is_favorite,
         'report_reasons': AdReport.REASON_CHOICES,
         'inquiries': inquiries,
+        'my_inquiries': my_inquiries,
     })
 
 
@@ -453,7 +486,6 @@ def ad_create(request):
         contact_phone     = request.POST.get('contact_phone', '').strip()
         contact_telegram  = request.POST.get('contact_telegram', '').strip()
         contact_instagram = request.POST.get('contact_instagram', '').strip()
-        contact_facebook  = request.POST.get('contact_facebook', '').strip()
 
         if not title or not category:
             messages.error(request, "Sarlavha va kategoriya majburiy.")
@@ -514,7 +546,6 @@ def ad_create(request):
             contact_phone=contact_phone,
             contact_telegram=contact_telegram,
             contact_instagram=contact_instagram,
-            contact_facebook=contact_facebook,
         )
 
         for i, img in enumerate(images[:10]):
@@ -575,7 +606,6 @@ def ad_edit(request, pk):
         ad.contact_phone     = request.POST.get('contact_phone', '').strip()
         ad.contact_telegram  = request.POST.get('contact_telegram', '').strip()
         ad.contact_instagram = request.POST.get('contact_instagram', '').strip()
-        ad.contact_facebook  = request.POST.get('contact_facebook', '').strip()
 
         price = request.POST.get('price', None)
         if ad.price_type not in ('fixed', 'free'):

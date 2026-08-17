@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 from main.admin_widgets import LatLngPickerWidget
-from .models import Venue, VenueBooking, VenueService, VenueStaff
+from .models import Venue, VenueBooking, VenueService, VenueStaff, VenueWork
 
 
 class VenueServiceInline(admin.TabularInline):
@@ -11,6 +11,11 @@ class VenueServiceInline(admin.TabularInline):
 
 class VenueStaffInline(admin.TabularInline):
     model = VenueStaff
+    extra = 1
+
+
+class VenueWorkInline(admin.TabularInline):
+    model = VenueWork
     extra = 1
 
 
@@ -24,12 +29,12 @@ class VenueAdminForm(forms.ModelForm):
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
     form = VenueAdminForm
-    list_display = ('name', 'venue_type', 'owner', 'capacity', 'price_per_day',
+    list_display = ('name', 'venue_type', 'owner', 'place', 'capacity', 'price_per_day',
                     'cancel_penalty_percent', 'is_active', 'created_at')
     list_filter = ('venue_type', 'is_active')
     search_fields = ('name', 'address', 'owner__phone', 'owner__name')
     list_editable = ('is_active',)
-    inlines = [VenueServiceInline, VenueStaffInline]
+    inlines = [VenueServiceInline, VenueStaffInline, VenueWorkInline]
 
 
 @admin.register(VenueService)
@@ -37,6 +42,14 @@ class VenueServiceAdmin(admin.ModelAdmin):
     list_display = ('name', 'venue', 'price', 'duration_minutes', 'is_active')
     list_filter = ('is_active', 'venue__venue_type')
     search_fields = ('name', 'venue__name')
+
+
+@admin.register(VenueWork)
+class VenueWorkAdmin(admin.ModelAdmin):
+    list_display = ('title', 'venue', 'service', 'staff', 'price', 'is_active', 'created_at')
+    list_filter = ('is_active', 'venue__venue_type')
+    search_fields = ('title', 'venue__name')
+    list_editable = ('is_active',)
 
 
 @admin.register(VenueStaff)

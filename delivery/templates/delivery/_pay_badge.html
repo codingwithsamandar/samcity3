@@ -1,0 +1,12 @@
+{% load taxi_extras %}{% comment %}
+Kuryer uchun to'lov chiptasi. Eng muhim ma'lumot — naqd pul olish kerakmi.
+Avval panelda umuman ko'rsatilmasdi: kuryer eshik oldida "to'landimi?" degan
+savolga javob topa olmasdi, karta bilan to'langan buyurtma uchun ham pul
+so'rash xavfi bor edi. `o` — Order.
+{% endcomment %}{% if o.cash_to_collect %}
+<span class="pay-tag pay-cash" title="Mijozdan naqd pul olish kerak">
+  💵 NAQD OLINADI: {{ o.cash_to_collect|som }} so'm</span>
+{% else %}
+<span class="pay-tag pay-paid" title="Buyurtma oldindan to'langan">
+  ✅ To'langan{% if o.payment_method == 'card' %} (karta){% endif %} — pul so'ralmaydi</span>
+{% endif %}

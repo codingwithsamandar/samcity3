@@ -49,9 +49,13 @@
         <div style="display:flex;flex-direction:column;gap:.5rem;">
           {% for s in services %}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.7rem .9rem;border:1px solid var(--border);border-radius:12px;">
-            <div>
-              <div style="font-weight:650;">{{ s.name }}</div>
-              <div style="color:var(--text3);font-size:.8rem;display:flex;align-items:center;gap:.3rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-clock"/></svg> {{ s.duration_minutes }} daqiqa</div>
+            <div style="display:flex;align-items:center;gap:.75rem;min-width:0;">
+              {% if s.image %}<img src="{{ s.image.url }}" alt="{{ s.name }}" style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;">{% endif %}
+              <div style="min-width:0;">
+                <div style="font-weight:650;">{{ s.name }}</div>
+                {% if s.description %}<div style="color:var(--text2);font-size:.8rem;margin:.15rem 0;">{{ s.description }}</div>{% endif %}
+                <div style="color:var(--text3);font-size:.8rem;display:flex;align-items:center;gap:.3rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-clock"/></svg> {{ s.duration_minutes }} daqiqa</div>
+              </div>
             </div>
             <div style="font-weight:800;color:var(--accent);font-family:'Plus Jakarta Sans';white-space:nowrap;">{{ s.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
           </div>
@@ -73,6 +77,53 @@
             <div style="font-size:.74rem;color:var(--gold);margin-top:.2rem;">★ {{ st.rating|floatformat:1 }} <span style="color:var(--text3);">({{ st.reviews_count }})</span></div>
             <div style="font-size:.7rem;color:var(--text3);">{{ st.completed_count }} ish · {{ st.experience_years }} yil</div>
           </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Menyu (xaritadagi bog'langan joydan) ── -->
+      {% if menu_sections %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-doc"/></svg> Menyu</h3>
+        {% for section, items in menu_sections %}
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700;margin-bottom:.5rem;">{{ section }}</div>
+          {% for it in items %}
+          <div style="display:flex;align-items:center;gap:.8rem;padding:.55rem 0;{% if not forloop.last %}border-bottom:1px solid var(--border);{% endif %}">
+            {% if it.image %}<img src="{{ it.image.url }}" alt="{{ it.name }}" loading="lazy" style="width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;">{% endif %}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:650;font-size:.92rem;">{{ it.name }}</div>
+              {% if it.description %}<div style="color:var(--text3);font-size:.8rem;">{{ it.description }}</div>{% endif %}
+            </div>
+            <div style="font-weight:800;color:var(--accent);white-space:nowrap;">{{ it.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        {% if venue.place_id %}<a href="{% url 'places:place_detail' venue.place_id %}" style="color:var(--accent);font-size:.85rem;">Xaritada ko'rish →</a>{% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ── Bajarilgan ishlar (portfolio) ── -->
+      {% if works %}
+      <div class="card card-pad" style="margin-top:1.5rem;">
+        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-sparkle"/></svg> Bajarilgan ishlar</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem;">
+          {% for w in works %}
+          <figure style="margin:0;border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+            <a href="{{ w.image.url }}" target="_blank" rel="noopener">
+              <img src="{{ w.image.url }}" alt="{{ w.title }}" loading="lazy" style="width:100%;height:150px;object-fit:cover;display:block;">
+            </a>
+            <figcaption style="padding:.6rem .7rem;">
+              <div style="font-weight:650;font-size:.9rem;">{{ w.title }}</div>
+              {% if w.description %}<div style="color:var(--text2);font-size:.78rem;margin-top:.2rem;line-height:1.45;">{{ w.description }}</div>{% endif %}
+              {% if w.service or w.staff %}
+              <div style="color:var(--text3);font-size:.74rem;margin-top:.35rem;">{% if w.service %}{{ w.service.name }}{% endif %}{% if w.staff %} · {{ w.staff.name }}{% endif %}</div>
+              {% endif %}
+              {% if w.price %}<div style="font-weight:750;color:var(--accent);font-size:.85rem;margin-top:.3rem;">{{ w.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>{% endif %}
+            </figcaption>
+          </figure>
           {% endfor %}
         </div>
       </div>

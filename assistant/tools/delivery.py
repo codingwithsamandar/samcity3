@@ -37,10 +37,9 @@ def _delivery_fee():
 
 @tool(
     section='delivery', action='find_store',
-    description="Do'kon qidiradi (nom yoki sotadigan mahsuloti bo'yicha). "
-                "Buyurtma berish uchun birinchi qadam.",
-    params={'query': ('str', True, "nima qidiryapsiz: do'kon nomi yoki mahsulot "
-                                   "(masalan «lavash», «suv»)")},
+    description="Do'kon qidiradi (nomi yoki mahsuloti bo'yicha) — buyurtmaning "
+                "1-qadami.",
+    params={'query': ('str', True, "do'kon nomi yoki mahsulot, masalan «lavash»")},
 )
 def find_store(ctx, query):
     from delivery.models import Store
@@ -92,8 +91,7 @@ def find_store(ctx, query):
 
 @tool(
     section='delivery', action='list_products',
-    description="Tanlangan do'kon mahsulotlarini ko'rsatadi (avval find_store bilan "
-                "do'konni toping).",
+    description="Tanlangan do'kon mahsulotlari (avval find_store).",
     params={'store_id': ('int', True, "do'kon ID (find_store natijasidan)")},
 )
 def list_products(ctx, store_id):
@@ -127,10 +125,10 @@ def list_products(ctx, store_id):
 
 @tool(
     section='delivery', action='cart_add',
-    description="Mahsulotni foydalanuvchi savatiga qo'shadi. Bu tool'ni ALBATTA "
-                "chaqiring — «qo'shdim» deyishning o'zi yetarli emas.",
+    description="Mahsulotni savatga qo'shadi. ALBATTA chaqir — «qo'shdim» deyishning "
+                "o'zi yetarli emas.",
     params={
-        'product_id': ('int', True, "mahsulot ID (list_products bilan toping)"),
+        'product_id': ('int', True, "mahsulot ID (list_products'dan)"),
         'qty': ('int', False, "soni, standart 1"),
     },
     mutating=False,        # savatga qo'shish — pul ketmaydi
@@ -181,16 +179,15 @@ def _clean_address(value):
 
 @tool(
     section='delivery', action='propose_order',
-    description="Savatdagi mahsulotlarni buyurtmaga tayyorlaydi va TASDIQ kartasini "
-                "ko'rsatadi. Buyurtma faqat foydalanuvchi tasdiqlagach yaratiladi. "
-                "MANZIL MAJBURIY: foydalanuvchi yetkazish manzilini aytmagan bo'lsa, "
-                "avval undan so'ra — o'zingdan to'qib chiqarma.",
+    description="Savatni buyurtmaga tayyorlaydi; buyurtma faqat foydalanuvchi "
+                "tasdiqlagach yaratiladi. MANZIL MAJBURIY — aytilmagan bo'lsa "
+                "avval so'ra, o'zingdan to'qib chiqarma.",
     params={
-        'address': ('str', True, "yetkazish manzili — ko'cha, uy raqami, mo'ljal "
-                                 "(foydalanuvchi aytgani; taxmin qilma)"),
-        'note': ('str', False, "kuryerga izoh (masalan «eshik oldiga»)"),
+        'address': ('str', True, "yetkazish manzili (foydalanuvchi aytgani; "
+                                 "taxmin qilma)"),
+        'note': ('str', False, "kuryerga izoh"),
     },
-    mutating=True,         # ← PUL KETADI: server majburan PendingAction qiladi
+    mutating=True,         # PUL KETADI: server majburan PendingAction qiladi
     auth_required=True,
 )
 def propose_order(ctx, address='', note=''):
@@ -338,7 +335,7 @@ def place_order(payload, user):
 
 @tool(
     section='delivery', action='view_cart',
-    description="Foydalanuvchi savatidagi mahsulotlar va jami summani ko'rsatadi.",
+    description="Savatdagi mahsulotlar va jami summa.",
     params={},
     auth_required=True,
 )
@@ -364,7 +361,7 @@ def view_cart(ctx, **_):
 
 @tool(
     section='delivery', action='remove_from_cart',
-    description="Savatдан bitta mahsulotни olib tashlaydi.",
+    description="Savatdan bitta mahsulotni olib tashlaydi.",
     params={'product_id': ('int', True, "mahsulot ID")},
     mutating=False,
     auth_required=True,
@@ -387,10 +384,9 @@ def remove_from_cart(ctx, product_id):
 
 @tool(
     section='delivery', action='clear_cart',
-    description="Savatни BUTUNLAY tozalaydi — hamma mahsulotни olib tashlaydi. "
-                "«savatни tozala», «savatни bo'shat» degan so'rovда shuni chaqiring.",
+    description="Savatni butunlay bo'shatadi.",
     params={},
-    mutating=False,        # pul ketmaydi — o'z savatини tozalash
+    mutating=False,        # pul ketmaydi — o'z savatini tozalash
     auth_required=True,
 )
 def clear_cart(ctx, **_):
@@ -409,7 +405,7 @@ def clear_cart(ctx, **_):
 
 @tool(
     section='delivery', action='my_orders',
-    description="Foydalanuvchining oxirgi buyurtmalari va ularning holatини ko'rsatadi.",
+    description="Foydalanuvchining oxirgi buyurtmalari va holati.",
     params={},
     auth_required=True,
 )

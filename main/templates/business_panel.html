@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Biznes panel — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bp-card { border:1px solid var(--border); border-radius:16px; background:var(--surface);
+    padding:1.1rem 1.2rem; margin-bottom:1rem; }
+  .bp-head { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:.9rem; }
+  .bp-head .nm { font-weight:750; font-size:1.05rem; }
+  .bp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); gap:.6rem; margin-bottom:.9rem; }
+  .bp-stat { background:var(--surface2); border-radius:12px; padding:.6rem .7rem; text-align:center; }
+  .bp-stat .v { font-family:'Plus Jakarta Sans'; font-weight:800; font-size:1.35rem; line-height:1.1; }
+  .bp-stat .l { color:var(--text3); font-size:.72rem; margin-top:.15rem; }
+  .bp-stat.hot .v { color:var(--accent); }
+  .bp-acts { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .bp-sec { font-size:1.15rem; font-weight:750; margin:1.8rem 0 .9rem;
+    display:flex; align-items:center; gap:.5rem; }
+  .bp-sec .ic { color:var(--accent); }
+  .bp-sum { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:940px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <div class="page-header">
+    <h1>Biznes panel</h1>
+    <p>Do'kon, xizmat va joylaringizni bir joydan boshqaring</p>
+  </div>
+
+  {% if jami_yangi_buyurtma or jami_pickup_kutmoqda or jami_yangi_bron or jami_bugun_bron %}
+  <div class="bp-sum">
+    {% if jami_yangi_buyurtma %}<span class="badge badge-green">🛒 {{ jami_yangi_buyurtma }} yangi buyurtma</span>{% endif %}
+    {% if jami_pickup_kutmoqda %}<span class="badge badge-amber">📦 {{ jami_pickup_kutmoqda }} ta olib ketishga tayyor</span>{% endif %}
+    {% if jami_yangi_bron %}<span class="badge badge-gold">📅 {{ jami_yangi_bron }} tasdiq kutayotgan bron</span>{% endif %}
+    {% if jami_bugun_bron %}<span class="badge badge-indigo">⏰ Bugun {{ jami_bugun_bron }} ta bron</span>{% endif %}
+  </div>
+  {% endif %}
+
+  {# ── DO'KONLAR ──────────────────────────────────────────────── #}
+  {% if stores %}
+  <div class="bp-sec"><svg class="ic"><use href="#i-cart"/></svg> Do'konlarim</div>
+  {% for c in stores %}
+  <div class="bp-card">
+    <div class="bp-head">
+      <span class="nm">{{ c.obj.name }}</span>
+      <span class="badge badge-gray" style="font-size:.68rem;">{{ c.obj.get_store_type_display }}</span>
+      {% if c.pickup_yoqilgan %}<span class="badge badge-amber" style="font-size:.68rem;">📦 Olib ketish</span>{% endif %}
+      {% if not c.obj.is_active %}<span class="badge badge-red" style="font-size:.68rem;">Yopiq</span>{% endif %}
+    </div>
+    <div class="bp-stats">
+      <div class="bp-stat {% if c.yangi %}hot{% endif %}"><div class="v">{{ c.yangi }}</div><div class="l">Yangi buyurtma</div></div>
+      <div class="bp-stat"><div class="v">{{ c.faol }}</div><div class="l">Jarayonda</div></div>
+      <div class="bp-stat"><div class="v">{{ c.bugun }}</div><div class="l">Bugun</div></div>
+      <div class="bp-stat"><div class="v">{{ c.mahsulot }}</div><div class="l">Mahsulot</div></div>
+      {% if c.pickup_yoqilgan %}
+      <div class="bp-stat {% if c.pickup_kutmoqda %}hot{% endif %}"><div class="v">{{ c.pickup_kutmoqda }}</div><div class="l">Mijoz kutmoqda</div></div>
+      {% endif %}
+    </div>
+    {% if c.pickup_kutmoqda %}
+    <div style="background:var(--gold-l);color:var(--gold-d);border-radius:10px;padding:.5rem .75rem;font-size:.85rem;font-weight:650;margin-bottom:.8rem;">
+      📦 {{ c.pickup_kutmoqda }} ta buyurtma tayyor — mijoz kelib olishini kutmoqda
+    </div>
+    {% endif %}
+    <div class="bp-acts">
+      <a href="{% url 'delivery:store_orders' %}" class="btn btn-accent btn-sm"><svg class="ic"><use href="#i-doc"/></svg> Buyurtmalar</a>
+      <a href="{% url 'delivery:product_create' c.obj.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Mahsulot</a>
+      <a href="{% url 'delivery:store_chat_inbox' %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-chat"/></svg> Savollar</a>
+      <a href="{% url 'delivery:store_announcement_create' c.obj.pk %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-bell"/></svg> E'lon</a>
+      <a href="{% url 'delivery:store_edit' c.obj.pk %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-settings"/></svg></a>
+      <a href="{% url 'delivery:store_detail' c.obj.pk %}" class="btn btn-outline btn-sm">Ko'rish</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── BRON JOYLARI (sartarosh, restoran, to'yxona...) ─────────── #}
+  {% if venues %}
+  <div class="bp-sec"><svg class="ic"><use href="#i-clock"/></svg> Bron qilinadigan joylarim</div>
+  {% for c in venues %}
+  <div class="bp-card">
+    <div class="bp-head">
+      <span class="nm">{{ c.obj.name }}</span>
+      <span class="badge badge-indigo" style="font-size:.68rem;">{{ c.obj.get_venue_type_display }}</span>
+      {% if not c.obj.is_active %}<span class="badge badge-red" style="font-size:.68rem;">Yopiq</span>{% endif %}
+    </div>
+    <div class="bp-stats">
+      <div class="bp-stat {% if c.yangi %}hot{% endif %}"><div class="v">{{ c.yangi }}</div><div class="l">Tasdiq kutmoqda</div></div>
+      <div class="bp-stat"><div class="v">{{ c.bugun }}</div><div class="l">Bugun</div></div>
+      <div class="bp-stat"><div class="v">{{ c.hafta }}</div><div class="l">Bu hafta</div></div>
+      <div class="bp-stat"><div class="v">{{ c.xizmat }}</div><div class="l">Xizmat</div></div>
+      {% if c.ustali %}<div class="bp-stat"><div class="v">{{ c.usta }}</div><div class="l">Usta</div></div>{% endif %}
+      <div class="bp-stat"><div class="v">{{ c.ish }}</div><div class="l">Ish rasmi</div></div>
+    </div>
+    <div class="bp-acts">
+      <a href="{% url 'manage_bookings' %}" class="btn btn-accent btn-sm"><svg class="ic"><use href="#i-doc"/></svg> Bronlar</a>
+      <a href="{% url 'venue_services' c.obj.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-settings"/></svg>
+        {% if c.ustali %}Xizmat va ustalar{% else %}Xizmatlar{% endif %}</a>
+      {% if c.menyuli %}
+        {% if c.obj.place_id %}
+        <a href="{% url 'places:place_menu' c.obj.place_id %}" class="btn btn-gold btn-sm">🍽️ Menyu</a>
+        {% else %}
+        <a href="{% url 'venue_edit' c.obj.pk %}" class="btn btn-ghost btn-sm" title="Menyu uchun avval xaritadagi joyga bog'lang">🍽️ Menyu ulash</a>
+        {% endif %}
+      {% endif %}
+      <a href="{% url 'venue_edit' c.obj.pk %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-settings"/></svg></a>
+      <a href="{% url 'venue_detail' c.obj.pk %}" class="btn btn-outline btn-sm">Ko'rish</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── XARITADAGI JOYLAR (shifoxona, dorixona...) ──────────────── #}
+  {% if places %}
+  <div class="bp-sec"><svg class="ic"><use href="#i-pin"/></svg> Xaritadagi joylarim</div>
+  {% for c in places %}
+  <div class="bp-card">
+    <div class="bp-head">
+      <span class="nm">{{ c.obj.icon }} {{ c.obj.name }}</span>
+      <span class="badge badge-gray" style="font-size:.68rem;">{{ c.obj.get_category_display }}</span>
+      {% if not c.obj.is_active %}<span class="badge badge-red" style="font-size:.68rem;">Nofaol</span>{% endif %}
+    </div>
+    <div class="bp-stats">
+      <div class="bp-stat"><div class="v">{{ c.korish }}</div><div class="l">Ko'rildi</div></div>
+      <div class="bp-stat"><div class="v">{{ c.baho|floatformat:1 }}</div><div class="l">Reyting</div></div>
+      <div class="bp-stat"><div class="v">{{ c.sharh }}</div><div class="l">Sharh</div></div>
+      {% if c.menyuli %}<div class="bp-stat"><div class="v">{{ c.menyu }}</div><div class="l">Menyu taomi</div></div>{% endif %}
+    </div>
+    <div class="bp-acts">
+      {% if c.menyuli %}<a href="{% url 'places:place_menu' c.obj.pk %}" class="btn btn-gold btn-sm">🍽️ Menyu</a>{% endif %}
+      <a href="{% url 'places:place_edit' c.obj.pk %}" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-settings"/></svg> Tahrirlash</a>
+      <a href="{% url 'places:place_detail' c.obj.pk %}" class="btn btn-outline btn-sm">Ko'rish</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── Hech narsa yo'q ─────────────────────────────────────────── #}
+  {% if hech_narsa_yoq %}
+  <div class="card card-pad" style="text-align:center;padding:2.5rem 1.5rem;">
+    <div style="font-size:2.5rem;margin-bottom:.5rem;">🏪</div>
+    <p style="font-weight:650;margin-bottom:.4rem;">Hali biznesingiz yo'q</p>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:1.3rem;">
+      Do'kon oching, xizmatingizni bron qilinadigan qiling yoki joyingizni xaritaga qo'shing.</p>
+    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'delivery:store_request_create' %}" class="btn btn-accent"><svg class="ic"><use href="#i-cart"/></svg> Do'kon ochish</a>
+      <a href="{% url 'venue_create' %}" class="btn btn-green"><svg class="ic"><use href="#i-clock"/></svg> Bron joyi qo'shish</a>
+      <a href="{% url 'places:place_create' %}" class="btn btn-ghost"><svg class="ic"><use href="#i-pin"/></svg> Xaritaga joy qo'shish</a>
+    </div>
+  </div>
+  {% else %}
+  <div style="margin-top:1.5rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+    <a href="{% url 'delivery:store_request_create' %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Yana do'kon</a>
+    <a href="{% url 'venue_create' %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Yana bron joyi</a>
+    <a href="{% url 'places:place_create' %}" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Xaritaga joy</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

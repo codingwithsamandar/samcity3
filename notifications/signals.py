@@ -30,18 +30,60 @@ try:
     def _order_pre(sender, instance, **kwargs):
         _cache_old(sender, instance, 'status')
 
+    # Do'kon egasiga qaysi holatlar haqida xabar beriladi. `accepted`,
+    # `preparing`, `ready` — egasining O'ZI bosgan tugmalari, ular yuborilmaydi
+    # (aks holda har bosishda o'ziga xabar kelardi).
+    OWNER_STATUS_TEXT = {
+        'assigned': "Buyurtmani kuryer oldi 🚗",
+        'picked_up': "Kuryer buyurtmani do'kondan oldi 📦",
+        'on_the_way': "Kuryer buyurtma bilan yo'lga chiqdi 🛵",
+        'delivered': "Buyurtma mijozga yetkazildi ✅",
+        'cancelled': "Buyurtma bekor qilindi ❌",
+    }
+    # Olib ketishda kuryer yo'q — «yetkazildi» aslida mijoz o'zi olib ketgani.
+    OWNER_PICKUP_TEXT = {
+        'delivered': "Mijoz buyurtmani olib ketdi ✅",
+        'cancelled': "Buyurtma bekor qilindi ❌",
+    }
+
+    def _order_owner(order):
+        """Buyurtma tegishli do'kon egasi.
+
+        Buyurtma checkout'da do'kon bo'yicha bo'linadi, ya'ni bitta buyurtma —
+        bitta do'kon. Mahsulot o'chirilgan bo'lsa (`product` SET_NULL) egasini
+        topib bo'lmaydi — bunday holda None qaytadi va xabar o'tkazib yuboriladi.
+        """
+        item = (order.items.select_related('product__store__owner')
+                .filter(product__isnull=False).first())
+        return item.product.store.owner if item else None
+
     @receiver(post_save, sender=Order)
     def _order_post(sender, instance, created, **kwargs):
         if created:
             return
         old = getattr(instance, '_old_status', None)
-        if old and old != instance.status:
-            notify(
-                instance.user,
-                f"Buyurtmangiz holati yangilandi: {instance.get_status_display()}",
-                reverse('delivery:order_detail', args=[instance.id]),
-                'order',
-            )
+        if not old or old == instance.status:
+            return
+        notify(
+            instance.user,
+            f"Buyurtmangiz holati yangilandi: {instance.get_status_display()}",
+            reverse('delivery:order_detail', args=[instance.id]),
+            'order',
+        )
+        # ── Do'kon egasiga ham: buyurtma uning qo'lidan chiqqach nima
+        # bo'layotganini bilishi kerak. Avval faqat xaridor xabar olardi,
+        # shuning uchun kuryer mahsulotni olib ketganini egasi bilmasdi.
+        table = (OWNER_PICKUP_TEXT if instance.fulfillment_type == 'pickup'
+                 else OWNER_STATUS_TEXT)
+        text = table.get(instance.status)
+        if not text:
+            return
+        owner = _order_owner(instance)
+        # Egasi o'z do'konidan buyurtma bergan bo'lsa — ikki xabar kelmasin.
+        if owner is None or owner.id == instance.user_id:
+            return
+        short = str(instance.id)[:8]
+        notify(owner, f"#{short} — {text}", reverse('delivery:store_orders'), 'order')
 
     # Yangi do'kon ochilishi — adminlarga (biznes ro'yxatdan o'tish so'rovi)
     @receiver(post_save, sender=Store)

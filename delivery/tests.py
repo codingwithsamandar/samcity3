@@ -22,9 +22,9 @@ class OrderAcceptRaceTests(TestCase):
         self.u1 = make_user('+998931000051')
         self.u2 = make_user('+998931000052')
         self.d1 = DeliveryDriver.objects.create(
-            user=self.u1, full_name='D1', phone='+998931000051', is_available=True)
+            user=self.u1, full_name='D1', phone='+998931000051', is_available=True, status='approved')
         self.d2 = DeliveryDriver.objects.create(
-            user=self.u2, full_name='D2', phone='+998931000052', is_available=True)
+            user=self.u2, full_name='D2', phone='+998931000052', is_available=True, status='approved')
         self.order = Order.objects.create(
             user=self.customer, address='Shofirkon, 1-uy', status='ready', total=20000)
 
@@ -70,7 +70,7 @@ class DeliveryDriverTests(TestCase):
     def test_create_driver_defaults(self):
         u = make_user('+998931000001')
         d = DeliveryDriver.objects.create(
-            user=u, full_name='Ali', phone='+998931000001', vehicle_type='moto')
+            user=u, full_name='Ali', phone='+998931000001', vehicle_type='moto', status='approved')
         self.assertTrue(d.is_available)
         self.assertTrue(d.is_active)
 

@@ -3,7 +3,9 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from booking.models import Venue, VenueBooking, VenueService, VenueStaff
+from booking.models import (
+    Venue, VenueBooking, VenueService, VenueStaff, booking_date_error,
+)
 
 
 def _abs(request, field):
@@ -180,3 +182,10 @@ class BookingCreateSerializer(serializers.Serializer):
     table_count = serializers.IntegerField(required=False, min_value=1, default=1)
     special_request = serializers.CharField(required=False, allow_blank=True, default='')
     subscription_type = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_booking_date(self, value):
+        """Bron oynasi — veb forma bilan bir xil qoida (booking.models)."""
+        err = booking_date_error(value)
+        if err:
+            raise serializers.ValidationError(err)
+        return value

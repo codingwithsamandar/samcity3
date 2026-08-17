@@ -11,6 +11,10 @@ bilan chaqiradi, aks holda csrf_token bo'sh chiqadi.
     <div>
       <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }} · {{ o.total|som }} so'm</div>
       <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;"><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }} · {{ o.delivery_fee|som }} so'm yetkazish</div>
+      {% if o.eta %}<div style="color:var(--accent);font-size:.84rem;font-weight:650;margin-top:.2rem;">⏱ {{ o.eta }}</div>{% endif %}
+      {# To'lov turi qabul qilishdan OLDIN ko'rinadi — naqd buyurtma #}
+      {# kuryerdan qaytim pul talab qiladi, buni oldindan bilishi kerak. #}
+      <div style="margin-top:.45rem;">{% include 'delivery/_pay_badge.html' %}</div>
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
       {# Kuryer qabul qilishdan OLDIN manzil qayerdaligini ko'rishi kerak. #}

@@ -19,6 +19,7 @@ dist/
 # ── Django ───────────────────────────────────────────────────────
 db.sqlite3
 db.sqlite3-journal
+*.sqlite3
 *.log
 logs/
 staticfiles/
@@ -82,6 +83,25 @@ certs/*
 
 # ── settings.py zaxira nusxasi ──
 sdev/settings_old.py
+
+# ── Katta binar fayllar: GitHub'ga ham, Docker image'ga ham kerak emas ──
+# APK (~61MB) va zip arxivlar deploy'ni sekinlashtiradi va GitHub'ning 100MB
+# chekloviga yaqinlashtiradi. Kerak bo'lsa GitHub Releases orqali tarqating.
+*.apk
+*.zip
+# ISTISNO: bu arxiv `manage.py import_catalog` uchun MAJBURIY manba —
+# entrypoint.sh baza bo'sh bo'lganda undan katalog rasmlarini oladi.
+# Ignore qilinsa Render'da katalog rasmsiz qoladi.
+!New/catalog_images.zip
+
+# ── Vaqtinchalik/tasodifiy yuklangan fayllar ──
+fayl.pdf
+samcity_home.html
+
+# ── jarvis/ — alohida desktop loyiha, o'z .git'i bor (SamCity saytiga aloqasi yo'q) ──
+# Ilgari .gitmodules'siz submodule (gitlink) sifatida yozilgan edi — repo klon
+# qilinganda bo'sh papka bo'lib qolardi. Endi butunlay ignore qilinadi.
+jarvis/
 
 # Generated catalog export (manage.py export_catalog)
 catalog_export.json

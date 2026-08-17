@@ -33,6 +33,17 @@ def _get_driver(user):
     return DeliveryDriver.objects.filter(user=user).first()
 
 
+def _get_working_driver(user):
+    """Buyurtma olishga haqli kuryer — `is_active=False` bo'lsa admin bloklagan.
+
+    Web `delivery.views._get_working_driver` bilan bir xil qoida. Bloklangan
+    kuryer buyurtma qabul qila olmasligi VA mijozlarning manzil/telefonini
+    ko'rmasligi kerak. Avval mobil API buni tekshirmasdi — bloklangan kuryer
+    ilova orqali ishlashda davom etardi.
+    """
+    return DeliveryDriver.objects.filter(user=user, is_active=True).first()
+
+
 def _orders_ctx(request):
     return {'request': request}
 
@@ -52,6 +63,11 @@ class CourierDashboardView(APIView):
         base = Order.objects.select_related('driver').prefetch_related('items')
         available = base.filter(status='ready', driver__isnull=True,
                                 fulfillment_type='delivery').order_by('-created_at')
+        # Bloklangan kuryer mijozlarning manzil/telefonini ko'rmasligi kerak
+        # (web `_driver_queues` bilan bir xil). Faol buyurtmalar/tarix ochiq —
+        # allaqachon qo'lidagi yetkazishni yakunlashi mumkin.
+        if not driver.is_active:
+            available = available.none()
         active = base.filter(driver=driver,
                              status__in=['assigned', 'picked_up', 'on_the_way']).order_by('-assigned_at')
         history = base.filter(driver=driver, status='delivered').order_by('-delivered_at')
@@ -120,8 +136,11 @@ class CourierAvailableView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        driver = _get_driver(request.user)
+        driver = _get_working_driver(request.user)
         if not driver:
+            if _get_driver(request.user):
+                return Response({'detail': 'Hisobingiz bloklangan.'},
+                                status=status.HTTP_403_FORBIDDEN)
             return Response({'detail': 'Kuryer profili topilmadi.'},
                             status=status.HTTP_404_NOT_FOUND)
         val = request.data.get('is_available')
@@ -135,8 +154,12 @@ class CourierAcceptView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, order_id):
-        driver = _get_driver(request.user)
+        # Yangi buyurtma olish — bloklangan kuryerga ruxsat yo'q (web bilan bir xil).
+        driver = _get_working_driver(request.user)
         if not driver:
+            if _get_driver(request.user):
+                return Response({'detail': 'Hisobingiz bloklangan — buyurtma qabul qila olmaysiz.'},
+                                status=status.HTTP_403_FORBIDDEN)
             return Response({'detail': 'Kuryer profili topilmadi.'},
                             status=status.HTTP_404_NOT_FOUND)
         if not driver.is_available:

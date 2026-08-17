@@ -659,7 +659,7 @@ class Command(BaseCommand):
     # ── 9. DELIVERY HAYDOVCHILAR ────────────────────────────────────────────────
     def _seed_delivery_drivers(self, citizens):
         from delivery.models import DeliveryDriver
-        VEH = ['moto', 'bike', 'car', 'foot']
+        VEH = ['moto', 'bike', 'car']
         n = 0
         for u in RNG.sample(citizens, min(6, len(citizens))):
             _, c = DeliveryDriver.objects.get_or_create(

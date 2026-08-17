@@ -35,6 +35,30 @@ def env_bool(key, default=False):
         return default
     return val.strip().lower() in ('1', 'true', 'yes', 'on')
 
+# ─── XARITA PLITKALARI ───────────────────────────────────────────────────────
+# DIQQAT — LITSENZIYA. Ilgari core-sat.maps.yandex.net to'g'ridan-to'g'ri
+# chaqirilardi. Yandex plitkalarini o'z ilovangizda shunday ishlatish ularning
+# foydalanish shartlariga zid: istalgan payt bloklanishi yoki huquqiy talab
+# kelib chiqishi mumkin. Shu sabab manba sozlanadigan qilindi — sifat
+# uchun default 'yandex', lekin bir qator bilan toza variantga o'tiladi.
+#
+#   MAP_TILE_PROVIDER=yandex    — DEFAULT. Eng sifatli (O'zbekistonda OSM
+#                                 ma'lumoti kam), LEKIN litsenziyasi yo'q.
+#   MAP_TILE_PROVIDER=osm       — kalit KERAKMAS, ODbL, huquqiy jihatdan toza
+#   MAP_TILE_PROVIDER=maptiler  — MAP_TILE_KEY kerak; sputnik + ko'cha nomlari
+#   MAP_TILE_PROVIDER=mapbox    — MAP_TILE_KEY kerak; satellite-streets
+#
+# Kalit talab qiladigan provayder tanlansa-yu kalit berilmasa — default'ga
+# tushamiz (xarita hech qachon ishlamay qolmaydi).
+# DEBUG'da Django'ning texnik 404 sahifasi (URL ro'yxati bilan) kerak bo'lsa
+# shuni yoqing. Odatda o'chiq — ichki tuzilma oshkor bo'lmasin.
+DEBUG_SHOW_URL_LIST = env_bool('DEBUG_SHOW_URL_LIST', False)
+
+MAP_TILE_PROVIDER = os.environ.get('MAP_TILE_PROVIDER', 'yandex').strip().lower()
+MAP_TILE_KEY = os.environ.get('MAP_TILE_KEY', '').strip()
+if MAP_TILE_PROVIDER in ('maptiler', 'mapbox') and not MAP_TILE_KEY:
+    MAP_TILE_PROVIDER = 'yandex'
+
 # ─── XAVFSIZLIK ──────────────────────────────────────────────────────────────
 # DEBUG: muhit o'zgaruvchisidan boshqariladi (default — development uchun True)
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
@@ -103,6 +127,9 @@ MIDDLEWARE = [
     # SessionMiddleware'dan keyin, CommonMiddleware'dan oldin turishi SHART.
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # DEBUG'da Django texnik 404'i BARCHA URL manzillarini ro'yxatlab
+    # ko'rsatadi — uni loyiha shabloni bilan almashtiramiz.
+    'main.middleware_404.PrettyNotFoundMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -123,6 +150,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'notifications.context_processors.notifications',
                 'main.context_processors.feature_flags',
+                'main.context_processors.ad_inquiries',
+                'main.context_processors.user_personas',
+                'main.context_processors.map_tiles',
             ],
         },
     },
@@ -317,7 +347,8 @@ elif _s3_bucket:
         MEDIA_URL = f'{_s3_endpoint}/{_s3_bucket}/'
     else:
         MEDIA_URL = f'https://{_s3_bucket}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
-LOGIN_REDIRECT_URL = 'profile'
+# Rolga qarab taqsimlanadi (main.views.after_login) — kuryer ish paneliga tushadi.
+LOGIN_REDIRECT_URL = 'after_login'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 AUTH_USER_MODEL = 'main.User'
@@ -505,6 +536,20 @@ DELIVERY_CART_ENABLED = env_bool('DELIVERY_CART_ENABLED', False)
 # qoldi). Admin panelda staff uchun modellar ko'rinishda qoladi.
 # Qayta yoqish: .env'ga  TAXI_ENABLED=True
 TAXI_ENABLED = env_bool('TAXI_ENABLED', False)
+
+# ─── TO'LOVLAR BO'LIMI: VAQTINCHA YOPIQ ─────────────────────────────────────
+# False bo'lganda /payments/ sahifalariga kirib bo'lmaydi — view'lar bosh
+# sahifaga qaytaradi (payments/views.py) va menyudagi havolalar yashiriladi.
+# ⚠️ Payme/Click WEBHOOK'lari bu bayroqdan MUSTAQIL ishlashda davom etadi —
+# ular provayder kabinetida ro'yxatdan o'tgan, yopilsa to'lovlar tasdiqlanmaydi.
+# Qayta yoqish: .env'ga  PAYMENTS_ENABLED=True
+PAYMENTS_ENABLED = env_bool('PAYMENTS_ENABLED', False)
+
+# ─── HOKIM PANELI: ARXIVLANGAN ──────────────────────────────────────────────
+# Mahalla bo'limi bilan birga arxivlangan (main/community_views.py da view
+# allaqachon `_archived_view` ga bog'langan). Bu bayroq menyudagi havolani
+# boshqaradi. Qayta yoqish: .env'ga  HOKIM_ENABLED=True
+HOKIM_ENABLED = env_bool('HOKIM_ENABLED', False)
 
 # ─── AI ASISTENT: TASHQI E'LON QIDIRUVI (OLX va h.k.) ────────────────────────
 # AI asistent faqat sayt ichidagi e'lonlar bilan cheklanmasin. Saytda natija kam

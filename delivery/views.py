@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from main.utils import validate_file_type, clean_image
+from .estimates import estimate_label
 from .models import (
     DeliveryCategory, Store, StoreImage, Product, ProductImage, Cart, Order, OrderItem,
     DeliveryDriver, DriverLocation, DriverReview, StoreUpdate, StoreSubscription,
@@ -1248,6 +1249,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _notify_admins_new_driver(driver):
+    """Yangi kuryer arizasi haqida adminlarga xabar.
+
+    Bildirishnoma yuborilmasa ham ariza yo'qolmaydi (admin panelda ko'rinadi),
+    shuning uchun xatolik butun ro'yxatdan o'tishni yiqitmasligi kerak.
+    """
+    try:
+        from notifications.models import notify
+        from django.contrib.auth import get_user_model
+        from django.urls import reverse
+        url = reverse('admin:delivery_deliverydriver_change', args=[driver.pk])
+        for admin in get_user_model().objects.filter(is_staff=True, is_active=True):
+            notify(admin, f"Yangi kuryer arizasi: {driver.full_name}", url, 'delivery')
+    except Exception:
+        logger.exception('driver application notify failed for %s', driver.pk)
+
+
 def _get_driver(request):
     """Kuryer yozuvi — bloklangan bo'lsa ham qaytaradi.
 
@@ -1259,12 +1277,15 @@ def _get_driver(request):
 
 
 def _get_working_driver(request):
-    """Buyurtma olishga haqli kuryer. `is_active=False` — admin bloklagan.
+    """Buyurtma olishga haqli kuryer: TASDIQLANGAN va bloklanmagan.
 
-    Avval `is_active` HECH QAYERDA tekshirilmasdi: bloklangan kuryer ishlashda
-    davom etar va mijozlarning manzil/telefonini ko'raverardi.
+    `is_active=False` — admin bloklagan. `status != approved` — ariza hali
+    ko'rib chiqilmagan yoki rad etilgan; bunday odam mijozlarning manzil va
+    telefonini ko'rmasligi kerak.
     """
-    return DeliveryDriver.objects.filter(user=request.user, is_active=True).first()
+    return DeliveryDriver.objects.filter(
+        user=request.user, is_active=True,
+        status=DeliveryDriver.STATUS_APPROVED).first()
 
 
 def _normalize_phone(phone):
@@ -1291,19 +1312,23 @@ def driver_register(request):
             return render(request, 'delivery/driver_register.html', {'mode': 'register', 'vehicles': DeliveryDriver.VEHICLE_CHOICES})
         try:
             with transaction.atomic():
-                DeliveryDriver.objects.create(
+                driver = DeliveryDriver.objects.create(
                     user=request.user, full_name=full_name, phone=phone,
                     vehicle_type=request.POST.get('vehicle_type', 'moto'),
                     vehicle_number=request.POST.get('vehicle_number', '').strip(),
+                    status=DeliveryDriver.STATUS_PENDING,
                 )
-                if request.user.role == 'user':
-                    request.user.role = 'driver'
-                    request.user.save(update_fields=['role'])
+                # DIQQAT: 'driver' roli SHU YERDA berilmaydi. Ilgari ariza
+                # yuborilishi bilan berilardi va odam darhol ishlay boshlardi.
+                # Rolni admin tasdiqlaganda `driver.approve()` beradi.
         except Exception:
             logger.exception('driver_register failed for user %s', request.user.pk)
             messages.error(request, "Haydovchi profili yaratishda xatolik. Qayta urinib ko'ring.")
             return render(request, 'delivery/driver_register.html', {'mode': 'register', 'vehicles': DeliveryDriver.VEHICLE_CHOICES})
-        messages.success(request, "Haydovchi profili yaratildi! ✅")
+        _notify_admins_new_driver(driver)
+        messages.success(
+            request,
+            "Arizangiz qabul qilindi! ⏳ Admin tekshirgach kuryer paneli ochiladi.")
         return redirect('delivery:driver_dashboard')
     return render(request, 'delivery/driver_register.html', {'mode': 'register', 'vehicles': DeliveryDriver.VEHICLE_CHOICES})
 
@@ -1363,8 +1388,24 @@ def driver_dashboard(request):
     driver = _get_driver(request)
     if not driver:
         return redirect('delivery:driver_register')
+
+    # Tasdiqlanmagan ariza — buyurtma navbatlari umuman yuklanmaydi va
+    # panel o'rniga ariza holati sahifasi ko'rsatiladi.
+    if not driver.is_approved:
+        return render(request, 'delivery/driver_pending.html', {
+            'driver': driver, 'blocked': not driver.is_active,
+        })
+
     available, my_active, history = _driver_queues(driver)
     earnings = history.aggregate(s=Sum('delivery_fee'))['s'] or 0
+
+    # Taxminiy yetkazish vaqti — kuryer buyurtmani QABUL QILISHDAN OLDIN
+    # "bu qancha vaqt oladi?" degan savolga javob olsin. Tezlik shu transport
+    # turidagi haqiqiy yetkazishlardan o'lchanadi (delivery/estimates.py).
+    available = list(available.prefetch_related('items__product__store'))
+    my_active = list(my_active.prefetch_related('items__product__store'))
+    for o in available + my_active:
+        o.eta = estimate_label(o, driver.vehicle_type)
 
     # ── Davriy daromad (bugun / 7 kun / 30 kun) — delivered_at bo'yicha.
     # Eski yozuvlarda delivered_at bo'sh — ular faqat umumiy summada hisoblanadi.
@@ -1402,9 +1443,15 @@ def driver_orders_feed(request):
     driver = _get_driver(request)
     if not driver:
         return JsonResponse({'ok': False, 'error': 'not_a_driver'}, status=403)
+    if not driver.is_approved:
+        return JsonResponse({'ok': False, 'error': 'not_approved'}, status=403)
     available, my_active, _ = _driver_queues(driver)
     if not driver.is_available or not driver.is_active:
         available = available.none()
+    # Panel bilan bir xil ko'rinish: jonli ro'yxatda ham taxminiy vaqt bo'lsin.
+    available = list(available.prefetch_related('items__product__store'))
+    for o in available:
+        o.eta = estimate_label(o, driver.vehicle_type)
     return JsonResponse({
         'ok': True,
         # `request=request` SHART — aks holda {% csrf_token %} bo'sh chiqadi va
@@ -1422,8 +1469,13 @@ def order_accept(request, order_id):
     # Yangi buyurtma olish — bloklangan kuryerga ruxsat yo'q.
     driver = _get_working_driver(request)
     if not driver:
-        if _get_driver(request):
-            messages.error(request, "Hisobingiz bloklangan — buyurtma qabul qila olmaysiz.")
+        existing = _get_driver(request)
+        if existing:
+            if not existing.is_approved:
+                messages.error(
+                    request, "Arizangiz hali tasdiqlanmagan — buyurtma qabul qila olmaysiz.")
+            else:
+                messages.error(request, "Hisobingiz bloklangan — buyurtma qabul qila olmaysiz.")
             return redirect('delivery:driver_dashboard')
         return redirect('delivery:driver_register')
     if not driver.is_available:

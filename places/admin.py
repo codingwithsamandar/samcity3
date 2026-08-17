@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 from main.admin_widgets import LatLngPickerWidget
-from .models import Place, PlaceImage, PlaceReview, PlaceFavorite
+from .models import Place, PlaceImage, PlaceReview, PlaceFavorite, PlaceMenuItem
 
 
 @admin.register(PlaceReview)
@@ -18,6 +18,19 @@ class PlaceImageInline(admin.TabularInline):
     extra = 1
 
 
+class PlaceMenuItemInline(admin.TabularInline):
+    model = PlaceMenuItem
+    extra = 1
+
+
+@admin.register(PlaceMenuItem)
+class PlaceMenuItemAdmin(admin.ModelAdmin):
+    list_display = ('name', 'place', 'section', 'price', 'is_active')
+    list_filter = ('section', 'is_active', 'place__category')
+    search_fields = ('name', 'place__name')
+    list_editable = ('is_active',)
+
+
 class PlaceAdminForm(forms.ModelForm):
     class Meta:
         model = Place
@@ -32,7 +45,7 @@ class PlaceAdmin(admin.ModelAdmin):
     list_filter = ('category', 'is_active')
     search_fields = ('name', 'name_ru', 'name_en', 'address', 'description')
     list_editable = ('is_active',)
-    inlines = [PlaceImageInline]
+    inlines = [PlaceImageInline, PlaceMenuItemInline]
 
 
 @admin.register(PlaceImage)

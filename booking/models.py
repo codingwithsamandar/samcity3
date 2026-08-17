@@ -21,6 +21,38 @@ VENUE_TYPE_CHOICES = [
 SLOT_TYPES = ('barber', 'beauty', 'restaurant', 'cafe')
 # Maksimal bekor-qilish jarimasi (foiz). Joy egasi bundan oshira olmaydi.
 MAX_PENALTY_PERCENT = 15
+# Bron oldindan qancha kunga ochiq. Mijoz bugundan boshlab shu oraliqdagi
+# sanalarni band qila oladi (bugun + 7 kun). Undan narisi — rad etiladi:
+# uzoq kelajakka qilingan bronlar odatda kelib chiqmaydi va slotni band qiladi.
+MAX_BOOKING_AHEAD_DAYS = 7
+
+
+def booking_window():
+    """Bron ochiq bo'lgan sana oralig'i: (birinchi_kun, oxirgi_kun)."""
+    today = timezone.localdate()
+    return today, today + timedelta(days=MAX_BOOKING_AHEAD_DAYS)
+
+
+def booking_date_error(value):
+    """Sana oynadan tashqarida bo'lsa xato MATNI, aks holda None.
+
+    Yagona manba — veb forma ham, API ham shuni chaqiradi, shunda ikki
+    joyda ikki xil qoida paydo bo'lmaydi.
+    """
+    if value is None:
+        return "Iltimos, sanani tanlang."
+    first, last = booking_window()
+    if value < first:
+        return "O'tgan sanaga bron qilib bo'lmaydi."
+    if value > last:
+        return (f"Bron faqat {MAX_BOOKING_AHEAD_DAYS} kun oldindan ochiq — "
+                f"{last.strftime('%d.%m.%Y')} gacha bo'lgan sanani tanlang.")
+    return None
+
+
+# Bitta joy uchun portfoliodagi maksimal ish soni — sahifa og'irlashib
+# ketmasligi uchun (galereya bir sahifada to'liq yuklanadi).
+MAX_WORKS_PER_VENUE = 30
 
 
 class Venue(models.Model):
@@ -37,6 +69,12 @@ class Venue(models.Model):
     address = models.CharField(max_length=300, blank=True, verbose_name='Manzil')
     phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
     image = models.ImageField(upload_to='venues/%Y/%m/', blank=True, null=True)
+    # Xaritadagi joy (places.Place) bilan bog'lanish. Bog'lansa — o'sha
+    # joyning menyusi bron sahifasida ham ko'rinadi, ya'ni restoran menyuni
+    # BIR marta kiritadi, mijoz uni ikkala sahifada ham ko'radi.
+    place = models.ForeignKey(
+        'places.Place', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='venues', verbose_name='Xaritadagi joy')
     capacity = models.PositiveIntegerField(null=True, blank=True, verbose_name="Sig'imi (kishi)")
     price_per_day = models.BigIntegerField(null=True, blank=True, verbose_name="Narx (kunlik, so'm)")
     price_per_hour = models.BigIntegerField(null=True, blank=True, verbose_name="Narx (soatlik, so'm)")
@@ -75,6 +113,13 @@ class Venue(models.Model):
         return f'{self.name} ({self.get_venue_type_display()})'
 
     @property
+    def menu_items(self):
+        """Bog'langan xaritadagi joyning faol menyusi (bog'lanmasa — bo'sh)."""
+        if not self.place_id:
+            return []
+        return list(self.place.menu_items.filter(is_active=True))
+
+    @property
     def uses_slots(self):
         """Vaqt-slot va usta tanlanadigan joymi (sartarosh/salon/restoran/kafe)."""
         return self.venue_type in SLOT_TYPES
@@ -85,6 +130,14 @@ class Venue(models.Model):
 
     def active_staff(self):
         return list(self.staff.filter(is_active=True))
+
+    def _day_time_off_by_staff(self, date):
+        """Kun bo'yi barcha yopilgan vaqtlarni BIR so'rovda, usta bo'yicha."""
+        from collections import defaultdict
+        by_staff = defaultdict(list)
+        for off in StaffTimeOff.objects.filter(staff__venue=self, date=date):
+            by_staff[off.staff_id].append(off)
+        return by_staff
 
     def _day_bookings_by_staff(self, date):
         """Kun bo'yi barcha faol bronlarni BIR so'rovda yuklab, usta bo'yicha guruhlaydi.
@@ -105,8 +158,11 @@ class Venue(models.Model):
     def free_staff_at(self, date, start, duration_minutes=30):
         """Shu sana/vaqtда bo'sh ustalar ro'yxati (N+1siz — bir so'rov)."""
         by_staff = self._day_bookings_by_staff(date)
+        off_by_staff = self._day_time_off_by_staff(date)
         return [s for s in self.active_staff()
-                if s.is_free_at(date, start, duration_minutes, bookings=by_staff.get(s.id, []))]
+                if s.is_free_at(date, start, duration_minutes,
+                                bookings=by_staff.get(s.id, []),
+                                time_off=off_by_staff.get(s.id, []))]
 
     def available_slots(self, date, staff=None, duration_minutes=30):
         """Berilgan sana uchun bo'sh vaqt-slotlar ro'yxati ('HH:MM').
@@ -127,6 +183,7 @@ class Venue(models.Model):
         # Kun bronlarini BIR marta yuklaymiz (N+1 oldini olish: ilgari
         # har usta×har slot uchun alohida so'rov bo'lardi).
         by_staff = self._day_bookings_by_staff(date)
+        off_by_staff = self._day_time_off_by_staff(date)
         all_day = [b for lst in by_staff.values() for b in lst]
 
         # Joy darajasidagi bandlik (usta yo'q holat uchun)
@@ -140,10 +197,13 @@ class Venue(models.Model):
             is_past = (date == now.date() and t <= now.time())
             if not is_past:
                 if staff is not None:
-                    free = staff.is_free_at(date, t, step, bookings=by_staff.get(staff.id, []))
+                    free = staff.is_free_at(
+                        date, t, step, bookings=by_staff.get(staff.id, []),
+                        time_off=off_by_staff.get(staff.id, []))
                 elif staff_list:
-                    free = any(s.is_free_at(date, t, step, bookings=by_staff.get(s.id, []))
-                               for s in staff_list)
+                    free = any(s.is_free_at(
+                        date, t, step, bookings=by_staff.get(s.id, []),
+                        time_off=off_by_staff.get(s.id, [])) for s in staff_list)
                 else:
                     free = label not in venue_taken
                 if free:
@@ -157,6 +217,9 @@ class VenueService(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name='services')
     name = models.CharField(max_length=150, verbose_name='Xizmat nomi')
+    description = models.TextField(blank=True, verbose_name='Xizmat haqida')
+    image = models.ImageField(
+        upload_to='venues/services/%Y/%m/', blank=True, null=True, verbose_name='Rasm')
     price = models.BigIntegerField(verbose_name="Narx (so'm)")
     duration_minutes = models.PositiveIntegerField(
         default=30, verbose_name='Davomiyligi (daqiqa)')
@@ -178,7 +241,17 @@ class VenueStaff(models.Model):
     """Joyning ishchisi/ustasi (sartarosh, master va h.k.)."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name='staff')
+    # Usta hisobi. Ilgari usta shunchaki egasi kiritgan ism edi — u tizimga
+    # kira olmasdi va o'z jadvalini ko'ra olmasdi. Bog'lansa, usta o'z
+    # panelini ochadi (FAQAT o'ziga biriktirilgan bronlar).
+    # FK, OneToOne emas: bir odam ikki joyda usta bo'lishi mumkin.
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='staff_roles', verbose_name='Hisob (panelga kirish uchun)')
     name = models.CharField(max_length=120, verbose_name='Ism')
+    phone = models.CharField(
+        max_length=30, blank=True, verbose_name='Telefon',
+        help_text='Shu raqamli foydalanuvchi topilsa, ustaga panel ochiladi.')
     specialty = models.CharField(max_length=120, blank=True, verbose_name='Mutaxassisligi')
     photo = models.ImageField(upload_to='venues/staff/%Y/%m/', blank=True, null=True)
     bio = models.TextField(blank=True, verbose_name='Usta haqida')
@@ -200,14 +273,49 @@ class VenueStaff(models.Model):
     def __str__(self):
         return self.name
 
-    def is_free_at(self, date, start, duration_minutes=30, bookings=None):
-        """Berilgan sana/vaqtда usta bo'shmi (band bron bilan kesishmasa True).
+    def link_user_by_phone(self):
+        """Telefon raqami bo'yicha hisobni topib bog'laydi (topilmasa — None).
 
-        `bookings` berilsa — DB so'rovi o'rniga shu ro'yxat ishlatiladi
-        (N+1 oldini olish: chaqiruvchi kun bronlarini bir marta yuklaydi).
+        Egasi ustani qo'shganda chaqiriladi: usta allaqachon ro'yxatdan
+        o'tgan bo'lsa, paneli darhol ochiladi.
+        """
+        if self.user_id or not self.phone:
+            return None
+        from main.models import User
+        digits = ''.join(ch for ch in self.phone if ch.isdigit())[-9:]
+        if len(digits) < 9:
+            return None
+        found = User.objects.filter(phone__endswith=digits).first()
+        if found:
+            self.user = found
+            self.save(update_fields=['user'])
+        return found
+
+    def is_free_at(self, date, start, duration_minutes=30, bookings=None,
+                   time_off=None):
+        """Berilgan sana/vaqtда usta bo'shmi.
+
+        Ikki sabab band qiladi: mavjud BRON va ustaning o'zi YOPGAN vaqti
+        (tushlik, dam olish, shaxsiy ish — `StaffTimeOff`).
+
+        `bookings` / `time_off` berilsa — DB so'rovi o'rniga shu ro'yxatlar
+        ishlatiladi (N+1 oldini olish: chaqiruvchi kun ma'lumotini bir
+        marta yuklaydi).
         """
         if not start:
             return True
+
+        from datetime import datetime as _d, timedelta as _t
+        end_new = (_d.combine(date, start) + _t(minutes=duration_minutes)).time()
+
+        if time_off is None:
+            time_off = self.time_off.filter(date=date)
+        for off in time_off:
+            if off.start_time is None:          # kun bo'yi yopiq
+                return False
+            off_end = off.end_time or off.start_time
+            if start < off_end and off.start_time < end_new:
+                return False
         from datetime import datetime as _dt, timedelta as _td
         new_end = (_dt.combine(date, start) + _td(minutes=duration_minutes)).time()
         if bookings is None:
@@ -220,6 +328,78 @@ class VenueStaff(models.Model):
             if start < b_end and b.start_time < new_end:
                 return False
         return True
+
+
+class VenueWork(models.Model):
+    """Joy egasining portfoliosi — qilgan ishi rasmi va ma'lumoti.
+
+    Masalan sartaroshxona: "Fade soch turmagi" rasmi, qaysi usta qilgani,
+    qaysi xizmatga tegishli va narxi. Mijoz bron qilishdan oldin ko'radi.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name='works')
+    title = models.CharField(max_length=150, verbose_name='Ish nomi')
+    description = models.TextField(blank=True, verbose_name='Tavsif')
+    image = models.ImageField(upload_to='venues/works/%Y/%m/', verbose_name='Rasm')
+    service = models.ForeignKey(
+        VenueService, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='works', verbose_name='Xizmat')
+    staff = models.ForeignKey(
+        VenueStaff, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='works', verbose_name='Usta/ishchi')
+    price = models.BigIntegerField(null=True, blank=True, verbose_name="Narx (so'm)")
+    is_active = models.BooleanField(default=True, verbose_name="Ko'rsatilsin")
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'venue_works'
+        verbose_name = 'Bajarilgan ish'
+        verbose_name_plural = 'Bajarilgan ishlar'
+        ordering = ['order', '-created_at']
+
+    def __str__(self):
+        return f'{self.venue.name} — {self.title}'
+
+
+
+class StaffTimeOff(models.Model):
+    """Usta yopgan vaqt — tushlik, dam olish, shaxsiy ish.
+
+    Nega kerak: ilgari ustaning vaqti faqat BRON bilan band bo'lardi va usta
+    o'zi "bu vaqtda yo'qman" deya olmasdi — mijoz istalgan bo'sh slotga
+    yozilaverardi. Endi usta o'z jadvalini boshqaradi.
+
+    `start_time` bo'sh bo'lsa — butun kun yopiq.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    staff = models.ForeignKey(
+        VenueStaff, on_delete=models.CASCADE, related_name='time_off')
+    date = models.DateField(db_index=True, verbose_name='Sana')
+    start_time = models.TimeField(
+        null=True, blank=True, verbose_name='Boshlanish',
+        help_text="Bo'sh qoldirilsa \u2014 butun kun yopiq.")
+    end_time = models.TimeField(null=True, blank=True, verbose_name='Tugash')
+    reason = models.CharField(max_length=120, blank=True, verbose_name='Sabab')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'venue_staff_time_off'
+        verbose_name = 'Usta yopgan vaqt'
+        verbose_name_plural = 'Usta yopgan vaqtlar'
+        ordering = ['date', 'start_time']
+        indexes = [
+            models.Index(fields=['staff', 'date'], name='stf_off_staff_date_idx'),
+        ]
+
+    def __str__(self):
+        if self.start_time is None:
+            return f'{self.staff.name} \u2014 {self.date} (butun kun)'
+        return f'{self.staff.name} \u2014 {self.date} {self.start_time:%H:%M}'
+
+    @property
+    def whole_day(self):
+        return self.start_time is None
 
 
 class VenueBooking(models.Model):
@@ -274,6 +454,16 @@ class VenueBooking(models.Model):
     refund_amount = models.BigIntegerField(default=0, verbose_name='Qaytariladigan summa')
     cancelled_at = models.DateTimeField(null=True, blank=True)
 
+    # ── Haqiqiy bajarilish vaqti (taxmin uchun o'lchov) ────────────
+    # Usta "Yakunlandi" bosganda to'ldiriladi. Shu ma'lumot yig'ilgach,
+    # "bu usta bu xizmatni odatda necha daqiqada bajaradi" degan TAXMIN
+    # rejadagi `duration_minutes` o'rniga haqiqatga tayanadi.
+    completed_at = models.DateTimeField(
+        null=True, blank=True, verbose_name='Yakunlangan vaqt')
+    actual_minutes = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name='Haqiqiy davomiylik (daqiqa)',
+        help_text='Yakunlanganda hisoblanadi — taxminiy vaqtni aniqlashtiradi.')
+
     # ── Eslatma (send_booking_reminders buyrug'i to'ldiradi) ─────────────────
     reminder_sent_at = models.DateTimeField(
         null=True, blank=True, verbose_name='Eslatma yuborilgan vaqt',
@@ -319,6 +509,25 @@ class VenueBooking(models.Model):
         return self.paid_amount and self.paid_amount > 0
 
     @property
+    def payment_state(self):
+        """To'lov holati — usta/egasi paneli uchun: ('kod', 'matn').
+
+        Uch holat farqlanadi: to'langan; oldindan to'lov MAJBURIY-yu hali
+        to'lanmagan (xavfli — mijoz kelmasligi mumkin); oldindan to'lov
+        talab qilinmaydi, ya'ni joyida to'laydi.
+        """
+        if self.is_paid:
+            return ('paid', "To'langan")
+        if self.venue.prepay_required:
+            return ('awaiting', "To'lov kutilmoqda")
+        return ('onsite', "Joyida to'laydi")
+
+    @property
+    def amount_due(self):
+        """Hali to'lanmagan summa (so'm)."""
+        return max((self.total_amount or 0) - (self.paid_amount or 0), 0)
+
+    @property
     def starts_at(self):
         """Bron boshlanish vaqti (datetime) — no-show hisobi uchun."""
         if not self.start_time:
@@ -330,6 +539,25 @@ class VenueBooking(models.Model):
         if not self.is_paid:
             return 0
         return int(self.paid_amount * self.venue.penalty_percent / 100)
+
+    def mark_completed(self):
+        """Xizmat yakunlandi — haqiqiy davomiylikni ham o'lchab qo'yamiz.
+
+        Davomiylik rejalashtirilgan boshlanishdan yakunlashgacha. Bu aniq
+        o'lchov emas (usta kechikib bosishi mumkin), shuning uchun keyin
+        MEDIANA olinadi — bitta unutilgan yozuv o'rtachani buzmasin.
+        """
+        now = timezone.now()
+        self.completed_at = now
+        started = self.starts_at
+        if started:
+            mins = int((now - started).total_seconds() // 60)
+            # Manfiy (erta bosilgan) yoki bir kunlik (unutilgan) qiymatlar
+            # o'lchov sifatida yaroqsiz — yozilmaydi.
+            if 0 < mins <= 8 * 60:
+                self.actual_minutes = mins
+        self.status = 'completed'
+        self.save(update_fields=['status', 'completed_at', 'actual_minutes'])
 
     def mark_cancelled(self):
         """Foydalanuvchi bekor qildi — jarima ushlanadi, qolgani qaytariladi."""

@@ -27,7 +27,7 @@ class CourierAPITests(TestCase):
         self.driver_user = make_user('+998936100002')
         self.driver = DeliveryDriver.objects.create(
             user=self.driver_user, full_name='Kuryer', phone='+998936100002',
-            is_available=True)
+            is_available=True, status='approved')
         self.c = APIClient()
         self.c.force_authenticate(self.driver_user)
 
@@ -96,7 +96,7 @@ class CourierAPITests(TestCase):
 
     def test_accept_already_taken_conflict(self):
         other = DeliveryDriver.objects.create(
-            user=make_user('+998936100003'), full_name='B', phone='+998936100003')
+            user=make_user('+998936100003'), full_name='B', phone='+998936100003', status='approved')
         o = make_order(self.customer, driver=other, status='assigned')
         r = self.c.post(reverse('api:courier-accept', args=[o.id]))
         self.assertEqual(r.status_code, 409)
@@ -111,14 +111,24 @@ class CourierAPITests(TestCase):
 
     # ── Holat o'tishlari ──
     def test_status_flow(self):
+        # `picked_up` MAJBURIY birinchi qadam: kuryer mahsulotni do'kondan
+        # olmasdan "yo'ldaman" deb belgilay olmaydi (ORDER_TRANSITIONS).
         o = make_order(self.customer, driver=self.driver, status='assigned')
-        for st in ('on_the_way', 'delivered'):
+        for st in ('picked_up', 'on_the_way', 'delivered'):
             r = self.c.post(reverse('api:courier-order-status', args=[o.id]),
                             {'status': st}, format='json')
             self.assertEqual(r.status_code, 200, f'{st}: {r.data}')
             o.refresh_from_db()
             self.assertEqual(o.status, st)
         self.assertIsNotNone(o.delivered_at)
+
+    def test_road_before_pickup_rejected(self):
+        o = make_order(self.customer, driver=self.driver, status='assigned')
+        r = self.c.post(reverse('api:courier-order-status', args=[o.id]),
+                        {'status': 'on_the_way'}, format='json')
+        self.assertEqual(r.status_code, 409)
+        o.refresh_from_db()
+        self.assertEqual(o.status, 'assigned')
 
     def test_status_invalid_transition(self):
         o = make_order(self.customer, driver=self.driver, status='assigned')
@@ -138,3 +148,38 @@ class CourierAPITests(TestCase):
         c = APIClient()
         r = c.get(reverse('api:courier-dashboard'))
         self.assertIn(r.status_code, (401, 403))
+
+    # ── Bloklangan kuryer (is_active=False) ──
+    def test_blocked_courier_available_hidden(self):
+        """Bloklangan kuryer mijozning manzil/telefonini ko'rmaydi (available bo'sh)."""
+        make_order(self.customer, status='ready')
+        self.driver.is_active = False
+        self.driver.save(update_fields=['is_active'])
+        r = self.c.get(reverse('api:courier-dashboard'))
+        self.assertTrue(r.data['registered'])
+        self.assertEqual(len(r.data['available']), 0)
+
+    def test_blocked_courier_cannot_go_available(self):
+        self.driver.is_active = False
+        self.driver.save(update_fields=['is_active'])
+        r = self.c.post(reverse('api:courier-available'))
+        self.assertEqual(r.status_code, 403)
+
+    def test_blocked_courier_cannot_accept(self):
+        self.driver.is_active = False
+        self.driver.save(update_fields=['is_active'])
+        o = make_order(self.customer, status='ready')
+        r = self.c.post(reverse('api:courier-accept', args=[o.id]))
+        self.assertEqual(r.status_code, 403)
+        o.refresh_from_db()
+        self.assertIsNone(o.driver_id)
+
+    def test_blocked_courier_can_finish_active_order(self):
+        """Bloklansa ham qo'lidagi yetkazishni yakunlay/qaytara olishi kerak."""
+        self.driver.is_active = False
+        self.driver.save(update_fields=['is_active'])
+        o = make_order(self.customer, driver=self.driver, status='assigned')
+        r = self.c.post(reverse('api:courier-release', args=[o.id]))
+        self.assertEqual(r.status_code, 200)
+        o.refresh_from_db()
+        self.assertEqual(o.status, 'ready')

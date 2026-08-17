@@ -4,6 +4,7 @@ from django.views.generic import RedirectView
 from . import views
 from . import community_views
 from . import marketplace_views
+from . import business_views
 
 class LogoutGetView(LogoutView):
     """Logout'ni GET (havola) yoki POST orqali bajaradi.
@@ -26,9 +27,11 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('login/', views.user_login, name='login'),
+    path('after-login/', views.after_login, name='after_login'),
     path('logout/', LogoutGetView.as_view(next_page='home'), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('staff/analytics/', views.admin_dashboard, name='admin_dashboard'),
+    path('panel/', business_views.business_panel, name='business_panel'),
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/update/', views.profile_edit, name='profile_update'),
@@ -54,6 +57,8 @@ urlpatterns = [
     path('ads/<uuid:pk>/favorite/', marketplace_views.ad_favorite_toggle, name='ad_favorite'),
     path('ads/<uuid:pk>/report/', marketplace_views.ad_report, name='ad_report'),
     path('ads/<uuid:pk>/inquiry/', marketplace_views.ad_inquiry, name='ad_inquiry'),
+    path('inquiry/<int:pk>/delete/', marketplace_views.inquiry_delete, name='inquiry_delete'),
+    path('ads/inquiries/', marketplace_views.my_inquiries, name='my_inquiries'),
 
     # ─── COMMUNITY: POLLS ───────────────────────────────────────────────────
     path('community/polls/', community_views.poll_list, name='poll_list'),

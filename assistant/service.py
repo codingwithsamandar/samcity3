@@ -37,7 +37,8 @@ def build_response(message, location=None, history=None, context=None,
         if agent_res is not None:
             return _as_agent_response(agent_res)
 
-    res = engine.handle(message, location=location, context=context)
+    res = engine.handle(message, location=location, context=context,
+                        user=getattr(request, 'user', None))
 
     if res.get('intent') != 'unknown':
         # ── AGENT EGALLAGAN BO'LIMLAR → engine chekinsin ─────────────────────
@@ -88,8 +89,29 @@ def build_response(message, location=None, history=None, context=None,
         res['ok'] = True
         return res
 
+    # ── 3.5-bosqich: BILIMLAR BAZASI — amal niyati uchun zaxira ──────────────
+    # «ovqat buyurtma qilaman», «joy band qil» kabi AMAL niyatlari `engine.handle()`
+    # da ataylab erta qaytariladi (agent bajarishi kerak). LLM ishlamasa
+    # (kalit yo'q, provayder o'lgan, tarmoq uzilgan) foydalanuvchi «tushunmadim»
+    # ko'rardi — holbuki KB da aynan shu mavzu bo'yicha javob va havola bor.
+    # Shu sabab muloyim fallback'dan OLDIN KB ga bir marta murojaat qilamiz.
+    # ⚠️ ANIQ TOIFA bo'lsa KB'ga murojaat qilmaymiz. «sartaroshxonadan joy bron
+    # qilmoqchiman» da KB umumiy TO'YXONA javobini qaytarardi — noto'g'ri va
+    # chalg'ituvchi. Bunday so'rovni faqat agent to'g'ri bajara oladi; u ishlamasa
+    # muloyim fallback aniqroq (u toifani nomlab, yo'nalish beradi).
+    try:
+        qn = engine._norm(message)
+        if not engine.detect_category(qn):
+            kb_res = engine._kb_result(qn, dict(res))
+            if kb_res and kb_res.get('reply'):
+                kb_res['source'] = 'local'
+                kb_res['ok'] = True
+                return kb_res
+    except Exception:
+        pass  # KB zaxirasi hech qachon javob oqimini uzmasin
+
     # ── 4-bosqich: muloyim fallback ───────────────────────────────────────────
-    fb = engine.fallback(message)
+    fb = engine.fallback(message, user=getattr(request, 'user', None))
     res['reply'] = fb['reply']
     res['actions'] = fb.get('actions', [])
     res['intent'] = 'fallback'

@@ -32,15 +32,13 @@ def _som(v):
 
 @tool(
     section='ads', action='search',
-    description="E'lonlar (oldi-sotdi) ichidan qidiradi: mashina, uy, telefon va h.k. "
-                "Faqat qidirish — foydalanuvchi topganини ko'radi va sotuvchiga qo'ng'iroq qiladi. "
-                "Saytda kam natija bo'lsa yoki foydalanuvchi «internetdan / boshqa saytdan "
-                "qidir» desa — `external=true` bilan tashqi saytlar (OLX) ham qo'shiladi.",
+    description="E'lonlar (oldi-sotdi) ichidan qidiradi. Faqat qidirish — sotib "
+                "olinmaydi. Kam natija bo'lsa yoki «internetdan qidir» desa "
+                "external=true (OLX qo'shiladi).",
     params={
-        'query': ('str', True, "nima qidiryapsiz (masalan «velosiped», «kvartira»)"),
-        'category': ('str', False, "toifa (ixtiyoriy) filtri", AD_CATEGORIES),
-        'external': ('bool', False, "internetdan (OLX va boshqa saytlar) ham qidirish. "
-                     "Foydalanuvchi «tashqaridan/boshqa saytdan qidir» desa true qil"),
+        'query': ('str', True, "nima qidiryapsiz, masalan «velosiped»"),
+        'category': ('str', False, "toifa filtri", AD_CATEGORIES),
+        'external': ('bool', False, "tashqi saytlardan ham qidirish"),
     },
 )
 def search(ctx, query, category=None, external=None):
@@ -138,9 +136,8 @@ def _ad_link_card(a):
 
 @tool(
     section='ads', action='details',
-    description="Bitta e'lon haqида TO'LIQ ma'lumot: tavsif, narx, aloqa. "
-                "«u haqида batafsil», «birinchisi» deganда — search'даги ad_id ni ber.",
-    params={'ad_id': ('str', True, "e'lon ID'si (search natijasidan)")},
+    description="Bitta e'lonning to'liq ma'lumoti (tavsif, narx, aloqa).",
+    params={'ad_id': ('str', True, "search natijasidagi ID")},
 )
 def details(ctx, ad_id):
     from django.core.exceptions import ValidationError
@@ -179,14 +176,13 @@ def details(ctx, ad_id):
 
 @tool(
     section='ads', action='post',
-    description="YANGI e'lon joylaydi (oldi-sotdi). Barcha ma'lumot to'planganда chaqir: "
-                "sarlavha, toifa, narx. Rasmsiz joylanadi.",
+    description="YANGI e'lon joylaydi (oldi-sotdi). Ma'lumot to'planganda chaqir.",
     params={
-        'title': ('str', True, "e'lon sarlavhasi (masalan «Velosiped sotiladi»)"),
+        'title': ('str', True, "sarlavha"),
         'category': ('str', True, "toifa", AD_CATEGORIES),
-        'price': ('int', False, "narx (so'm). Bepul bo'lsa 0 yoki bo'sh qoldiring"),
+        'price': ('int', False, "narx (so'm); bepul bo'lsa 0"),
         'description': ('str', False, "batafsil tavsif"),
-        'phone': ('str', False, "aloqa telefoni (bo'sh bo'lsa profil telefoni)"),
+        'phone': ('str', False, "aloqa telefoni (bo'sh bo'lsa profildan)"),
     },
     mutating=True,
     auth_required=True,
@@ -217,8 +213,7 @@ def post(ctx, title, category, price=None, description='', phone=''):
 
 @tool(
     section='ads', action='list_my',
-    description="Foydalanuvchining O'Z faol e'lonlari. «e'lonlarimni ko'rsat» yoki "
-                "bekor qilishдан oldin qaysинини tanlash uchun.",
+    description="Foydalanuvchining O'Z faol e'lonlari.",
     params={},
     auth_required=True,
 )
@@ -248,9 +243,8 @@ def list_my(ctx, **_):
 
 @tool(
     section='ads', action='cancel',
-    description="Foydalanuvchining O'Z e'lonини bekor qiladi (olib tashlaydi). "
-                "e'lon ID'sини ber (list_my yoki search natijasidan). Tasdiq talab qiladi.",
-    params={'ad_id': ('str', True, "bekor qilinadigan e'lon ID'si")},
+    description="Foydalanuvchining O'Z e'lonini olib tashlaydi.",
+    params={'ad_id': ('str', True, "list_my yoki search natijasidagi ID")},
     mutating=True,
     auth_required=True,
     owns={'ad_id': 'main.Ad'},

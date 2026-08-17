@@ -7,7 +7,7 @@
 
   <a href="{% url 'venue_detail' venue.pk %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> {{ venue.name }}</a>
 
-  <div class="page-header"><h1>Xizmat va ustalar</h1><p>{{ venue.name }} uchun xizmatlar, narxlar va ustalarni boshqaring</p></div>
+  <div class="page-header"><h1>Xizmat, usta va ishlar</h1><p>{{ venue.name }} uchun xizmatlar, narxlar, ustalar va qilgan ishlaringiz galereyasini boshqaring</p></div>
 
   <div class="grid-2" style="align-items:start;">
     <!-- Xizmatlar -->
@@ -15,18 +15,23 @@
       <h3 style="font-size:1.1rem;margin-bottom:.9rem;">Xizmatlar</h3>
       {% for s in services %}
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border);">
-        <div><b>{{ s.name }}</b><br><small style="color:var(--text3);">{{ s.price|floatformat:0 }} so'm · {{ s.duration_minutes }} daq</small></div>
+        <div style="display:flex;align-items:center;gap:.6rem;">
+          {% if s.image %}<img src="{{ s.image.url }}" alt="{{ s.name }}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">{% endif %}
+          <div><b>{{ s.name }}</b><br><small style="color:var(--text3);">{{ s.price|floatformat:0 }} so'm · {{ s.duration_minutes }} daq</small>{% if s.description %}<br><small style="color:var(--text3);">{{ s.description|truncatechars:60 }}</small>{% endif %}</div>
+        </div>
         <form method="post" action="{% url 'service_delete' s.pk %}" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-outline btn-sm">O'chir</button></form>
       </div>
       {% empty %}<p style="color:var(--text3);font-size:.88rem;">Hali xizmat yo'q.</p>{% endfor %}
 
-      <form method="post" action="{% url 'service_add' venue.pk %}" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+      <form method="post" action="{% url 'service_add' venue.pk %}" enctype="multipart/form-data" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
         {% csrf_token %}
         <div class="form-group" style="margin-bottom:.7rem;"><input name="name" class="form-control" placeholder="Xizmat nomi (masalan: Soch olish)" required></div>
         <div class="form-row">
           <input name="price" type="number" class="form-control" placeholder="Narx (so'm)" min="0" required>
           <input name="duration_minutes" type="number" class="form-control" placeholder="Daqiqa" value="30" min="10">
         </div>
+        <div class="form-group" style="margin-top:.7rem;margin-bottom:.7rem;"><textarea name="description" class="form-control" rows="2" placeholder="Xizmat haqida qisqacha (ixtiyoriy)"></textarea></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><label style="font-size:.8rem;color:var(--text3);">Xizmat rasmi (ixtiyoriy)</label><input name="image" type="file" accept="image/*" class="form-control"></div>
         <button class="btn btn-green btn-block btn-sm" style="margin-top:.7rem;"><svg class="ic"><use href="#i-plus"/></svg> Xizmat qo'shish</button>
       </form>
     </div>
@@ -38,7 +43,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:.6rem;">
           {% if st.photo %}<img src="{{ st.photo.url }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">{% else %}<div class="avatar" style="width:38px;height:38px;">{{ st.name|slice:":1" }}</div>{% endif %}
-          <div><b>{{ st.name }}</b>{% if st.specialty %}<br><small style="color:var(--text3);">{{ st.specialty }}</small>{% endif %}</div>
+          <div><b>{{ st.name }}</b>{% if st.user_id %} <span class="badge badge-green" style="font-size:.62rem;">Panel ochiq</span>{% elif st.phone %} <span class="badge badge-gray" style="font-size:.62rem;">Hisob topilmadi</span>{% endif %}{% if st.specialty %}<br><small style="color:var(--text3);">{{ st.specialty }}</small>{% endif %}</div>
         </div>
         <form method="post" action="{% url 'staff_delete' st.pk %}" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-outline btn-sm">O'chir</button></form>
       </div>
@@ -47,11 +52,67 @@
       <form method="post" action="{% url 'staff_add' venue.pk %}" enctype="multipart/form-data" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
         {% csrf_token %}
         <div class="form-group" style="margin-bottom:.7rem;"><input name="name" class="form-control" placeholder="Usta ismi" required></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="phone" type="tel" class="form-control" placeholder="Telefon (+998...) — ustaga panel ochish uchun"></div>
         <div class="form-group" style="margin-bottom:.7rem;"><input name="specialty" class="form-control" placeholder="Mutaxassisligi (ixtiyoriy)"></div>
-        <div class="form-group" style="margin-bottom:.7rem;"><input name="photo" type="file" accept="image/*" class="form-control"></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><input name="experience_years" type="number" min="0" class="form-control" placeholder="Tajriba (yil)"></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><textarea name="bio" class="form-control" rows="2" placeholder="Usta haqida (ixtiyoriy)"></textarea></div>
+        <div class="form-group" style="margin-bottom:.7rem;"><label style="font-size:.8rem;color:var(--text3);">Usta rasmi</label><input name="photo" type="file" accept="image/*" class="form-control"></div>
         <button class="btn btn-green btn-block btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Usta qo'shish</button>
       </form>
     </div>
+  </div>
+
+  <!-- ── Bajarilgan ishlar (portfolio) ── -->
+  <div class="card card-pad" style="margin-top:1.5rem;">
+    <h3 style="font-size:1.1rem;margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-sparkle"/></svg> Qilgan ishlarim</h3>
+    <p style="color:var(--text3);font-size:.85rem;margin-bottom:1rem;">Bajargan ishlaringiz rasmini va ma'lumotini joylang — mijozlar bron qilishdan oldin ko'radi. <b>{{ works|length }}/{{ works_max }}</b> ta ish joylangan.</p>
+
+    {% if works %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.2rem;">
+      {% for w in works %}
+      <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <img src="{{ w.image.url }}" alt="{{ w.title }}" style="width:100%;height:140px;object-fit:cover;display:block;">
+        <div style="padding:.6rem .7rem;">
+          <b style="font-size:.9rem;">{{ w.title }}</b>
+          {% if w.description %}<div style="color:var(--text3);font-size:.78rem;margin-top:.2rem;">{{ w.description|truncatechars:70 }}</div>{% endif %}
+          <div style="color:var(--text3);font-size:.75rem;margin-top:.3rem;">
+            {% if w.service %}{{ w.service.name }}{% endif %}{% if w.staff %} · {{ w.staff.name }}{% endif %}
+          </div>
+          {% if w.price %}<div style="font-weight:700;color:var(--accent);font-size:.85rem;margin-top:.25rem;">{{ w.price|floatformat:0 }} so'm</div>{% endif %}
+          <form method="post" action="{% url 'work_delete' w.pk %}" onsubmit="return confirm('O\'chirilsinmi?')" style="margin-top:.5rem;">{% csrf_token %}<button class="btn btn-outline btn-sm btn-block">O'chir</button></form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text3);font-size:.88rem;margin-bottom:1rem;">Hali ish qo'shilmagan.</p>
+    {% endif %}
+
+    {% if works_left %}
+    <form method="post" action="{% url 'work_add' venue.pk %}" enctype="multipart/form-data" style="border-top:1px solid var(--border);padding-top:1rem;">
+      {% csrf_token %}
+      <div class="form-row">
+        <input name="title" class="form-control" placeholder="Ish nomi (masalan: Fade soch turmagi)" required>
+        <input name="price" type="number" min="0" class="form-control" placeholder="Narx (so'm, ixtiyoriy)">
+      </div>
+      <div class="form-group" style="margin-top:.7rem;margin-bottom:.7rem;"><textarea name="description" class="form-control" rows="2" placeholder="Ish haqida ma'lumot (ixtiyoriy)"></textarea></div>
+      <div class="form-row">
+        <select name="service" class="form-control">
+          <option value="">Xizmat (ixtiyoriy)</option>
+          {% for s in services %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}
+        </select>
+        <select name="staff" class="form-control">
+          <option value="">Usta (ixtiyoriy)</option>
+          {% for st in staff %}<option value="{{ st.pk }}">{{ st.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:.7rem;margin-bottom:.7rem;"><label style="font-size:.8rem;color:var(--text3);">Ish rasmi *</label><input name="image" type="file" accept="image/*" class="form-control" required></div>
+      <button class="btn btn-green btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Ish qo'shish</button>
+      <div style="color:var(--text3);font-size:.8rem;margin-top:.5rem;">Yana {{ works_left }} ta ish qo'sha olasiz.</div>
+    </form>
+    {% else %}
+    <div class="flash flash-warning" style="border-top:1px solid var(--border);margin-top:0;"><svg class="ic"><use href="#i-x"/></svg> Ishlar soni chegarasi ({{ works_max }} ta) to'ldi. Yangi ish qo'shish uchun eskilaridan birini o'chiring.</div>
+    {% endif %}
   </div>
 
   <p style="color:var(--text3);font-size:.84rem;margin-top:1rem;">💡 Joy turi, ish vaqti, joylashuv (xarita) va bekor-jarima foizini <a href="{% url 'venue_edit' venue.pk %}" style="color:var(--accent);">Tahrirlash</a> sahifasidan sozlang.</p>

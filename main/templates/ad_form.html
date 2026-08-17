@@ -157,15 +157,9 @@
           <input class="form-control" type="text" name="contact_telegram" placeholder="username (@ belgisisiz)" value="{{ ad.contact_telegram|default:post.contact_telegram|default:'' }}">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">📸 Instagram</label>
-          <input class="form-control" type="text" name="contact_instagram" placeholder="instagram_username" value="{{ ad.contact_instagram|default:post.contact_instagram|default:'' }}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">📘 Facebook</label>
-          <input class="form-control" type="text" name="contact_facebook" placeholder="facebook.com/..." value="{{ ad.contact_facebook|default:post.contact_facebook|default:'' }}">
-        </div>
+      <div class="form-group">
+        <label class="form-label">📸 Instagram</label>
+        <input class="form-control" type="text" name="contact_instagram" placeholder="instagram_username" value="{{ ad.contact_instagram|default:post.contact_instagram|default:'' }}">
       </div>
     </div>
 

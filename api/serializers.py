@@ -22,17 +22,46 @@ class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     avatar_upload = serializers.ImageField(write_only=True, required=False)
     is_hokim = serializers.SerializerMethodField()
+    # ── Qobiliyat belgilari ──────────────────────────────────────────────────
+    # `role` bitta qiymat oladi (user/business/driver/admin), lekin bitta odam
+    # bir vaqtda kuryer HAM, do'kon egasi HAM bo'lishi mumkin — masalan taksist
+    # keyin do'kon ochsa. Mobil ilova qaysi panel(lar)ni ko'rsatishni SHU
+    # belgilarga qarab hal qiladi, `role`ga emas: aks holda kuryer bilan taksist
+    # (ikkalasi ham role='driver') farqlanmay, "doim haydovchi panelga o'tadi".
+    is_courier = serializers.SerializerMethodField()
+    is_taxist = serializers.SerializerMethodField()
+    is_store_owner = serializers.SerializerMethodField()
+    is_venue_owner = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'phone', 'name', 'username', 'bio', 'avatar',
                   'avatar_upload', 'role', 'rating', 'gender', 'birth_date',
-                  'is_staff', 'is_hokim', 'created_at')
-        read_only_fields = ('id', 'phone', 'role', 'rating', 'is_staff', 'is_hokim', 'created_at')
+                  'is_staff', 'is_hokim', 'is_courier', 'is_taxist',
+                  'is_store_owner', 'is_venue_owner', 'created_at')
+        read_only_fields = ('id', 'phone', 'role', 'rating', 'is_staff', 'is_hokim',
+                            'is_courier', 'is_taxist', 'is_store_owner',
+                            'is_venue_owner', 'created_at')
 
     def get_is_hokim(self, obj) -> bool:
         # Tuman hokimi (yoki staff) — mobil ilovada "Hokim paneli" kirish nuqtasi uchun.
         return bool(obj.is_staff) or obj.district_admin_roles.exists()
+
+    def get_is_courier(self, obj) -> bool:
+        # Yetkazib beruvchi (DeliveryDriver profili bor) — "Kuryer paneli".
+        return hasattr(obj, 'delivery_driver') and obj.delivery_driver is not None
+
+    def get_is_taxist(self, obj) -> bool:
+        # Taksi haydovchisi (Taxist profili bor) — "Taksist paneli".
+        return obj.taxist_profiles.exists()
+
+    def get_is_store_owner(self, obj) -> bool:
+        # Do'kon egasi — "Mening do'konlarim".
+        return obj.stores.exists()
+
+    def get_is_venue_owner(self, obj) -> bool:
+        # Joy (to'yxona/salon...) egasi — "Joylarim".
+        return obj.venues.exists()
 
     def get_avatar(self, obj) -> str | None:
         request = self.context.get('request')

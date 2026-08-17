@@ -57,3 +57,50 @@ class PhoneFormatLoginTest(TestCase):
         bad = c.post(reverse('login'),
                      {'username': '900000030', 'password': 'NOTOGRI'})
         self.assertEqual(bad.status_code, 200)  # login sahifasida qoladi
+
+
+class VerifyOtpTest(TestCase):
+    """OTP tasdiqlash — ro'yxatdan o'tishning oxirgi qadami.
+
+    `verify_otp` parolni tekshirmaydi (kod bo'yicha tasdiqlaydi), shuning uchun
+    `authenticate()` chaqirilmaydi va `user.backend` o'rnatilmagan bo'ladi.
+    Bir nechta AUTHENTICATION_BACKENDS sozlangani uchun `login()` ga backend
+    ANIQ berilmasa ValueError chiqadi va ro'yxatdan o'tish uziladi.
+    """
+    PASSWORD = 'demo12345'
+
+    def setUp(self):
+        cache.clear()  # otp_verify rate-limiter holati oqmasin
+
+    def _pending(self, phone):
+        """Ro'yxatdan o'tish holatini tayyorlaydi: nofaol user + faol OTP + sessiya."""
+        from datetime import timedelta
+        from django.utils import timezone
+        from main.models import OTPCode
+        user = User.objects.create_user(phone=phone, password=self.PASSWORD,
+                                        name='Yangi', is_active=False)
+        OTPCode.objects.create(phone=phone, code='123456',
+                               expires_at=timezone.now() + timedelta(minutes=10))
+        c = Client()
+        s = c.session
+        s['pending_phone'] = phone
+        s.save()
+        return c, user
+
+    def test_correct_otp_logs_user_in(self):
+        c, user = self._pending('+998900000050')
+        resp = c.post(reverse('verify_otp'), {'code': '123456'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/profile/', resp['Location'])
+        # Hisob faollashdi VA sessiyaga kirdi
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertEqual(str(c.session.get('_auth_user_id')), str(user.pk))
+
+    def test_wrong_otp_stays_on_page(self):
+        c, user = self._pending('+998900000051')
+        resp = c.post(reverse('verify_otp'), {'code': '000000'})
+        self.assertEqual(resp.status_code, 200)  # sahifada qoladi
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)         # faollashmaydi
+        self.assertIsNone(c.session.get('_auth_user_id'))  # kirmaydi

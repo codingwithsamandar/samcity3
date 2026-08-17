@@ -170,6 +170,30 @@ ACTION_INTENT_WORDS = BOOKING_WORDS + [
 HOWTO_WORDS = ['qanday', 'qanaqa', 'qandoq', 'qay tarz', 'how']
 
 
+def _kb_result(qn, result):
+    """Bilimlar bazasidan javob topsa — to'ldirilgan `result`ni, aks holda None.
+
+    Ikki joyda chaqiriladi: how-to savollarida joy qidiruvidan OLDIN va
+    umumiy oqimda joy qidiruvidan keyin. Shu sabab alohida funksiya.
+    """
+    from django.urls import reverse   # modulda global emas — lokal import (fayl uslubi)
+    from . import knowledge
+    # Taksi arxivlangan bo'lsa `knowledge.answer()` taksi yozuvlarini o'zi
+    # chetlab o'tadi (TAXI_KB_IDS) — bu yerda qo'shimcha filtr kerak emas.
+    kb = knowledge.answer(qn)
+    if not kb:
+        return None
+    actions = []
+    for label, urlname in kb.get('actions', []):
+        try:
+            actions.append({'label': label, 'url': reverse(urlname)})
+        except Exception:
+            pass  # url topilmasa — o'sha havolani jimgina tashlab ketamiz
+    result.update(intent='faq', reply=kb['answer'], actions=actions)
+    result['kb_id'] = kb['id']
+    return result
+
+
 def is_action_intent(message):
     """Harakat (amal) niyatimi — bron/buyurtma/yozib qo'y/soch oldir.
 
@@ -329,7 +353,8 @@ def _followup(qn, last_cards):
 # ── "Balki buni nazarda tutdingizmi?" — fuzzy taklif indeksi ─────────────────
 # (term, ko'rsatiladigan_yorliq, yuboriladigan_savol). Toifalardan darhol,
 # bilimlar bazasidan esa birinchi chaqiruvda (aylanma importdan qochish) to'ladi.
-_SUGGEST_TERMS = []
+_SUGGEST_TERMS = []       # toifa urug'i — modul yuklanganda bir marta
+_KB_SUGGEST_TERMS = []    # KB atamalari — arxiv bayrog'iga qarab qayta quriladi
 for _cat, _words in CATEGORY_KEYWORDS.items():
     _lbl = CATEGORY_LABEL.get(_cat, (_cat, ''))[0]
     _q = f'eng yaqin {_lbl.lower()}'
@@ -337,21 +362,33 @@ for _cat, _words in CATEGORY_KEYWORDS.items():
         for _part in _norm(_w).split():
             if len(_part) >= 4:
                 _SUGGEST_TERMS.append((_part, f'Eng yaqin {_lbl.lower()}', _q))
-_KB_TERMS_LOADED = False
+_KB_TERMS_LOADED = None
 
 
 def _ensure_kb_terms():
+    """«Balki shuni demoqchimisiz?» uchun atamalar indeksi.
+
+    ARXIVLANGAN bo'limlar chiqarib tashlanadi — aks holda yopiq xizmat
+    taklif qilinardi («somsa buyurtma» → «Taksi buyurtma qilish»).
+    Indeks bayroqqa bog'liq, shuning uchun bayroq to'plami o'zgarsa
+    qayta quriladi (test/runtime'da sozlama almashishi mumkin).
+    """
     global _KB_TERMS_LOADED
-    if _KB_TERMS_LOADED:
-        return
     from . import knowledge
+    skip = knowledge.archived_ids()
+    key = tuple(sorted(skip))
+    if _KB_TERMS_LOADED == key:
+        return
+    _KB_SUGGEST_TERMS.clear()
     for e in knowledge.KB:
+        if e['id'] in skip:
+            continue
         q = e['keywords'][0]
         for k in e['keywords']:
             for part in _norm(k).split():
                 if len(part) >= 4:
-                    _SUGGEST_TERMS.append((part, e['title'], q))
-    _KB_TERMS_LOADED = True
+                    _KB_SUGGEST_TERMS.append((part, e['title'], q))
+    _KB_TERMS_LOADED = key
 
 
 def suggest(qn):
@@ -364,14 +401,14 @@ def suggest(qn):
     tokens = [t for t in re.findall(r"[a-zа-яё]+", qn) if len(t) >= 3]
     best, best_ratio = None, 0.0
     for tok in tokens:
-        for term, label, q in _SUGGEST_TERMS:
+        for term, label, q in (_SUGGEST_TERMS + _KB_SUGGEST_TERMS):
             r = difflib.SequenceMatcher(None, tok, term).ratio()
             if r > best_ratio and r >= 0.78:
                 best_ratio, best = r, (label, q)
     return {'label': best[0], 'q': best[1]} if best else None
 
 
-def fallback(message):
+def fallback(message, user=None):
     """LLM o'chiq/ishlamaganda — boshi berk ko'cha o'rniga foydali javob.
 
     views.py chaqiradi. Yaqin mavzu topilsa "balki shuni demoqchimisiz?" taklifini,
@@ -380,15 +417,16 @@ def fallback(message):
     from . import knowledge
     qn = _norm(message)
     sug = suggest(qn)
-    actions = knowledge.overview_actions()
+    actions = knowledge.overview_actions(user)
     if sug:
         reply = (f"Buni to'liq tushunmadim. 🤔 Balki «{sug['label']}» demoqchimisiz? "
                  f"Yoki quyidagilardan tanlang:")
         actions = [{'label': f"👉 {sug['label']}", 'q': sug['q']}] + actions
     else:
-        reply = ("Buni tushunmadim. 😊 Lekin men eng yaqin joyni topish, e'lon, taksi, "
-                 "do'kon, to'lov va boshqalarda yordam beraman. Quyidagilardan birini "
-                 "tanlang yoki savolingizni boshqacharoq yozing:")
+        # ⚠️ Yopiq bo'limlar (taksi, to'lov) matnda ham sanalmasin.
+        reply = ("Buni tushunmadim. 😊 Lekin men eng yaqin joyni topish, do'kondan "
+                 "buyurtma, e'lon va joy bron qilishda yordam beraman. "
+                 "Quyidagilardan birini tanlang yoki savolingizni boshqacharoq yozing:")
     return {'reply': reply, 'actions': actions}
 
 # Fuzzy moslash uchun bir so'zli kalitlarning tekis ro'yxati (cat bilan)
@@ -663,7 +701,7 @@ def _resolve_point(location, result):
     return CENTER
 
 
-def handle(message, location=None, context=None):
+def handle(message, location=None, context=None, user=None):
     """Asosiy kirish nuqtasi.
 
     message  — foydalanuvchi matni.
@@ -699,7 +737,7 @@ def handle(message, location=None, context=None):
             reply=("🚧 Taksi xizmati hozircha o'chirilgan. Yetkazib berish, joy "
                    "bron qilish va boshqa bo'limlar ishlayapti — nima kerakligini "
                    "yozing, yordam beraman."),
-            actions=knowledge.overview_actions(),
+            actions=knowledge.overview_actions(user),
         )
         return result
 
@@ -726,6 +764,17 @@ def handle(message, location=None, context=None):
             offset = max(0, int(context.get('offset') or 0))
         except (TypeError, ValueError):
             offset = 0
+
+    # ── 0.9) HOW-TO SAVOLI JOY QIDIRUVIDAN USTUN ─────────────────────────────
+    # «do'kon qanday ochaman» da `detect_category()` "do'kon" so'zini topib,
+    # ENG YAQIN DO'KONNI qaytarardi — foydalanuvchi esa yo'l-yo'riq so'ragan.
+    # Xuddi shu narsa «to'yxona qanday bron qilaman», «dorixona ochish» da ham.
+    # Shuning uchun how-to belgisi bo'lsa avval bilimlar bazasiga murojaat
+    # qilamiz; u javob topmasa — pastdagi oddiy oqim davom etadi.
+    if _contains_any(qn, HOWTO_WORDS):
+        kb_first = _kb_result(qn, result)
+        if kb_first:
+            return kb_first
 
     # ── 1) JOY TOPISH (eng yaqin dorixona/shifoxona/bank...) ──────────────────
     if category:
@@ -806,20 +855,9 @@ def handle(message, location=None, context=None):
     # ── 1.5) SAYT FUNKSIYALARI BO'YICHA QO'LLANMA (bilimlar bazasi) ──────────
     # "e'lon qanday joylayman", "do'kon ochish", "kommunal to'lov" kabi savollar.
     # Joy topishdan keyin, umumiy xizmat yorliqlaridan oldin tekshiriladi.
-    from . import knowledge
-    # Taksi arxivlangan bo'lsa `knowledge.answer()` taksi yozuvlarini o'zi
-    # chetlab o'tadi (TAXI_KB_IDS) — bu yerda qo'shimcha filtr kerak emas.
-    kb = knowledge.answer(qn)
-    if kb:
-        actions = []
-        for label, urlname in kb.get('actions', []):
-            try:
-                actions.append({'label': label, 'url': reverse(urlname)})
-            except Exception:
-                pass  # url topilmasa — o'sha havolani jimgina tashlab ketamiz
-        result.update(intent='faq', reply=kb['answer'], actions=actions)
-        result['kb_id'] = kb['id']
-        return result
+    kb_res = _kb_result(qn, result)
+    if kb_res:
+        return kb_res
 
     # ── 2) TAKSI ──────────────────────────────────────────────────────────────
     # Taksi arxivlangan bo'lsa bu yergacha yetib kelmaydi — yuqoridagi
@@ -920,7 +958,7 @@ def handle(message, location=None, context=None):
             intent='smalltalk',
             reply=("Yaxshi! 👍 Nima bilan yordam beray? Masalan «eng yaqin dorixona» "
                    "yoki «e'lon qanday joylayman». Bo'limlardan birini tanlang:"),
-            actions=knowledge.overview_actions())
+            actions=knowledge.overview_actions(user))
         return result
 
     # ── 7) SALOMLASHISH ───────────────────────────────────────────────────────
@@ -950,7 +988,7 @@ def handle(message, location=None, context=None):
                    "• 🗺️ Xarita, sayohat va joy qo'shish\n"
                    "• 👤 Ro'yxatdan o'tish, profil, bildirishnomalar, mobil ilova\n\n"
                    "Biror bo'limni tanlang yoki savolingizni yozing:"),
-            actions=knowledge.overview_actions(),
+            actions=knowledge.overview_actions(user),
         )
         return result
 

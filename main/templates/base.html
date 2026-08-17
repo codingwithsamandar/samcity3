@@ -40,7 +40,13 @@
   :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
   a:focus-visible, .btn:focus-visible, button:focus-visible, .chip:focus-visible,
   [role="button"]:focus-visible, summary:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
-  h1,h2,h3,h4 { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; letter-spacing: -0.025em; line-height: 1.14; color: var(--text); font-weight: 800; }
+  /* Tipografik shkala: display (h1) 800, bo'lim sarlavhalari 700, ichki 650.
+     Bir xil 800 og'irlik ierarxiyani yo'q qilardi — endi vazn kontrast beradi. */
+  h1,h2,h3,h4 { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; letter-spacing: -0.025em; line-height: 1.14; color: var(--text); text-wrap: balance; }
+  h1 { font-weight: 800; letter-spacing: -0.035em; }
+  h2 { font-weight: 700; letter-spacing: -0.028em; }
+  h3 { font-weight: 650; letter-spacing: -0.02em; }
+  h4 { font-weight: 650; letter-spacing: -0.015em; }
   ::selection { background: rgba(79,70,229,.18); color: var(--accent-d); }
   ::-webkit-scrollbar { width: 11px; height: 11px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -60,10 +66,12 @@
   .nav-inner { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: .75rem; height: 66px; padding: 0 1rem; }
   .nav-logo { font-family: 'Plus Jakarta Sans'; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.04em;
     color: var(--text); display: inline-flex; align-items: center; gap: .4rem; }
-  .nav-logo .logo-mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff;
-    background: linear-gradient(140deg, var(--accent), var(--violet)); box-shadow: var(--shadow-brand); }
-  .nav-logo .logo-mark .ic { width: 20px; height: 20px; stroke-width: 2; }
-  .nav-logo b { color: var(--accent); font-weight: 800; }
+  /* Belgi: gradientli yumaloq kvadrat emas — qat'iy, deyarli kvadrat siyoh blok,
+     ichida emerald joy belgisi. Emerald sahifada bir marta paydo bo'ladi. */
+  .nav-logo .logo-mark { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center;
+    color: var(--accent-on-dark); background: var(--ink-900); box-shadow: none; }
+  .nav-logo .logo-mark .ic { width: 17px; height: 17px; stroke-width: 2.1; }
+  .nav-logo b { color: var(--text); font-weight: 800; }
   .nav-links { display: flex; gap: 0rem; flex: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
   .nav-links::-webkit-scrollbar { display: none; }
   .nav-links a { padding: 0.5rem 0.6rem; border-radius: 11px; font-size: 0.84rem; font-weight: 550; color: var(--text2);
@@ -94,14 +102,16 @@
   .btn:active { transform: translateY(1px); }
   .btn .ic { width: 1.1em; height: 1.1em; }
   .btn-sm { min-height: 38px; }
-  .btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent-d)); color: #fff; box-shadow: var(--shadow-brand); }
-  .btn-accent:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 14px 32px rgba(53,81,209,.34); }
-  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-d)); color: #3a2a05; box-shadow: var(--shadow-gold); }
-  .btn-gold:hover { filter: brightness(1.05); transform: translateY(-1px); }
-  .btn-outline { background: #fff; border: 1px solid var(--border2); color: var(--text); }
+  /* Tekis, qattiq rangli tugmalar. Gradient — birlamchi harakatni ajratish uchun
+     signal emas, shunchaki bezak edi; olib tashlandi. Ierarxiya rang bilan beriladi. */
+  .btn-accent { background: var(--accent); color: #fff; box-shadow: var(--shadow-brand); }
+  .btn-accent:hover { background: var(--accent-d); transform: translateY(-1px); }
+  .btn-gold { background: var(--gold); color: #3a2a05; }
+  .btn-gold:hover { background: var(--gold-d); transform: translateY(-1px); }
+  .btn-outline { background: var(--surface); border: 1px solid var(--border2); color: var(--text); }
   .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
-  .btn-green { background: linear-gradient(135deg, #12b27c, #0e9f6e); color: #fff; box-shadow: 0 8px 22px rgba(14,159,110,.26); }
-  .btn-green:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { filter: brightness(.94); transform: translateY(-1px); }
   .btn-red { background: var(--red); color: #fff; box-shadow: 0 8px 22px rgba(229,72,77,.24); }
   .btn-red:hover { filter: brightness(1.05); }
   .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
@@ -116,8 +126,10 @@
   .page-header { margin-bottom: 1.75rem; }
   .page-header h1 { font-size: 1.85rem; font-weight: 800; }
   .page-header p { color: var(--text2); font-size: 0.96rem; margin-top: 0.4rem; }
+  /* Kichik qalin matn pale fonda: --accent 3.06:1 berardi (AA dan o'tmaydi),
+     --accent-d 4.55:1 beradi. */
   .eyebrow { display: inline-flex; align-items: center; gap: .45rem; font-size: .78rem; font-weight: 700;
-    letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: var(--accent-l);
+    letter-spacing: .04em; text-transform: uppercase; color: var(--accent-d); background: var(--accent-l);
     padding: .35rem .8rem; border-radius: 100px; }
 
   /* ── CARDS ───────────────────────────────────────────────────── */
@@ -132,8 +144,8 @@
   .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.28rem 0.65rem; border-radius: 100px; font-size: 0.74rem; font-weight: 700; line-height: 1; }
   .badge .ic { width: .95em; height: .95em; stroke-width: 2.2; }
   .badge-amber, .badge-gold { background: var(--gold-l); color: var(--gold-d); }
-  .badge-green { background: var(--green-l); color: var(--green); }
-  .badge-red { background: var(--red-l); color: var(--red); }
+  .badge-green { background: var(--green-l); color: var(--green-d); }
+  .badge-red { background: var(--red-l); color: var(--red-d); }
   .badge-blue, .badge-indigo { background: var(--accent-l); color: var(--accent-d); }
   .badge-gray { background: var(--surface3); color: var(--text2); }
 
@@ -146,6 +158,12 @@
     padding: 0.78rem 1rem; color: var(--text); font-size: 1rem; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
   .form-control::placeholder { color: var(--text3); }
   .form-control:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
+  /* Klaviatura fokusi — outline + offset (WCAG 2.4.7). Sichqoncha bosishida chiqmaydi. */
+  a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+  summary:focus-visible, .chip:focus-visible, .btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-sm); }
+  .form-control:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px; }
   textarea.form-control { resize: vertical; min-height: 120px; }
   select.form-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%235b6678' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .85rem center; padding-right: 2.6rem; }
 
@@ -158,8 +176,10 @@
   /* ── FLASH / ALERTS ──────────────────────────────────────────── */
   .flash { padding: 0.9rem 1.1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.9rem; font-weight: 550; display: flex; gap: .6rem; align-items: center; border: 1px solid transparent; }
   .flash .ic { flex: none; }
-  .flash-success { background: var(--green-l); border-color: rgba(14,159,110,.25); color: #0a7a54; }
-  .flash-error { background: var(--red-l); border-color: rgba(229,72,77,.25); color: #c0353a; }
+  /* Rang TOKEN orqali: qattiq yozilgan #0a7a54 / #c0353a qorong'i rejimda
+     surface2 foni ustida 2.5:1 kontrast berardi — matn o'qilmasdi. */
+  .flash-success { background: var(--green-l); border-color: rgba(14,159,110,.25); color: var(--green-d); }
+  .flash-error { background: var(--red-l); border-color: rgba(229,72,77,.25); color: var(--red-d); }
   .flash-warning { background: var(--gold-l); border-color: rgba(230,168,23,.3); color: var(--gold-d); }
   .flash-info { background: var(--accent-l); border-color: rgba(53,81,229,.2); color: var(--accent-d); }
 
@@ -209,7 +229,7 @@
   footer.site-footer { border-top: 1px solid var(--border); margin-top: 4rem; padding: 3rem 1.25rem 2.25rem; background: var(--bg-soft); }
   .foot-in { max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
   .foot-in .brand { font-family: 'Plus Jakarta Sans'; font-weight: 800; font-size: 1.25rem; color: var(--text); display: inline-flex; align-items: center; gap: .5rem; }
-  .foot-in .brand .logo-mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--accent), var(--violet)); }
+  .foot-in .brand .logo-mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--accent); }
   .foot-in .brand .logo-mark .ic { width: 18px; height: 18px; stroke-width: 2; }
   .foot-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
   .foot-links a { color: var(--text2); font-size: .9rem; font-weight: 500; }
@@ -286,17 +306,15 @@
 .section-soft { background: var(--bg-soft); }
 .section-head { max-width: 660px; margin: 0 auto 2.75rem; text-align: center; }
 .section-head.left { margin-left: 0; text-align: left; }
-.section-head h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 800; letter-spacing: -.03em; }
+.section-head h2 { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 800; letter-spacing: -.03em; }
 .section-head p { color: var(--text2); font-size: 1.02rem; margin-top: .8rem; line-height: 1.6; }
-.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 1.25rem; }
-.wrap-narrow { max-width: 920px; margin: 0 auto; padding-inline: 1.25rem; }
 .orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; pointer-events: none; z-index: 0; }
 .orb-indigo { background: radial-gradient(circle, rgba(79,70,229,.5), transparent 70%); }
 .orb-gold { background: radial-gradient(circle, rgba(224,165,46,.45), transparent 70%); }
 .orb-violet { background: radial-gradient(circle, rgba(122,90,248,.4), transparent 70%); }
 .hero { position: relative; overflow: hidden; padding: 4.5rem 0 4rem; background: radial-gradient(60% 50% at 12% 0%, rgba(14,163,113,.10), transparent 60%), radial-gradient(50% 45% at 100% 8%, rgba(8,145,178,.10), transparent 55%), linear-gradient(180deg, #f6f8fb, #eef1f6 60%); }
 .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 3rem; align-items: center; position: relative; z-index: 1; }
-.hero h1 { font-size: clamp(2.3rem, 5.2vw, 3.8rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.05; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.1; }
 .hero h1 .grad { background: linear-gradient(120deg, var(--accent), var(--violet) 60%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero p.lead { font-size: 1.12rem; color: var(--text2); margin-top: 1.25rem; max-width: 520px; line-height: 1.6; }
 .hero-cta { display: flex; gap: .85rem; flex-wrap: wrap; margin-top: 1.9rem; }
@@ -521,82 +539,28 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 
 <style>
 /* ════════════════════════════════════════════════════════════════
-   SamCity — PREMIUM WOW LAYER (3D · scroll · glow · motion)
+   SamCity — CLEAN UNIFIED THEME
    ════════════════════════════════════════════════════════════════ */
 
 /* ── Page-load entrance ─────────────────────────────────────────── */
 body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 @keyframes pageIn { to { opacity: 1; } }
 
-/* ── Aurora living background (fixed, behind all content) ───────── */
-.aurora-bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
-.aurora-bg span { position: absolute; display: block; border-radius: 50%; filter: blur(80px); opacity: .55;
-  mix-blend-mode: multiply; will-change: transform; }
-.aurora-bg .a1 { width: 46vw; height: 46vw; top: -12vw; left: -8vw;
-  background: radial-gradient(circle, rgba(79,70,229,.45), transparent 70%); animation: drift1 26s ease-in-out infinite; }
-.aurora-bg .a2 { width: 40vw; height: 40vw; top: 8vw; right: -10vw;
-  background: radial-gradient(circle, rgba(230,168,23,.40), transparent 70%); animation: drift2 32s ease-in-out infinite; }
-.aurora-bg .a3 { width: 38vw; height: 38vw; bottom: -12vw; left: 22vw;
-  background: radial-gradient(circle, rgba(124,58,237,.38), transparent 70%); animation: drift3 30s ease-in-out infinite; }
-.aurora-bg .a4 { width: 32vw; height: 32vw; bottom: 4vw; right: 14vw;
-  background: radial-gradient(circle, rgba(14,165,183,.34), transparent 70%); animation: drift1 36s ease-in-out infinite reverse; }
-[data-theme="dark"] .aurora-bg span { mix-blend-mode: screen; opacity: .30; }
-@keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(6vw,8vw) scale(1.15); } }
-@keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-7vw,6vw) scale(1.1); } }
-@keyframes drift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(5vw,-7vw) scale(1.12); } }
-
-/* fine grain texture — subtler for better readability on cheap screens */
-.grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .03;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-
 /* ── Scroll progress bar ────────────────────────────────────────── */
 #scrollProgress { position: fixed; top: 0; left: 0; height: 3px; width: 0;
-  background: linear-gradient(90deg, var(--accent), var(--violet) 45%, var(--gold)); z-index: 200;
-  box-shadow: 0 0 12px rgba(79,70,229,.6); transition: width .1s linear; border-radius: 0 3px 3px 0; }
+  background: var(--accent); z-index: 200;
+  transition: width .1s linear; border-radius: 0 3px 3px 0; }
 
 /* ── Nav shrink on scroll ───────────────────────────────────────── */
 .nav { transition: height .25s, background .25s, box-shadow .25s; }
-.nav.scrolled { box-shadow: 0 6px 24px rgba(16,24,40,.08); background: rgba(255,255,255,.92); }
+.nav.scrolled { box-shadow: var(--shadow-sm); background: rgba(255,255,255,.98); }
 .nav.scrolled .nav-inner { height: 56px; }
-[data-theme="dark"] .nav.scrolled { background: rgba(15,17,23,.96); }
-
-/* ── Animated gradient brand text ───────────────────────────────── */
-.hero h1 .grad, .grad-anim {
-  background: linear-gradient(120deg, var(--accent), var(--violet) 35%, var(--teal) 60%, var(--gold) 90%);
-  background-size: 280% 280%; -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: gradShift 8s ease infinite; }
-@keyframes gradShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-
-/* ── 3D tilt + glare ────────────────────────────────────────────── */
-[data-tilt], .svc-card, .lcard, .stat-tile, .kpi, .tcard {
-  transform-style: preserve-3d; will-change: transform; }
-.tilt-glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 4;
-  background: radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,.35), transparent 45%);
-  opacity: 0; transition: opacity .25s; }
-.has-glare:hover .tilt-glare { opacity: 1; }
-
-/* ── Spotlight glow that follows the cursor on cards ────────────── */
-.spotlight { position: relative; }
-.spotlight::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  z-index: 1; opacity: 0; transition: opacity .3s;
-  background: radial-gradient(420px circle at var(--mx,50%) var(--my,50%), rgba(79,70,229,.12), transparent 42%); }
-.spotlight:hover::before { opacity: 1; }
-.spotlight > * { position: relative; z-index: 2; }
-
-/* ── Sheen sweep on primary buttons ─────────────────────────────── */
-.btn-accent, .btn-gold, .btn-green { position: relative; overflow: hidden; }
-.btn-accent::after, .btn-gold::after, .btn-green::after { content: ""; position: absolute; top: 0; left: -120%;
-  width: 60%; height: 100%; transform: skewX(-20deg);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transition: left .6s; }
-.btn-accent:hover::after, .btn-gold:hover::after, .btn-green:hover::after { left: 140%; }
-
-/* magnetic buttons get a smooth return */
-.magnetic { transition: transform .2s cubic-bezier(.2,.8,.3,1); }
+[data-theme="dark"] .nav.scrolled { background: rgba(15,23,42,.98); }
 
 /* ── Scroll-to-top button ───────────────────────────────────────── */
 #toTop { position: fixed; right: 20px; bottom: 22px; width: 46px; height: 46px; border-radius: 50%; border: none;
-  background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; cursor: pointer; z-index: 95;
-  display: grid; place-items: center; box-shadow: var(--glow-brand); opacity: 0; transform: translateY(20px) scale(.8);
+  background: var(--accent); color: #fff; cursor: pointer; z-index: 95;
+  display: grid; place-items: center; box-shadow: var(--shadow-sm); opacity: 0; transform: translateY(20px) scale(.8);
   pointer-events: none; transition: opacity .3s, transform .3s; }
 #toTop.show { opacity: 1; transform: none; pointer-events: auto; }
 #toTop:hover { transform: translateY(-3px) scale(1.05); }
@@ -604,173 +568,92 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 @media (max-width: 720px) { #toTop { bottom: 84px; right: 14px; } }
 
 /* ── Reveal variants + stagger ──────────────────────────────────── */
-.reveal-scale { opacity: 0; transform: scale(.92) translateY(16px);
-  transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+.reveal-scale { opacity: 0; transform: scale(.96) translateY(8px);
+  transition: opacity .5s ease, transform .5s ease; }
 .reveal-scale.in { opacity: 1; transform: none; }
-.reveal-left { opacity: 0; transform: translateX(-32px); transition: opacity .7s, transform .7s cubic-bezier(.2,.7,.2,1); }
+.reveal-left { opacity: 0; transform: translateX(-16px); transition: opacity .5s ease, transform .5s ease; }
 .reveal-left.in { opacity: 1; transform: none; }
-.reveal-right { opacity: 0; transform: translateX(32px); transition: opacity .7s, transform .7s cubic-bezier(.2,.7,.2,1); }
+.reveal-right { opacity: 0; transform: translateX(16px); transition: opacity .5s ease, transform .5s ease; }
 .reveal-right.in { opacity: 1; transform: none; }
 
-/* richer elevation on key interactive cards */
-.svc-card:hover, .lcard:hover { box-shadow: var(--glow-brand); }
-
-/* float keyframe reused; add subtle pulse for badges */
-.badge-gold { box-shadow: 0 0 0 rgba(230,168,23,.5); animation: goldPulse 3s ease-in-out infinite; }
-@keyframes goldPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(230,168,23,.0); } 50% { box-shadow: 0 0 14px 0 rgba(230,168,23,.35); } }
-
-@media (max-width: 720px) {
-  .aurora-bg .a3, .aurora-bg .a4 { display: none; }
-  /* Reduce aurora on mobile — cheaper GPU, more readable text */
-  .aurora-bg span { animation: none; opacity: .18; }
-  [data-theme="dark"] .aurora-bg span { opacity: .25; }
-}
 @media (prefers-reduced-motion: reduce) {
   body { opacity: 1; animation: none; }
-  .aurora-bg span, .hero h1 .grad, .grad-anim, .badge-gold { animation: none !important; }
-  .aurora-bg { display: none; } /* completely disable for reduced-motion users */
-  .grain { display: none; }
   .reveal-scale, .reveal-left, .reveal-right { opacity: 1 !important; transform: none !important; }
 }
 </style>
 
 <style>
-/* ════════════════════════════════════════════════════════════════
-   SamCity — GLASS DARK PREMIUM THEME  (emerald · teal · frosted glass)
-   This block intentionally overrides the earlier palette/components.
-   ════════════════════════════════════════════════════════════════ */
-
-/* ── Tokens: SINGLE consolidated LIGHT palette (emerald glass) ────
-   This is the one and only light :root. All earlier palettes were
-   merged here (final computed values preserved). ──────────────────── */
-:root{
-  --bg:#eef1f6; --bg-soft:#e7ebf2; --surface:#ffffff; --surface2:#f1f4f9; --surface3:#e5eaf2;
-  --border:#e2e7f0; --border2:#d2dae7;
-  --accent:#0ea371; --accent-d:#0b7d57; --accent-l:#e4f6ee; --accent2:#06b6d4;
-  --teal:#0891b2; --teal-d:#0c8a99; --teal-l:#e3f7fa; --violet:#0891b2; --violet-l:#e3f7fa; --blue:#4f46e5;
-  --gold:#caa23a; --gold-d:#a9831f; --gold-l:#f6eed6;
-  --green:#0ea371; --green-l:#e4f6ee; --red:#e11d48; --red-l:#fde7ec; --amber:#caa23a;
-  --text:#0c1018; --text2:#56607a; --text3:#8993a8;
+/* ── Tokens: CONSOLIDATED PALETTE ──────────────────── */
+:root {
+  /* Neytral poydevor — sovuq ko'k-kulrang o'rniga bir tomchi yashil moyilligi
+     bor iliq-neytral. 90% shu ranglar, 10% emerald. */
+  --bg: #F6F7F6; --bg-soft: #FFFFFF; --surface: #FFFFFF; --surface2: #F1F3F1; --surface3: #E8EBE9;
+  --border: #E2E6E3; --border2: #CBD1CD;
+  /* Qorong'i neytral oila — hero mastheadi va qorong'i yuzalar uchun */
+  --ink-900: #0B0F0D; --ink-800: #141A17; --ink-700: #1E2623; --ink-600: #2C3733;
+  --on-dark: #F4F6F4; --on-dark-2: #A8B3AD; --on-dark-brd: #2A3531;
+  --accent-on-dark: #35C48A;
+  /* Brend rangi — emerald. SamCity identifikatori: shahar/yetkazish domeni uchun
+     umumiy "SaaS ko'k"dan ko'ra o'ziga xos. Legacy --emer tokeni bilan bir xil. */
+  --accent: #0e9f6e; --accent-d: #0a7d55; --accent-l: #e6f6ef;
+  --teal: #14b8a6; --violet: #8b5cf6;
+  --gold: #f59e0b; --gold-d: #d97706; --gold-l: #fef3c7;
+  --green: #10b981; --green-l: #d1fae5; --green-d: #047857; --red: #ef4444; --red-l: #fee2e2; --red-d: #b91c1c; --amber: #f59e0b;
+  --text: #0F1512; --text2: #4A544F; --text3: #6B756F;
   /* radii */
-  --radius:16px; --radius-sm:12px; --radius-lg:24px; --radius-xl:32px;
-  /* elevation (light) */
-  --shadow-xs:0 1px 2px rgba(16,24,40,.05); --shadow-sm:0 2px 8px rgba(16,24,40,.06);
-  --shadow:0 6px 24px rgba(16,24,40,.08); --shadow-lg:0 18px 48px rgba(16,24,40,.12); --shadow-xl:0 32px 70px rgba(16,24,40,.16);
-  --shadow-brand:0 10px 30px rgba(14,163,113,.25); --shadow-gold:0 10px 28px rgba(8,145,178,.25);
-  --glow-brand:0 0 0 1px rgba(14,163,113,.16), 0 12px 40px rgba(14,163,113,.20); --glow-gold:0 0 40px rgba(230,168,23,.35);
-  --ring:0 0 0 4px rgba(14,163,113,.18);
-  /* glass surfaces */
-  --glass-bg:rgba(255,255,255,.66); --glass-brd:rgba(255,255,255,.7); --glass-hi:rgba(255,255,255,.9);
-  /* legacy shim tokens (taxi / list / community pages) */
-  --yel:#0891b2; --yel-d:#0b7d57; --yel2:#22d3ee; --emer:#0ea371; --emer2:#10b981; --muted:#56607a;
-  --card:#fff; --card2:#f1f4f9; --line:#e2e7f0; --line2:#d2dae7; --bg2:#e7ebf2;
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 16px; --radius-xl: 24px;
+  /* elevation */
+  --shadow-xs: 0 1px 2px rgba(15,23,42,.05); --shadow-sm: 0 4px 6px -1px rgba(15,23,42,.05);
+  --shadow: 0 10px 15px -3px rgba(15,23,42,.05); --shadow-lg: 0 20px 25px -5px rgba(15,23,42,.05);
+  --shadow-brand: 0 8px 18px -6px rgba(14,159,110,.32);
+  --ring: 0 0 0 3px rgba(14,159,110,.28);
+  /* Legacy tokens mapping */
+  --emer: var(--accent); --emer2: var(--accent-d); --yel: var(--gold); --yel-d: var(--gold-d); --muted: var(--text2);
+  /* Ish rejimi (kuryer) — brenddan ajralib turadigan amber oila */
+  --work: #f59e0b; --work-d: #b45309; --work-l: #fff3e0;
 }
 
-/* ── Tokens: PRIMARY dark glass theme ───────────────────────────── */
-[data-theme="dark"]{
-  --bg:#070a10; --bg-soft:#0b0f17; --surface:#0f1521; --surface2:#141b29; --surface3:#1d2636;
-  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.16);
-  --accent:#34d399; --accent-d:#10b981; --accent-l:rgba(52,211,153,.13); --accent2:#22d3ee;
-  --teal:#22d3ee; --violet:#22d3ee; --violet-l:rgba(34,211,238,.14); --gold:#e6b450; --gold-d:#caa23a; --gold-l:rgba(230,180,80,.14);
-  --green:#34d399; --green-l:rgba(52,211,153,.14); --red:#fb7185; --red-l:rgba(251,113,133,.14); --amber:#e6b450;
-  --text:#eaf0f8; --text2:#9aa6bd; --text3:#69748a;
-  --glass-bg:rgba(18,24,38,.55); --glass-brd:rgba(255,255,255,.10); --glass-hi:rgba(255,255,255,.14);
-  --shadow-xs:0 1px 2px rgba(0,0,0,.5); --shadow-sm:0 2px 10px rgba(0,0,0,.5); --shadow:0 8px 30px rgba(0,0,0,.5);
-  --shadow-lg:0 20px 60px rgba(0,0,0,.62); --shadow-xl:0 30px 80px rgba(0,0,0,.72);
-  --shadow-brand:0 10px 34px rgba(16,185,129,.28); --glow-gold:0 0 40px rgba(34,211,238,.3);
-  --glow-brand:0 0 0 1px rgba(52,211,153,.22), 0 14px 50px rgba(52,211,153,.16);
-  --ring:0 0 0 4px rgba(52,211,153,.22);
-  --card:#0f1521; --card2:#141b29; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16); --bg2:#0b0f17;
-  /* legacy shim tokens (taxi / list / community pages) */
-  --yel:#22d3ee; --yel-d:#0891b2; --yel2:#67e8f9; --emer:#34d399; --emer2:#10b981; --muted:#9aa6bd;
+[data-theme="dark"] {
+  --work: #fbbf24; --work-d: #fcd34d; --work-l: rgba(251,191,36,.15);
+  --bg: #0f172a; --bg-soft: #0b1120; --surface: #1e293b; --surface2: #334155; --surface3: #475569;
+  --border: #334155; --border2: #475569;
+  --accent: #34d399; --accent-d: #10b981; --accent-l: rgba(52,211,153,.15);
+  --teal: #2dd4bf; --violet: #a78bfa;
+  --gold: #fbbf24; --gold-d: #f59e0b; --gold-l: rgba(251,191,36,.15);
+  --green: #34d399; --green-l: rgba(52,211,153,.15); --green-d: #6ee7b7; --red: #f87171; --red-l: rgba(248,113,113,.15); --red-d: #fca5a5; --amber: #fbbf24;
+  --text: #f8fafc; --text2: #cbd5e1; --text3: #94a3b8;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.3); --shadow-sm: 0 4px 6px -1px rgba(0,0,0,.4);
+  --shadow: 0 10px 15px -3px rgba(0,0,0,.4); --shadow-lg: 0 20px 25px -5px rgba(0,0,0,.4);
+  --shadow-brand: 0 8px 18px -6px rgba(52,211,153,.28);
+  --ring: 0 0 0 3px rgba(52,211,153,.35);
 }
 
-/* ── Calm single-hue ambient (no rainbow) ───────────────────────── */
-.aurora-bg .a1{ background:radial-gradient(circle, rgba(16,185,129,.28), transparent 70%)!important; animation-duration:36s!important; }
-.aurora-bg .a2{ background:radial-gradient(circle, rgba(34,211,238,.15), transparent 70%)!important; animation-duration:44s!important; }
-.aurora-bg .a3, .aurora-bg .a4{ display:none!important; }
-[data-theme="dark"] .aurora-bg span{ mix-blend-mode:screen; opacity:.30; }
-.grain{ opacity:.025; }
+/* ── Service / icon tile gradients unified ───── */
+.g-indigo, .g-violet, .g-blue { background: var(--violet); color: #fff; }
+.g-gold, .g-amber, .g-cyan { background: var(--gold); color: #fff; }
+.g-green { background: var(--green); color: #fff; }
+.g-slate { background: var(--surface2); color: var(--text); }
+.g-rose { background: var(--red); color: #fff; }
+.logo-mark, .foot-in .brand .logo-mark, .avatar { background: var(--accent); color: #fff; }
 
-/* ── Frosted glass surfaces (cascade to all components) ─────────── */
-.nav{ background:var(--glass-bg)!important; backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%); border-bottom:1px solid var(--glass-brd)!important; }
-.nav.scrolled{ background:var(--glass-bg)!important; }
-.card, .svc-card, .lcard, .kpi, .tcard, .stat-tile, .table-card, .glass, .float-card, .mm-panel, .segmented, #cartToast {
-  background:var(--glass-bg)!important; backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%);
-  border:1px solid var(--glass-brd)!important; box-shadow:var(--shadow), inset 0 1px 0 var(--glass-hi)!important; }
-.card:hover, .svc-card:hover, .lcard:hover, a.card:hover {
-  border-color:rgba(52,211,153,.38)!important; box-shadow:var(--glow-brand), inset 0 1px 0 var(--glass-hi)!important; }
-.svc-card .tilt-glare, .lcard .tilt-glare { mix-blend-mode:overlay; }
+/* Map surface overrides */
+.chip, .hero-search, .pagination a, .pagination span, .danger-card { background: var(--surface); }
+.segmented a.active, .segmented button.active, .tl-step .dot { background: var(--surface); }
+.form-control, select.form-control, textarea.form-control { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.form-control:focus { border-color: var(--accent); box-shadow: var(--ring); }
+.btn-outline { background: var(--surface); border-color: var(--border2); }
+.badge-gold { background: var(--gold-l); color: var(--gold-d); }
+.chip.active, .pagination .current { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-/* footer glass */
-footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-brd); }
-
-/* ── Monochrome emerald→teal accents ────────────────────────────── */
-.hero h1 .grad, .grad-anim{ background-image:linear-gradient(110deg, var(--accent), var(--teal) 65%, #ffffff)!important; background-size:240% 240%!important; -webkit-background-clip:text!important; background-clip:text!important; -webkit-text-fill-color:transparent!important; color:transparent!important; }
-#scrollProgress{ background:linear-gradient(90deg, var(--accent), var(--teal))!important; box-shadow:0 0 14px rgba(52,211,153,.6); }
-#toTop{ background:linear-gradient(135deg, var(--accent), var(--teal))!important; color:#04130d; }
-.spotlight::before{ background:radial-gradient(440px circle at var(--mx,50%) var(--my,50%), rgba(52,211,153,.14), transparent 42%)!important; }
-::selection{ background:rgba(52,211,153,.26); color:#063d2b; }
-[data-theme="dark"] ::selection{ background:rgba(52,211,153,.3); color:#eafff6; }
-
-/* ── Buttons ────────────────────────────────────────────────────── */
-.btn-accent{ background:linear-gradient(135deg, var(--accent), var(--accent-d))!important; color:#04130d!important; box-shadow:var(--shadow-brand)!important; }
-.btn-gold{ background:linear-gradient(135deg,#22d3ee,#0891b2)!important; color:#03121a!important; box-shadow:0 10px 28px rgba(34,211,238,.28)!important; }
-.btn-green{ background:linear-gradient(135deg,#34d399,#10b981)!important; color:#04130d!important; }
-.btn-outline, .btn-ghost{ background:var(--glass-bg)!important; border:1px solid var(--glass-brd)!important; color:var(--text)!important; backdrop-filter:blur(12px); }
-.btn-outline:hover, .btn-ghost:hover{ border-color:var(--accent)!important; color:var(--accent)!important; }
-.theme-toggle{ background:var(--glass-bg); border:1px solid var(--glass-brd); }
-
-/* ── Big gradient panels → emerald/teal ─────────────────────────── */
-.hero-stage, .auth-aside, .cta-band{ background:linear-gradient(150deg,#064e3b 0%, #0a1020 55%, #083344 100%)!important; }
-.logo-mark, .foot-in .brand .logo-mark{ background:linear-gradient(140deg, var(--accent), var(--teal))!important; box-shadow:var(--shadow-brand); }
-.hero-trust .avatars span, .tcard .who .av, .avatar{ background:linear-gradient(135deg, var(--accent), var(--teal))!important; }
-
-/* ── Service / icon tile gradients unified (kill the rainbow) ───── */
-.g-indigo, .g-violet, .g-blue{ background:linear-gradient(140deg,#10b981,#0b7d57)!important; box-shadow:0 12px 26px rgba(16,185,129,.30)!important; }
-.g-gold, .g-amber, .g-cyan{ background:linear-gradient(140deg,#22d3ee,#0891b2)!important; box-shadow:0 12px 26px rgba(34,211,238,.26)!important; }
-.g-green{ background:linear-gradient(140deg,#34d399,#0b7d57)!important; }
-.g-slate{ background:linear-gradient(140deg,#475569,#1e293b)!important; }
-.g-rose{ background:linear-gradient(140deg,#fb7185,#e11d48)!important; }
-
-/* ── Forms (glass inputs) ───────────────────────────────────────── */
-.form-control{ background:var(--glass-bg)!important; border:1px solid var(--glass-brd)!important; color:var(--text)!important; backdrop-filter:blur(8px); }
-.form-control:focus{ border-color:var(--accent)!important; box-shadow:var(--ring)!important; }
-[data-theme="dark"] select.form-control{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239aa6bd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
-
-/* ── Badges / chips on dark ─────────────────────────────────────── */
-.badge-gold{ background:var(--gold-l); color:var(--gold); }
-.chip.active{ background:var(--accent)!important; border-color:var(--accent)!important; color:#04130d!important; }
-.pagination .current{ background:var(--accent)!important; border-color:var(--accent)!important; color:#04130d!important; }
-
-/* perf: drop heavy per-card blur on small screens */
-@media (max-width:720px){
-  .card, .svc-card, .lcard, .kpi, .tcard, .stat-tile{ backdrop-filter:none!important; -webkit-backdrop-filter:none!important; }
-  [data-theme="dark"] .card, [data-theme="dark"] .svc-card, [data-theme="dark"] .lcard,
-  [data-theme="dark"] .kpi, [data-theme="dark"] .tcard, [data-theme="dark"] .stat-tile{ background:rgba(18,24,38,.92)!important; }
-}
-
-/* ── Map hardcoded white surfaces → theme tokens (works light+dark) ──
-   base components */
-.chip, .hero-search, .pagination a, .pagination span, .danger-card { background:var(--surface)!important; }
-.segmented a.active, .segmented button.active, .tl-step .dot { background:var(--surface)!important; }
-.form-control, select.form-control, textarea.form-control { background:var(--surface)!important; }
-.btn-outline { background:var(--surface)!important; }
-
-/* module-specific panels (named classes that hardcoded #fff) */
 .notif-pop, #notifToast, .tm-panel, .yx-svc, .yx-tx, .yx-route, .o-card, .dash-card,
 .profile-avatar-card, .sidebar-nav, .content-card, .pm-card, .near-row,
 .track-stat .ts, .map-search, .bubble, .composer, .react-pop, .msg-actions,
 #acBox, .method-tab, .load-older button {
-  background:var(--surface)!important; border-color:var(--border)!important; color:var(--text);
+  background: var(--surface); border-color: var(--border); color: var(--text);
 }
-/* small round controls */
-.qty-btn, .chat-head .hbtn, .reacts .rb { background:var(--surface2)!important; border-color:var(--border)!important; color:var(--text)!important; }
-/* inputs that must stay transparent inside their own card (taxi route picker) */
-.yx-field input, .hero-search input, .map-search input { background:transparent!important; }
-.yx-num { background:linear-gradient(140deg,#22d3ee,#0891b2)!important; color:#03121a!important; }
-/* chat bubble: own messages keep accent; received = surface (above) */
-[data-theme="dark"] .bubble.mine, .bubble.me, .bubble.out { background:var(--accent-l)!important; }
+.qty-btn, .chat-head .hbtn, .reacts .rb { background: var(--surface2); border-color: var(--border); color: var(--text); }
+.yx-field input, .hero-search input, .map-search input { background: transparent; }
+[data-theme="dark"] .bubble.mine, .bubble.me, .bubble.out { background: var(--accent-l); }
 </style>
 <!-- Kengaytirilgan komponent kutubxonasi (taksi yx-*, hero, section va h.k.) — inline core stillardan keyin, additive -->
 <link rel="stylesheet" href="{% static 'css/samcity.css' %}">
@@ -834,7 +717,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     color:var(--text); font-family:inherit; font-weight:600; font-size:.85rem; transition:all .15s; min-height:44px; }
   .nav-account-btn:hover { border-color:var(--border2); background:var(--surface3); }
   .nav-account .avatar { width:30px; height:30px; border-radius:50%; flex:none; display:grid; place-items:center;
-    color:#fff; font-weight:700; font-size:.82rem; background:linear-gradient(140deg, var(--accent), var(--violet)); }
+    color:#fff; font-weight:700; font-size:.82rem; background:var(--accent); }
   .nav-account .avatar .ic { width:1em; height:1em; }
   .nav-account-name { max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .nav-account-btn .chev { width:1em; height:1em; opacity:.55; transition:transform .2s; }
@@ -872,7 +755,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   .mm-head { display:flex; align-items:center; justify-content:space-between; padding:.2rem .4rem 1rem; margin-bottom:.4rem; border-bottom:1px solid var(--border); }
   .mm-user { display:flex; align-items:center; gap:.65rem; min-width:0; }
   .mm-user .avatar { width:40px; height:40px; border-radius:50%; flex:none; display:grid; place-items:center;
-    color:#fff; font-weight:700; background:linear-gradient(140deg, var(--accent), var(--violet)); }
+    color:#fff; font-weight:700; background:var(--accent); }
   .mm-user .avatar .ic { width:1.1em; height:1.1em; }
   .mm-user .nm { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .mm-user .sub { color:var(--text3); font-size:.78rem; }
@@ -892,12 +775,76 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
     .bottom-nav a.active::before { content:""; position:absolute; top:0; width:26px; height:3px;
       border-radius:0 0 5px 5px; background:var(--accent); }
   }
+
+  /* KURYER: navigatsiya elementi.
+     Kuryer uchun ishga kirish nuqtasi navbarning O'ZIDA bo'lishi kerak edi —
+     avval yagona havola /delivery/ sahifasi ichida turardi (3 klik). */
+  .nav-work { position: relative; display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem .8rem; border-radius: 11px; font-size: .84rem; font-weight: 700;
+    background: var(--work-l); color: var(--work-d); white-space: nowrap; }
+  .nav-work:hover, .nav-work.active { background: var(--work); color: #fff; }
+  .nav-work .cnt { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+    background: var(--red); color: #fff; font-size: .68rem; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .nav-work .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  /* Biznes paneli — kuryerникi bilan bir xil shakl, boshqa rang: bir odam
+     ham kuryer, ham do'kon egasi bo'lishi mumkin, ikkalasi ajralib tursin. */
+  .nav-biz { background: var(--accent-l); color: var(--accent-d); }
+  .nav-biz:hover, .nav-biz.active { background: var(--accent); color: #fff; }
+  /* Usta paneli — uchinchi rol, uchinchi rang (kuryer sariq, biznes yashil) */
+  .nav-usta { background: rgba(167,139,250,.16); color: var(--violet); }
+  .nav-usta:hover, .nav-usta.active { background: var(--violet); color: #fff; }
+  .bn-cnt { position: absolute; top: 2px; right: 22%; min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 8px; background: var(--red); color: #fff; font-size: .62rem; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center; }
+
+  /* ISH REJIMI (work-mode).
+     Kuryer panellarida yoqiladi: brend emerald o'rniga "ish" amberi, kattaroq
+     tegish maydonlari va yirikroq raqamlar. Sabab: kuryer harakatda, telefonni
+     bir qo'lda ushlab, ekranga bir soniya qaraydi. Faqat body.work-mode ichida
+     amal qiladi — saytning qolgan qismi tegilmaydi. */
+  body.work-mode { --accent: var(--work); --accent-d: var(--work-d); --accent-l: var(--work-l);
+    --shadow-brand: 0 8px 18px -6px rgba(245,158,11,.35);
+    --ring: 0 0 0 3px rgba(245,158,11,.3); }
+  body.work-mode .btn { min-height: 50px; font-size: .95rem; font-weight: 700; }
+  body.work-mode .btn-lg { min-height: 58px; font-size: 1.05rem; }
+  body.work-mode .kpi-num { font-size: 1.75rem; }
+  body.work-mode .o-card { padding: 1.25rem 1.35rem; }
+  /* Ish rejimida sayt-navigatsiyasi diqqatni tortmasin — asosiy oqim panelda. */
+  body.work-mode .nav-links a:not(.nav-work) { opacity: .62; }
+  body.work-mode .site-footer { display: none; }
+
+  /* Kuryer holati chizig'i (bosh sahifa va panel tepasida) */
+  .work-strip { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+    background: var(--work-l); border: 1px solid rgba(245,158,11,.35); color: var(--work-d);
+    border-radius: var(--radius); padding: .75rem 1rem; font-weight: 650; font-size: .9rem; }
+  .work-strip .grow { flex: 1; }
+  .work-strip .ws-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 </style>
 
 <nav class="nav">
   <div class="nav-inner">
     <a href="{% url 'home' %}" class="nav-logo"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<b>City</b></a>
     <div class="nav-links">
+      {% if is_courier %}
+      <a href="{% url 'delivery:driver_dashboard' %}" class="nav-work{% if '/delivery/driver' in request.path %} active{% endif %}" title="{% trans 'Kuryer paneli' %}">
+        <span class="dot" style="background:{% if courier_available %}var(--green){% else %}var(--red){% endif %}"></span>
+        <svg class="ic"><use href="#i-bike"/></svg>{% trans "Ish" %}
+        {% if courier_new_orders %}<span class="cnt">{{ courier_new_orders }}</span>{% endif %}
+      </a>
+      {% endif %}
+      {% if has_business %}
+      <a href="{% url 'business_panel' %}" class="nav-work nav-biz{% if request.path == '/panel/' %} active{% endif %}" title="{% trans 'Biznes panel' %}">
+        <svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Biznes" %}
+        {% if business_alerts %}<span class="cnt">{{ business_alerts }}</span>{% endif %}
+      </a>
+      {% endif %}
+      {% if is_venue_staff %}
+      <a href="{% url 'staff_panel' %}" class="nav-work nav-usta{% if '/booking/usta' in request.path %} active{% endif %}" title="{% trans 'Usta paneli' %}">
+        <svg class="ic"><use href="#i-user"/></svg>{% trans "Usta" %}
+        {% if staff_today %}<span class="cnt">{{ staff_today }}</span>{% endif %}
+      </a>
+      {% endif %}
       <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
       <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
       <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
@@ -950,14 +897,19 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
                 <div class="sub">{{ user.phone }}</div>
               </div>
             </div>
+            {% if is_courier %}<a href="{% url 'delivery:driver_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-bike"/></svg> {% trans "Kuryer paneli" %}{% if courier_new_orders %} <span class="nav-badge" style="background:var(--work);color:#fff;">{{ courier_new_orders }}</span>{% endif %}</a>{% endif %}
+            {% if has_business %}<a href="{% url 'business_panel' %}" role="menuitem"><svg class="ic"><use href="#i-briefcase"/></svg> {% trans "Biznes panel" %}{% if business_alerts %} <span class="nav-badge">{{ business_alerts }}</span>{% endif %}</a>{% endif %}
+            {% if is_venue_staff %}<a href="{% url 'staff_panel' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> {% trans "Usta paneli" %}{% if staff_today %} <span class="nav-badge">{{ staff_today }}</span>{% endif %}</a>{% endif %}
             <a href="{% url 'dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Boshqaruv paneli" %}</a>
             <a href="{% url 'my_ads' %}" role="menuitem"><svg class="ic"><use href="#i-tag"/></svg> {% trans "Mening e'lonlarim" %}</a>
+            <a href="{% url 'my_inquiries' %}" role="menuitem"><svg class="ic"><use href="#i-chat"/></svg> {% trans "Kelgan savollar" %}{% if inquiry_unread %} <span class="nav-badge" style="background:var(--accent);color:#fff;">{{ inquiry_unread }}</span>{% endif %}</a>
             <a href="{% url 'saved_ads' %}" role="menuitem"><svg class="ic"><use href="#i-heart"/></svg> {% trans "Saqlangan e'lonlar" %}</a>
             <a href="{% url 'profile' %}" role="menuitem"><svg class="ic"><use href="#i-user"/></svg> {% trans "Profil" %}</a>
             <a href="{% url 'notification_list' %}" role="menuitem"><svg class="ic"><use href="#i-bell"/></svg> {% trans "Bildirishnomalar" %}</a>
             {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}" role="menuitem"><svg class="ic"><use href="#i-chart"/></svg> {% trans "Analitika" %}</a>{% endif %}
             {% if user.is_staff %}<a href="{% url 'delivery:catalog_manage' %}" role="menuitem"><svg class="ic"><use href="#i-grid"/></svg> {% trans "Katalog boshqaruvi" %}</a>{% endif %}
-            {% if user.is_staff or user.district_admin_roles.exists %}<a href="{% url 'hokim_panel' %}" role="menuitem"><svg class="ic"><use href="#i-building"/></svg> {% trans "Hokim paneli" %}</a>{% endif %}
+            {# Hokim paneli arxivlangan — HOKIM_ENABLED=True bo'lsa qaytadi #}
+            {% if HOKIM_ENABLED %}{% if user.is_staff or user.district_admin_roles.exists %}<a href="{% url 'hokim_panel' %}" role="menuitem"><svg class="ic"><use href="#i-building"/></svg> {% trans "Hokim paneli" %}</a>{% endif %}{% endif %}
             <div class="am-divider"></div>
             <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="danger" role="menuitem"><svg class="ic"><use href="#i-logout"/></svg> {% trans "Chiqish" %}</button></form>
           </div>
@@ -1002,6 +954,24 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   <div class="mm-divider"></div>
   {% endif %}
 
+  {% if is_courier %}
+  <div class="mm-label">{% trans "Ish" %}</div>
+  <a href="{% url 'delivery:driver_dashboard' %}"><svg class="ic"><use href="#i-bike"/></svg> {% trans "Kuryer paneli" %}{% if courier_new_orders %} <span class="nav-badge" style="background:var(--work);color:#fff;">{{ courier_new_orders }}</span>{% endif %}</a>
+  <a href="{% url 'delivery:driver_profile' %}"><svg class="ic"><use href="#i-user"/></svg> {% trans "Kuryer profili" %}</a>
+  <div class="mm-divider"></div>
+  {% endif %}
+
+  {% if has_business %}
+  <div class="mm-label">{% trans "Biznesim" %}</div>
+  <a href="{% url 'business_panel' %}"><svg class="ic"><use href="#i-briefcase"/></svg> {% trans "Biznes panel" %}{% if business_alerts %} <span class="nav-badge">{{ business_alerts }}</span>{% endif %}</a>
+  <div class="mm-divider"></div>
+  {% endif %}
+
+  {% if is_venue_staff %}
+  <div class="mm-label">{% trans "Ishim" %}</div>
+  <a href="{% url 'staff_panel' %}"><svg class="ic"><use href="#i-user"/></svg> {% trans "Usta paneli" %}{% if staff_today %} <span class="nav-badge">{{ staff_today }}</span>{% endif %}</a>
+  <div class="mm-divider"></div>
+  {% endif %}
   <div class="mm-label">{% trans "Bo'limlar" %}</div>
   <a href="{% url 'home' %}"><svg class="ic"><use href="#i-home"/></svg> {% trans "Bosh sahifa" %}</a>
   <a href="{% url 'all_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> {% trans "E'lonlar" %}</a>
@@ -1064,11 +1034,36 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
 
 <!-- Mobile bottom navigation -->
 <nav class="bottom-nav">
+  {% if is_courier %}
+  {# Kuryer telefonda, harakatda ishlaydi: pastki nav e'lon lentasiga #}
+  {# emas, ish oqimiga olib borishi kerak. #}
+  <a href="{% url 'delivery:driver_dashboard' %}" {% if '/delivery/driver' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-bike"/></svg>{% trans "Panel" %}{% if courier_new_orders %}<span class="bn-cnt">{{ courier_new_orders }}</span>{% endif %}</a>
+  <a href="{% url 'delivery:driver_dashboard' %}#faol"><svg class="ic"><use href="#i-car"/></svg>{% trans "Faol" %}{% if courier_active_orders %} {{ courier_active_orders }}{% endif %}</a>
+  <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
+  <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
+  <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>{% trans "Ko'proq" %}</a>
+  {% elif is_venue_staff %}
+  {# Usta ham telefonda ishlaydi — pastki nav uni jadvaliga olib boradi. #}
+  <a href="{% url 'staff_panel' %}" {% if '/booking/usta' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-user"/></svg>{% trans "Jadval" %}{% if staff_today %}<span class="bn-cnt">{{ staff_today }}</span>{% endif %}</a>
+  <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
+  <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
+  <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
+  <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>{% trans "Ko'proq" %}</a>
+  {% elif has_business %}
+  {# Biznes egasi ham telefonda ishlaydi: pastki nav uni e'lon lentasiga #}
+  {# emas, buyurtma/bron oqimiga olib borishi kerak (kuryerdagi kabi). #}
+  <a href="{% url 'business_panel' %}" {% if request.path == '/panel/' %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Biznes" %}{% if business_alerts %}<span class="bn-cnt">{{ business_alerts }}</span>{% endif %}</a>
+  <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
+  <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
+  <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
+  <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>{% trans "Ko'proq" %}</a>
+  {% else %}
   <a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}><svg class="ic"><use href="#i-home"/></svg>{% trans "Bosh" %}</a>
   <a href="{% url 'all_ads' %}" {% if '/all-ads' in request.path or '/ads' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-tag"/></svg>{% trans "E'lonlar" %}</a>
   <a href="{% url 'job_list' %}" {% if 'jobs' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-briefcase"/></svg>{% trans "Ish" %}</a>
   <a href="{% url 'places:map' %}" {% if '/map' in request.path %}class="active"{% endif %}><svg class="ic"><use href="#i-map"/></svg>{% trans "Xarita" %}</a>
   <a href="#" role="button" onclick="event.preventDefault();var m=document.getElementById('mobileMenu');m.style.display=(m.style.display==='block'?'none':'block');"><svg class="ic"><use href="#i-menu"/></svg>{% trans "Ko'proq" %}</a>
+  {% endif %}
 </nav>
 
 <button id="toTop" aria-label="{% trans 'Tepaga' %}" title="{% trans 'Tepaga' %}"><svg class="ic" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
@@ -1076,7 +1071,7 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
 <!-- ── PWA Install Banner ──────────────────────────────────────── -->
 <div id="pwaInstallBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9990;width:calc(100% - 2rem);max-width:420px;">
   <div style="background:var(--surface);border:1px solid var(--accent);border-radius:18px;padding:1rem 1.25rem;box-shadow:var(--shadow-xl);display:flex;align-items:center;gap:1rem;">
-    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(140deg,var(--accent),var(--teal));display:grid;place-items:center;color:#fff;flex:none;font-size:1.5rem;">📱</div>
+    <div style="width:46px;height:46px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#fff;flex:none;font-size:1.5rem;">📱</div>
     <div style="flex:1;min-width:0;">
       <div style="font-weight:700;font-size:.95rem;color:var(--text);">{% trans "SamCity ilovasini o'rnating" %}</div>
       <div style="color:var(--text2);font-size:.8rem;margin-top:2px;">{% trans "Tezroq, qulay va offline ishlaydi" %}</div>
@@ -1233,49 +1228,9 @@ footer.site-footer{ background:var(--bg-soft); border-top:1px solid var(--glass-
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  function initTilt() {
-    if (reduceMotion || !fine) return;
-    /* Ro'yxat cardlari (.lcard) tilt'dan chiqarildi — CSS hover bilan to'qnashib
-       "buzilgan" ko'rinardi. Faqat bosh sahifa kartalari tilt oladi. */
-    var sel = '[data-tilt], .svc-card';
-    document.querySelectorAll(sel).forEach(function (el) {
-      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
-      var glare = document.createElement('span'); glare.className = 'tilt-glare';
-      el.appendChild(glare); el.classList.add('has-glare');
-      var strength = el.hasAttribute('data-tilt') ? 9 : 6;
-      el.addEventListener('mousemove', function (ev) {
-        var r = el.getBoundingClientRect();
-        var px = (ev.clientX - r.left) / r.width - 0.5;
-        var py = (ev.clientY - r.top) / r.height - 0.5;
-        el.style.transform = 'perspective(900px) rotateY(' + (px*strength) + 'deg) rotateX(' + (-py*strength) + 'deg) translateY(-6px)';
-        glare.style.setProperty('--gx', ((px+0.5)*100) + '%');
-        glare.style.setProperty('--gy', ((py+0.5)*100) + '%');
-      });
-      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
-    });
-  }
-  function initSpotlight() {
-    if (!fine) return;
-    document.querySelectorAll('.svc-card, .lcard, .kpi, .stat-tile, .tcard, .spotlight').forEach(function (el) {
-      el.classList.add('spotlight');
-      el.addEventListener('mousemove', function (ev) {
-        var r = el.getBoundingClientRect();
-        el.style.setProperty('--mx', (ev.clientX - r.left) + 'px');
-        el.style.setProperty('--my', (ev.clientY - r.top) + 'px');
-      });
-    });
-  }
-  function initMagnetic() {
-    if (reduceMotion || !fine) return;
-    document.querySelectorAll('.btn-accent, .btn-gold, .magnetic').forEach(function (el) {
-      el.classList.add('magnetic');
-      el.addEventListener('mousemove', function (ev) {
-        var r = el.getBoundingClientRect();
-        el.style.transform = 'translate(' + ((ev.clientX - r.left - r.width/2)*0.18) + 'px,' + ((ev.clientY - r.top - r.height/2)*0.28) + 'px)';
-      });
-      el.addEventListener('mouseleave', function () { el.style.transform = ''; });
-    });
-  }
+  function initTilt() { /* removed */ }
+  function initSpotlight() { /* removed */ }
+  function initMagnetic() { /* removed */ }
   function initScrollFx() {
     var bar = document.getElementById('scrollProgress');
     var nav = document.querySelector('.nav');

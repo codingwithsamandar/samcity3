@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Menyu — {{ place.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:820px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  <a href="{% url 'places:place_detail' place.pk %}" style="color:var(--text2);font-size:.88rem;display:inline-flex;align-items:center;gap:.3rem;margin-bottom:1rem;"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow-right"/></svg> {{ place.name }}</a>
+
+  <div class="page-header">
+    <h1>Menyu</h1>
+    <p>{{ place.name }} menyusi — mijozlar buni xarita sahifasida va bron qilishda ko'radi.</p>
+  </div>
+
+  <!-- Mavjud taomlar -->
+  <div class="card card-pad">
+    <h3 style="font-size:1.1rem;margin-bottom:.9rem;">Menyudagi taomlar</h3>
+    {% for section, items in menu_sections %}
+    <div style="margin-bottom:1.2rem;">
+      <div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700;margin-bottom:.5rem;">{{ section }}</div>
+      {% for it in items %}
+      <div style="display:flex;align-items:center;gap:.7rem;padding:.6rem 0;border-bottom:1px solid var(--border);{% if not it.is_active %}opacity:.5;{% endif %}">
+        {% if it.image %}<img src="{{ it.image.url }}" alt="{{ it.name }}" style="width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0;">{% endif %}
+        <div style="flex:1;min-width:0;">
+          <b>{{ it.name }}</b>{% if not it.is_active %} <span class="badge badge-gray" style="font-size:.65rem;">Yashirin</span>{% endif %}
+          {% if it.description %}<div style="color:var(--text3);font-size:.8rem;">{{ it.description }}</div>{% endif %}
+        </div>
+        <div style="font-weight:800;color:var(--accent);white-space:nowrap;">{{ it.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
+        <form method="post" action="{% url 'places:menu_item_delete' it.pk %}" onsubmit="return confirm('O\'chirilsinmi?')" style="margin:0;">
+          {% csrf_token %}<button class="btn btn-outline btn-sm">O'chir</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% empty %}
+    <p style="color:var(--text3);font-size:.88rem;">Menyu hali bo'sh. Quyidan birinchi taomni qo'shing.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Taom qo'shish -->
+  <div class="card card-pad" style="margin-top:1.2rem;">
+    <h3 style="font-size:1.1rem;margin-bottom:.9rem;">Taom qo'shish</h3>
+    <form method="post" action="{% url 'places:menu_item_add' place.pk %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row">
+        <input name="name" class="form-control" placeholder="Taom nomi (masalan: Osh)" required>
+        <input name="price" type="number" min="0" class="form-control" placeholder="Narx (so'm)" required>
+      </div>
+      <div class="form-group" style="margin-top:.7rem;margin-bottom:.7rem;">
+        <label class="form-label">Bo'lim</label>
+        <select name="section" class="form-control">
+          {% for key, label in sections %}<option value="{{ key }}"{% if key == 'main' %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:.7rem;"><textarea name="description" class="form-control" rows="2" placeholder="Tarkibi yoki tavsif (ixtiyoriy)"></textarea></div>
+      <div class="form-group" style="margin-bottom:.7rem;"><label class="form-label" style="font-size:.8rem;color:var(--text3);">Taom rasmi (ixtiyoriy)</label><input name="image" type="file" accept="image/*" class="form-control"></div>
+      <button class="btn btn-green btn-sm"><svg class="ic"><use href="#i-plus"/></svg> Menyuga qo'shish</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

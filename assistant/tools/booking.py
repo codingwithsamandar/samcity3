@@ -142,13 +142,10 @@ def _parse_time(s):
 
 @tool(
     section='booking', action='find_venue',
-    description="Bron qilinadigan joyni topadi (sartaroshxona, salon, restoran). "
-                "Bron oqimining birinchi qadami.",
+    description="Bron qilinadigan joyni topadi — bron oqimining 1-qadami.",
     params={
-        'query': ('str', False, "nom yoki mahsulot bo'yicha qidiruv (ixtiyoriy)"),
-        'venue_type': ('str', False,
-                       "joy turi: barber=sartaroshxona, beauty=salon, "
-                       "restaurant=restoran, cafe=kafe", VENUE_TYPE_ENUM),
+        'query': ('str', False, "nom bo'yicha qidiruv"),
+        'venue_type': ('str', False, "joy turi", VENUE_TYPE_ENUM),
     },
 )
 def find_venue(ctx, query='', venue_type='barber'):
@@ -204,7 +201,7 @@ def find_venue(ctx, query='', venue_type='barber'):
 
 @tool(
     section='booking', action='list_services',
-    description="Tanlangan joyning xizmatlari va narxlari (avval find_venue).",
+    description="Joyning xizmatlari va narxlari (avval find_venue).",
     params={'venue_id': ('str', True, "joy ID (find_venue natijasidan)")},
 )
 def list_services(ctx, venue_id):
@@ -245,7 +242,7 @@ def list_services(ctx, venue_id):
 
 @tool(
     section='booking', action='list_staff',
-    description="Joyning ustalari/ishchilari (ixtiyoriy — usta tanlash uchun).",
+    description="Joyning ustalari (ixtiyoriy qadam).",
     params={'venue_id': ('str', True, "joy ID")},
 )
 def list_staff(ctx, venue_id):
@@ -286,12 +283,12 @@ def list_staff(ctx, venue_id):
 
 @tool(
     section='booking', action='available_slots',
-    description="Berilgan kun uchun bo'sh vaqtlarni ko'rsatadi (avval joy tanlanadi).",
+    description="Berilgan kun uchun bo'sh vaqtlar (avval joy tanlanadi).",
     params={
         'venue_id': ('str', True, "joy ID"),
-        'day': ('str', False, "kun: bugun / ertaga / YYYY-MM-DD (standart bugun)"),
+        'day': ('str', False, "bugun / ertaga / YYYY-MM-DD (standart bugun)"),
         'service_id': ('str', False, "xizmat ID (davomiylik uchun)"),
-        'staff_id': ('str', False, "usta ID (ixtiyoriy)"),
+        'staff_id': ('str', False, "usta ID"),
     },
 )
 def available_slots(ctx, venue_id, day='bugun', service_id=None, staff_id=None):
@@ -335,16 +332,15 @@ def available_slots(ctx, venue_id, day='bugun', service_id=None, staff_id=None):
 
 @tool(
     section='booking', action='propose_booking',
-    description="Bronni tasdiqqa tayyorlaydi va TASDIQ kartasini ko'rsatadi. "
-                "Bron faqat foydalanuvchi tasdiqlagach yaratiladi. Barcha ma'lumot "
-                "([FAOL VAZIFA] slotlari) to'lganda chaqir.",
+    description="Bronni tasdiqqa tayyorlaydi; bron faqat foydalanuvchi tasdiqlagach "
+                "yaratiladi. Barcha slot to'lganda chaqir.",
     params={
         'venue_id': ('str', True, "joy ID"),
         'service_id': ('str', True, "xizmat ID"),
         'time': ('str', True, "boshlanish vaqti (HH:MM, available_slots'dan)"),
         'day': ('str', False, "kun (standart bugun)"),
-        'staff_id': ('str', False, "usta ID (ixtiyoriy)"),
-        'payment_method': ('str', False, "to'lov: cash=naqd / prepay=oldindan",
+        'staff_id': ('str', False, "usta ID"),
+        'payment_method': ('str', False, "cash=naqd / prepay=oldindan",
                            ['cash', 'prepay']),
     },
     mutating=True,
@@ -471,12 +467,10 @@ def _day_taken(venue, date):
 
 @tool(
     section='booking', action='propose_wedding',
-    description="TO'YXONA (wedding) uchun KUNLIK bronни tasdiqqa tayyorlaydi. "
-                "Slot/xizmat yo'q — sana va mehmon soni kerak. To'yxona tanlangach "
-                "(find_venue venue_type='wedding') shuni chaqir.",
+    description="TO'YXONA uchun KUNLIK bronni tasdiqqa tayyorlaydi (slot/xizmat yo'q).",
     params={
-        'venue_id': ('str', True, "to'yxona ID (find_venue natijasidan)"),
-        'day': ('str', True, "sana (masalan «ertaga», «15-avgust»)"),
+        'venue_id': ('str', True, "to'yxona ID (find_venue venue_type='wedding')"),
+        'day': ('str', True, "sana"),
         'guests': ('int', True, "mehmonlar soni"),
     },
     mutating=True,
@@ -563,7 +557,7 @@ def place_wedding(payload, user):
 
 @tool(
     section='booking', action='my_bookings',
-    description="Foydalanuvchining bronlari va ularning holatини ko'rsatadi.",
+    description="Foydalanuvchining bronlari va holati.",
     params={},
     auth_required=True,
 )
@@ -596,8 +590,8 @@ def my_bookings(ctx, **_):
 
 @tool(
     section='booking', action='cancel_booking',
-    description="Bronni bekor qiladi (faqat o'z broni). my_bookings'даги booking ID'sини ber.",
-    params={'booking_id': ('str', True, "bron ID (my_bookings natijasidan)")},
+    description="Bronni bekor qiladi (faqat o'z broni).",
+    params={'booking_id': ('str', True, "my_bookings natijasidagi ID")},
     mutating=True,
     auth_required=True,
     owns={'booking_id': 'booking.VenueBooking'},

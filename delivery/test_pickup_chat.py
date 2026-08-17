@@ -139,7 +139,7 @@ class PickupTransitionTests(TestCase):
         customer = make_user('+998932000041')
         driver_user = make_user('+998932000042')
         DeliveryDriver.objects.create(
-            user=driver_user, full_name='D', phone='+998932000042', is_available=True)
+            user=driver_user, full_name='D', phone='+998932000042', is_available=True, status='approved')
         pickup_order = Order.objects.create(
             user=customer, address='', status='ready', total=5000,
             fulfillment_type='pickup', payment_status='paid')

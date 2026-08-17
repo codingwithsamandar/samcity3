@@ -61,8 +61,10 @@
         <a href="{% url 'profile' %}" class="active"><svg class="ic"><use href="#i-user"/></svg> Profil</a>
         <a href="{% url 'dashboard' %}"><svg class="ic"><use href="#i-grid"/></svg> Boshqaruv paneli</a>
         <a href="{% url 'my_ads' %}"><svg class="ic"><use href="#i-tag"/></svg> Mening e'lonlarim {% if ads_count %}<span class="nav-badge">{{ ads_count }}</span>{% endif %}</a>
+        <a href="{% url 'my_inquiries' %}"><svg class="ic"><use href="#i-chat"/></svg> Kelgan savollar {% if inquiry_unread %}<span class="nav-badge" style="background:var(--accent);color:#fff;">{{ inquiry_unread }}</span>{% endif %}</a>
+        {% if has_business %}<a href="{% url 'business_panel' %}"><svg class="ic"><use href="#i-briefcase"/></svg> Biznes panel {% if business_alerts %}<span class="nav-badge">{{ business_alerts }}</span>{% endif %}</a>{% endif %}
         <a href="{% url 'job_list' %}"><svg class="ic"><use href="#i-briefcase"/></svg> Ish e'lonlari</a>
-        <a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>
+        {% if PAYMENTS_ENABLED %}<a href="{% url 'payments:home' %}"><svg class="ic"><use href="#i-card"/></svg> To'lovlar</a>{% endif %}
         <a href="{% url 'my_venue_bookings' %}"><svg class="ic"><use href="#i-doc"/></svg> Bronlar</a>
         <a href="{% url 'profile_edit' %}"><svg class="ic"><use href="#i-settings"/></svg> Sozlamalar</a>
         <form method="post" action="{% url 'logout' %}" style="margin:0;">{% csrf_token %}

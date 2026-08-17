@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -106,3 +107,28 @@ def my_payments(request):
         'total_paid': stats['total'] or 0,
         'paid_count': stats['count'] or 0,
     })
+
+
+# ─── ARXIV: TO'LOVLAR BO'LIMI ──────────────────────────────────────────────
+# To'lovlar bo'limi vaqtincha yopildi. Loyihadagi mavjud naqsh
+# (main/community_views.py: `_archived_view`) bilan bir xil ishlaydi:
+# URL yo'llari REGISTRDA QOLADI — shuning uchun shablonlardagi
+# `{% url 'payments:...' %}` teglari NoReverseMatch bermaydi — lekin
+# sahifaga kirib bo'lmaydi, foydalanuvchi bosh sahifaga qaytariladi.
+#
+# ⚠️ Payme/Click webhook'lariga TEGILMAYDI (payments/payme.py, click.py).
+# Ular provayder kabinetida ro'yxatdan o'tgan; yopilsa real to'lovlar
+# tasdiqlanmay qoladi.
+#
+# Qayta yoqish: .env'ga  PAYMENTS_ENABLED=True
+def _archived_view(request, *args, **kwargs):
+    messages.error(request, "To'lovlar bo'limi vaqtincha faol emas.")
+    return redirect('home')
+
+
+if not getattr(settings, 'PAYMENTS_ENABLED', False):
+    payments_home = _archived_view
+    detail = _archived_view
+    pay = _archived_view
+    receipt = _archived_view
+    my_payments = _archived_view

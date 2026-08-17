@@ -8,6 +8,7 @@ urlpatterns = [
     path('directory/', views.place_list, name='place_list'),
     path('nearby/', views.nearby, name='nearby'),
     path('geojson/', views.places_geojson, name='geojson'),
+    path('search/', views.search_api, name='search_api'),
     path('neighborhoods/', views.neighborhoods_geojson, name='neighborhoods_geojson'),
     path('neighborhoods/<int:pk>/', views.neighborhood_detail, name='neighborhood_detail'),
     path('neighborhoods/<int:pk>/geojson/', views.neighborhood_places_geojson, name='neighborhood_places_geojson'),
@@ -23,5 +24,8 @@ urlpatterns = [
 
     path('<int:pk>/', views.place_detail, name='place_detail'),
     path('<int:pk>/edit/', views.place_edit, name='place_edit'),
+    path('<int:pk>/menu/', views.place_menu, name='place_menu'),
+    path('<int:pk>/menu/add/', views.menu_item_add, name='menu_item_add'),
+    path('menu/<int:item_id>/delete/', views.menu_item_delete, name='menu_item_delete'),
     path('<int:pk>/delete/', views.place_delete, name='place_delete'),
 ]

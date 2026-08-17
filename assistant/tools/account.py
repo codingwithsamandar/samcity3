@@ -27,7 +27,7 @@ def _url(name, *args):
 
 @tool(
     section='account', action='profile',
-    description="Foydalanuvchining o'z profil ma'lumotini ko'rsatadi: ism, telefon, mahalla.",
+    description="O'z profili: ism, telefon, mahalla.",
     params={},
     auth_required=True,
 )
@@ -52,7 +52,7 @@ def profile(ctx, **_):
 
 @tool(
     section='account', action='my_orders',
-    description="Foydalanuvchining oxirgi buyurtmalari (dostavka) va holati.",
+    description="O'z buyurtmalari (dostavka) va holati.",
     params={},
     auth_required=True,
 )
@@ -75,7 +75,7 @@ def my_orders(ctx, **_):
 
 @tool(
     section='account', action='my_bookings',
-    description="Foydalanuvchining joy bronlari (sartaroshxona, salon, restoran).",
+    description="O'z joy bronlari.",
     params={},
     auth_required=True,
 )
@@ -104,7 +104,7 @@ def my_bookings(ctx, **_):
 
 @tool(
     section='account', action='my_trips',
-    description="Foydalanuvchining taksi safarlari (buyurtmalari) va holati.",
+    description="O'z taksi safarlari va holati.",
     params={},
     auth_required=True,
 )
@@ -133,7 +133,7 @@ def my_trips(ctx, **_):
 
 @tool(
     section='account', action='my_ads',
-    description="Foydalanuvchining joylagan e'lonlari (marketplace oldi-sotdi).",
+    description="O'z e'lonlari (marketplace).",
     params={},
     auth_required=True,
 )
@@ -157,8 +157,7 @@ def my_ads(ctx, **_):
 
 @tool(
     section='account', action='change_name',
-    description="Foydalanuvchining O'Z ismini o'zgartiradi. «ismимni Ali qil» kabi. "
-                "Tasdiq talab qiladi.",
+    description="Foydalanuvchining O'Z ismini o'zgartiradi.",
     params={'name': ('str', True, "yangi ism")},
     mutating=True,
     auth_required=True,

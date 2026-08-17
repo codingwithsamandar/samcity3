@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Usta paneli — SamCity{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sp-row { display:flex; gap:.9rem; align-items:flex-start; padding:.9rem 1rem;
+    border:1px solid var(--border); border-radius:14px; background:var(--surface); margin-bottom:.6rem; }
+  .sp-time { font-family:'Plus Jakarta Sans'; font-weight:800; font-size:1.05rem;
+    color:var(--accent); white-space:nowrap; min-width:56px; }
+  .sp-main { flex:1; min-width:0; }
+  .sp-svc { font-weight:650; }
+  .sp-meta { color:var(--text3); font-size:.82rem; margin-top:.15rem; }
+  .sp-sec { font-size:1.1rem; font-weight:750; margin:1.7rem 0 .8rem;
+    display:flex; align-items:center; gap:.5rem; }
+  .sp-sec .ic { color:var(--accent); }
+  .sp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+    gap:.6rem; margin-bottom:1.2rem; }
+  .sp-stat { background:var(--surface2); border-radius:12px; padding:.7rem; text-align:center; }
+  .sp-stat .v { font-family:'Plus Jakarta Sans'; font-weight:800; font-size:1.4rem; }
+  .sp-stat .l { color:var(--text3); font-size:.73rem; margin-top:.15rem; }
+  .sp-slots { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .sp-slot { background:var(--accent-l); color:var(--accent-d); font-weight:700;
+    font-size:.84rem; padding:.35rem .7rem; border-radius:9px; }
+  .sp-dayform { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin-bottom:.8rem; }
+  .sp-off { display:flex; align-items:center; justify-content:space-between; gap:.6rem;
+    background:var(--red-l); border-radius:10px; padding:.45rem .7rem; margin-bottom:.4rem; }
+  .sp-off .t { font-weight:700; font-size:.85rem; color:var(--red-d); }
+  .sp-offform { border-top:1px solid var(--border); padding-top:.8rem; margin-top:.8rem; }
+  .pay { font-size:.72rem; font-weight:800; padding:.16rem .5rem; border-radius:100px;
+    white-space:nowrap; display:inline-flex; align-items:center; gap:.2rem; }
+  .pay-paid { background:var(--green-l); color:var(--green-d); }
+  .pay-awaiting { background:var(--gold-l); color:var(--gold-d); }
+  .pay-onsite { background:var(--surface2); color:var(--text2); }
+  .sp-sum { font-weight:800; font-family:'Plus Jakarta Sans'; white-space:nowrap; }
+  .sp-busy { display:flex; gap:.7rem; align-items:flex-start; padding:.6rem 0;
+    border-bottom:1px solid var(--border); }
+  .sp-busy:last-child { border-bottom:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:760px;">
+  {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}success{% endif %}"><svg class="ic"><use href="#i-{% if 'error' in m.tags %}x{% else %}check{% endif %}"/></svg>{{ m }}</div>{% endfor %}
+
+  {% if not roles %}
+  <div class="card card-pad" style="text-align:center;padding:2.5rem 1.5rem;">
+    <div style="font-size:2.5rem;margin-bottom:.5rem;">✂️</div>
+    <p style="font-weight:650;margin-bottom:.4rem;">Siz hali usta sifatida qo'shilmagansiz</p>
+    <p style="color:var(--text2);font-size:.9rem;">
+      Ishlayotgan joyingiz egasi sizni telefon raqamingiz bilan qo'shsa,
+      jadvalingiz shu yerda ko'rinadi.</p>
+  </div>
+  {% else %}
+
+  <div class="page-header">
+    <h1>Usta paneli</h1>
+    <p>{% for r in roles %}{{ r.venue.name }}{% if r.specialty %} · {{ r.specialty }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+  </div>
+
+  <div class="sp-stats">
+    <div class="sp-stat"><div class="v">{{ bugun|length }}</div><div class="l">Bugun</div></div>
+    <div class="sp-stat"><div class="v">{{ keyingi|length }}</div><div class="l">Kelgusi</div></div>
+    <div class="sp-stat"><div class="v">{{ bajarilgan }}</div><div class="l">Bajarilgan</div></div>
+    {% for r in roles %}{% if forloop.first %}
+    <div class="sp-stat"><div class="v">{{ r.rating|floatformat:1 }}</div><div class="l">Reyting ({{ r.reviews_count }})</div></div>
+    {% endif %}{% endfor %}
+  </div>
+
+  {# ── BO'SH VAQTLAR ──────────────────────────────────────── #}
+  {% if bosh_vaqtlar %}
+  <div class="sp-sec"><svg class="ic"><use href="#i-clock"/></svg> Bo'sh vaqtlarim</div>
+  <form method="get" class="sp-dayform">
+    <label style="color:var(--text3);font-size:.85rem;">Sana:</label>
+    <input type="date" name="kun" value="{{ kun|date:'Y-m-d' }}"
+           min="{{ kun_min|date:'Y-m-d' }}" max="{{ kun_max|date:'Y-m-d' }}"
+           class="form-control" style="max-width:180px;" onchange="this.form.submit()">
+    <noscript><button class="btn btn-accent btn-sm">Ko'rsat</button></noscript>
+  </form>
+  {% for bv in bosh_vaqtlar %}
+  <div class="card card-pad" style="margin-bottom:.7rem;">
+    {% if bosh_vaqtlar|length > 1 %}
+    <div style="font-weight:650;font-size:.9rem;margin-bottom:.5rem;">{{ bv.rol.venue.name }}</div>
+    {% endif %}
+    {% if bv.kun_yopiq %}
+    <p style="color:var(--red-d);font-weight:650;font-size:.9rem;margin:0 0 .6rem;">
+      🚫 Bu kun butunlay yopilgan — bron qabul qilinmaydi.</p>
+    {% elif bv.slotlar %}
+    <div class="sp-slots">
+      {% for t in bv.slotlar %}<span class="sp-slot">{{ t }}</span>{% endfor %}
+    </div>
+    <div style="color:var(--text3);font-size:.78rem;margin-top:.55rem;">
+      {{ bv.slotlar|length }} ta bo'sh vaqt · har biri {{ bv.daqiqa }} daqiqa
+    </div>
+    {% else %}
+    <p style="color:var(--text3);font-size:.88rem;margin:0;">
+      Bu kunda bo'sh vaqt yo'q{% if kun == today %} (yoki ish vaqti tugagan){% endif %}.
+    </p>
+    {% endif %}
+
+    {% if bv.band %}
+    <div style="margin-top:.9rem;border-top:1px solid var(--border);padding-top:.8rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem;">
+        <span style="color:var(--text3);font-size:.78rem;">Band vaqtlar — {{ bv.band|length }} ta mijoz</span>
+        <span style="font-size:.76rem;color:var(--text3);">
+          {% if bv.yigilgan %}<span style="color:var(--green-d);font-weight:700;">{{ bv.yigilgan|floatformat:0 }}</span> to'langan{% endif %}
+          {% if bv.kutilayotgan %}{% if bv.yigilgan %} · {% endif %}<span style="color:var(--gold-d);font-weight:700;">{{ bv.kutilayotgan|floatformat:0 }}</span> kutilmoqda{% endif %}
+        </span>
+      </div>
+      {% for b in bv.band %}
+      <div class="sp-busy">
+        <div class="sp-time" style="min-width:48px;font-size:.95rem;">{{ b.start_time|time:"H:i" }}</div>
+        <div class="sp-main">
+          <div class="sp-svc" style="font-size:.92rem;">
+            {% if b.service %}{{ b.service.name }}{% else %}{{ b.service_type|default:"Xizmat" }}{% endif %}
+            {% if b.end_time %}<span style="color:var(--text3);font-weight:400;font-size:.8rem;"> · {{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }}</span>{% endif %}
+          </div>
+          <div class="sp-meta">
+            {{ b.user.name|default:b.user.phone }}
+            {% if b.user.phone %}· <a href="tel:{{ b.user.phone }}" style="color:var(--accent);">{{ b.user.phone }}</a>{% endif %}
+          </div>
+          {% if b.message %}<div class="sp-meta">💬 {{ b.message }}</div>{% endif %}
+          {% if b.taxmin %}<div class="sp-meta" style="color:var(--accent-d);">⏱ {{ b.taxmin }}</div>{% endif %}
+          <div class="sp-meta" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.3rem;">
+            {% with st=b.payment_state %}
+            <span class="pay pay-{{ st.0 }}">
+              {% if st.0 == 'paid' %}✓{% elif st.0 == 'awaiting' %}⏳{% else %}💵{% endif %} {{ st.1 }}
+            </span>
+            {% endwith %}
+            {% if b.total_amount %}
+            <span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>
+            {% if b.amount_due and b.is_paid %}<span style="font-size:.75rem;color:var(--gold-d);">({{ b.amount_due|floatformat:0 }} qoldi)</span>{% endif %}
+            {% endif %}
+            <span style="font-size:.75rem;">· {{ b.get_status_display }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if bv.yopilgan %}
+    <div style="margin-top:.8rem;">
+      <div style="color:var(--text3);font-size:.78rem;margin-bottom:.35rem;">Yopilgan vaqtlar</div>
+      {% for off in bv.yopilgan %}
+      <div class="sp-off">
+        <span class="t">
+          {% if off.whole_day %}Butun kun{% else %}{{ off.start_time|time:"H:i" }}{% if off.end_time %}–{{ off.end_time|time:"H:i" }}{% endif %}{% endif %}
+          {% if off.reason %}<span style="font-weight:400;color:var(--text3);"> · {{ off.reason }}</span>{% endif %}
+        </span>
+        <form method="post" action="{% url 'staff_time_off_delete' off.pk %}" style="margin:0;">
+          {% csrf_token %}<button class="btn btn-ghost btn-sm">Ochish</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not bv.kun_yopiq %}
+    <form method="post" action="{% url 'staff_time_off_add' bv.rol.pk %}" class="sp-offform">
+      {% csrf_token %}
+      <input type="hidden" name="kun" value="{{ kun|date:'Y-m-d' }}">
+      <div style="color:var(--text3);font-size:.78rem;margin-bottom:.45rem;">Vaqtni yopish (tushlik, dam olish...)</div>
+      <div class="form-row" style="gap:.5rem;">
+        <input type="time" name="start_time" class="form-control" aria-label="Boshlanish">
+        <input type="time" name="end_time" class="form-control" aria-label="Tugash">
+      </div>
+      <div class="form-group" style="margin:.5rem 0;">
+        <input name="reason" class="form-control" placeholder="Sabab (ixtiyoriy)" maxlength="120">
+      </div>
+      <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;margin-bottom:.6rem;">
+        <input type="checkbox" name="whole_day"> Butun kunni yopish
+      </label>
+      <button class="btn btn-outline btn-sm">🔒 Yopish</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── BUGUN ──────────────────────────────────────────────── #}
+  <div class="sp-sec"><svg class="ic"><use href="#i-clock"/></svg> Bugun — {{ today|date:"d.m.Y" }}</div>
+  {% for b in bugun %}
+  <div class="sp-row">
+    <div class="sp-time">{{ b.start_time|time:"H:i" }}</div>
+    <div class="sp-main">
+      <div class="sp-svc">{% if b.service %}{{ b.service.name }}{% else %}{{ b.service_type|default:"Xizmat" }}{% endif %}</div>
+      <div class="sp-meta">
+        {{ b.user.name|default:b.user.phone }}
+        {% if b.user.phone %}· <a href="tel:{{ b.user.phone }}" style="color:var(--accent);">{{ b.user.phone }}</a>{% endif %}
+      </div>
+      {% if b.message %}<div class="sp-meta">💬 {{ b.message }}</div>{% endif %}
+      <div class="sp-meta" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.3rem;">
+        {% with st=b.payment_state %}
+        <span class="pay pay-{{ st.0 }}">
+          {% if st.0 == 'paid' %}✓{% elif st.0 == 'awaiting' %}⏳{% else %}💵{% endif %} {{ st.1 }}
+        </span>
+        {% endwith %}
+        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>{% endif %}
+      </div>
+      <div class="sp-meta">{{ b.venue.name }} · {{ b.get_status_display }}</div>
+    </div>
+    <form method="post" action="{% url 'staff_booking_complete' b.pk %}" style="margin:0;">
+      {% csrf_token %}
+      <button class="btn btn-green btn-sm"><svg class="ic"><use href="#i-check"/></svg> Yakunlandi</button>
+    </form>
+  </div>
+  {% empty %}
+  <p style="color:var(--text3);font-size:.9rem;">Bugun bron yo'q.</p>
+  {% endfor %}
+
+  {# ── KELGUSI ────────────────────────────────────────────── #}
+  {% if keyingi %}
+  <div class="sp-sec"><svg class="ic"><use href="#i-doc"/></svg> Kelgusi bronlar</div>
+  {% for b in keyingi %}
+  <div class="sp-row">
+    <div class="sp-time" style="font-size:.82rem;">{{ b.booking_date|date:"d.m" }}<br>{{ b.start_time|time:"H:i" }}</div>
+    <div class="sp-main">
+      <div class="sp-svc">{% if b.service %}{{ b.service.name }}{% else %}{{ b.service_type|default:"Xizmat" }}{% endif %}</div>
+      <div class="sp-meta">
+        {{ b.user.name|default:b.user.phone }}
+        {% if b.user.phone %}· <a href="tel:{{ b.user.phone }}" style="color:var(--accent);">{{ b.user.phone }}</a>{% endif %}
+      </div>
+      <div class="sp-meta" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-top:.3rem;">
+        {% with st=b.payment_state %}
+        <span class="pay pay-{{ st.0 }}">
+          {% if st.0 == 'paid' %}✓{% elif st.0 == 'awaiting' %}⏳{% else %}💵{% endif %} {{ st.1 }}
+        </span>
+        {% endwith %}
+        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>{% endif %}
+      </div>
+      <div class="sp-meta">{{ b.venue.name }} · {{ b.get_status_display }}</div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <p style="color:var(--text3);font-size:.82rem;margin-top:1.5rem;">
+    💡 Yopilgan vaqtga mijoz bron qila olmaydi. Bronni bekor qilish yoki
+    vaqtini o'zgartirish joy egasida.
+    Siz xizmatni bajarganingizda «Yakunlandi» deb belgilaysiz.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

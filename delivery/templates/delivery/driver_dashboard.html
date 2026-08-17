@@ -73,7 +73,7 @@
         ishlardi: lookup xato berib, |default o.address ga tushardi.
         {% endcomment %}
         <div style="font-weight:700;">#{{ o.id|stringformat:'s'|slice:':8' }}</div>
-        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }}</span><a href="tel:{{ o.phone }}" class="call-link"><svg class="ic" style="width:1em;height:1em;"><use href="#i-phone"/></svg> {{ o.phone }}</a><span style="font-weight:700;color:var(--text);">{{ o.total|som }} so'm</span></div>
+        <div style="color:var(--text2);font-size:.85rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:.5rem;"><span><svg class="ic" style="width:.9em;height:.9em;color:var(--text3)"><use href="#i-pin"/></svg> {{ o.address }}</span><a href="tel:{{ o.phone }}" class="call-link"><svg class="ic" style="width:1em;height:1em;"><use href="#i-phone"/></svg> {{ o.phone }}</a><span style="font-weight:700;color:var(--text);">{{ o.total|som }} so'm</span>{% if o.eta %}<span style="color:var(--accent);font-weight:650;">⏱ {{ o.eta }}</span>{% endif %}</div>
         <div style="color:var(--text3);font-size:.8rem;margin-top:.3rem;">{% for it in o.items.all %}{{ it.product_name }}×{{ it.quantity }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
       </div>
       <span class="badge badge-gold">{{ o.get_status_display }}</span>
@@ -90,11 +90,18 @@
     {% elif o.address %}
     <div class="no-point">📍 Aniq nuqta belgilanmagan — manzil matni bo'yicha yo'l ko'rsatiladi.</div>
     {% endif %}
+    {# To'lov chiptasi — kuryer eshik oldida "naqd olamanmi?" ni bilishi shart. #}
+    <div style="margin:.5rem 0;">{% include 'delivery/_pay_badge.html' %}</div>
     <div class="o-actions">
       {% nav_url o as nav %}
       {% if nav %}<a href="{{ nav }}" target="_blank" rel="noopener" class="btn btn-outline"><svg class="ic"><use href="#i-map"/></svg> Yo'l ko'rsatish</a>{% endif %}
       {% if o.status == 'assigned' %}
-      <form method="post" action="{% url 'delivery:driver_order_status' o.id %}" class="js-once">{% csrf_token %}<input type="hidden" name="status" value="on_the_way"><button class="btn btn-accent"><svg class="ic"><use href="#i-bike"/></svg> Yo'lga chiqdim</button></form>
+      {% comment %}
+      Buyurtma qabul qilingach birinchi qadam — mahsulotni do'kondan olish.
+      Ilgari bu yerda darhol "Yo'lga chiqdim" turardi va kuryer mahsulotni
+      olmasdan yo'lga chiqqan holatga o'ta olardi.
+      {% endcomment %}
+      <form method="post" action="{% url 'delivery:driver_order_status' o.id %}" class="js-once">{% csrf_token %}<input type="hidden" name="status" value="picked_up"><button class="btn btn-accent"><svg class="ic"><use href="#i-cart"/></svg> Mahsulotni do'kondan oldim</button></form>
       <form method="post" action="{% url 'delivery:order_release' o.id %}" class="js-once" data-confirm="Buyurtmadan voz kechasizmi? U boshqa kuryerlarga ochiladi.">{% csrf_token %}<button class="btn btn-outline">Voz kechish</button></form>
       {% elif o.status == 'picked_up' %}
       {% comment %}

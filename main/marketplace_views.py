@@ -88,6 +88,34 @@ def ad_inquiry(request, pk):
     return redirect('ad_detail', pk=pk)
 
 
+@login_required
+def my_inquiries(request):
+    """Markaziy "Kelgan savollar" — foydalanuvchining BARCHA e'lonlariga kelgan
+    savollar bir joyda (avval har e'lonni alohida ochish kerak edi).
+
+    Ochilganda o'qilmaganlar o'qilgan deb belgilanadi (badge nolga tushadi).
+    """
+    qs = (AdInquiry.objects
+          .filter(ad__user=request.user)
+          .select_related('ad', 'sender')
+          .order_by('-created_at'))
+    unread_ids = list(qs.filter(is_read=False).values_list('id', flat=True))
+    inquiries = list(qs[:200])
+    if unread_ids:
+        AdInquiry.objects.filter(id__in=unread_ids).update(is_read=True)
+    return render(request, 'my_inquiries.html', {
+        'inquiries': inquiries,
+        'unread_ids': set(unread_ids),  # shu ochilishda yangi bo'lganlarni ajratish
+    })
+
+
+def unread_inquiry_count(user):
+    """Foydalanuvchi e'lonlariga kelgan o'qilmagan savollar soni (badge uchun)."""
+    if not user.is_authenticated:
+        return 0
+    return AdInquiry.objects.filter(ad__user=user, is_read=False).count()
+
+
 # ── Global search ────────────────────────────────────────────────────────────
 def _record_term(term):
     term = (term or '').strip().lower()[:120]
@@ -153,3 +181,25 @@ def search_autocomplete(request):
     else:
         out = [{'type': 'trend', 'text': t} for t in SearchQuery.objects.values_list('term', flat=True)[:6]]
     return JsonResponse({'suggestions': out})
+
+
+@login_required
+@require_POST
+def inquiry_delete(request, pk):
+    """Savolni o'chirish.
+
+    Ikki tomon ham o'chira oladi: e'lon EGASI kelgan savolni tozalaydi,
+    YUBORUVCHI esa o'zi yozgan xabaridan voz kechadi. Boshqa hech kim emas.
+    """
+    inq = get_object_or_404(AdInquiry.objects.select_related('ad'), pk=pk)
+    if request.user.id not in (inq.ad.user_id, inq.sender_id):
+        messages.error(request, "Bu xabarni o'chirish huquqingiz yo'q.")
+        return redirect('ad_detail', pk=inq.ad.pk)
+
+    ad_pk = inq.ad.pk
+    inq.delete()
+    messages.success(request, "Xabar o'chirildi.")
+    nxt = request.POST.get('next')
+    if nxt == 'inquiries':
+        return redirect('my_inquiries')
+    return redirect('ad_detail', pk=ad_pk)
