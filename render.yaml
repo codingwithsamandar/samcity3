@@ -93,21 +93,24 @@ services:
         sync: false
       - key: CLICK_SECRET_KEY
         sync: false
-      # ── Media Storage (Supabase S3) ──
-      - key: AWS_STORAGE_BUCKET_NAME
-        value: "media"
-      - key: AWS_S3_REGION_NAME
-        value: "ap-northeast-1"
-      - key: AWS_S3_ENDPOINT_URL
-        value: "https://shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/s3"
-      # Public o'qish URLi: busiz django-storages endpoint'dan (/storage/v1/s3/...)
-      # havola yasaydi — u imzosiz GET'da 403 beradi. Public format shu:
-      - key: AWS_S3_CUSTOM_DOMAIN
-        value: "shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/object/public/media"
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
+      # ── Media Storage (Supabase S3) — HOZIRCHA O'CHIRILGAN ───────
+      # Test uchun media saqlash vaqtincha o'chiq. Rasmlar efemer diskka
+      # tushadi va keyingi deploy'da yo'qoladi. Keyinroq Supabase yoki
+      # Cloudinary qo'shiladi (RENDER_DEPLOY.md ga qarang).
+      # Quyidagi 6 qator #'larni olib tashlab, AWS_ACCESS_KEY_ID va
+      # AWS_SECRET_ACCESS_KEY ni Render Environment'da kiritasiz:
+      # - key: AWS_STORAGE_BUCKET_NAME
+      #   value: "media"
+      # - key: AWS_S3_REGION_NAME
+      #   value: "ap-northeast-1"
+      # - key: AWS_S3_ENDPOINT_URL
+      #   value: "https://shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/s3"
+      # - key: AWS_S3_CUSTOM_DOMAIN
+      #   value: "shyllblzdbjctcbwgzun.storage.supabase.co/storage/v1/object/public/media"
+      # - key: AWS_ACCESS_KEY_ID
+      #   sync: false
+      # - key: AWS_SECRET_ACCESS_KEY
+      #   sync: false
       # ── Monitoring (ixtiyoriy) ──
       - key: SENTRY_DSN
         sync: false
