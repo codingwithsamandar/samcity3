@@ -217,7 +217,8 @@ Busiz qora qidiruv paneli yorug' sahifalarga ham o'tib ketardi.
       <div class="hero-copy">
         <span class="eyebrow reveal"><svg class="ic"><use href="#i-sparkle"/></svg> Shahringiz uchun raqamli platforma</span>
         <h1 class="reveal" data-reveal-delay="60">Hamma narsa<br><span class="grad">bir joyda.</span></h1>
-        <p class="lead reveal" data-reveal-delay="120">E'lonlar, taksi, yetkazib berish, joy bron qilish va to'lovlar — barchasi yagona, qulay va ishonchli platformada.</p>
+        {# Taksi arxivlangan — TAXI_ENABLED=True bo'lsa matn qaytadi #}
+        <p class="lead reveal" data-reveal-delay="120">E'lonlar, {% if TAXI_ENABLED %}taksi, {% endif %}yetkazib berish, joy bron qilish va to'lovlar — barchasi yagona, qulay va ishonchli platformada.</p>
 
         <form class="hero-search reveal" data-reveal-delay="180" method="get" action="{% url 'all_ads' %}">
           <svg class="ic"><use href="#i-search"/></svg>
@@ -524,7 +525,7 @@ Busiz qora qidiruv paneli yorug' sahifalarga ham o'tib ketardi.
     <div class="sc-quotes">
       <div class="sc-q-lead reveal">
         <span class="stars">★★★★★</span>
-        <p class="qt">“Taksi va yetkazib berishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi.”</p>
+        <p class="qt">{% if TAXI_ENABLED %}“Taksi va yetkazib berishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi.”{% else %}“Yetkazib berish va joy bron qilishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi.”{% endif %}</p>
         <div class="sc-who">
           <div class="av">S</div>
           <div><div class="nm">Sardor A.</div><div class="rl">Doimiy foydalanuvchi</div></div>
