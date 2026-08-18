@@ -1019,7 +1019,8 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 <footer class="site-footer"><div class="foot-in">
   <div>
     <div class="brand"><span class="logo-mark"><svg class="ic"><use href="#i-pin"/></svg></span>Sam<span style="color:var(--accent)">City</span></div>
-    <div style="color:var(--text3);font-size:.85rem;margin-top:.55rem;max-width:320px;">{% trans "Shahar uchun yagona raqamli super-ilova — e'lonlar, taksi, yetkazish, joylar va to'lovlar bir joyda." %}</div>
+    {# Taksi arxivlangan — TAXI_ENABLED=True bo'lsa matn qaytadi (main.context_processors) #}
+    <div style="color:var(--text3);font-size:.85rem;margin-top:.55rem;max-width:320px;">{% if TAXI_ENABLED %}{% trans "Shahar uchun yagona raqamli super-ilova — e'lonlar, taksi, yetkazish, joylar va to'lovlar bir joyda." %}{% else %}{% trans "Shahar uchun yagona raqamli super-ilova — e'lonlar, yetkazish, joylar va to'lovlar bir joyda." %}{% endif %}</div>
     <div style="color:var(--text3);font-size:.8rem;margin-top:.8rem;">© 2026 SamCity</div>
   </div>
   <div class="foot-links">

@@ -13,7 +13,7 @@ from .estimates import estimate_label, estimate_minutes
 from .models import (
     Venue, VenueBooking, VenueService, VenueStaff, VenueWork, StaffTimeOff,
     VENUE_TYPE_CHOICES, SLOT_TYPES, MAX_PENALTY_PERCENT, MAX_WORKS_PER_VENUE,
-    MAX_BOOKING_AHEAD_DAYS, booking_window, booking_date_error,
+    booking_ahead_days, booking_window, booking_date_error,
 )
 
 
@@ -39,7 +39,9 @@ def _parse_date(value):
 
 
 WHOLE_DAY_TYPES = ('wedding', 'other')
-TIME_SLOT_TYPES = ('barber', 'beauty', 'restaurant', 'cafe')
+# Yagona manba — models.SLOT_TYPES (ilgari bu yerda nusxa ro'yxat bor edi va
+# yangi tur qo'shilganda ikki joyda ikki xil bo'lib qolardi).
+TIME_SLOT_TYPES = SLOT_TYPES
 ACTIVE_BOOKING_STATUSES = ('pending', 'confirmed')
 
 
@@ -111,8 +113,8 @@ def venue_detail(request, pk):
         'services': venue.services.filter(is_active=True),
         'staff': venue.staff.filter(is_active=True),
         'works': venue.works.filter(is_active=True).select_related('service', 'staff'),
-        'book_until': booking_window()[1],
-        'max_ahead_days': MAX_BOOKING_AHEAD_DAYS,
+        'book_until': booking_window(venue)[1],
+        'max_ahead_days': booking_ahead_days(venue),
         'menu_sections': _venue_menu(venue),
     })
 
@@ -133,14 +135,14 @@ def venue_book(request, pk):
     venue = get_object_or_404(Venue, pk=pk, is_active=True)
     services = venue.services.filter(is_active=True)
     staff = venue.staff.filter(is_active=True)
-    book_from, book_until = booking_window()
+    book_from, book_until = booking_window(venue)
     ctx = {'venue': venue, 'services': services, 'staff': staff,
            'book_from': book_from, 'book_until': book_until,
-           'max_ahead_days': MAX_BOOKING_AHEAD_DAYS}
+           'max_ahead_days': booking_ahead_days(venue)}
 
     if request.method == 'POST':
         booking_date = _parse_date(request.POST.get('booking_date'))
-        date_err = booking_date_error(booking_date)
+        date_err = booking_date_error(booking_date, venue)
         if date_err:
             messages.error(request, date_err)
             return render(request, 'booking/venue_book.html', ctx)
@@ -390,7 +392,7 @@ def venue_slots(request, pk):
     date = _parse_date(request.GET.get('date'))
     if date is None:
         return JsonResponse({'slots': [], 'error': 'bad_date'})
-    date_err = booking_date_error(date)
+    date_err = booking_date_error(date, venue)
     if date_err:
         return JsonResponse({'slots': [], 'error': 'out_of_window',
                              'detail': date_err})
@@ -711,7 +713,11 @@ def staff_panel(request):
     # 15:00 gacha bo'shman" degan savolga panel javob bersin. Sana tanlanadi;
     # default — bugun.
     kun = _parse_date(request.GET.get('kun')) or today
-    first, last = booking_window()
+    # Usta bir nechta joyda ishlashi mumkin (masalan klinika + salon) — oyna
+    # eng keng joyniki bo'ladi, aks holda klinika shifokori o'z jadvalining
+    # uzoq kunlarini ko'ra olmasdi.
+    widest = max(roles, key=lambda r: booking_ahead_days(r.venue)).venue
+    first, last = booking_window(widest)
     if kun < first:
         kun = first
     elif kun > last:
@@ -801,7 +807,7 @@ def staff_time_off_add(request, staff_id):
         return redirect('staff_panel')
 
     kun = _parse_date(request.POST.get('kun'))
-    date_err = booking_date_error(kun)
+    date_err = booking_date_error(kun, role.venue)
     if date_err:
         messages.error(request, date_err)
         return redirect('staff_panel')

@@ -27,7 +27,7 @@ from ..registry import executor, propose, tool
 # holda ikkita faol vazifa yaratilib, slotlar va last_ui_ref BO'LINADI.
 GOAL = 'booking'
 # LLM ga ko'rsatiladigan joy turlari (Venue.venue_type bilan mos).
-VENUE_TYPE_ENUM = ['barber', 'beauty', 'restaurant', 'cafe', 'wedding']
+VENUE_TYPE_ENUM = ['barber', 'beauty', 'restaurant', 'cafe', 'wedding', 'clinic']
 
 # ⚠️ To'yxona (wedding) — slot emas, KUNLIK bron: sana + mehmon soni, narx
 # `price_per_day`. Xizmat/usta tanlanmaydi. Shuning uchun alohida oqim
@@ -35,7 +35,7 @@ VENUE_TYPE_ENUM = ['barber', 'beauty', 'restaurant', 'cafe', 'wedding']
 DAY_TYPES = ('wedding',)
 
 _VT_LABEL = {'barber': 'sartaroshxona', 'beauty': 'salon', 'restaurant': 'restoran',
-             'cafe': 'kafe', 'wedding': "to'yxona"}
+             'cafe': 'kafe', 'wedding': "to'yxona", 'clinic': 'klinika'}
 
 
 def _som(v):

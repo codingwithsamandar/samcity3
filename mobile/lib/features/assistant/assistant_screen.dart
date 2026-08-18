@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config.dart';
 import '../../core/dialer.dart';
+import '../../core/feature_flags.dart';
 import '../../core/providers.dart';
 import 'assistant_models.dart';
 
@@ -49,12 +50,13 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   bool _busy = false;
   bool _locating = false;
 
-  static const _chips = [
+  // Taksi arxivlangan — chip kTaxiEnabled=true bo'lsa qaytadi (veb bilan bir xil).
+  static final _chips = [
     ('💊 Dorixona', 'Eng yaqin dorixona qayerda'),
     ('🏥 Shifoxona', 'Eng yaqin shifoxona'),
     ('🏦 Bank', 'Yaqin bank'),
     ('🍽️ Restoran', 'Yaqin restoran'),
-    ('🚗 Taksi', 'Taksi chaqirish'),
+    if (kTaxiEnabled) ('🚗 Taksi', 'Taksi chaqirish'),
   ];
 
   @override
@@ -70,7 +72,8 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                 : 'Xayrli kech';
     _items.add(_Msg(
       "$greet! 👋 Men SamCity yordamchisiman. Eng yaqin dorixona, shifoxona, "
-      "bank yoki restoranni topib beraman, taksi va do'konlar bo'yicha yordam beraman.\n\n"
+      "bank yoki restoranni topib beraman, "
+      "${kTaxiEnabled ? "taksi va " : ""}do'konlar bo'yicha yordam beraman.\n\n"
       "Savolingizni yozing yoki pastdagi tugmalardan tanlang.",
       mine: false,
     ));

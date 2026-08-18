@@ -56,7 +56,8 @@
       <button type="button" class="sam-ai-chip" data-q="Eng yaqin shifoxona">🏥 {% trans "Shifoxona" %}</button>
       <button type="button" class="sam-ai-chip" data-q="Yaqin bank">🏦 {% trans "Bank" %}</button>
       <button type="button" class="sam-ai-chip" data-q="Yaqin restoran">🍽️ {% trans "Restoran" %}</button>
-      <button type="button" class="sam-ai-chip" data-q="Taksi chaqirish">🚗 {% trans "Taksi" %}</button>
+      {# Taksi arxivlangan — chip TAXI_ENABLED=True bo'lsa qaytadi (main.context_processors) #}
+      {% if TAXI_ENABLED %}<button type="button" class="sam-ai-chip" data-q="Taksi chaqirish">🚗 {% trans "Taksi" %}</button>{% endif %}
     </div>
 
     <form id="samAiForm" class="sam-ai-input">
@@ -558,7 +559,7 @@
     var h = new Date().getHours();
     var t = h < 5 ? 'Xayrli tun' : h < 11 ? 'Xayrli tong' : h < 18 ? 'Xayrli kun' : 'Xayrli kech';
     addMsg(t + "! 👋 Men SamCity yordamchisiman. Eng yaqin dorixona, shifoxona, bank " +
-           "yoki restoranni topib beraman, taksi va do'konlar bo'yicha yordam beraman.\n\n" +
+           "yoki restoranni topib beraman, do'konlar bo'yicha yordam beraman.\n\n" +
            "Savolingizni yozing yoki 🎤 tugmasi bilan gapiring.", 'bot');
   }
   function openPanel() { panel.classList.add('open'); if (!opened) { opened = true; greet(); }

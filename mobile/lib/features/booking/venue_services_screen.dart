@@ -215,9 +215,10 @@ class _VenueServicesScreenState extends ConsumerState<VenueServicesScreen> {
                   ),
                 )),
           const SizedBox(height: 12),
-          // ── Ustalar ──
+          // ── Ustalar / shifokorlar (joy turiga qarab) ──
           Row(children: [
-            Expanded(child: _sectionTitle('Ustalar / ishchilar', v.staff.length)),
+            Expanded(
+                child: _sectionTitle('${v.staffLabel}lar / ishchilar', v.staff.length)),
             TextButton.icon(
               onPressed: _busy ? null : _addStaff,
               icon: const Icon(Icons.add, size: 18),
@@ -225,7 +226,8 @@ class _VenueServicesScreenState extends ConsumerState<VenueServicesScreen> {
             ),
           ]),
           if (v.staff.isEmpty)
-            _hint('Usta qo\'shilmagan. Sartarosh/salon uchun ustalarni kiriting.')
+            _hint('${v.staffLabel} qo\'shilmagan. Vaqt-slot bilan ishlaydigan '
+                'joy uchun (sartarosh, salon, klinika) kiriting.')
           else
             ...v.staff.map((s) => Card(
                   child: ListTile(

@@ -53,10 +53,16 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    // Bron oynasi serverdan keladi (klinika — kengroq). Ilgari taqvim 365 kun
+    // ochiq edi va tanlangan sana serverда rad etilardi.
+    final first = _d?.bookFrom ?? now;
+    final last = _d?.bookUntil ?? now.add(Duration(days: _d?.maxAheadDays ?? 7));
+    final initial = now.add(const Duration(days: 1));
     final picked = await showDatePicker(
-      context: context, firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      initialDate: now.add(const Duration(days: 1)),
+      context: context,
+      firstDate: first.isAfter(now) ? now : first,
+      lastDate: last,
+      initialDate: initial.isAfter(last) ? last : initial,
     );
     if (picked == null) return;
     setState(() {
@@ -116,7 +122,7 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
       return;
     }
     if (_staff.isNotEmpty && _staffId == null) {
-      _snack("Bo'sh ustani tanlang");
+      _snack("Bo'sh ${d.staffLabel.toLowerCase()}ni tanlang");
       return;
     }
     setState(() => _submitting = true);
@@ -192,7 +198,7 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
     );
   }
 
-  // ── Slot oqimi (sartarosh/salon/restoran/kafe) ──
+  // ── Slot oqimi (sartarosh/salon/restoran/kafe/klinika) ──
   List<Widget> _slotFlow(VenueDetail d) {
     return [
       const _StepLabel('1. Xizmatni tanlang'),
@@ -202,7 +208,7 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
       else
         ...d.services.map((s) => _serviceTile(s)),
       const SizedBox(height: 16),
-      const _StepLabel('2. Sana'),
+      _StepLabel('2. Sana (${d.maxAheadDays} kun oldindan ochiq)'),
       OutlinedButton.icon(
         onPressed: _pickDate,
         icon: const Icon(Icons.calendar_month),
@@ -231,7 +237,7 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
         const SizedBox(height: 16),
       ],
       if (_time != null && d.staff.isNotEmpty) ...[
-        const _StepLabel('4. Ustani tanlang (shu vaqtda bo\'shlari)'),
+        _StepLabel('4. ${d.staffLabel}ni tanlang (shu vaqtda bo\'shlari)'),
         if (_loadingStaff)
           const Padding(padding: EdgeInsets.all(8), child: LinearProgressIndicator())
         else
@@ -243,7 +249,7 @@ class _VenueBookScreenState extends ConsumerState<VenueBookScreen> {
   // ── Oddiy oqim (to'yxona/sport/boshqa) ──
   List<Widget> _simpleFlow(VenueDetail d) {
     return [
-      const _StepLabel('Sana'),
+      _StepLabel('Sana (${d.maxAheadDays} kun oldindan ochiq)'),
       OutlinedButton.icon(
         onPressed: _pickDate,
         icon: const Icon(Icons.calendar_month),

@@ -107,11 +107,12 @@ class _VenueDetailScreenState extends ConsumerState<VenueDetailScreen> {
                                 )),
                           ],
 
-                          // ── Ustalar ──
+                          // ── Ustalar / shifokorlar (joyga qarab) ──
                           if (d.staff.isNotEmpty) ...[
                             const Divider(height: 28),
-                            const Text('Ustalar',
-                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text('${d.staffLabel}lar',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 10),
                             SizedBox(
                               height: 132,

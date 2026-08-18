@@ -114,6 +114,13 @@ class VenueDetail {
   final int penaltyPercent;
   final double? latitude;
   final double? longitude;
+  /// Xodim uchun joyga mos so'z: klinikada «Shifokor», aks holda «Usta».
+  final String staffLabel;
+  /// Bron oynasi — serverdan keladi (tur bo'yicha turlicha). Taqvim shu
+  /// chegaradan narisiga ruxsat bermasin, aks holda server rad etadi.
+  final int maxAheadDays;
+  final DateTime? bookFrom;
+  final DateTime? bookUntil;
 
   VenueDetail({
     required this.venue,
@@ -126,6 +133,10 @@ class VenueDetail {
     this.penaltyPercent = 0,
     this.latitude,
     this.longitude,
+    this.staffLabel = 'Usta',
+    this.maxAheadDays = 7,
+    this.bookFrom,
+    this.bookUntil,
   });
 
   factory VenueDetail.fromJson(Map<String, dynamic> j) => VenueDetail(
@@ -145,6 +156,10 @@ class VenueDetail {
         penaltyPercent: j['penalty_percent'] ?? 0,
         latitude: (j['latitude'] is num) ? (j['latitude'] as num).toDouble() : null,
         longitude: (j['longitude'] is num) ? (j['longitude'] as num).toDouble() : null,
+        staffLabel: j['staff_label'] ?? 'Usta',
+        maxAheadDays: j['max_ahead_days'] ?? 7,
+        bookFrom: DateTime.tryParse(j['book_from']?.toString() ?? ''),
+        bookUntil: DateTime.tryParse(j['book_until']?.toString() ?? ''),
       );
 }
 
@@ -170,6 +185,8 @@ class OwnerVenue {
   final int graceMinutes;
   final bool isActive;
   final bool usesSlots;
+  /// Xodim uchun joyga mos so'z: klinikada «Shifokor», aks holda «Usta».
+  final String staffLabel;
   final List<VenueService> services;
   final List<VenueStaff> staff;
 
@@ -194,6 +211,7 @@ class OwnerVenue {
     this.graceMinutes = 15,
     this.isActive = true,
     this.usesSlots = false,
+    this.staffLabel = 'Usta',
     this.services = const [],
     this.staff = const [],
   });
@@ -219,6 +237,7 @@ class OwnerVenue {
         graceMinutes: j['grace_minutes'] ?? 15,
         isActive: j['is_active'] ?? true,
         usesSlots: j['uses_slots'] ?? false,
+        staffLabel: j['staff_label'] ?? 'Usta',
         services: ((j['services'] as List?) ?? [])
             .map((e) => VenueService.fromJson(e))
             .toList(),

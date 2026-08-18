@@ -16,6 +16,7 @@ const venueTypes = <String, String>{
   'gym': '🏋️ Sport zal',
   'cafe': '☕ Kafe',
   'beauty': "💅 Go'zallik saloni",
+  'clinic': '🏥 Klinika',
   'other': '📍 Boshqa',
 };
 

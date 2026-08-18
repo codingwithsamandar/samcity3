@@ -967,7 +967,8 @@ def handle(message, location=None, context=None, user=None):
             intent='greeting',
             reply=("Assalomu alaykum! 👋 Men SamCity yordamchisiman. Eng yaqin "
                    "dorixona, shifoxona, bank yoki restoranni topib beraman, "
-                   "taksi, do'kon va e'lonlar bo'yicha yordam beraman. Nima kerak?"),
+                   + ("taksi, " if settings.TAXI_ENABLED else "")
+                   + "do'kon va e'lonlar bo'yicha yordam beraman. Nima kerak?"),
         )
         return result
 
@@ -980,7 +981,8 @@ def handle(message, location=None, context=None, user=None):
                    "• 📍 Eng yaqin joyni topish (dorixona, shifoxona, bank, restoran…)\n"
                    "• 📢 E'lon joylash, qidirish, ko'tarish\n"
                    "• 💼 Ish e'lonlari va rezyumelar\n"
-                   "• 🚕 Taksi chaqirish yoki taksist bo'lish\n"
+                   + ("• 🚕 Taksi chaqirish yoki taksist bo'lish\n"
+                      if settings.TAXI_ENABLED else "") +
                    "• 🛒 Do'kondan buyurtma yoki o'z do'koningizni ochish\n"
                    "• 📅 To'yxona/zal bron qilish\n"
                    "• 💳 Kommunal va boshqa to'lovlar (Payme/Click)\n"

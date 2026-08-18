@@ -41,8 +41,9 @@ SECTION_DESC = {
                  "olmoqchiman», «buyurtma qil» — hammasi shu yerga."),
     'taxi':     ("Taksi: haydovchi/marshrut topish, narx, taksi chaqirish (buyurtma). "
                  "«taksi chaqir», «Buxoroga boraman»."),
-    'booking':  ("Joy bron qilish: sartaroshxona, salon, restoran, to'yxona/zal. "
-                 "«sartaroshxona bron qil», «soch oldirmoqchiman» — shu yerga. "
+    'booking':  ("Joy bron qilish: sartaroshxona, salon, restoran, to'yxona/zal, "
+                 "klinika (shifokor qabuli). «sartaroshxona bron qil», «soch "
+                 "oldirmoqchiman», «shifokorga yozilmoqchiman» — shu yerga. "
                  "Mening bronlarim, bekor qilish ham shu yerda."),
     'ads':      ("E'lonlar (oldi-sotdi marketplace): e'lon qidirish va YANGI e'lon "
                  "joylash. «mashina sotaman», «velosiped bormi»."),

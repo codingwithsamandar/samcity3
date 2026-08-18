@@ -31,7 +31,7 @@
       </span>
     </div>
 
-    {% if b.staff %}<div style="color:var(--text2);font-size:.82rem;margin-top:.3rem;">💈 Usta: {{ b.staff.name }}</div>{% endif %}
+    {% if b.staff %}<div style="color:var(--text2);font-size:.82rem;margin-top:.3rem;">💈 {{ b.venue.staff_label }}: {{ b.staff.name }}</div>{% endif %}
     {% if b.penalty_amount %}<div style="color:var(--red);font-size:.82rem;margin-top:.3rem;">Jarima ushlandi: {{ b.penalty_amount }} so'm · qaytarildi: {{ b.refund_amount }} so'm</div>{% endif %}
 
     {% if b.status == 'pending' or b.status == 'confirmed' %}

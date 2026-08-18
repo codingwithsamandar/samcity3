@@ -394,6 +394,7 @@ class Command(BaseCommand):
     # ── 4. VENUE (booking) ─────────────────────────────────────────────────────
     def _seed_venues(self, owners, citizens):
         from booking.models import Venue, VenueBooking, VenueService, VenueStaff
+        from booking.seed_utils import upsert_venue
         from datetime import time as _t
 
         # Joy turiga qarab namuna xizmatlar va ustalar (slot turlari uchun)
@@ -405,12 +406,17 @@ class Command(BaseCommand):
             'restaurant': [("Oilaviy xona (2 soat)", 50000, 120),
                            ("Banket zali (3 soat)", 200000, 180)],
             'cafe': [("Stol bron (1.5 soat)", 30000, 90)],
+            # Klinikada «xizmat» = qabul turi, «usta» = shifokor.
+            'clinic': [("Terapevt qabuli", 80000, 30), ("Kardiolog qabuli", 120000, 30),
+                       ("Stomatolog qabuli", 150000, 45), ("UZI tekshiruvi", 100000, 20)],
         }
         STAFF_TPL = {
             'barber': [("Aziz usta", "Usta sartarosh"), ("Bobur", "Sartarosh"), ("Sardor", "Bolalar ustasi")],
             'beauty': [("Malika", "Kosmetolog"), ("Dilnoza", "Manikür ustasi"), ("Nigora", "Stilist")],
             'restaurant': [("Asosiy zal", ""), ("VIP xona", "")],
             'cafe': [("Ofitsiant xizmati", "")],
+            'clinic': [("Dr. Akmal Rahimov", "Terapevt"), ("Dr. Nodira Yusupova", "Kardiolog"),
+                       ("Dr. Shohruh Qodirov", "Stomatolog")],
         }
 
         DATA = [
@@ -430,13 +436,15 @@ class Command(BaseCommand):
             ('restaurant', "Anor Restorani", 150, None, "Banket va tantanalar uchun."),
             ('wedding', "Guliston To'yxona", 400, 10000000, "Bog'li hovli, fontan."),
             ('beauty', "Glamour Studio", 7, None, "Make-up va stilistika."),
+            ('clinic', "Med Life Klinikasi", 20, None, "Oilaviy shifokor, laboratoriya, UZI."),
+            ('clinic', "Sog'lom Avlod Klinikasi", 15, None, "Terapevt, kardiolog, stomatolog qabuli."),
         ]
         EVENTS = ['wedding', 'birthday', 'engagement', 'other']
         n_v = n_b = 0
         for i, (vtype, name, cap, ppd, desc) in enumerate(DATA):
             _lat = round(40.110 + RNG.random() * 0.013, 6)
             _lng = round(64.498 + RNG.random() * 0.013, 6)
-            v, _ = Venue.objects.get_or_create(
+            v, _ = upsert_venue(
                 name=name,
                 defaults={
                     'owner': owners[i % len(owners)], 'venue_type': vtype,

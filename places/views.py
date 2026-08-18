@@ -268,7 +268,7 @@ def _booking_points(category=''):
         'wedding': ('💍', '#db2777'), 'restaurant': ('🍽️', '#d97706'),
         'barber': ('💈', '#0d9488'), 'gym': ('🏋️', '#4f46e5'),
         'cafe': ('☕', '#b45309'), 'beauty': ('💅', '#ec4899'),
-        'other': ('📍', '#3551d1'),
+        'clinic': ('🏥', '#e11d48'), 'other': ('📍', '#3551d1'),
     }
     qs = Venue.objects.filter(
         is_active=True, place__isnull=True,

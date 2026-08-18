@@ -174,6 +174,7 @@ class Command(BaseCommand):
         yo'q), alohida oqim: booking.propose_wedding."""
         import datetime as _dt
         from booking.models import Venue, VenueService, VenueStaff
+        from booking.seed_utils import upsert_venue
         owner = User.objects.get(phone=OWNER_PHONE)
         # (nom, tur, manzil, telefon, siljish, [(xizmat, narx, davomiylik)], [(usta, mutaxassislik)])
         venues = [
@@ -191,7 +192,7 @@ class Command(BaseCommand):
              [('Zal', 'Restoran zali')]),
         ]
         for name, vtype, addr, phone, off, services, staff in venues:
-            venue, created = Venue.objects.get_or_create(
+            venue, created = upsert_venue(
                 name=name, owner=owner,
                 defaults={
                     'venue_type': vtype, 'address': addr, 'phone': phone,
@@ -218,7 +219,7 @@ class Command(BaseCommand):
             ("Navro'z To'yxonasi", "Shofirkon, To'y ko'chasi 1", 300, 12000000, 0.0045),
             ("Sharq Yulduzi To'yxonasi", "Shofirkon, Mustaqillik 22", 150, 7000000, 0.0055),
         ]:
-            venue, created = Venue.objects.get_or_create(
+            venue, created = upsert_venue(
                 name=name, owner=owner,
                 defaults={
                     'venue_type': 'wedding', 'address': addr,

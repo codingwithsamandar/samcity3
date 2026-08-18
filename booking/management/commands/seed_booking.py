@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from booking.models import Venue, VenueBooking, VenueService, VenueStaff
+from booking.seed_utils import upsert_venue
 
 User = get_user_model()
 
@@ -12,7 +13,7 @@ COORDS = {
     'toy': (40.1162, 64.5051), 'restoran': (40.1149, 64.5032),
     'barber': (40.1175, 64.5068), 'gym': (40.1133, 64.5009),
     'cafe': (40.1158, 64.5044), 'beauty': (40.1141, 64.5077),
-    'zal': (40.1187, 64.5025),
+    'zal': (40.1187, 64.5025), 'klinika': (40.1170, 64.5013),
 }
 
 # Xizmatlar: key -> [(nom, narx, daqiqa), ...]
@@ -23,6 +24,9 @@ SERVICES = {
                ("Soch turmaklash", 80000, 60), ("Kosmetologiya", 120000, 60)],
     'restoran': [("Oilaviy xona (2 soat)", 50000, 120), ("Banket zali (3 soat)", 200000, 180)],
     'cafe': [("Stol bron (1.5 soat)", 30000, 90)],
+    # Klinikada «xizmat» = qabul turi, davomiyligi shifokor qabuli vaqti.
+    'klinika': [("Terapevt qabuli", 80000, 30), ("Kardiolog qabuli", 120000, 30),
+                ("Stomatolog qabuli", 150000, 45), ("UZI tekshiruvi", 100000, 20)],
 }
 
 # Ustalar/ishchilar: key -> [(ism, mutaxassislik), ...]
@@ -31,6 +35,9 @@ STAFF = {
     'beauty': [("Malika", "Kosmetolog"), ("Dilnoza", "Manikür ustasi"), ("Nigora", "Stilist")],
     'restoran': [("Asosiy zal", ""), ("VIP xona", "")],
     'cafe': [("Ofitsiant xizmati", "")],
+    # Klinikada «usta» = shifokor, mutaxassislik — yo'nalishi.
+    'klinika': [("Dr. Akmal Rahimov", "Terapevt"), ("Dr. Nodira Yusupova", "Kardiolog"),
+                ("Dr. Shohruh Qodirov", "Stomatolog")],
 }
 
 
@@ -56,6 +63,9 @@ VENUES = [
      "Shofirkon, Gulzor 7", '+998 90 700 60 06', None, None, 60000, time(9, 0), time(20, 0)),
     ('zal', 'Nurafshon Banket Zali', 'other', "Yig'ilish, seminar va tadbirlar uchun universal zal.",
      "Shofirkon, Madaniyat uyi", '+998 90 700 70 07', 120, 900000, None, time(8, 0), time(22, 0)),
+    ('klinika', 'Shifo Nur Klinikasi', 'clinic', "Terapevt, kardiolog, stomatolog qabuli va UZI.",
+     "Shofirkon, Navoiy ko'chasi 12", '+998 90 700 80 08', None, None, 80000,
+     time(8, 0), time(18, 0)),
 ]
 
 
@@ -86,8 +96,8 @@ class Command(BaseCommand):
         vmap = {}
         for key, name, vtype, desc, addr, phone, cap, pday, phour, ws, we in VENUES:
             lat, lng = COORDS.get(key, (None, None))
-            v, _ = Venue.objects.update_or_create(
-                name=name,
+            v, _ = upsert_venue(
+                name=name, update=True,
                 defaults={
                     'owner': owner, 'venue_type': vtype, 'description': desc,
                     'address': addr, 'phone': phone, 'capacity': cap,
@@ -139,6 +149,18 @@ class Command(BaseCommand):
                     staff_n += 1
         self.stdout.write(f"✓ {svc_n} ta xizmat, {staff_n} ta usta")
 
+        # Klinika bronlari xizmat/shifokorga HAQIQIY bog'lanadi (boshqa demo
+        # bronlarda faqat matn bor) — slot oqimi: qabul turi + shifokor + vaqt.
+        klinika = vmap['klinika']
+
+        def _k(model, name):
+            return model.objects.filter(venue=klinika, name=name).first()
+
+        k_terapevt = _k(VenueService, "Terapevt qabuli")
+        k_kardiolog = _k(VenueService, "Kardiolog qabuli")
+        dr_akmal = _k(VenueStaff, "Dr. Akmal Rahimov")
+        dr_nodira = _k(VenueStaff, "Dr. Nodira Yusupova")
+
         # Bronlar (turli holatlar va turga mos maydonlar bilan)
         bookings = [
             dict(venue=vmap['toy'], user=users[0], status='pending',
@@ -166,6 +188,18 @@ class Command(BaseCommand):
             dict(venue=vmap['zal'], user=users[0], status='completed',
                  booking_date=today - timedelta(days=5), guests=50,
                  message='Mahalla yig\'ilishi.', total_amount=800000),
+            dict(venue=klinika, user=users[1], status='confirmed',
+                 booking_date=today + timedelta(days=2), start_time=time(9, 0),
+                 end_time=time(9, 30), service=k_terapevt, staff=dr_akmal,
+                 service_type="Terapevt qabuli", master_name="Dr. Akmal Rahimov",
+                 total_amount=80000),
+            # 18 kundan keyin — klinikaning kengaytirilgan (30 kunlik) oynasi
+            # ishlayotganini demoda ham ko'rsatadi.
+            dict(venue=klinika, user=users[3], status='pending',
+                 booking_date=today + timedelta(days=18), start_time=time(14, 0),
+                 end_time=time(14, 30), service=k_kardiolog, staff=dr_nodira,
+                 service_type="Kardiolog qabuli", master_name="Dr. Nodira Yusupova",
+                 total_amount=120000),
         ]
         n = 0
         for data in bookings:

@@ -67,7 +67,7 @@
       <!-- ── Ustalar ── -->
       {% if staff %}
       <div class="card card-pad" style="margin-top:1.5rem;">
-        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-user"/></svg> Ustalar / ishchilar</h3>
+        <h3 style="font-size:1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;"><svg class="ic" style="color:var(--accent)"><use href="#i-user"/></svg> {{ venue.staff_label }}lar</h3>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;">
           {% for st in staff %}
           <div style="text-align:center;width:104px;">

@@ -14,11 +14,13 @@ VENUE_TYPE_CHOICES = [
     ('gym', '🏋️ Sport zal'),
     ('cafe', '☕ Kafe'),
     ('beauty', "💅 Go'zallik saloni"),
+    ('clinic', '🏥 Klinika'),
     ('other', '📍 Boshqa'),
 ]
 
-# Vaqt-slot (usta tanlanadigan) turlari — sartarosh, salon, restoran, kafe.
-SLOT_TYPES = ('barber', 'beauty', 'restaurant', 'cafe')
+# Vaqt-slot (usta/shifokor tanlanadigan) turlari — sartarosh, salon, restoran,
+# kafe va klinika. Klinikada «usta» = shifokor, «xizmat» = qabul turi.
+SLOT_TYPES = ('barber', 'beauty', 'restaurant', 'cafe', 'clinic')
 # Maksimal bekor-qilish jarimasi (foiz). Joy egasi bundan oshira olmaydi.
 MAX_PENALTY_PERCENT = 15
 # Bron oldindan qancha kunga ochiq. Mijoz bugundan boshlab shu oraliqdagi
@@ -26,26 +28,41 @@ MAX_PENALTY_PERCENT = 15
 # uzoq kelajakka qilingan bronlar odatda kelib chiqmaydi va slotni band qiladi.
 MAX_BOOKING_AHEAD_DAYS = 7
 
+# Klinikada bemor qabulga odatda ancha oldindan yoziladi (shifokor jadvali
+# haftalab oldin to'ladi) — 7 kun kam, shuning uchun oyna kengroq.
+CLINIC_BOOKING_AHEAD_DAYS = 30
 
-def booking_window():
+# Tur bo'yicha alohida oyna; ro'yxatda yo'q turlar MAX_BOOKING_AHEAD_DAYS oladi.
+AHEAD_DAYS_BY_TYPE = {'clinic': CLINIC_BOOKING_AHEAD_DAYS}
+
+
+def booking_ahead_days(venue=None):
+    """Shu joy uchun bron necha kun oldindan ochiq (venue berilmasa — umumiy)."""
+    if venue is None:
+        return MAX_BOOKING_AHEAD_DAYS
+    return AHEAD_DAYS_BY_TYPE.get(venue.venue_type, MAX_BOOKING_AHEAD_DAYS)
+
+
+def booking_window(venue=None):
     """Bron ochiq bo'lgan sana oralig'i: (birinchi_kun, oxirgi_kun)."""
     today = timezone.localdate()
-    return today, today + timedelta(days=MAX_BOOKING_AHEAD_DAYS)
+    return today, today + timedelta(days=booking_ahead_days(venue))
 
 
-def booking_date_error(value):
+def booking_date_error(value, venue=None):
     """Sana oynadan tashqarida bo'lsa xato MATNI, aks holda None.
 
     Yagona manba — veb forma ham, API ham shuni chaqiradi, shunda ikki
-    joyda ikki xil qoida paydo bo'lmaydi.
+    joyda ikki xil qoida paydo bo'lmaydi. `venue` berilsa oyna o'sha
+    joyning turiga qarab olinadi (klinika — kengroq).
     """
     if value is None:
         return "Iltimos, sanani tanlang."
-    first, last = booking_window()
+    first, last = booking_window(venue)
     if value < first:
         return "O'tgan sanaga bron qilib bo'lmaydi."
     if value > last:
-        return (f"Bron faqat {MAX_BOOKING_AHEAD_DAYS} kun oldindan ochiq — "
+        return (f"Bron faqat {booking_ahead_days(venue)} kun oldindan ochiq — "
                 f"{last.strftime('%d.%m.%Y')} gacha bo'lgan sanani tanlang.")
     return None
 
@@ -121,8 +138,13 @@ class Venue(models.Model):
 
     @property
     def uses_slots(self):
-        """Vaqt-slot va usta tanlanadigan joymi (sartarosh/salon/restoran/kafe)."""
+        """Vaqt-slot va usta tanlanadigan joymi (SLOT_TYPES bo'yicha)."""
         return self.venue_type in SLOT_TYPES
+
+    @property
+    def staff_label(self):
+        """Xodim uchun joyga mos so'z: klinikada «Shifokor», aks holda «Usta»."""
+        return 'Shifokor' if self.venue_type == 'clinic' else 'Usta'
 
     @property
     def penalty_percent(self):

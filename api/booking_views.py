@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from datetime import date as _date, datetime as _datetime, timedelta
 
-from booking.models import Venue, VenueBooking, VenueService, VenueStaff
+from booking.models import Venue, VenueBooking, VenueService, VenueStaff, SLOT_TYPES
 from .booking_serializers import (
     VenueListSerializer, VenueDetailSerializer,
     VenueBookingSerializer, BookingCreateSerializer, VenueStaffSerializer,
@@ -18,7 +18,9 @@ from .booking_serializers import (
 )
 
 WHOLE_DAY_TYPES = ('wedding', 'other')
-TIME_SLOT_TYPES = ('barber', 'beauty', 'restaurant', 'cafe')
+# Yagona manba — booking.models.SLOT_TYPES (ilgari bu yerda nusxa ro'yxat bor
+# edi va yangi tur qo'shilganda API veb bilan farq qilib qolardi).
+TIME_SLOT_TYPES = SLOT_TYPES
 ACTIVE_STATUSES = ('pending', 'confirmed')
 
 
@@ -117,7 +119,9 @@ class VenueViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def book(self, request, pk=None):
         venue = self.get_object()
-        ser = BookingCreateSerializer(data=request.data)
+        # Bron oynasi joy turiga bog'liq (klinika kengroq) — serializer'ga
+        # venue'ni beramiz, aks holda u umumiy 7 kunlik oynani qo'llardi.
+        ser = BookingCreateSerializer(data=request.data, context={'venue': venue})
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
 

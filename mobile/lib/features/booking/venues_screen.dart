@@ -15,6 +15,7 @@ const _venueTypes = <String, String>{
   'barber': 'Sartaroshxona',
   'beauty': "Go'zallik",
   'gym': 'Sport zal',
+  'clinic': 'Klinika',
   'other': 'Boshqa',
 };
 

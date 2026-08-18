@@ -111,8 +111,9 @@ MARSHRUTLASH (qaysi bo'lim):
   ⚠️ Restoran/kafe ikkalasida ham uchraydi. Qoida sodda:
      MANZIL so'ralsa («kafe qayerda?») → places
      OVQAT so'ralsa («lavash yeyishni xohlayman») → delivery
-• booking  — joy BRON qilish: sartaroshxona/salon/restoran/to'yxona. «bron qil»,
-             «soch oldirmoqchiman», «mening bronlarim», «bronни bekor qil».
+• booking  — joy BRON qilish: sartaroshxona/salon/restoran/to'yxona/klinika.
+             «bron qil», «soch oldirmoqchiman», «shifokorga yozil», «mening
+             bronlarim», «bronни bekor qil».
 • taxi     — taksi: haydovchi/marshrut topish, «taksi chaqir», «Buxoroga boraman».
 • ads      — E'LONLAR (oldi-sotdi): «velosiped bormi» (qidirish), «mashina
              sotaman» / «e'lon joylashtir» (yangi e'lon). Foydalanuvchi

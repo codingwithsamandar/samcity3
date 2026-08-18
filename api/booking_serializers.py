@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from booking.models import (
     Venue, VenueBooking, VenueService, VenueStaff, booking_date_error,
+    booking_ahead_days, booking_window,
 )
 
 
@@ -52,12 +53,31 @@ class VenueDetailSerializer(VenueListSerializer):
     staff = serializers.SerializerMethodField()
     uses_slots = serializers.BooleanField(read_only=True)
     penalty_percent = serializers.IntegerField(read_only=True)
+    # Xodim uchun joyga mos so'z (klinikada «Shifokor») — mobil ilova yorlig'i
+    # veb bilan bir xil bo'lsin.
+    staff_label = serializers.CharField(read_only=True)
+    # Bron oynasi: mijoz shu sanadan narisiga bron qila olmaydi. Ilova taqvimi
+    # shu chegarani qo'ymasa, foydalanuvchi sanani tanlab, keyin server
+    # xatosiga urilardi (oyna tur bo'yicha turlicha: klinika — kengroq).
+    max_ahead_days = serializers.SerializerMethodField()
+    book_from = serializers.SerializerMethodField()
+    book_until = serializers.SerializerMethodField()
 
     class Meta(VenueListSerializer.Meta):
         fields = VenueListSerializer.Meta.fields + (
             'description', 'working_hours_start', 'working_hours_end', 'booked_dates',
             'latitude', 'longitude', 'prepay_required', 'penalty_percent',
-            'uses_slots', 'services', 'staff')
+            'uses_slots', 'staff_label', 'max_ahead_days', 'book_from', 'book_until',
+            'services', 'staff')
+
+    def get_max_ahead_days(self, obj) -> int:
+        return booking_ahead_days(obj)
+
+    def get_book_from(self, obj) -> str:
+        return booking_window(obj)[0].isoformat()
+
+    def get_book_until(self, obj) -> str:
+        return booking_window(obj)[1].isoformat()
 
     @extend_schema_field(VenueServiceSerializer(many=True))
     def get_services(self, obj):
@@ -108,6 +128,7 @@ class VenueOwnerSerializer(serializers.ModelSerializer):
     (nafaqat faol) xizmat va ustalar qaytadi."""
     venue_type_display = serializers.CharField(source='get_venue_type_display', read_only=True)
     uses_slots = serializers.BooleanField(read_only=True)
+    staff_label = serializers.CharField(read_only=True)
     image = serializers.SerializerMethodField()
     services = serializers.SerializerMethodField()
     staff = serializers.SerializerMethodField()
@@ -118,7 +139,8 @@ class VenueOwnerSerializer(serializers.ModelSerializer):
                   'address', 'phone', 'image', 'capacity', 'price_per_day',
                   'price_per_hour', 'working_hours_start', 'working_hours_end',
                   'latitude', 'longitude', 'prepay_required', 'cancel_penalty_percent',
-                  'grace_minutes', 'is_active', 'uses_slots', 'services', 'staff')
+                  'grace_minutes', 'is_active', 'uses_slots', 'staff_label',
+                  'services', 'staff')
 
     def get_image(self, obj) -> str | None:
         return _abs(self.context.get('request'), obj.image)
@@ -184,8 +206,12 @@ class BookingCreateSerializer(serializers.Serializer):
     subscription_type = serializers.CharField(required=False, allow_blank=True, default='')
 
     def validate_booking_date(self, value):
-        """Bron oynasi — veb forma bilan bir xil qoida (booking.models)."""
-        err = booking_date_error(value)
+        """Bron oynasi — veb forma bilan bir xil qoida (booking.models).
+
+        Oyna joy turiga bog'liq (klinika kengroq), shuning uchun view
+        context'da venue'ni beradi; berilmasa umumiy oyna qo'llanadi.
+        """
+        err = booking_date_error(value, self.context.get('venue'))
         if err:
             raise serializers.ValidationError(err)
         return value

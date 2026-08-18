@@ -16,7 +16,7 @@ from django.utils import timezone
 # Bron joyi turi → panel ko'rinishi. Restoran/kafe menyu bilan ishlaydi,
 # sartarosh/salon/sport usta va vaqt-slot bilan, to'yxona kunlik bron bilan.
 MENU_VENUE_TYPES = ('restaurant', 'cafe')
-STAFF_VENUE_TYPES = ('barber', 'beauty', 'gym')
+STAFF_VENUE_TYPES = ('barber', 'beauty', 'gym', 'clinic')
 
 # Menyusi bo'lishi mumkin bo'lgan xarita joylari (places.MENU_CATEGORIES bilan bir xil)
 MENU_PLACE_CATEGORIES = ('restaurant', 'wedding', 'hotel')
