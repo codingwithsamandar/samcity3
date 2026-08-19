@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}To'lov — {{ booking.venue.name }}{% endblock %}
 
 {% block content %}
@@ -10,7 +11,7 @@
     {% if booking.service %}<div class="info-row"><svg class="ic"><use href="#i-sparkle"/></svg><span>Xizmat</span><b>{{ booking.service.name }}</b></div>{% endif %}
     {% if booking.staff %}<div class="info-row"><svg class="ic"><use href="#i-user"/></svg><span>{{ booking.venue.staff_label }}</span><b>{{ booking.staff.name }}</b></div>{% endif %}
     <div class="info-row"><svg class="ic"><use href="#i-clock"/></svg><span>Vaqt</span><b>{{ booking.booking_date|date:"d.m.Y" }}{% if booking.start_time %} · {{ booking.start_time|time:"H:i" }}{% endif %}</b></div>
-    <div class="info-row"><svg class="ic"><use href="#i-card"/></svg><span>Summa</span><b style="color:var(--accent);font-size:1.1rem;">{{ booking.total_amount|floatformat:0 }} so'm</b></div>
+    <div class="info-row"><svg class="ic"><use href="#i-card"/></svg><span>Summa</span><b style="color:var(--accent);font-size:1.1rem;">{{ booking.total_amount|uz_price }} so'm</b></div>
 
     <div style="margin-top:1.3rem;display:flex;flex-direction:column;gap:.7rem;">
       <a href="{{ payme_url }}" class="btn btn-block btn-lg" style="background:#33cccc;color:#03121a;font-weight:800;">Payme orqali to'lash</a>

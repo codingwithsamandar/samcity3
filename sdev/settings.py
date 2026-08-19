@@ -60,8 +60,11 @@ if MAP_TILE_PROVIDER in ('maptiler', 'mapbox') and not MAP_TILE_KEY:
     MAP_TILE_PROVIDER = 'yandex'
 
 # ─── XAVFSIZLIK ──────────────────────────────────────────────────────────────
-# DEBUG: muhit o'zgaruvchisidan boshqariladi (default — development uchun True)
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
+# DEBUG: muhit o'zgaruvchisidan boshqariladi. Default — False (xavfsiz tomon):
+# env'siz serverga ko'chirilgan loyiha tasodifan DEBUG bilan ishlab, xatolik
+# sahifasida kod va sozlamalarni oshkor qilmasin. Lokal ishlash uchun .env da
+# DJANGO_DEBUG=True turadi (.env.example ham shunday).
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
 
 # SECRET_KEY: production uchun DJANGO_SECRET_KEY SHART.
 # DEBUG=False bo'lsa va kalit berilmagan bo'lsa — ishga tushmaydi (xavfsizlik).
@@ -462,6 +465,9 @@ REST_FRAMEWORK = {
         'login': '10/min',
         'checkout': '20/min',
         'payment_init': '30/min',
+        # Ovozli AI (TTS/STT) — pullik bulut xizmatiga boradi, shuning uchun
+        # umumiy anon limitidan ancha past.
+        'assistant_voice': '10/min',
     },
 }
 
@@ -536,6 +542,32 @@ DELIVERY_CART_ENABLED = env_bool('DELIVERY_CART_ENABLED', False)
 # qoldi). Admin panelda staff uchun modellar ko'rinishda qoladi.
 # Qayta yoqish: .env'ga  TAXI_ENABLED=True
 TAXI_ENABLED = env_bool('TAXI_ENABLED', False)
+
+# ─── ANDROID APK ─────────────────────────────────────────────────────────────
+# APK fayli (~60MB) `.gitignore` da (`*.apk`) — ya'ni repoga tushmaydi va
+# repodan build qiladigan serverga (Render) HECH QACHON yetib bormaydi.
+# Shu sabab yuklab olish tugmasi serverда 404 berardi.
+#
+# Yechim: faylni tashqarida saqlang (GitHub Releases, S3, CDN) va manzilini shu
+# env'ga yozing — view o'sha yerga yo'naltiradi:
+#     APK_DOWNLOAD_URL=https://github.com/<user>/<repo>/releases/download/v1.0.0/samcity.apk
+# Bo'sh bo'lsa — lokal fayl bo'lsa o'sha uzatiladi, u ham bo'lmasa tugma
+# umuman ko'rsatilmaydi (o'lik havola bo'lmasin).
+APK_DOWNLOAD_URL = os.environ.get('APK_DOWNLOAD_URL', '').strip()
+
+
+def _apk_local_path():
+    """Diskdagi APK yo'li (topilmasa None)."""
+    for p in (BASE_DIR / 'main' / 'static' / 'samcity.apk',
+              Path(STATIC_ROOT) / 'samcity.apk'):
+        if os.path.exists(p):
+            return str(p)
+    return None
+
+
+APK_LOCAL_PATH = _apk_local_path()
+# Shablon shu flagga qarab tugmani ko'rsatadi/yashiradi.
+APK_AVAILABLE = bool(APK_DOWNLOAD_URL or APK_LOCAL_PATH)
 
 # ─── TO'LOVLAR BO'LIMI: VAQTINCHA YOPIQ ─────────────────────────────────────
 # False bo'lganda /payments/ sahifalariga kirib bo'lmaydi — view'lar bosh

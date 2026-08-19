@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Buyurtma rasmiylashtirish — SamCity{% endblock %}
 
 {% block extra_css %}
@@ -96,9 +97,9 @@
           {% for it in items %}
           <div class="oi-row"><span>{{ it.product.name }} × {{ it.quantity }}</span><span>{{ it.get_line_total|floatformat:0 }}</span></div>
           {% endfor %}
-          <div class="summary-line" style="margin-top:.6rem;border-top:1px solid var(--border);padding-top:.6rem;"><span>Mahsulotlar</span><span>{{ subtotal }} so'm</span></div>
-          {% if has_delivery %}<div class="summary-line"><span>Yetkazish</span><span>{{ delivery_fee }} so'm</span></div>{% endif %}
-          <div class="summary-line total"><span>Jami</span><span>{{ total }} so'm</span></div>
+          <div class="summary-line" style="margin-top:.6rem;border-top:1px solid var(--border);padding-top:.6rem;"><span>Mahsulotlar</span><span>{{ subtotal|uz_price }} so'm</span></div>
+          {% if has_delivery %}<div class="summary-line"><span>Yetkazish</span><span>{{ delivery_fee|uz_price }} so'm</span></div>{% endif %}
+          <div class="summary-line total"><span>Jami</span><span>{{ total|uz_price }} so'm</span></div>
           <button type="submit" class="btn btn-accent btn-block btn-lg" style="margin-top:1.1rem;"><svg class="ic"><use href="#i-check"/></svg> Buyurtmani tasdiqlash</button>
           <a href="{% url 'delivery:cart' %}" class="btn btn-ghost btn-block" style="margin-top:.5rem;">← Savatga qaytish</a>
         </div>

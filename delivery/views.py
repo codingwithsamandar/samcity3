@@ -1458,7 +1458,9 @@ def driver_orders_feed(request):
         # "Qabul qilish" 403 beradi.
         'html': render_to_string('delivery/_driver_available.html',
                                  {'available': available}, request=request),
-        'available_count': available.count(),
+        # `available` yuqorida list() ga aylantirilgan — .count() list'da
+        # argument talab qiladi va TypeError bilan 500 berardi.
+        'available_count': len(available),
         'active_count': my_active.count(),
     })
 

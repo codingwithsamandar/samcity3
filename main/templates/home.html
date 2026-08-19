@@ -25,8 +25,10 @@
   .sc-head .sc-sub { margin-top: .5rem; }
   /* Kichik matn uchun --accent oq fonda 3.41:1 (AA dan o'tmaydi) —
      matn rollarida har doim --accent-d (5.08:1). */
+  /* min-height 44px: "Barchasini ko'rish" havolasi barmoq uchun juda ingichka
+     edi (22px) — matn o'lchami o'zgarmaydi, faqat tegish maydoni kengayadi. */
   .see-all { font-size: .88rem; font-weight: 650; color: var(--accent-d); display: inline-flex;
-    align-items: center; gap: .35rem; white-space: nowrap; }
+    align-items: center; gap: .35rem; white-space: nowrap; min-height: 44px; }
   .see-all .ic { width: 1.05em; height: 1.05em; transition: transform .2s; }
   .see-all:hover .ic { transform: translateX(3px); }
 

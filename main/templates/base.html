@@ -232,7 +232,9 @@
   .foot-in .brand .logo-mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--accent); }
   .foot-in .brand .logo-mark .ic { width: 18px; height: 18px; stroke-width: 2; }
   .foot-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
-  .foot-links a { color: var(--text2); font-size: .9rem; font-weight: 500; }
+  /* min-height 44px — footer havolalari ham barmoq bilan tegiladigan bo'lsin */
+  .foot-links a { color: var(--text2); font-size: .9rem; font-weight: 500;
+    display: inline-flex; align-items: center; min-height: 44px; }
   .foot-links a:hover { color: var(--accent); }
 
   /* ── MOBILE DRAWER ───────────────────────────────────────────── */
@@ -363,7 +365,9 @@
 .g-slate { background: linear-gradient(140deg, #64748b, #334155); box-shadow: 0 12px 24px rgba(51,65,85,.2); }
 .g-amber { background: linear-gradient(140deg, #f59e0b, #d97706); box-shadow: 0 12px 24px rgba(217,119,6,.22); }
 .chip-row { display: flex; gap: .55rem; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .95rem; border-radius: 100px; background: #fff; border: 1px solid var(--border2); color: var(--text2); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
+/* min-height: 44px — barmoq bilan aniq tegish uchun eng kichik o'lcham
+   (ilgari 39px edi va yoshi kattalar uchun tegish qiyin bo'lardi). */
+.chip { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; padding: .5rem .95rem; border-radius: 100px; background: #fff; border: 1px solid var(--border2); color: var(--text2); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
 .chip .ic { width: 1.05em; height: 1.05em; }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-brand); }
@@ -509,7 +513,8 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 
 /* Dark mode toggle button */
 .theme-toggle {
-  width: 38px; height: 38px; border-radius: 50%;
+  /* 44px — tegish uchun tavsiya etilgan eng kichik nishon */
+  width: 44px; height: 44px; border-radius: 50%;
   background: var(--surface2); border: 1px solid var(--border);
   color: var(--text2); cursor: pointer; display: inline-flex;
   align-items: center; justify-content: center; font-size: 1.1rem;

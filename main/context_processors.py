@@ -17,6 +17,9 @@ def feature_flags(request):
         'DELIVERY_CART_ENABLED': settings.DELIVERY_CART_ENABLED,
         'PAYMENTS_ENABLED': settings.PAYMENTS_ENABLED,
         'HOKIM_ENABLED': settings.HOKIM_ENABLED,
+        # APK fayli (yoki tashqi manzili) bormi — bo'lmasa yuklab olish tugmasi
+        # ko'rsatilmaydi, aks holda foydalanuvchi o'lik havolaga uriladi.
+        'APK_AVAILABLE': settings.APK_AVAILABLE,
     }
 
 

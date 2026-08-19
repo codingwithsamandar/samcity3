@@ -143,7 +143,8 @@ class CatalogManageTests(TestCase):
         self.assertEqual(r.status_code, 200)
         html = r.content.decode()
         self.assertIn('Royxatdagi mahsulot', html)
-        self.assertIn('7000', html)
+        # Narx ming ajratuvchi bilan ko'rsatiladi (uz_price): 7000 -> "7 000"
+        self.assertIn('7 000', html)
 
     def test_staff_can_create(self):
         self.client.force_login(self.admin)

@@ -23,6 +23,7 @@ from django.http import HttpResponse
 from rest_framework.parsers import BaseParser, FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 
@@ -77,6 +78,11 @@ class AssistantTTSView(APIView):
     """
     permission_classes = [AllowAny]
     authentication_classes = []
+    # TTS bulutli, PULLIK xizmatga boradi (Azure/Mohir). Umumiy anon limiti
+    # (60/min) bu yerda juda bo'sh — bitta anonim klient hisobni sarflab
+    # yuborishi mumkin. Shuning uchun alohida, past limit.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'assistant_voice'
 
     def post(self, request):
         data = request.data if isinstance(request.data, dict) else {}
@@ -99,6 +105,9 @@ class AssistantSTTView(APIView):
     """
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser, RawMediaParser]
+    # TTS bilan bir xil sabab — pullik bulut xizmati (xarajat himoyasi).
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'assistant_voice'
 
     def post(self, request):
         ctype = request.META.get('CONTENT_TYPE', '')

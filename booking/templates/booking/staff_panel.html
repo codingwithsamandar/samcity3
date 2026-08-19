@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Usta paneli — SamCity{% endblock %}
 
 {% block extra_css %}
@@ -127,7 +128,7 @@
             </span>
             {% endwith %}
             {% if b.total_amount %}
-            <span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>
+            <span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|uz_price }} so'm</span>
             {% if b.amount_due and b.is_paid %}<span style="font-size:.75rem;color:var(--gold-d);">({{ b.amount_due|floatformat:0 }} qoldi)</span>{% endif %}
             {% endif %}
             <span style="font-size:.75rem;">· {{ b.get_status_display }}</span>
@@ -195,7 +196,7 @@
           {% if st.0 == 'paid' %}✓{% elif st.0 == 'awaiting' %}⏳{% else %}💵{% endif %} {{ st.1 }}
         </span>
         {% endwith %}
-        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>{% endif %}
+        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|uz_price }} so'm</span>{% endif %}
       </div>
       <div class="sp-meta">{{ b.venue.name }} · {{ b.get_status_display }}</div>
     </div>
@@ -226,7 +227,7 @@
           {% if st.0 == 'paid' %}✓{% elif st.0 == 'awaiting' %}⏳{% else %}💵{% endif %} {{ st.1 }}
         </span>
         {% endwith %}
-        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|floatformat:0 }} so'm</span>{% endif %}
+        {% if b.total_amount %}<span class="sp-sum" style="font-size:.85rem;color:var(--text);">{{ b.total_amount|uz_price }} so'm</span>{% endif %}
       </div>
       <div class="sp-meta">{{ b.venue.name }} · {{ b.get_status_display }}</div>
     </div>

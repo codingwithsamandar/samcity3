@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Buyurtma — SamCity{% endblock %}
 
 {% block content %}
@@ -71,9 +72,9 @@
     </div>
 
     <div style="margin-top:1rem;">
-      <div class="summary-line"><span>Mahsulotlar</span><span>{{ order.subtotal }} so'm</span></div>
-      {% if not order.is_pickup %}<div class="summary-line"><span>Yetkazish</span><span>{{ order.delivery_fee }} so'm</span></div>{% endif %}
-      <div class="summary-line total"><span>Jami</span><span>{{ order.total }} so'm</span></div>
+      <div class="summary-line"><span>Mahsulotlar</span><span>{{ order.subtotal|uz_price }} so'm</span></div>
+      {% if not order.is_pickup %}<div class="summary-line"><span>Yetkazish</span><span>{{ order.delivery_fee|uz_price }} so'm</span></div>{% endif %}
+      <div class="summary-line total"><span>Jami</span><span>{{ order.total|uz_price }} so'm</span></div>
     </div>
 
     <div class="card card-pad" style="margin-top:1.25rem;background:var(--surface2);font-size:.9rem;color:var(--text2);display:flex;flex-direction:column;gap:.45rem;">

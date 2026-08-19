@@ -351,7 +351,7 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
     <div class="mr">💪</div>
   </div>
   <div class="suc-title">Muvaffaqiyatli! 🎉</div>
-  <div class="suc-sub">Ro'yhatdan o'tish yakunlandi</div>
+  <div class="suc-sub">Ro'yxatdan o'tish yakunlandi</div>
   <button class="go-btn" id="goBtn" type="button">Kirish sahifasiga o'tish →</button>
 </div>
 
@@ -633,7 +633,7 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
 <!-- REGISTER PANEL -->
 <div class="rpanel" id="regP" {% if mode == 'login' %}style="display:none;"{% endif %}>
   <div class="logo"><div class="logo-dot"></div>SamCity</div>
-  <h2 class="form-title">Ro'yhatdan o'tish</h2>
+  <h2 class="form-title">Ro'yxatdan o'tish</h2>
   <p class="form-sub">Hisobingiz bormi? <span class="switch-link" id="toLogin">Kirish →</span></p>
   <div class="prog-bar"><div class="prog-fill" id="progFill"></div><div class="prog-glow" id="progGlow"></div></div>
 
@@ -656,20 +656,20 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
   {% endif %}
 
   <div class="fg">
-    <label>Ism va familiya</label>
+    <label for="nameI">Ism va familiya</label>
     <div class="iw">
-      <input type="text" id="nameI" placeholder="Masalan: Ali Rahimov" name="first_name" autocomplete="off"/>
+      <input type="text" id="nameI" placeholder="Masalan: Ali Rahimov" name="first_name" autocomplete="name"/>
       <div class="iicon"><div class="chk" id="nameChk"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div></div>
     </div>
     <div class="ferr" id="nameE">Kamida ism va familiya kiriting</div>
   </div>
 
   <div class="fg">
-    <label>Telefon raqami</label>
+    <label for="phoneI">Telefon raqami</label>
     <div class="ph-row">
-      <input class="ph-code" type="text" value="+998" readonly/>
+      <input class="ph-code" type="text" value="+998" readonly tabindex="-1" aria-hidden="true"/>
       <div class="iw" style="flex:1">
-        <input type="tel" id="phoneI" placeholder="90 123 45 67" maxlength="12" name="username"/>
+        <input type="tel" id="phoneI" placeholder="90 123 45 67" maxlength="12" name="username" autocomplete="tel-national" inputmode="tel"/>
         <div class="iicon"><div class="chk" id="phoneChk"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div></div>
       </div>
     </div>
@@ -677,9 +677,9 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
   </div>
 
   <div class="fg">
-    <label>Parol</label>
+    <label for="passI">Parol</label>
     <div class="iw">
-      <input type="password" id="passI" placeholder="Kamida 8 ta belgi"/>
+      <input type="password" id="passI" placeholder="Kamida 8 ta belgi" autocomplete="new-password"/>
       <input type="hidden" name="password" id="hiddenPass1">
       <div class="iicon" style="gap:5px">
         <div class="chk" id="passChk"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div>
@@ -707,7 +707,8 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
       SMS orqali tasdiqlash kodi
     </div>
     <div class="sms-row">
-      <input class="sd" maxlength="1" type="text" inputmode="numeric" id="d0"/>
+      <!-- one-time-code: telefon SMS kodini o'zi taklif qiladi (iOS/Android) -->
+      <input class="sd" maxlength="1" type="text" inputmode="numeric" autocomplete="one-time-code" id="d0"/>
       <input class="sd" maxlength="1" type="text" inputmode="numeric" id="d1"/>
       <input class="sd" maxlength="1" type="text" inputmode="numeric" id="d2"/>
       <input class="sd" maxlength="1" type="text" inputmode="numeric" id="d3"/>
@@ -742,7 +743,7 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
 <div class="login-panel" id="loginP" {% if mode == 'login' %}style="display:flex;"{% endif %}>
   <div class="logo"><div class="logo-dot"></div>SamCity</div>
   <h2 class="form-title">Kirish</h2>
-  <p class="form-sub">Hisobingiz yo'qmi? <span class="switch-link" id="toReg">Ro'yhatdan o'tish →</span></p>
+  <p class="form-sub">Hisobingiz yo'qmi? <span class="switch-link" id="toReg">Ro'yxatdan o'tish →</span></p>
 
   <form id="actualLoginForm" method="POST" action="{% url 'login' %}">
   {% csrf_token %}
@@ -753,20 +754,20 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
   {% endif %}
 
   <div class="fg">
-    <label>Telefon raqami</label>
+    <label for="lPhone">Telefon raqami</label>
     <div class="ph-row">
-      <input class="ph-code" type="text" value="+998" readonly/>
+      <input class="ph-code" type="text" value="+998" readonly tabindex="-1" aria-hidden="true"/>
       <div class="iw" style="flex:1">
-        <input type="tel" id="lPhone" placeholder="90 123 45 67" maxlength="12" name="username"/>
+        <input type="tel" id="lPhone" placeholder="90 123 45 67" maxlength="12" name="username" autocomplete="tel-national" inputmode="tel"/>
         <div class="iicon"><div class="chk" id="lPhChk"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div></div>
       </div>
     </div>
   </div>
 
   <div class="fg">
-    <label>Parol</label>
+    <label for="lPass">Parol</label>
     <div class="iw">
-      <input type="password" id="lPass" placeholder="Parolingizni kiriting" name="password"/>
+      <input type="password" id="lPass" placeholder="Parolingizni kiriting" name="password" autocomplete="current-password"/>
       <div class="iicon">
         <button class="ebtn" id="lEyeB" type="button">
           <svg id="lEyeIco" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -801,7 +802,7 @@ label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;lette
     <div class="mhead"><h3>Oferta Shartlari</h3><button class="mcl" id="modCl">✕</button></div>
     <div class="mbody">
       <h4>1. Umumiy qoidalar</h4><p>Ushbu shartlar SamCity platformasidan foydalanish qoidalarini belgilaydi.</p>
-      <h4>2. Foydalanuvchi ma'lumotlari</h4><p>Ro'yhatdan o'tishda to'g'ri ma'lumot kiritish shart.</p>
+      <h4>2. Foydalanuvchi ma'lumotlari</h4><p>Ro'yxatdan o'tishda to'g'ri ma'lumot kiritish shart.</p>
       <h4>3. Maxfiylik siyosati</h4><p>Shaxsiy ma'lumotlaringiz uchinchi tomonlarga berilmaydi.</p>
       <h4>4. Majburiyatlar</h4><p>Platformada qonuniy faoliyat yuritish shart.</p>
     </div>

@@ -301,7 +301,11 @@ def _apply_venue_fields(request, venue):
             return default
 
     venue.name = request.POST.get('name', '').strip() or venue.name
-    venue.venue_type = request.POST.get('venue_type', venue.venue_type or 'other')
+    # Tur FAQAT ro'yxatdagi qiymat bo'lishi mumkin — qo'lda yuborilgan POST
+    # bazaga o'zboshimcha satr yozib, joyni "turi yo'q" holatga tushirmasin.
+    _vt = request.POST.get('venue_type', '')
+    _valid_types = {c[0] for c in VENUE_TYPE_CHOICES}
+    venue.venue_type = _vt if _vt in _valid_types else (venue.venue_type or 'other')
     venue.description = request.POST.get('description', '').strip()
     venue.address = request.POST.get('address', '').strip()
     venue.phone = request.POST.get('phone', '').strip()

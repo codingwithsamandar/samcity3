@@ -47,6 +47,7 @@
 {% block content %}
 <div class="app-page">
   <div class="wrap">
+    {% for m in messages %}<div class="flash flash-{% if 'error' in m.tags %}error{% elif 'warning' in m.tags %}warning{% else %}info{% endif %}">{{ m }}</div>{% endfor %}
 
     <!-- Hero -->
     <div class="app-hero reveal">
@@ -70,10 +71,23 @@
         <div class="dl-desc">
           APK faylni yuklab, o'rnating. Qurilma sozlamalarida "Noma'lum manbalar" bandini yoqing.
         </div>
+        {# APK bo'lmasa (repoga tushmagan, tashqi manzil ham berilmagan) —
+           o'lik tugma o'rniga tushunarli izoh ko'rsatiladi. #}
+        {% if APK_AVAILABLE %}
         <a href="{% url 'download_apk' %}" class="btn btn-accent btn-lg btn-block" id="apkDownloadBtn" onclick="trackDownload('android')">
           <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v13M5 13l7 7 7-7"/></svg>
           APK Yuklab olish
         </a>
+        {% else %}
+        <button class="btn btn-outline btn-lg btn-block" disabled style="opacity:.6;cursor:not-allowed;">
+          Hozircha mavjud emas
+        </button>
+        <div class="dl-desc" style="margin-top:.6rem;">
+          Android ilovasi tayyorlanmoqda. Shu paytgacha saytni telefon
+          brauzerida ochib, «Bosh ekranga qo'shish» orqali ilova sifatida
+          o'rnatishingiz mumkin.
+        </div>
+        {% endif %}
         <div class="dl-version">v1.0.0 — Android 6.0+</div>
       </div>
 

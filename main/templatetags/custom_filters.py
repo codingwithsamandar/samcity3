@@ -13,11 +13,16 @@ def split(value, key):
 
 @register.filter(name='uz_price')
 def uz_price(value):
-    """Narxni mingtayk ajratuvchi bilan formatlaydi: 1 000 000"""
+    """Narxni ming ajratuvchi bilan formatlaydi: 1 000 000
+
+    Ajratuvchi HAR DOIM oddiy bo'shliq. `intcomma` faol tilga qarab vergul
+    yoki UZILMAS bo'shliq (\\xa0) qaytaradi — natijada bir sahifada narxlar
+    ikki xil ko'rinardi (taxi_extras dagi `som` filtri oddiy bo'shliq beradi).
+    """
     if value is None or value == '':
         return ''
     try:
         n = int(float(value))
     except (TypeError, ValueError):
         return value
-    return intcomma(n).replace(',', ' ')
+    return intcomma(n).replace(',', ' ').replace('\xa0', ' ')

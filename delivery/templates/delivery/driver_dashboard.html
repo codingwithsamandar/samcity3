@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% load taxi_extras delivery_extras %}
+{# Ish rejimi: yirik tugmalar, footer yashirin — kuryer ekranga bir qo'lda,
+   bir soniyaga qaraydi (uslublar base.html dagi body.work-mode blokida). #}
+{% block body_class %}work-mode{% endblock %}
 {% block title %}Haydovchi paneli — SamCity{% endblock %}
 
 {% block extra_css %}

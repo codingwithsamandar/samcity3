@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load l10n %}
+{% load l10n custom_filters %}
 {% block title %}{{ venue.name }} — Joylar{% endblock %}
 
 {% block extra_css %}
@@ -57,7 +57,7 @@
                 <div style="color:var(--text3);font-size:.8rem;display:flex;align-items:center;gap:.3rem;"><svg class="ic" style="width:.9em;height:.9em;"><use href="#i-clock"/></svg> {{ s.duration_minutes }} daqiqa</div>
               </div>
             </div>
-            <div style="font-weight:800;color:var(--accent);font-family:'Plus Jakarta Sans';white-space:nowrap;">{{ s.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
+            <div style="font-weight:800;color:var(--accent);font-family:'Plus Jakarta Sans';white-space:nowrap;">{{ s.price|uz_price }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
           </div>
           {% endfor %}
         </div>
@@ -96,7 +96,7 @@
               <div style="font-weight:650;font-size:.92rem;">{{ it.name }}</div>
               {% if it.description %}<div style="color:var(--text3);font-size:.8rem;">{{ it.description }}</div>{% endif %}
             </div>
-            <div style="font-weight:800;color:var(--accent);white-space:nowrap;">{{ it.price|floatformat:0 }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
+            <div style="font-weight:800;color:var(--accent);white-space:nowrap;">{{ it.price|uz_price }} <small style="color:var(--text3);font-weight:500;">so'm</small></div>
           </div>
           {% endfor %}
         </div>
@@ -155,9 +155,9 @@
       <div class="card card-pad sticky-card">
         {% if services %}
         <div style="color:var(--text3);font-size:.8rem;">Narxlar</div>
-        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{{ services.0.price|floatformat:0 }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm dan</small></div>
+        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{{ services.0.price|uz_price }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm dan</small></div>
         {% elif venue.price_per_day or venue.price_per_hour %}
-        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{% if venue.price_per_day %}{{ venue.price_per_day }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/kun</small>{% else %}{{ venue.price_per_hour }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/soat</small>{% endif %}</div>
+        <div style="font-family:'Plus Jakarta Sans';font-size:1.5rem;font-weight:800;color:var(--text);">{% if venue.price_per_day %}{{ venue.price_per_day|uz_price }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/kun</small>{% else %}{{ venue.price_per_hour|uz_price }} <small style="font-size:.85rem;color:var(--text3);font-weight:500;">so'm/soat</small>{% endif %}</div>
         {% endif %}
         {% if venue.address %}<div class="info-row"><svg class="ic"><use href="#i-pin"/></svg><span>Manzil</span><b style="text-align:right;">{{ venue.address }}</b></div>{% endif %}
         {% if venue.phone %}<div class="info-row"><svg class="ic"><use href="#i-phone"/></svg><span>Telefon</span><b><a href="tel:{{ venue.phone }}" style="color:var(--accent);">{{ venue.phone }}</a></b></div>{% endif %}

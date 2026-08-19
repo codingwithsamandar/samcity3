@@ -1424,15 +1424,24 @@ def download_apk(request):
     """
     import os
     from django.conf import settings
-    from django.http import FileResponse, Http404
+    from django.http import FileResponse
 
-    candidates = [
-        os.path.join(settings.BASE_DIR, 'main', 'static', 'samcity.apk'),
-        os.path.join(settings.STATIC_ROOT, 'samcity.apk'),
-    ]
-    path = next((p for p in candidates if os.path.exists(p)), None)
-    if not path:
-        raise Http404("APK topilmadi. Iltimos keyinroq urinib ko'ring.")
+    # 1) Tashqi manzil (GitHub Releases / S3 / CDN) — APK repoga tushmagani
+    #    uchun serverда odatda shu yo'l ishlaydi.
+    if settings.APK_DOWNLOAD_URL:
+        return redirect(settings.APK_DOWNLOAD_URL)
+
+    # 2) Diskdagi fayl (lokal ishlab chiqish yoki APK qo'lda joylangan server).
+    path = settings.APK_LOCAL_PATH
+    if not path or not os.path.exists(path):
+        # Xom 404 o'rniga tushunarli xabar: foydalanuvchi nima qilishini bilsin.
+        messages.info(
+            request,
+            "Android ilova fayli hozircha yuklab olish uchun tayyor emas. "
+            "Saytdan telefon brauzeri orqali foydalanishingiz yoki "
+            "«Bosh ekranga qo'shish» bilan ilova sifatida o'rnatishingiz mumkin.",
+        )
+        return redirect('app_download')
 
     resp = FileResponse(
         open(path, 'rb'),

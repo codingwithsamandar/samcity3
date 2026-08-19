@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Mening bronlarim — SamCity{% endblock %}
 
 {% block content %}
@@ -23,7 +24,7 @@
           {% if b.subscription_type %}🏋️ {{ b.get_subscription_type_display }} · {% endif %}
           {% if b.master_name %}💈 {{ b.master_name }} · {% endif %}
           👥 {{ b.guests }} kishi
-          {% if b.total_amount %} · 💰 {{ b.total_amount }} so'm{% endif %}
+          {% if b.total_amount %} · 💰 {{ b.total_amount|uz_price }} so'm{% endif %}
         </div>
       </div>
       <span class="badge {% if b.status == 'confirmed' %}badge-green{% elif b.status == 'pending' %}badge-amber{% elif b.status == 'cancelled' or b.status == 'no_show' %}badge-red{% else %}badge-blue{% endif %}">

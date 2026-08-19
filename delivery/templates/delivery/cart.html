@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Savat — SamCity{% endblock %}
 
 {% block extra_css %}
@@ -164,7 +165,7 @@
           <div class="listing-row">
             <div class="thumb">{% with img=ci.ad.images.all.0 %}{% if img %}<img src="{{ img.image.url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 8a4 4 0 010 8"/></svg>{% endif %}{% endwith %}</div>
             <a class="listing-info" href="{% url 'ad_detail' ci.ad.pk %}"><div class="name">{{ ci.ad.title }}</div><div class="seller">{{ ci.ad.user.name|default:ci.ad.user.phone }} tomonidan</div></a>
-            <div class="listing-price">{% if ci.ad.price %}{{ ci.ad.price|floatformat:0 }} so'm{% else %}Kelishilgan{% endif %}</div>
+            <div class="listing-price">{% if ci.ad.price %}{{ ci.ad.price|uz_price }} so'm{% else %}Kelishilgan{% endif %}</div>
             <div class="item-remove"><form method="post" action="{% url 'delivery:cart_ad_remove' ci.ad.pk %}">{% csrf_token %}<button type="submit" title="O'chirish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button></form></div>
           </div>
           {% endfor %}
@@ -206,9 +207,9 @@
         <h3><span class="dot" style="background:var(--turquoise)"></span>Yetkazib berish</h3>
         <div class="sum-row"><span>Mahsulotlar soni</span><b>{{ delivery_qty }} dona</b></div>
         <div class="sum-row"><span>{{ delivery_store_count }} ta do'kondan</span><b>{{ delivery_subtotal|floatformat:0 }} so'm</b></div>
-        <div class="sum-row"><span>Yetkazish narxi</span><b>{% if delivery_fee %}{{ delivery_fee|floatformat:0 }} so'm{% else %}Bepul{% endif %}</b></div>
+        <div class="sum-row"><span>Yetkazish narxi</span><b>{% if delivery_fee %}{{ delivery_fee|uz_price }} so'm{% else %}Bepul{% endif %}</b></div>
         <div class="sum-div"></div>
-        <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--turquoise)">{{ delivery_subtotal|add:delivery_fee|floatformat:0 }} so'm</span></div>
+        <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--turquoise)">{{ delivery_subtotal|add:delivery_fee|uz_price }} so'm</span></div>
         {% if has_delivery %}
         <a class="btn-primary" href="{% url 'delivery:checkout' %}?section=delivery" style="background:var(--turquoise); color:#06211F;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Hammasiga birdan to'lash</a>
         {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text-dim);" disabled>Mahsulot yo'q</button>{% endif %}

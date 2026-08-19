@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Joylar va bron — SamCity{% endblock %}
 
 {% block content %}
@@ -38,7 +39,7 @@
         {% if v.address %}<div class="lc-sub"><svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-pin"/></svg> {{ v.address }}</div>{% endif %}
         <div class="lc-sub" style="justify-content:space-between;margin-top:.5rem;border-top:1px solid var(--border);padding-top:.6rem;">
           <span>{% if v.capacity %}<svg class="ic" style="width:.95em;height:.95em;color:var(--text3);"><use href="#i-user"/></svg> {{ v.capacity }} kishi{% endif %}</span>
-          <span style="font-weight:800;color:var(--text);font-family:'Plus Jakarta Sans';">{% if v.price_per_day %}{{ v.price_per_day }}<small style="font-weight:500;color:var(--text3);">/kun</small>{% elif v.price_per_hour %}{{ v.price_per_hour }}<small style="font-weight:500;color:var(--text3);">/soat</small>{% endif %}</span>
+          <span style="font-weight:800;color:var(--text);font-family:'Plus Jakarta Sans';">{% if v.price_per_day %}{{ v.price_per_day|uz_price }}<small style="font-weight:500;color:var(--text3);"> so'm/kun</small>{% elif v.price_per_hour %}{{ v.price_per_hour|uz_price }}<small style="font-weight:500;color:var(--text3);"> so'm/soat</small>{% endif %}</span>
         </div>
       </div>
     </a>
