@@ -104,8 +104,8 @@
   .btn-sm { min-height: 38px; }
   /* Tekis, qattiq rangli tugmalar. Gradient — birlamchi harakatni ajratish uchun
      signal emas, shunchaki bezak edi; olib tashlandi. Ierarxiya rang bilan beriladi. */
-  .btn-accent { background: var(--accent); color: #fff; box-shadow: var(--shadow-brand); }
-  .btn-accent:hover { background: var(--accent-d); transform: translateY(-1px); }
+  /* .btn-accent -> samcity.css (yagona ta'rif). Bu yerdagi nusxa
+     hech qachon qo'llanmasdi — samcity.css uni !important bilan bosardi. */
   .btn-gold { background: var(--gold); color: #3a2a05; }
   .btn-gold:hover { background: var(--gold-d); transform: translateY(-1px); }
   .btn-outline { background: var(--surface); border: 1px solid var(--border2); color: var(--text); }
@@ -154,8 +154,13 @@
   /* ── FORMS ───────────────────────────────────────────────────── */
   .form-group { margin-bottom: 1.2rem; }
   .form-label { display: block; font-size: 0.85rem; font-weight: 650; color: var(--text); margin-bottom: 0.5rem; }
-  .form-control { width: 100%; background: #fff; border: 1px solid var(--border2); border-radius: var(--radius-sm);
-    padding: 0.78rem 1rem; color: var(--text); font-size: 1rem; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
+  /* Forma maydoni — yagona ta'rif, o'lchamlar tokenlardan.
+     font-size 16px ATAYLAB qoldirilgan: iOS Safari 16px dan kichik maydonga
+     fokus tushganda sahifani zumlab yuboradi (--fs-body 14px bo'lardi). */
+  .form-control { width: 100%; min-height: var(--tap-min);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card);
+    padding: var(--sp-3) var(--sp-4); color: var(--text); font-size: 16px; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s; }
   .form-control::placeholder { color: var(--text3); }
   .form-control:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
   /* Klaviatura fokusi — outline + offset (WCAG 2.4.7). Sichqoncha bosishida chiqmaydi. */
@@ -279,7 +284,10 @@
     .float-card { display: none !important; }
     /* Hero visual is decorative — hide to save space */
     .hero-visual { display: none !important; }
-    .hero-grid { grid-template-columns: 1fr !important; }
+    /* minmax(0,…) SHART: oddiy `1fr` ustunning eng kichik o'lchamini ichidagi
+       eng keng element bo'yicha oladi — hero'dagi chip skrolleri sahifani
+       375px o'rniga ~580px qilib, gorizontal siljish keltirib chiqarardi. */
+    .hero-grid { grid-template-columns: minmax(0, 1fr) !important; }
     .hero h1 { font-size: clamp(1.9rem, 8vw, 2.6rem); }
     .hero p.lead { font-size: 1rem; }
     /* Tor telefonlarda navbar boshqaruvlarini ixchamlash — barcha ikonkalar
@@ -295,7 +303,8 @@
 <style>
 /* ===== SamCity extended component library (inlined for reliable loading) ===== */
 /* (palette tokens consolidated into the single :root further down) */
-.filter-pill.active, .status-tab.active, .ad-boosted-badge, .img-send-btn, .enter-btn, .pm-cat.active { color:#fff !important; }
+/* filter-pill/status-tab -> chip yagona bloki. Qolganlari o'z joyida: */
+.ad-boosted-badge, .img-send-btn, .enter-btn, .pm-cat.active { color:#fff !important; }
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);
   /* Xavfsizlik to'ri: JS biror sababdan ishlamasa ham, 2.5s dan keyin
      elementlar avtomatik ko'rinadi — ko'rinmas/bosib bo'lmaydigan qolmasin. */
@@ -365,12 +374,7 @@
 .g-slate { background: linear-gradient(140deg, #64748b, #334155); box-shadow: 0 12px 24px rgba(51,65,85,.2); }
 .g-amber { background: linear-gradient(140deg, #f59e0b, #d97706); box-shadow: 0 12px 24px rgba(217,119,6,.22); }
 .chip-row { display: flex; gap: .55rem; flex-wrap: wrap; }
-/* min-height: 44px — barmoq bilan aniq tegish uchun eng kichik o'lcham
-   (ilgari 39px edi va yoshi kattalar uchun tegish qiyin bo'lardi). */
-.chip { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; padding: .5rem .95rem; border-radius: 100px; background: #fff; border: 1px solid var(--border2); color: var(--text2); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
-.chip .ic { width: 1.05em; height: 1.05em; }
-.chip:hover { border-color: var(--accent); color: var(--accent); }
-.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-brand); }
+/* chip -> css/samcity.css oxiridagi yagona blok (min-height ham o'sha yerda) */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.15rem; }
 .kpi { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.35rem; box-shadow: var(--shadow-xs); position: relative; overflow: hidden; }
 .kpi .kpi-top { display: flex; justify-content: space-between; align-items: center; }
@@ -463,7 +467,7 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 .danger-icon .ic { width: 30px; height: 30px; }
 .avatar { border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
 .rating-stars { display: inline-flex; gap: .2rem; font-size: 1.5rem; color: var(--gold); }
-@media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; gap: 2rem; } .hero-visual { min-height: 280px; order: -1; } .detail-grid { grid-template-columns: 1fr; } .sticky-card { position: static; } .stat-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 980px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 2rem; } .hero-visual { min-height: 280px; order: -1; } .detail-grid { grid-template-columns: 1fr; } .sticky-card { position: static; } .stat-row { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { #map, #tmap, #trackMap, #venueMap { min-height: 280px !important; height: 50vh !important; height: 50dvh !important; } }
 @media (max-width: 720px) { .aurora-bg .a3, .aurora-bg .a4 { display: none; } }
 @media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr !important; } }
@@ -503,8 +507,6 @@ form ul.errorlist { list-style: none; color: var(--red); font-size: .82rem; marg
 [data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--border2); }
 [data-theme="dark"] .skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%); }
-[data-theme="dark"] .chip, [data-theme="dark"] .filter-pill { background: var(--surface2); border-color: var(--border); color: var(--text2); }
-[data-theme="dark"] .chip.active, [data-theme="dark"] .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 [data-theme="dark"] .badge-gray { background: var(--surface3); color: var(--text2); }
 [data-theme="dark"] .page-header h1 { color: var(--text); }
 [data-theme="dark"] table { border-color: var(--border); }
@@ -588,50 +590,9 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 </style>
 
 <style>
-/* ── Tokens: CONSOLIDATED PALETTE ──────────────────── */
-:root {
-  /* Neytral poydevor — sovuq ko'k-kulrang o'rniga bir tomchi yashil moyilligi
-     bor iliq-neytral. 90% shu ranglar, 10% emerald. */
-  --bg: #F6F7F6; --bg-soft: #FFFFFF; --surface: #FFFFFF; --surface2: #F1F3F1; --surface3: #E8EBE9;
-  --border: #E2E6E3; --border2: #CBD1CD;
-  /* Qorong'i neytral oila — hero mastheadi va qorong'i yuzalar uchun */
-  --ink-900: #0B0F0D; --ink-800: #141A17; --ink-700: #1E2623; --ink-600: #2C3733;
-  --on-dark: #F4F6F4; --on-dark-2: #A8B3AD; --on-dark-brd: #2A3531;
-  --accent-on-dark: #35C48A;
-  /* Brend rangi — emerald. SamCity identifikatori: shahar/yetkazish domeni uchun
-     umumiy "SaaS ko'k"dan ko'ra o'ziga xos. Legacy --emer tokeni bilan bir xil. */
-  --accent: #0e9f6e; --accent-d: #0a7d55; --accent-l: #e6f6ef;
-  --teal: #14b8a6; --violet: #8b5cf6;
-  --gold: #f59e0b; --gold-d: #d97706; --gold-l: #fef3c7;
-  --green: #10b981; --green-l: #d1fae5; --green-d: #047857; --red: #ef4444; --red-l: #fee2e2; --red-d: #b91c1c; --amber: #f59e0b;
-  --text: #0F1512; --text2: #4A544F; --text3: #6B756F;
-  /* radii */
-  --radius: 12px; --radius-sm: 8px; --radius-lg: 16px; --radius-xl: 24px;
-  /* elevation */
-  --shadow-xs: 0 1px 2px rgba(15,23,42,.05); --shadow-sm: 0 4px 6px -1px rgba(15,23,42,.05);
-  --shadow: 0 10px 15px -3px rgba(15,23,42,.05); --shadow-lg: 0 20px 25px -5px rgba(15,23,42,.05);
-  --shadow-brand: 0 8px 18px -6px rgba(14,159,110,.32);
-  --ring: 0 0 0 3px rgba(14,159,110,.28);
-  /* Legacy tokens mapping */
-  --emer: var(--accent); --emer2: var(--accent-d); --yel: var(--gold); --yel-d: var(--gold-d); --muted: var(--text2);
-  /* Ish rejimi (kuryer) — brenddan ajralib turadigan amber oila */
-  --work: #f59e0b; --work-d: #b45309; --work-l: #fff3e0;
-}
-
-[data-theme="dark"] {
-  --work: #fbbf24; --work-d: #fcd34d; --work-l: rgba(251,191,36,.15);
-  --bg: #0f172a; --bg-soft: #0b1120; --surface: #1e293b; --surface2: #334155; --surface3: #475569;
-  --border: #334155; --border2: #475569;
-  --accent: #34d399; --accent-d: #10b981; --accent-l: rgba(52,211,153,.15);
-  --teal: #2dd4bf; --violet: #a78bfa;
-  --gold: #fbbf24; --gold-d: #f59e0b; --gold-l: rgba(251,191,36,.15);
-  --green: #34d399; --green-l: rgba(52,211,153,.15); --green-d: #6ee7b7; --red: #f87171; --red-l: rgba(248,113,113,.15); --red-d: #fca5a5; --amber: #fbbf24;
-  --text: #f8fafc; --text2: #cbd5e1; --text3: #94a3b8;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,.3); --shadow-sm: 0 4px 6px -1px rgba(0,0,0,.4);
-  --shadow: 0 10px 15px -3px rgba(0,0,0,.4); --shadow-lg: 0 20px 25px -5px rgba(0,0,0,.4);
-  --shadow-brand: 0 8px 18px -6px rgba(52,211,153,.28);
-  --ring: 0 0 0 3px rgba(52,211,153,.35);
-}
+/* Palitra bu yerdan OLIB TASHLANDI — endi css/tokens.css da (yagona manba).
+   Bu blok emerald qiymatlar bilan yozilgan edi, lekin samcity.css uni
+   bosib ketardi — ya'ni hech qachon ko'rinmagan o'lik kod edi. */
 
 /* ── Service / icon tile gradients unified ───── */
 .g-indigo, .g-violet, .g-blue { background: var(--violet); color: #fff; }
@@ -644,7 +605,7 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 /* Map surface overrides */
 .chip, .hero-search, .pagination a, .pagination span, .danger-card { background: var(--surface); }
 .segmented a.active, .segmented button.active, .tl-step .dot { background: var(--surface); }
-.form-control, select.form-control, textarea.form-control { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+/* .form-control mavzu tuzatmasi -> asosiy ta'rifga birlashtirildi (yuqorida) */
 .form-control:focus { border-color: var(--accent); box-shadow: var(--ring); }
 .btn-outline { background: var(--surface); border-color: var(--border2); }
 .badge-gold { background: var(--gold-l); color: var(--gold-d); }
@@ -661,7 +622,11 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 [data-theme="dark"] .bubble.mine, .bubble.me, .bubble.out { background: var(--accent-l); }
 </style>
 <!-- Kengaytirilgan komponent kutubxonasi (taksi yx-*, hero, section va h.k.) — inline core stillardan keyin, additive -->
-<link rel="stylesheet" href="{% static 'css/samcity.css' %}">
+<link rel="stylesheet" href="{% static 'css/samcity.css' %}?v=2026-08-21g">
+{# Dizayn tokenlari — palitra, oraliq, radius, matn shkalasi, bo'lim ranglari.
+   ENG OXIRIDA turadi: palitra ilgari to'rt joyda belgilangan edi va qaysi biri
+   yutishi yuklanish tartibiga bog'liq edi. Endi manba bitta va u doim ustun. #}
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=2026-08-21g">
 </head>
 <!-- Anti-FOUC: apply theme before render -->
 <script>

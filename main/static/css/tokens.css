@@ -1,0 +1,173 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIZAYN TOKENLARI — yagona manba
+   ═══════════════════════════════════════════════════════════════════════════
+   Nima uchun kerak: ilgari oraliqlar (.7rem, 13px, 1.25rem…), burchaklar va
+   shrift o'lchamlari har shablonda qo'lda yozilardi. Natijada bir xil tugma
+   uch joyda uch xil bo'lib qolgan edi. Endi qiymatlar SHU YERDA belgilanadi.
+
+   Qoida: yangi kodda faqat shu tokenlar ishlatiladi.
+     padding: var(--sp-4) var(--sp-5);   ✅
+     padding: 15px 19px;                 ❌
+
+   DIQQAT: bu fayl faqat o'zgaruvchi E'LON QILADI, hech qanday element
+   ko'rinishini o'zgartirmaydi. Shu sababli uni qo'shish xavfsiz —
+   eski sahifalar avvalgidek qolaveradi va bosqichma-bosqich ko'chiriladi.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── ORALIQ SHKALASI ─────────────────────────────────────────────────────
+     Faqat shu qadamlar. Oradagi qiymat kerak bo'lsa — demak tuzilma noto'g'ri. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* ── BURCHAK RADIUSI ─────────────────────────────────────────────────────
+     Element qanchalik katta bo'lsa, burchagi shunchalik yumshoq. */
+  --r-chip: 12px;      /* chip, kichik tugma */
+  --r-card: 16px;      /* karta, ro'yxat qatori, forma maydoni */
+  --r-tile: 20px;      /* bo'lim plitkasi, katta karta */
+  --r-panel: 24px;     /* pastki panel, modal */
+  --r-pill: 100px;     /* to'liq yumaloq: chip, badge, FAB */
+
+  /* ── MATN SHKALASI ───────────────────────────────────────────────────────
+     Har o'lcham aniq vazifa uchun. Oradagi qiymatlar ishlatilmaydi. */
+  --fs-caption: 11px;  /* izoh, holat, masofa */
+  --fs-small: 12px;    /* ikkilamchi matn */
+  --fs-body-s: 13px;   /* ro'yxatdagi qo'shimcha satr */
+  --fs-body: 14px;     /* asosiy matn */
+  --fs-body-l: 15px;   /* karta nomi */
+  --fs-title: 17px;    /* bo'lim sarlavhasi */
+  --fs-h2: 20px;       /* ekran sarlavhasi */
+  --fs-h1: 25px;       /* asosiy sarlavha, narx */
+
+  --lh-tight: 1.15;    /* sarlavhalar */
+  --lh-normal: 1.45;   /* qatorlar */
+  --lh-loose: 1.6;     /* uzun matn (tavsif) */
+
+  /* Sarlavha shrifti harflari zichroq turadi — yirik o'lchamda chiroyliroq */
+  --track-tight: -0.025em;
+
+  /* ── TEGISH NISHONI ──────────────────────────────────────────────────────
+     Barmoq bilan aniq tegish uchun eng kichik o'lcham. Undan kichik
+     interaktiv element bo'lmasligi kerak. */
+  --tap-min: 44px;
+  --tap-lg: 52px;      /* asosiy amal tugmasi */
+
+  /* ── BO'LIM RANGLARI ─────────────────────────────────────────────────────
+     Har bo'lim o'z rangiga ega — foydalanuvchi qayerdaligini rangdan biladi.
+     Bir xil to'yinganlik (oklch) — hech biri boshqasidan "baqirmaydi". */
+  --sec-ads: oklch(0.55 0.15 275);        /* E'lonlar — binafsha */
+  --sec-jobs: oklch(0.55 0.15 215);       /* Ish — ko'k */
+  --sec-booking: oklch(0.55 0.15 350);    /* Bron — pushti */
+  --sec-delivery: oklch(0.60 0.15 55);    /* Yetkazish — to'q sariq */
+  --sec-map: oklch(0.55 0.15 155);        /* Xarita — yashil */
+  --sec-assistant: oklch(0.52 0.17 285);  /* AI yordamchi — siyoh binafsha */
+
+  /* Bo'lim rangining och varianti (karta foni) — har safar color-mix
+     yozmaslik uchun tayyor tokenlar. */
+  --sec-ads-soft: color-mix(in oklab, var(--sec-ads) 13%, var(--surface));
+  --sec-jobs-soft: color-mix(in oklab, var(--sec-jobs) 13%, var(--surface));
+  --sec-booking-soft: color-mix(in oklab, var(--sec-booking) 13%, var(--surface));
+  --sec-delivery-soft: color-mix(in oklab, var(--sec-delivery) 13%, var(--surface));
+  --sec-map-soft: color-mix(in oklab, var(--sec-map) 13%, var(--surface));
+
+  /* AI yordamchi gradienti — ilovadagi YAGONA gradient, shuning uchun
+     ko'zga darrov tashlanadi. */
+  --grad-assistant: linear-gradient(135deg, oklch(0.62 0.15 165), oklch(0.52 0.17 285));
+}
+
+/* Qorong'i rejimda bo'lim ranglari yorqinroq bo'ladi — to'q fonda bir xil
+   qiymat xira ko'rinadi. Neytral ranglar base.html dagi [data-theme] blokida. */
+[data-theme="dark"] {
+  --sec-ads: oklch(0.70 0.14 275);
+  --sec-jobs: oklch(0.70 0.13 215);
+  --sec-booking: oklch(0.70 0.14 350);
+  --sec-delivery: oklch(0.75 0.14 55);
+  --sec-map: oklch(0.72 0.14 155);
+  --sec-assistant: oklch(0.68 0.16 285);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PALITRA — yagona manba (ilgari IKKI joyda edi)
+   ═══════════════════════════════════════════════════════════════════════════
+   Muammo: palitra base.html ichida (emerald) va samcity.css oxirida
+   ("redesign-v3", teal) ikki marta belgilangan edi. samcity.css keyin
+   yuklangani uchun HAR DOIM u yutardi — ya'ni base.html dagi emerald
+   qiymatlar o'lik kod bo'lib yotardi va izohda "faqat bir joyda" deb
+   yozilgani to'g'ri emas edi.
+
+   Quyidagi qiymatlar jonli saytdan o'lchab olingan (teal yo'nalish) —
+   ya'ni ko'rinish o'zgarmaydi, faqat manba bitta bo'ladi.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Neytral — iliq kul (sovuq kulrangdan farqli, shaharga yaqinroq) */
+  --bg: #F7F5F2; --bg-soft: #FFFcf8; --surface: #FFFFFF;
+  --surface2: #F0EDE8; --surface3: #E5E0D8;
+  --border: #E0DBD3; --border2: #C9C2B6;
+  --text: #1A1612; --text2: #5C534A; --text3: #8A8075;
+
+  /* Brend — chuqur teal-indigo */
+  --accent: #0E7490; --accent-d: #0C5F75; --accent-l: #E0F2FE;
+  --accent-on-dark: #67E8F9;
+  /* Legacy nomlar (eski shablonlar ishlatadi) — brend rangiga bog'langan */
+  --emer: #0E7490; --emer2: #0C5F75; --teal: #0E7490; --violet: #6D28D9;
+
+  /* Holat va urg'u ranglari */
+  --gold: #C2410C; --gold-d: #9A3412; --gold-l: #FFEDD5;
+  --green: #047857; --green-l: #D1FAE5; --green-d: #065F46;
+  --red: #DC2626; --red-l: #FEE2E2; --red-d: #B91C1C;
+  --amber: #D97706;
+
+  /* Qorong'i yuzalar (hero, footer) */
+  --ink-900: #0F172A; --ink-800: #1E293B; --ink-700: #334155; --ink-600: #475569;
+  --on-dark: #F8FAFC; --on-dark-2: #94A3B8; --on-dark-brd: #334155;
+
+  /* Ish rejimi (kuryer paneli) — brenddan ataylab ajralib turadi */
+  --work: #f59e0b; --work-d: #b45309; --work-l: #fff3e0;
+
+  /* Legacy radius nomlari — yangi kodda --r-* ishlatiladi */
+  --radius: 14px; --radius-sm: 10px; --radius-lg: 18px; --radius-xl: 26px;
+
+  --shadow-xs: 0 1px 2px rgba(26,22,18,.04);
+  --shadow-sm: 0 2px 8px rgba(26,22,18,.05);
+  --shadow: 0 8px 20px rgba(26,22,18,.06);
+  --shadow-lg: 0 18px 36px rgba(26,22,18,.08);
+  --shadow-brand: 0 8px 22px -4px rgba(14,116,144,.28);
+  --ring: 0 0 0 3px rgba(14,116,144,.22);
+}
+
+[data-theme="dark"] {
+  --bg: #0B1220; --bg-soft: #0F172A; --surface: #152033;
+  --surface2: #1E2D45; --surface3: #2A3B55;
+  --border: #243247; --border2: #334155;
+  --text: #F1F5F9; --text2: #94A3B8; --text3: #64748B;
+
+  --accent: #22D3EE; --accent-d: #67E8F9; --accent-l: rgba(34,211,238,.14);
+  --accent-on-dark: #0B1220;
+  --emer: #22D3EE; --emer2: #67E8F9; --teal: #22D3EE; --violet: #A78BFA;
+
+  --gold: #FB923C; --gold-d: #FDBA74; --gold-l: rgba(251,146,60,.14);
+  --green: #34D399; --green-l: rgba(52,211,153,.14); --green-d: #6EE7B7;
+  --red: #F87171; --red-l: rgba(248,113,113,.14); --red-d: #FCA5A5;
+  --amber: #FBBF24;
+
+  --ink-900: #020617; --ink-800: #0B1220; --ink-700: #1E293B; --ink-600: #334155;
+  --on-dark: #F1F5F9; --on-dark-2: #94A3B8; --on-dark-brd: #243247;
+
+  --work: #fbbf24; --work-d: #fcd34d; --work-l: rgba(251,191,36,.15);
+
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.35);
+  --shadow-sm: 0 3px 10px rgba(0,0,0,.38);
+  --shadow: 0 10px 28px rgba(0,0,0,.42);
+  --shadow-lg: 0 22px 48px rgba(0,0,0,.48);
+  --shadow-brand: 0 8px 24px -4px rgba(34,211,238,.22);
+  --ring: 0 0 0 3px rgba(34,211,238,.28);
+}

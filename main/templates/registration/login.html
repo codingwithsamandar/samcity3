@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SamCity — Kirish / Ro'yxatdan o'tish</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+{# Dizayn tokenlari — bu sahifa base.html'ni kengaytirmaydi (mustaqil
+   qobiq), shuning uchun token qatlami alohida ulanadi. #}
+{% load static %}<link rel="stylesheet" href="{% static 'css/tokens.css' %}">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{

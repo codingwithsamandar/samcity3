@@ -1,0 +1,40 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Ilova prototipi", "x": 0, "y": 0, "w": 390, "h": 844 },
+    { "file": "Joylashuv.dc.html", "title": "Joylashuv holatlari", "x": 520, "y": 0, "w": 390, "h": 900 },
+    { "file": "Ekranlar.dc.html", "title": "Ichki ekranlar", "x": 0, "y": 1120, "w": 2200, "h": 960 },
+    { "file": "Ekranlar2.dc.html", "title": "Kirish, kuzatish, e'lon joylash", "x": 0, "y": 2200, "w": 1780, "h": 960 },
+    { "file": "Tizim.dc.html", "title": "Dizayn tizimi", "x": 1040, "y": 0, "w": 620, "h": 1180 }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -150,
+      "w": 390,
+      "text": "Bosh ekrandagi bo'limni bosib ko'ring — o'sha bo'limning o'z rangi, o'z qidiruvi va o'z pastki menyusi bilan ochiladi. Orqaga qaytish uchun chap yuqoridagi strelka."
+    },
+    {
+      "id": "gps",
+      "x": 520,
+      "y": -150,
+      "w": 390,
+      "text": "Joylashuv o'chiq va yoniq holatlar yonma-yon. Prototipda ham sinash mumkin: «Holat → joylashuv» tugmasi."
+    },
+    {
+      "id": "ichki",
+      "x": 0,
+      "y": 1010,
+      "w": 900,
+      "text": "Ichki ekranlar: e'lon ichi, do'kon va savat, bron oqimi (klinika), AI suhbati, profil. Har biri o'z bo'limining rangida."
+    },
+    {
+      "id": "oqimlar",
+      "x": 0,
+      "y": 2090,
+      "w": 900,
+      "text": "Kirish oqimi (telefon → SMS kodi), buyurtmani jonli kuzatish va e'lon joylash formasi."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

@@ -105,3 +105,6 @@ jarvis/
 
 # Generated catalog export (manage.py export_catalog)
 catalog_export.json
+
+# Dizayn kanvasi — generatsiya qilinadigan fayl (manba: design/*.dc.html + canvas.json)
+design/shahar-ilova-prototipi.html

@@ -215,7 +215,10 @@ Busiz qora qidiruv paneli yorug' sahifalarga ham o'tib ketardi.
   <div class="wrap">
     <!-- Bitta ustunli markazlashgan hero: o'ng paneldagi bo'sh to'r qutisi va
          ko'rinmas pinlar olib tashlandi (ma'nosiz bezak edi). -->
-    <div class="hero-grid" style="grid-template-columns:1fr; max-width:760px; margin:0 auto; text-align:center;">
+    {# minmax(0,1fr) — oddiy `1fr` ustunning eng kichik o'lchami ichidagi eng
+       keng element (chip qatori) bo'yicha hisoblanadi va telefon ekranida
+       butun sahifani kengaytirib yuborardi (gorizontal siljish). #}
+    <div class="hero-grid" style="grid-template-columns:minmax(0,1fr); max-width:760px; margin:0 auto; text-align:center;">
       <div class="hero-copy">
         <span class="eyebrow reveal"><svg class="ic"><use href="#i-sparkle"/></svg> Shahringiz uchun raqamli platforma</span>
         <h1 class="reveal" data-reveal-delay="60">Hamma narsa<br><span class="grad">bir joyda.</span></h1>

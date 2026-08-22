@@ -1,0 +1,689 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;450;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <style>
+    body { margin: 0; -webkit-font-smoothing: antialiased; }
+    a { color: #0a7d55; text-decoration: none; }
+    a:hover { color: #075c3f; }
+    * { box-sizing: border-box; }
+    .h { font-family: var(--fh); letter-spacing: var(--fh-track); line-height: 1.14; }
+    .tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    /* Telefon ekranida tizim skroll chizig'i ko'rinmaydi — maketda ham
+       ko'rinmasin (Windows'da kulrang chiziq chiqib, dizaynni buzardi). */
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+    .scroll { overflow-y: auto; }
+    .row { display: flex; gap: 8px; overflow-x: auto; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; overflow: hidden; position: relative; background: {{bg}}; color: {{text}}; display: flex; flex-direction: column; font-size: 14px; font-family: {{fontBody}}; --fh: {{fontHead}}; --fh-track: {{fontTrack}};">
+
+  <!-- ═══════════ BOSH EKRAN ═══════════ -->
+  <sc-if value="{{isHome}}" hint-placeholder-val="{{true}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+
+      <div style="padding: 26px 20px 0; display: flex; flex-direction: column; gap: 13px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+              <path d="M12 22c-5 0-8.5-3.4-8.5-8.2C3.5 7.2 9.2 2.4 20.4 2c.9 11.5-2.6 20-8.4 20z" fill="{{accent}}"/>
+              <path d="M19.4 4.2c-4.6 3.2-8 8.2-9.8 15.4" stroke="{{surface}}" stroke-width="1.7" stroke-linecap="round"/>
+              <path d="M13.6 9.2c-1.8-.5-3.4-.4-4.9.3M16.2 14.6c-1.7-.7-3.3-.8-4.9-.4" stroke="{{surface}}" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <span class="h" style="font-size: 21px; font-weight: 800; letter-spacing: -0.035em;">Sam<span style="color: {{accent}};">City</span></span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-shrink: 0;">
+            <div class="tap" style="width: 44px; height: 44px; border-radius: 14px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{text2}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+            </div>
+            <div class="tap" style="position: relative; width: 44px; height: 44px; border-radius: 14px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{text2}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span style="position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: oklch(0.6 0.15 25); border: 2px solid {{surface}};"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tap" style="align-self: flex-start; display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px 0 11px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; max-width: 100%;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="2.6"/></svg>
+          <span style="font-size: 14.5px; font-weight: 650;">Shofirkon</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="scroll" style="flex: 1; padding: 22px 20px 96px; display: flex; flex-direction: column; gap: 22px;">
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+
+          <div class="tap" onClick="{{openAds}}" style="position: relative; overflow: hidden; min-height: 118px; padding: 15px; border-radius: 20px; background: color-mix(in oklab, oklch(0.55 0.15 275) 13%, {{surface}}); border: 1px solid color-mix(in oklab, oklch(0.55 0.15 275) 22%, {{surface}}); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1;">
+              <span class="h" style="font-size: 17px; font-weight: 700; color: color-mix(in oklab, oklch(0.55 0.15 275) 76%, {{ink}});">E'lonlar</span>
+              <span style="font-size: 12px; color: {{text2}};">42 ta yangi</span>
+            </div>
+            <svg width="86" height="70" viewBox="0 0 86 70" fill="none" style="position: absolute; right: -8px; bottom: -8px;">
+              <rect x="20" y="16" width="46" height="46" rx="10" transform="rotate(-12 43 39)" fill="color-mix(in oklab, oklch(0.55 0.15 275) 30%, {{surface}})"/>
+              <rect x="30" y="24" width="40" height="40" rx="9" transform="rotate(8 50 44)" fill="oklch(0.55 0.15 275)"/>
+              <circle cx="43" cy="38" r="4.6" fill="{{surface}}" opacity="0.92"/>
+              <path d="M38 56h22M38 49h14" stroke="{{surface}}" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+            </svg>
+          </div>
+
+          <div class="tap" onClick="{{openDelivery}}" style="position: relative; overflow: hidden; grid-row: span 2; padding: 17px; border-radius: 22px; background: linear-gradient(155deg, oklch(0.68 0.15 62), oklch(0.58 0.16 45)); display: flex; flex-direction: column; justify-content: flex-start;">
+            <div style="display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1;">
+              <span class="h" style="font-size: 21px; font-weight: 800; color: #fff;">Yetkazish</span>
+              <span style="font-size: 12.5px; color: rgba(255,255,255,0.88);">23 do'kon ochiq · 25 daq</span>
+            </div>
+            <svg width="190" height="180" viewBox="0 0 190 180" fill="none" style="position: absolute; right: -34px; bottom: -18px;">
+              <ellipse cx="96" cy="150" rx="66" ry="14" fill="oklch(0.45 0.12 40)" opacity="0.22"/>
+              <path d="M52 74h84l-8 68a12 12 0 0 1-12 11H72a12 12 0 0 1-12-11z" fill="#fff" opacity="0.96"/>
+              <path d="M52 74h84l-3 26H55z" fill="oklch(0.9 0.06 70)"/>
+              <path d="M74 74V60a20 20 0 0 1 40 0v14" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity="0.95"/>
+              <circle cx="94" cy="120" r="17" fill="oklch(0.62 0.16 45)" opacity="0.9"/>
+              <path d="M86 120h16M94 112v16" stroke="#fff" stroke-width="4.6" stroke-linecap="round"/>
+              <path d="M20 96h22M12 116h30M26 136h20" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+            </svg>
+          </div>
+
+          <div class="tap" onClick="{{openBooking}}" style="position: relative; overflow: hidden; min-height: 118px; padding: 15px; border-radius: 20px; background: color-mix(in oklab, oklch(0.55 0.15 350) 13%, {{surface}}); border: 1px solid color-mix(in oklab, oklch(0.55 0.15 350) 22%, {{surface}}); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1;">
+              <span class="h" style="font-size: 17px; font-weight: 700; color: color-mix(in oklab, oklch(0.55 0.15 350) 76%, {{ink}});">Bron</span>
+              <span style="font-size: 12px; color: {{text2}};">Bugun 14 ta joy</span>
+            </div>
+            <svg width="88" height="72" viewBox="0 0 88 72" fill="none" style="position: absolute; right: -6px; bottom: -10px;">
+              <rect x="16" y="14" width="50" height="46" rx="10" fill="color-mix(in oklab, oklch(0.55 0.15 350) 28%, {{surface}})"/>
+              <rect x="24" y="22" width="50" height="46" rx="10" fill="oklch(0.55 0.15 350)"/>
+              <path d="M24 34h50" stroke="{{surface}}" stroke-width="3" opacity="0.85"/>
+              <path d="M36 18v8M62 18v8" stroke="oklch(0.55 0.15 350)" stroke-width="4.6" stroke-linecap="round"/>
+              <circle cx="49" cy="50" r="10" fill="{{surface}}" opacity="0.95"/>
+              <path d="M49 44v6l4 3" stroke="oklch(0.55 0.15 350)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="tap" onClick="{{openJobs}}" style="position: relative; overflow: hidden; min-height: 112px; padding: 15px; border-radius: 20px; background: color-mix(in oklab, oklch(0.55 0.15 215) 13%, {{surface}}); border: 1px solid color-mix(in oklab, oklch(0.55 0.15 215) 22%, {{surface}}); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1;">
+              <span class="h" style="font-size: 17px; font-weight: 700; color: color-mix(in oklab, oklch(0.55 0.15 215) 76%, {{ink}});">Ish</span>
+              <span style="font-size: 12px; color: {{text2}};">18 vakansiya</span>
+            </div>
+            <svg width="86" height="66" viewBox="0 0 86 66" fill="none" style="position: absolute; right: -6px; bottom: -6px;">
+              <rect x="14" y="24" width="58" height="40" rx="9" fill="oklch(0.55 0.15 215)"/>
+              <path d="M32 24v-5a7 7 0 0 1 7-7h8a7 7 0 0 1 7 7v5" stroke="color-mix(in oklab, oklch(0.55 0.15 215) 55%, {{ink}})" stroke-width="5" stroke-linecap="round"/>
+              <rect x="14" y="38" width="58" height="7" fill="{{surface}}" opacity="0.55"/>
+              <rect x="36" y="34" width="14" height="15" rx="4" fill="{{surface}}" opacity="0.95"/>
+            </svg>
+          </div>
+
+          <div class="tap" onClick="{{openMap}}" style="position: relative; overflow: hidden; min-height: 112px; padding: 15px; border-radius: 20px; background: color-mix(in oklab, oklch(0.55 0.15 155) 13%, {{surface}}); border: 1px solid color-mix(in oklab, oklch(0.55 0.15 155) 22%, {{surface}}); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1;">
+              <span class="h" style="font-size: 17px; font-weight: 700; color: color-mix(in oklab, oklch(0.55 0.15 155) 76%, {{ink}});">Xarita</span>
+              <span style="font-size: 12px; color: {{text2}};">210 ta joy</span>
+            </div>
+            <svg width="88" height="70" viewBox="0 0 88 70" fill="none" style="position: absolute; right: -4px; bottom: -8px;">
+              <path d="M10 58 30 46l22 10 24-14v34H10z" fill="color-mix(in oklab, oklch(0.55 0.15 155) 26%, {{surface}})"/>
+              <path d="M6 62c14-6 22 4 34-2s20-12 34-8" stroke="color-mix(in oklab, oklch(0.55 0.15 155) 45%, {{surface}})" stroke-width="4" stroke-linecap="round" fill="none"/>
+              <path d="M52 20a15 15 0 0 0-30 0c0 11 15 26 15 26s15-15 15-26" fill="oklch(0.55 0.15 155)"/>
+              <circle cx="37" cy="20" r="5.6" fill="{{surface}}"/>
+            </svg>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 11px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span class="h" style="font-size: 17px; font-weight: 700;">{{nearTitle}}</span>
+            <span style="font-size: 13px; color: {{text3}};">{{nearMeta}}</span>
+          </div>
+
+          <sc-if value="{{gpsOff}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; align-items: center; gap: 11px; padding: 10px 10px 10px 13px; border-radius: 15px; background: color-mix(in oklab, {{accent}} 9%, {{surface}}); border: 1px solid color-mix(in oklab, {{accent}} 18%, {{surface}});">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+                <circle cx="12" cy="12" r="9.2" stroke="{{accent}}" stroke-width="1.9"/>
+                <path d="M15.6 8.4 13.4 13.4 8.4 15.6l2.2-5z" fill="{{accent}}"/>
+              </svg>
+              <span style="flex: 1; min-width: 0; font-size: 13px; color: {{text2}};">Masofani ko'rish uchun joylashuv kerak</span>
+              <div class="tap" style="flex-shrink: 0; height: 34px; padding: 0 15px; border-radius: 100px; background: {{accent}}; display: flex; align-items: center;">
+                <span style="font-size: 13px; font-weight: 700; color: #fff;">Yoqish</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{nearby}}" as="n" hint-placeholder-count="2">
+              <div class="tap" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: {{surface}}; border: 1px solid {{border}}; border-radius: 16px;">
+                <div style="width: 38px; height: 38px; border-radius: 11px; background: color-mix(in oklab, oklch(0.55 0.15 155) 14%, {{surface}}); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.15 155)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="2.6"/></svg>
+                </div>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 14px; font-weight: 600;">{{n.name}}</span>
+                  <span style="font-size: 12px; color: {{text3}};">{{n.meta}}</span>
+                </div>
+                <span style="font-size: 12px; font-weight: 600; color: oklch(0.55 0.15 155);">{{n.right}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div class="tap" style="position: absolute; right: 18px; bottom: 24px; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 20px 0 8px; border-radius: 100px; background: linear-gradient(135deg, oklch(0.62 0.15 165), oklch(0.52 0.17 285)); box-shadow: 0 10px 26px -6px oklch(0.52 0.17 285 / 0.55), 0 2px 6px oklch(0.3 0.1 285 / 0.25);">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3.4c.5 3.3 1.9 4.7 5.2 5.2-3.3.5-4.7 1.9-5.2 5.2-.5-3.3-1.9-4.7-5.2-5.2 3.3-.5 4.7-1.9 5.2-5.2z" fill="#fff"/>
+            <path d="M17.6 14.2c.28 1.7 1 2.42 2.7 2.7-1.7.28-2.42 1-2.7 2.7-.28-1.7-1-2.42-2.7-2.7 1.7-.28 2.42-1 2.7-2.7z" fill="#fff" opacity="0.92"/>
+            <circle cx="7.2" cy="17.4" r="1.7" fill="#fff" opacity="0.78"/>
+          </svg>
+        </div>
+        <span class="h" style="font-size: 15px; font-weight: 700; color: #fff;">AI yordamchi</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ E'LONLAR ═══════════ -->
+  <sc-if value="{{isAds}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="background: oklch(0.55 0.15 275); padding: 24px 20px 18px; display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="tap" onClick="{{goHome}}" style="width: 44px; height: 44px; margin-left: -11px; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </div>
+          <span class="h" style="font-size: 22px; font-weight: 800; color: #fff;">E'lonlar</span>
+        </div>
+        <div class="tap" style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: rgba(255,255,255,.18); border-radius: 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span style="font-size: 14px; color: rgba(255,255,255,.9);">Masalan, velosiped</span>
+        </div>
+      </div>
+
+      <div class="row" style="padding: 14px 20px 6px;">
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: oklch(0.55 0.15 275); display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: #fff;">Barchasi</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Uy-joy</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Avtomobil</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Elektronika</span></div>
+      </div>
+
+      <div class="scroll" style="flex: 1; padding: 12px 20px 18px;">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+          <sc-for list="{{ads}}" as="a" hint-placeholder-count="4">
+            <div class="tap" style="display: flex; flex-direction: column; background: {{surface}}; border: 1px solid {{border}}; border-radius: 18px; overflow: hidden;">
+              <div style="height: 98px; background: {{a.tone}}; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <sc-if value="{{a.isCar}}" hint-placeholder-val="{{true}}">
+                  <svg width="104" height="70" viewBox="0 0 104 70" fill="none">
+                    <path d="M18 44h68l-6-16a10 10 0 0 0-9-6H33a10 10 0 0 0-9 6z" fill="oklch(0.55 0.15 275)"/>
+                    <rect x="12" y="42" width="80" height="16" rx="7" fill="color-mix(in oklab, oklch(0.55 0.15 275) 72%, {{ink}})"/>
+                    <path d="M34 28h36l4 12H30z" fill="{{surface}}" opacity="0.9"/>
+                    <circle cx="30" cy="58" r="8" fill="color-mix(in oklab, oklch(0.55 0.15 275) 55%, {{ink}})"/>
+                    <circle cx="74" cy="58" r="8" fill="color-mix(in oklab, oklch(0.55 0.15 275) 55%, {{ink}})"/>
+                  </svg>
+                </sc-if>
+                <sc-if value="{{a.isHome}}" hint-placeholder-val="{{false}}">
+                  <svg width="96" height="72" viewBox="0 0 96 72" fill="none">
+                    <path d="M14 34 48 10l34 24v30a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill="oklch(0.55 0.15 275)"/>
+                    <path d="M8 36 48 8l40 28" stroke="color-mix(in oklab, oklch(0.55 0.15 275) 60%, {{ink}})" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <rect x="38" y="44" width="20" height="24" rx="3" fill="{{surface}}" opacity="0.92"/>
+                    <rect x="22" y="40" width="12" height="12" rx="3" fill="{{surface}}" opacity="0.6"/>
+                    <rect x="62" y="40" width="12" height="12" rx="3" fill="{{surface}}" opacity="0.6"/>
+                  </svg>
+                </sc-if>
+                <sc-if value="{{a.isTv}}" hint-placeholder-val="{{false}}">
+                  <svg width="98" height="70" viewBox="0 0 98 70" fill="none">
+                    <rect x="12" y="10" width="74" height="44" rx="6" fill="oklch(0.55 0.15 275)"/>
+                    <rect x="19" y="17" width="60" height="30" rx="3" fill="{{surface}}" opacity="0.9"/>
+                    <path d="M40 60h18M49 54v6" stroke="color-mix(in oklab, oklch(0.55 0.15 275) 65%, {{ink}})" stroke-width="5" stroke-linecap="round"/>
+                  </svg>
+                </sc-if>
+                <sc-if value="{{a.isLand}}" hint-placeholder-val="{{false}}">
+                  <svg width="100" height="68" viewBox="0 0 100 68" fill="none">
+                    <path d="M10 46 50 26l40 20-40 20z" fill="oklch(0.55 0.15 275)"/>
+                    <path d="M10 46 50 26l40 20" stroke="{{surface}}" stroke-width="3" opacity="0.55" fill="none"/>
+                    <path d="M30 20v18M70 20v18M30 20h40" stroke="color-mix(in oklab, oklch(0.55 0.15 275) 60%, {{ink}})" stroke-width="4.5" stroke-linecap="round"/>
+                    <circle cx="30" cy="18" r="4" fill="color-mix(in oklab, oklch(0.55 0.15 275) 60%, {{ink}})"/>
+                    <circle cx="70" cy="18" r="4" fill="color-mix(in oklab, oklch(0.55 0.15 275) 60%, {{ink}})"/>
+                  </svg>
+                </sc-if>
+              </div>
+              <div style="padding: 10px 12px 13px; display: flex; flex-direction: column; gap: 4px;">
+                <span class="h" style="font-size: 15px; font-weight: 700; color: oklch(0.55 0.15 275);">{{a.price}}</span>
+                <span style="font-size: 13px; font-weight: 500; line-height: 1.35;">{{a.title}}</span>
+                <span style="font-size: 11px; color: {{text3}};">{{a.meta}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; padding: 8px 12px 22px; background: {{surface}}; border-top: 1px solid {{border}};">
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.15 275)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 10 8-6 8 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: oklch(0.55 0.15 275);">Lenta</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Qidiruv</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">E'lon berish</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Menikilar</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ ISH ═══════════ -->
+  <sc-if value="{{isJobs}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="background: oklch(0.55 0.15 215); padding: 24px 20px 18px; display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="tap" onClick="{{goHome}}" style="width: 44px; height: 44px; margin-left: -11px; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </div>
+          <span class="h" style="font-size: 22px; font-weight: 800; color: #fff;">Ish</span>
+        </div>
+        <div class="tap" style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: rgba(255,255,255,.18); border-radius: 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span style="font-size: 14px; color: rgba(255,255,255,.9);">Kasb yoki kompaniya</span>
+        </div>
+      </div>
+
+      <div class="row" style="padding: 14px 20px 6px;">
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: oklch(0.55 0.15 215); display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: #fff;">Hammasi</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">To'liq kun</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Yarim kun</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Uzoqdan</span></div>
+      </div>
+
+      <div class="scroll" style="flex: 1; padding: 12px 20px 18px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{jobs}}" as="j" hint-placeholder-count="4">
+          <div class="tap" style="padding: 15px 16px; background: {{surface}}; border: 1px solid {{border}}; border-radius: 18px; display: flex; flex-direction: column; gap: 9px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div style="width: 44px; height: 44px; border-radius: 13px; background: {{j.tone}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span class="h" style="font-size: 17px; font-weight: 700; color: color-mix(in oklab, oklch(0.55 0.15 215) 82%, {{ink}});">{{j.initial}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1;">
+                <span class="h" style="font-size: 15px; font-weight: 700;">{{j.title}}</span>
+                <span style="font-size: 13px; color: {{text2}};">{{j.company}}</span>
+              </div>
+              <span class="h" style="font-size: 15px; font-weight: 700; color: oklch(0.55 0.15 215); white-space: nowrap;">{{j.pay}}</span>
+            </div>
+            <div style="display: flex; gap: 6px; padding-left: 56px;">
+              <span style="font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 8px; background: color-mix(in oklab, oklch(0.55 0.15 215) 13%, {{surface}}); color: color-mix(in oklab, oklch(0.55 0.15 215) 76%, {{ink}});">{{j.type}}</span>
+              <span style="font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 8px; background: {{surface2}}; color: {{text3}};">{{j.place}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; padding: 8px 12px 22px; background: {{surface}}; border-top: 1px solid {{border}};">
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.15 215)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2.5"/><path d="M8 7V5.5A2.5 2.5 0 0 1 10.5 3h3A2.5 2.5 0 0 1 16 5.5V7"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: oklch(0.55 0.15 215);">Vakansiya</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Rezyume</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Joylash</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Profil</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ BRON ═══════════ -->
+  <sc-if value="{{isBooking}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="background: oklch(0.55 0.15 350); padding: 24px 20px 18px; display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="tap" onClick="{{goHome}}" style="width: 44px; height: 44px; margin-left: -11px; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </div>
+          <span class="h" style="font-size: 22px; font-weight: 800; color: #fff;">Bron</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+            <div class="tap" style="flex: 1; min-width: 0; padding: 9px 0; border-radius: 13px; background: {{d.bg}}; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+              <span style="font-size: 11px; color: {{d.sub}};">{{d.dow}}</span>
+              <span class="h" style="font-size: 16px; font-weight: 700; color: {{d.ink}};">{{d.num}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div class="row" style="padding: 14px 20px 6px;">
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: oklch(0.55 0.15 350); display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: #fff;">Barchasi</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Klinika</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Sartaroshxona</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">To'yxona</span></div>
+      </div>
+
+      <div class="scroll" style="flex: 1; padding: 12px 20px 18px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{venues}}" as="v" hint-placeholder-count="3">
+          <div class="tap" style="display: flex; gap: 13px; padding: 12px; background: {{surface}}; border: 1px solid {{border}}; border-radius: 18px;">
+            <div style="width: 76px; height: 76px; border-radius: 15px; background: {{v.tone}}; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <sc-if value="{{v.isClinic}}" hint-placeholder-val="{{true}}">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.15 350)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a5 5 0 0 0 10 0V3"/><path d="M6 3H4.5M16 3h1.5"/><path d="M11 14v2a4 4 0 0 0 8 0v-1"/><circle cx="19" cy="12" r="2.2"/></svg>
+              </sc-if>
+              <sc-if value="{{v.isBarber}}" hint-placeholder-val="{{false}}">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.15 350)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M20 4 8.6 16.4M20 20 8.6 7.6"/></svg>
+              </sc-if>
+              <sc-if value="{{v.isHall}}" hint-placeholder-val="{{false}}">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.45 0.15 350)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l9-6 9 6v11"/><path d="M3 21h18M9 21v-6h6v6"/></svg>
+              </sc-if>
+            </div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+              <span class="h" style="font-size: 15px; font-weight: 700;">{{v.name}}</span>
+              <span style="font-size: 12px; color: {{text3}};">{{v.type}}</span>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+                <span class="h" style="font-size: 14px; font-weight: 700; color: oklch(0.55 0.15 350);">{{v.price}}</span>
+                <span style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px; background: color-mix(in oklab, oklch(0.55 0.15 350) 12%, {{surface}}); color: color-mix(in oklab, oklch(0.55 0.15 350) 76%, {{ink}});">{{v.slot}}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; padding: 8px 12px 22px; background: {{surface}}; border-top: 1px solid {{border}};">
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.15 350)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 10 8-6 8 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: oklch(0.55 0.15 350);">Joylar</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Kalendar</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2.4 2.4 0 0 0 0 4.8 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2A2.4 2.4 0 0 0 3 9"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Bronlarim</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Profil</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ YETKAZISH ═══════════ -->
+  <sc-if value="{{isDelivery}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="background: oklch(0.6 0.15 55); padding: 24px 20px 18px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="tap" onClick="{{goHome}}" style="width: 44px; height: 44px; margin-left: -11px; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </div>
+          <span class="h" style="font-size: 22px; font-weight: 800; color: #fff;">Yetkazish</span>
+        </div>
+        <div class="tap" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: rgba(255,255,255,.18); border-radius: 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="2.6"/></svg>
+          <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+            <span style="font-size: 11px; color: rgba(255,255,255,.75);">Yetkazish manzili</span>
+            <span style="font-size: 13px; font-weight: 600; color: #fff;">Navoiy ko'chasi 12</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="padding: 14px 20px 6px;">
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: oklch(0.6 0.15 55); display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: #fff;">Hammasi</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Oziq-ovqat</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Dorixona</span></div>
+        <div class="tap" style="flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 13px; font-weight: 600; color: {{text2}};">Gullar</span></div>
+      </div>
+
+      <div class="scroll" style="flex: 1; padding: 12px 20px 18px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{stores}}" as="d" hint-placeholder-count="4">
+          <div class="tap" style="display: flex; align-items: center; gap: 13px; padding: 13px 14px; background: {{surface}}; border: 1px solid {{border}}; border-radius: 18px;">
+            <div style="width: 54px; height: 54px; border-radius: 16px; background: {{d.tone}}; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <sc-if value="{{d.isMarket}}" hint-placeholder-val="{{true}}">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+                  <path d="M7 12h18l-2 14a3 3 0 0 1-3 2.6H12A3 3 0 0 1 9 26z" fill="oklch(0.6 0.15 55)"/>
+                  <path d="M12 12V9a4 4 0 0 1 8 0v3" stroke="color-mix(in oklab, oklch(0.6 0.15 55) 62%, {{ink}})" stroke-width="2.6" stroke-linecap="round"/>
+                  <path d="M13 18h6" stroke="{{surface}}" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
+                </svg>
+              </sc-if>
+              <sc-if value="{{d.isPharma}}" hint-placeholder-val="{{false}}">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+                  <rect x="6" y="6" width="20" height="20" rx="6" fill="oklch(0.6 0.15 55)"/>
+                  <path d="M16 11v10M11 16h10" stroke="{{surface}}" stroke-width="3.4" stroke-linecap="round"/>
+                </svg>
+              </sc-if>
+              <sc-if value="{{d.isBakery}}" hint-placeholder-val="{{false}}">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+                  <ellipse cx="16" cy="17" rx="11" ry="8.5" fill="oklch(0.6 0.15 55)"/>
+                  <path d="M10 14c2 2 3.4 2 6 0M16 14c2 2 3.4 2 6 0" stroke="{{surface}}" stroke-width="2.2" stroke-linecap="round" opacity="0.85" fill="none"/>
+                </svg>
+              </sc-if>
+              <sc-if value="{{d.isFlowers}}" hint-placeholder-val="{{false}}">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="12" r="4.2" fill="oklch(0.6 0.15 55)"/>
+                  <circle cx="10.5" cy="15.5" r="3.6" fill="color-mix(in oklab, oklch(0.6 0.15 55) 72%, {{surface}})"/>
+                  <circle cx="21.5" cy="15.5" r="3.6" fill="color-mix(in oklab, oklch(0.6 0.15 55) 72%, {{surface}})"/>
+                  <path d="M16 17v9" stroke="color-mix(in oklab, oklch(0.6 0.15 55) 58%, {{ink}})" stroke-width="2.6" stroke-linecap="round"/>
+                </svg>
+              </sc-if>
+            </div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+              <span class="h" style="font-size: 15px; font-weight: 700;">{{d.name}}</span>
+              <span style="font-size: 12px; color: {{text3}};">{{d.kind}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+              <span style="font-size: 13px; font-weight: 700; color: oklch(0.6 0.15 55);">{{d.eta}}</span>
+              <span style="font-size: 11px; color: {{text3}};">{{d.fee}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; padding: 8px 12px 22px; background: {{surface}}; border-top: 1px solid {{border}};">
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.6 0.15 55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 10 8-6 8 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: oklch(0.6 0.15 55);">Do'konlar</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12h11L21 7H6"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Savat</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-5 9 5v8l-9 5-9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Buyurtmalar</span>
+        </div>
+        <div class="tap" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 2px; min-height: 52px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          <span style="font-size: 10.5px; font-weight: 600; color: {{text3}};">Profil</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══════════ XARITA ═══════════ -->
+  <sc-if value="{{isMap}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+      <div style="position: absolute; inset: 0; background: {{mapBg}};">
+        <div style="position: absolute; inset: 0; background-image: linear-gradient({{gridLine}} 1px, transparent 1px), linear-gradient(90deg, {{gridLine}} 1px, transparent 1px); background-size: 46px 46px;"></div>
+        <div style="position: absolute; left: 158px; top: 268px; width: 40px; height: 40px; border-radius: 50%; background: oklch(0.55 0.15 155); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px -6px rgba(0,0,0,.35);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="2.6"/></svg>
+        </div>
+        <div style="position: absolute; left: 82px; top: 196px; width: 28px; height: 28px; border-radius: 50%; background: {{surface}}; border: 2.5px solid oklch(0.55 0.15 155);"></div>
+        <div style="position: absolute; left: 264px; top: 338px; width: 28px; height: 28px; border-radius: 50%; background: {{surface}}; border: 2.5px solid oklch(0.55 0.15 155);"></div>
+        <div style="position: absolute; left: 232px; top: 178px; width: 28px; height: 28px; border-radius: 50%; background: {{surface}}; border: 2.5px solid oklch(0.55 0.15 155);"></div>
+      </div>
+
+      <div style="position: relative; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="tap" onClick="{{goHome}}" style="width: 44px; height: 44px; border-radius: 14px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.12);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{text}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </div>
+          <div class="tap" style="flex: 1; display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: {{surface}}; border: 1px solid {{border}}; border-radius: 14px; box-shadow: 0 4px 12px -4px rgba(0,0,0,.12);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{text3}}" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span style="font-size: 14px; color: {{text3}};">Manzil yoki joy nomi</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="tap" style="flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 100px; background: oklch(0.55 0.15 155); display: flex; align-items: center;"><span style="font-size: 12.5px; font-weight: 600; color: #fff;">Yaqinda</span></div>
+          <div class="tap" style="flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 12.5px; font-weight: 600; color: {{text2}};">Dorixona</span></div>
+          <div class="tap" style="flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 12.5px; font-weight: 600; color: {{text2}};">Bank</span></div>
+          <div class="tap" style="flex-shrink: 0; height: 34px; padding: 0 13px; border-radius: 100px; background: {{surface}}; border: 1px solid {{border}}; display: flex; align-items: center;"><span style="font-size: 12.5px; font-weight: 600; color: {{text2}};">Shifoxona</span></div>
+        </div>
+      </div>
+
+      <div style="position: relative; margin-top: auto; background: {{surface}}; border-top: 1px solid {{border}}; border-radius: 24px 24px 0 0; padding: 10px 20px 22px; box-shadow: 0 -8px 24px -12px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 38px; height: 4px; border-radius: 2px; background: {{border}}; align-self: center; margin-bottom: 4px;"></div>
+        <sc-for list="{{places}}" as="p" hint-placeholder-count="3">
+          <div class="tap" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 12px; background: color-mix(in oklab, oklch(0.55 0.15 155) 13%, {{surface}}); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.15 155)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="2.6"/></svg>
+            </div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 14px; font-weight: 600;">{{p.name}}</span>
+              <span style="font-size: 12px; color: {{text3}};">{{p.meta}}</span>
+            </div>
+            <span style="font-size: 12px; font-weight: 600; color: oklch(0.55 0.15 155);">{{p.dist}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Mavzu"},"shrift":{"editor":"enum","default":"jakarta","options":["jakarta","manrope","grotesk"],"section":"Mavzu"},"joylashuv":{"editor":"boolean","default":false,"section":"Holat"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: 'home' };
+  }
+
+  renderVals() {
+    const dark = this.props.dark ?? false;
+
+    const t = dark
+      ? { bg: '#0F1512', surface: '#18201C', surface2: '#212A25', border: '#2A342E',
+          text: '#F3F6F4', text2: '#B9C2BC', text3: '#8A948E',
+          accent: 'oklch(0.72 0.14 165)',
+          mapBg: '#141C18', gridLine: '#212A25', ink: '#FFFFFF' }
+      : { bg: '#F6F7F6', surface: '#FFFFFF', surface2: '#F1F3F1', border: '#E2E6E3',
+          text: '#0F1512', text2: '#4A544F', text3: '#6B756F',
+          accent: 'oklch(0.56 0.13 163)',
+          mapBg: '#EBEFEC', gridLine: '#DDE3DF', ink: '#0B0F0D' };
+
+    const go = (screen) => () => this.setState({ screen });
+    const tone = (hue, pct) => 'color-mix(in oklab, oklch(0.55 0.15 ' + hue + ') ' + pct + '%, ' + t.surface2 + ')';
+
+    // Shrift juftliklari — chipdan almashtiriladi
+    const fonts = {
+      jakarta: { head: "'Plus Jakarta Sans', sans-serif", body: "'Inter', system-ui, sans-serif", track: '-0.025em' },
+      manrope: { head: "'Manrope', sans-serif", body: "'Manrope', system-ui, sans-serif", track: '-0.03em' },
+      grotesk: { head: "'Space Grotesk', sans-serif", body: "'Manrope', system-ui, sans-serif", track: '-0.02em' }
+    };
+    const f = fonts[this.props.shrift ?? 'jakarta'] || fonts.jakarta;
+
+    // Joylashuv: ilova ochilganda GPS odatda O'CHIQ bo'ladi (ruxsat so'raladi).
+    // Shuning uchun default — o'chiq holat, dizayn shunga tayyor bo'lsin.
+    const gpsOff = !(this.props.joylashuv ?? false);
+
+    return {
+      ...t,
+      fontHead: f.head,
+      fontBody: f.body,
+      fontTrack: f.track,
+      gpsOff,
+      nearTitle: gpsOff ? 'Shahar markazida' : 'Yaqinimda',
+      nearMeta: gpsOff ? 'Ommabop joylar' : '1.2 km ichida',
+      isHome: this.state.screen === 'home',
+      isAds: this.state.screen === 'ads',
+      isJobs: this.state.screen === 'jobs',
+      isBooking: this.state.screen === 'booking',
+      isDelivery: this.state.screen === 'delivery',
+      isMap: this.state.screen === 'map',
+
+      goHome: go('home'),
+      openAds: go('ads'),
+      openJobs: go('jobs'),
+      openBooking: go('booking'),
+      openDelivery: go('delivery'),
+      openMap: go('map'),
+
+      // GPS o'chiq bo'lsa masofa o'rniga ish holati ko'rsatiladi — yolg'on
+      // masofa yozib qo'yishdan ko'ra halolroq.
+      nearby: gpsOff
+        ? [
+            // GPS yo'q — masofa SHAHAR MARKAZIDAN hisoblanadi va shunday
+            // deb yoziladi, foydalanuvchi chalg'imasin.
+            { name: 'Shifo dorixonasi', meta: 'Ochiq · dorixona', right: 'Markazdan 340 m' },
+            { name: 'Oila Market', meta: "Ochiq · do'kon", right: 'Markazdan 620 m' }
+          ]
+        : [
+            { name: 'Shifo dorixonasi', meta: 'Ochiq · 22:00 gacha · 4 daq piyoda', right: '340 m' },
+            { name: 'Oila Market', meta: "Ochiq · do'kon · 7 daq piyoda", right: '620 m' },
+            { name: 'Aloqabank', meta: 'Ochiq · 17:00 gacha', right: '1.1 km' }
+          ],
+
+      ads: [
+        { price: '95 000 000', title: 'Nexia 3, 2019-yil', meta: 'Shofirkon · 2 soat oldin', tone: tone(275, 16),
+          isCar: true, isHome: false, isTv: false, isLand: false },
+        { price: '2 500 000', title: '2 xonali kvartira ijaraga', meta: 'Markaz · bugun', tone: tone(275, 26),
+          isCar: false, isHome: true, isTv: false, isLand: false },
+        { price: '5 800 000', title: 'Samsung 55" Smart TV', meta: 'Elektronika · kecha', tone: tone(275, 10),
+          isCar: false, isHome: false, isTv: true, isLand: false },
+        { price: 'Kelishiladi', title: 'Yer uchastkasi, 10 sotix', meta: 'Shofirkon · 3 kun', tone: tone(275, 20),
+          isCar: false, isHome: false, isTv: false, isLand: true }
+      ],
+
+      jobs: [
+        { title: 'Sotuvchi-konsultant', company: 'Mebel Style', pay: '4,5 mln', type: 'Toʻliq kun', place: 'Markaz', initial: 'M', tone: tone(215, 16) },
+        { title: 'Kuryer (velosiped)', company: 'Tez Yetkazish', pay: '6 mln', type: 'Smenali', place: 'Shahar', initial: 'T', tone: tone(215, 24) },
+        { title: 'Buxgalter', company: 'Agro Invest', pay: '8 mln', type: 'Toʻliq kun', place: 'Shofirkon', initial: 'A', tone: tone(215, 10) },
+        { title: 'Ingliz tili oʻqituvchisi', company: 'English Zone', pay: '5 mln', type: 'Yarim kun', place: 'Markaz', initial: 'E', tone: tone(215, 20) }
+      ],
+
+      days: [
+        { dow: 'Du', num: '18', bg: '#FFFFFF', ink: 'oklch(0.45 0.15 350)', sub: 'rgba(0,0,0,.45)' },
+        { dow: 'Se', num: '19', bg: 'rgba(255,255,255,.18)', ink: '#FFFFFF', sub: 'rgba(255,255,255,.7)' },
+        { dow: 'Ch', num: '20', bg: 'rgba(255,255,255,.18)', ink: '#FFFFFF', sub: 'rgba(255,255,255,.7)' },
+        { dow: 'Pa', num: '21', bg: 'rgba(255,255,255,.18)', ink: '#FFFFFF', sub: 'rgba(255,255,255,.7)' },
+        { dow: 'Ju', num: '22', bg: 'rgba(255,255,255,.18)', ink: '#FFFFFF', sub: 'rgba(255,255,255,.7)' }
+      ],
+
+      venues: [
+        { name: 'Shifo Nur Klinikasi', type: 'Klinika · terapevt, kardiolog', price: "80 000 so'm", slot: 'Ertaga 09:00',
+          tone: tone(350, 16), isClinic: true, isBarber: false, isHall: false },
+        { name: 'Zamon Barbershop', type: 'Sartaroshxona', price: "40 000 so'm", slot: 'Bugun 15:30',
+          tone: tone(350, 26), isClinic: false, isBarber: true, isHall: false },
+        { name: 'Shahzoda Toʻyxona', type: 'Toʻyxona · 350 kishi', price: '6 mln / kun', slot: '12-sentabr',
+          tone: tone(350, 10), isClinic: false, isBarber: false, isHall: true }
+      ],
+
+      stores: [
+        { name: 'Oila Market', kind: 'Oziq-ovqat, maishiy', eta: '25 daq', fee: "8 000 so'm", tone: tone(55, 18),
+          isMarket: true, isPharma: false, isBakery: false, isFlowers: false },
+        { name: 'Shifo dorixona', kind: 'Dori va vitaminlar', eta: '15 daq', fee: 'Bepul', tone: tone(55, 12),
+          isMarket: false, isPharma: true, isBakery: false, isFlowers: false },
+        { name: 'Non uyi', kind: 'Non, shirinliklar', eta: '20 daq', fee: "5 000 so'm", tone: tone(55, 26),
+          isMarket: false, isPharma: false, isBakery: true, isFlowers: false },
+        { name: 'Gulzor', kind: 'Gullar va sovgʻalar', eta: '35 daq', fee: "10 000 so'm", tone: tone(55, 8),
+          isMarket: false, isPharma: false, isBakery: false, isFlowers: true }
+      ],
+
+      places: [
+        { name: 'Shifo dorixonasi', meta: 'Ochiq · 22:00 gacha', dist: '340 m' },
+        { name: 'Aloqabank', meta: 'Ochiq · 17:00 gacha', dist: '1.1 km' },
+        { name: 'Tuman shifoxonasi', meta: '24 soat', dist: '1.6 km' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
