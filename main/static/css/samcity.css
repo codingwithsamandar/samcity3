@@ -1439,7 +1439,6 @@ form textarea, form select:not(.seg) {
 /* Qorong'i temada ham bir xil — eski dark override'larni bekor qiladi */
 /* -> chip/filtr yagona bloki (fayl oxiri) */
 /* -> chip/filtr yagona bloki (fayl oxiri) */
-}
 /* 24-satrdagi eski `color: #fff !important` shimini bekor qilamiz —
    yashil fonda oq matn kontrasti past edi. */
 /* -> chip/filtr yagona bloki (fayl oxiri) */
@@ -1555,21 +1554,12 @@ h1,h2,h3,h4{ letter-spacing:-0.02em; }
 .nav-cart:hover{ background:var(--accent); color:#fff; }
 
 /* ── TUGMALAR — yumaloq, jonli, aniq ierarxiya ──────────────────── */
-.btn{ border-radius:100px; font-weight:650; letter-spacing:-0.01em; transition:all .16s cubic-bezier(.2,.8,.3,1); }
+/* .btn oilasi -> fayl oxiridagi yagona blok */
 /* .btn-accent ranglari OLIB TASHLANDI — qattiq yozilgan #3B5673/#7C9DC0
    tokenlarni chetlab o'tardi va pastdagi qoida (!important) baribir
    ularni bosardi, ya'ni o'lik kod edi. Yagona ta'rif: shu fayl, 1828-qator. */
 .btn-accent:hover{ transform:translateY(-2px); box-shadow:0 14px 32px rgba(37,99,235,.32); }
-.btn-gold{ background:var(--gold); color:#fff; box-shadow:0 8px 18px rgba(184,134,46,.28); }
-.btn-gold:hover{ background:var(--gold-d); transform:translateY(-2px); }
-.btn-outline{ background:var(--surface); border:1.5px solid var(--border2); color:var(--text); }
-.btn-outline:hover{ border-color:var(--accent); color:var(--accent-d); background:var(--accent-l); }
-.btn-ghost{ background:var(--surface2); border:1px solid transparent; color:var(--text); }
-.btn-ghost:hover{ background:var(--surface3); }
-.btn-green{ background:var(--green); color:#fff; border-radius:100px; }
-.btn-red{ background:var(--red); color:#fff; box-shadow:0 8px 18px rgba(196,67,58,.22); border-radius:100px; }
-.btn:active{ transform:scale(.97); }
-.btn-sm, .btn-lg{ border-radius:100px; }
+
 
 /* ── HERO — asimetrik, creative, brend rangi bilan nafas oladi ───── */
 .hero{
@@ -1598,10 +1588,7 @@ h1,h2,h3,h4{ letter-spacing:-0.02em; }
 .float-card .fc-ic{ border-radius:14px; }
 
 /* ── KARTALAR — yumaloq, mayin chuqurlik, doiraviy ikonka idish ───── */
-.card{ border-radius:22px; border-color:var(--border); box-shadow:var(--shadow-xs); }
-.card:hover{ box-shadow:var(--shadow-lg); border-color:var(--border2); }
-a.card:hover, .card-link:hover{ transform:translateY(-5px); box-shadow:var(--shadow-lg); border-color:transparent; }
-.card-pad{ padding:1.4rem; }
+/* .card qoidalari -> fayl oxiridagi yagona blokka ko'chirildi */
 
 .eyebrow{ background:var(--accent-l); color:var(--accent-d); font-weight:700; border-radius:100px; }
 
@@ -1682,8 +1669,8 @@ a.card:hover, .card-link:hover{ transform:translateY(-5px); box-shadow:var(--sha
   radial-gradient(60% 70% at 100% 0%, rgba(91,141,239,.06), transparent 60%),
   radial-gradient(50% 60% at 0% 100%, rgba(91,141,239,.06), transparent 55%),
   var(--bg-soft); }
-.card, .lcard{ box-shadow:0 1px 2px rgba(28,20,12,.04), 0 8px 20px rgba(28,20,12,.03); }
-[data-theme="dark"] .card, [data-theme="dark"] .lcard{ box-shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.25); }
+/* .card qoidalari -> fayl oxiridagi yagona blokka ko'chirildi */
+[data-theme="dark"] .lcard{ box-shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.25); }
 
 /* Bo'sh joy va ritm — bo'limlar orasida nafas */
 .section{ padding:5.5rem 0; }
@@ -1781,14 +1768,14 @@ a.card:hover, .card-link:hover{ transform:translateY(-5px); box-shadow:var(--sha
   border-color: var(--bg) !important; }
 
 /* 2) Borderlar olib tashlandi — faqat soya bilan chuqurlik */
-.card, .lcard, .sc-feat, .sc-item, .float-card{ border-color: transparent !important; }
-.card{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
+.lcard, .sc-feat, .sc-item, .float-card{ border-color: transparent !important; }
+/* .card qoidalari -> fayl oxiridagi yagona blokka ko'chirildi */
 .lcard{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
 .sc-feat{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
 .sc-item{ box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05) !important; }
-[data-theme="dark"] .card, [data-theme="dark"] .lcard, [data-theme="dark"] .sc-feat, [data-theme="dark"] .sc-item{
+[data-theme="dark"] .lcard, [data-theme="dark"] .sc-feat, [data-theme="dark"] .sc-item{
   box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 12px 26px rgba(0,0,0,.3) !important; }
-.card:hover, .lcard:hover, .sc-feat:hover, .sc-item:hover, a.card:hover, .card-link:hover{
+.lcard:hover, .sc-feat:hover, .sc-item:hover{
   border-color: transparent !important; }
 .hero-search{ border-color: transparent !important; }
 .hero-stage{ border-color: transparent !important; }
@@ -1976,3 +1963,75 @@ a.card:hover, .card-link:hover{ transform:translateY(-5px); box-shadow:var(--sha
      atigi 1.8:1 (o'qib bo'lmaydi). To'q matn ~10:1 beradi. */
   color: var(--accent-on-dark);
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KARTA — yagona komponent
+   ═══════════════════════════════════════════════════════════════════════════
+   Ilgari .card beshta joyda ta'riflangan edi: base.html da (radius --radius,
+   chegara ko'rinadigan), samcity.css da uch marta (22px radius, keyin
+   chegarani shaffof qilib !important bilan soya qo'shadigan qatlamlar).
+   Endi bitta ta'rif: chegara yo'q, chuqurlik faqat soya bilan.
+   ═════════════════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: var(--r-tile);
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(28,20,12,.05), 0 10px 24px rgba(28,20,12,.05);
+  transition: transform .2s cubic-bezier(.2,.8,.3,1), box-shadow .2s;
+}
+.card-pad { padding: var(--sp-5); }
+.card:hover { box-shadow: var(--shadow-lg); }
+a.card, .card-link { display: block; }
+a.card:hover, .card-link:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+[data-theme="dark"] .card {
+  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 12px 26px rgba(0,0,0,.3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TUGMALAR — yagona oila
+   ═══════════════════════════════════════════════════════════════════════════
+   Ilgari oila IKKI joyda edi: base.html (radius --radius-sm, .62rem/1.15rem)
+   va samcity.css (radius 100px bilan ustidan bosuvchi qatlam). Har variant
+   ikki xil qiymat olardi va qaysi biri ishlashini bilish uchun ikkala faylni
+   solishtirish kerak edi. Endi bitta manba, o'lchamlar tokenlardan.
+   ═════════════════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .16s cubic-bezier(.2,.8,.3,1);
+}
+.btn .ic { width: 1.1em; height: 1.1em; }
+.btn:active { transform: scale(.97); }
+.btn-block { width: 100%; }
+
+/* O'lchamlar */
+.btn-lg { min-height: var(--tap-lg); padding: var(--sp-4) var(--sp-6); font-size: var(--fs-body-l); }
+.btn-sm { min-height: 38px; padding: var(--sp-2) var(--sp-3); font-size: var(--fs-small); }
+
+/* Variantlar — ierarxiya rang bilan beriladi (gradient yo'q) */
+.btn-outline { background: var(--surface); border: 1.5px solid var(--border2); color: var(--text); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent-d); background: var(--accent-l); }
+.btn-ghost { background: var(--surface2); border-color: transparent; color: var(--text); }
+.btn-ghost:hover { background: var(--surface3); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { filter: brightness(.94); }
+.btn-gold { background: var(--gold); color: #fff; box-shadow: 0 8px 18px rgba(184,134,46,.28); }
+.btn-gold:hover { background: var(--gold-d); }
+.btn-red { background: var(--red); color: #fff; box-shadow: 0 8px 18px rgba(196,67,58,.22); }
+.btn-red:hover { filter: brightness(1.05); }

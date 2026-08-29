@@ -94,31 +94,7 @@
     border-radius: 50%; min-width: 19px; height: 19px; padding: 0 4px; font-size: .7rem; font-weight: 800;
     display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(224,165,46,.5); }
 
-  /* ── BUTTONS ─────────────────────────────────────────────────── */
-  .btn { padding: 0.62rem 1.15rem; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 650;
-    font-family: inherit; cursor: pointer; border: 1px solid transparent; transition: all 0.16s; display: inline-flex;
-    align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap; line-height: 1.1; letter-spacing: -0.01em;
-    min-height: 44px; /* WCAG tap target */ }
-  .btn:active { transform: translateY(1px); }
-  .btn .ic { width: 1.1em; height: 1.1em; }
-  .btn-sm { min-height: 38px; }
-  /* Tekis, qattiq rangli tugmalar. Gradient — birlamchi harakatni ajratish uchun
-     signal emas, shunchaki bezak edi; olib tashlandi. Ierarxiya rang bilan beriladi. */
-  /* .btn-accent -> samcity.css (yagona ta'rif). Bu yerdagi nusxa
-     hech qachon qo'llanmasdi — samcity.css uni !important bilan bosardi. */
-  .btn-gold { background: var(--gold); color: #3a2a05; }
-  .btn-gold:hover { background: var(--gold-d); transform: translateY(-1px); }
-  .btn-outline { background: var(--surface); border: 1px solid var(--border2); color: var(--text); }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
-  .btn-green { background: var(--green); color: #fff; }
-  .btn-green:hover { filter: brightness(.94); transform: translateY(-1px); }
-  .btn-red { background: var(--red); color: #fff; box-shadow: 0 8px 22px rgba(229,72,77,.24); }
-  .btn-red:hover { filter: brightness(1.05); }
-  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--surface3); border-color: var(--border2); }
-  .btn-lg { padding: 0.85rem 1.55rem; font-size: 0.98rem; border-radius: var(--radius); }
-  .btn-sm { padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 10px; }
-  .btn-block { width: 100%; }
+  /* .btn oilasi -> css/samcity.css oxiridagi yagona blok */
 
   /* ── LAYOUT ──────────────────────────────────────────────────── */
   .container { max-width: 1240px; margin: 0 auto; padding: 2rem 1.25rem; }
@@ -133,11 +109,7 @@
     padding: .35rem .8rem; border-radius: 100px; }
 
   /* ── CARDS ───────────────────────────────────────────────────── */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    overflow: hidden; transition: transform .2s cubic-bezier(.2,.8,.3,1), border-color .2s, box-shadow .2s; box-shadow: var(--shadow-xs); }
-  .card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
-  a.card, .card-link { display: block; }
-  a.card:hover, .card-link:hover { transform: translateY(-4px); border-color: #c9d3ea; box-shadow: var(--shadow-lg); }
+  /* .card -> css/samcity.css oxiridagi yagona blok */
   .card-pad { padding: 1.25rem; }
 
   /* ── BADGES ──────────────────────────────────────────────────── */
@@ -622,11 +594,11 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 [data-theme="dark"] .bubble.mine, .bubble.me, .bubble.out { background: var(--accent-l); }
 </style>
 <!-- Kengaytirilgan komponent kutubxonasi (taksi yx-*, hero, section va h.k.) — inline core stillardan keyin, additive -->
-<link rel="stylesheet" href="{% static 'css/samcity.css' %}?v=2026-08-21g">
+<link rel="stylesheet" href="{% static 'css/samcity.css' %}?v=2026-08-21i">
 {# Dizayn tokenlari — palitra, oraliq, radius, matn shkalasi, bo'lim ranglari.
    ENG OXIRIDA turadi: palitra ilgari to'rt joyda belgilangan edi va qaysi biri
    yutishi yuklanish tartibiga bog'liq edi. Endi manba bitta va u doim ustun. #}
-<link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=2026-08-21g">
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=2026-08-21i">
 </head>
 <!-- Anti-FOUC: apply theme before render -->
 <script>
