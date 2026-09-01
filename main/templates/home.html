@@ -123,6 +123,29 @@
   .home-ads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.15rem; }
   @media (max-width: 980px) { .home-ads { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 680px) { .home-ads { grid-template-columns: 1fr 1fr; gap: .8rem; } }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TELEFON: bosh sahifa uzunligi
+     ═══════════════════════════════════════════════════════════════════
+     O'lchov: mobil ekranda sahifa 9620px = ~12 ekran edi. Foydalanuvchi
+     asosiy amalgacha (buyurtma, bron) 3-4 ekran siljitishi kerak bo'lardi.
+     Kontent o'chirilmaydi — faqat bo'sh joy va lenta uzunligi qisqaradi.
+     ═══════════════════════════════════════════════════════════════════ */
+  @media (max-width: 720px) {
+    /* Bo'limlar orasidagi nafas: 5.5rem (88px) telefon uchun juda ko'p */
+    .section { padding: var(--sp-8) 0 !important; }
+    .section-sm { padding: var(--sp-6) 0 !important; }
+
+    /* Hero: yirik sarlavha qoladi, ortiqcha bo'sh joy ketadi */
+    .hero { padding: var(--sp-8) 0 var(--sp-6) !important; }
+
+    /* E'lonlar lentasi 2.45 ekran edi — telefonda 6 ta yetarli,
+       qolganini "Barchasini ko'rish" ochadi (kontent yo'qolmaydi). */
+    .home-ads > *:nth-child(n+7) { display: none; }
+
+    /* Bo'lim sarlavhalari orasidagi oraliq ham ixchamroq */
+    .sc-head { margin-bottom: var(--sp-4) !important; }
+  }
   .toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.4rem; }
   .toolbar .chip-row { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
   .toolbar .chip-row::-webkit-scrollbar { display: none; }
@@ -457,123 +480,20 @@ Busiz qora qidiruv paneli yorug' sahifalarga ham o'tib ketardi.
   </div>
 </section>
 
-<!-- ── SAYOHAT ──────────────────────────────────────────────── -->
-<section class="section">
-  <div class="wrap">
-    <div class="sc-head reveal">
-      <div>
-        <span class="sc-label">Sayohat</span>
-        <h2 class="sc-h2" style="margin-top:.55rem;">Diqqatga sazovor joylar</h2>
-        <p class="sc-sub">Shaharning eng go'zal joylarini kashf eting.</p>
-      </div>
-      <a href="{% url 'places:tourism_list' %}" class="see-all">Barchasi <svg class="ic"><use href="#i-arrow-right"/></svg></a>
-    </div>
-    <div class="grid-3">
-      <a href="{% url 'places:tourism_list' %}" class="lcard reveal"><div class="lc-media"><div class="media-ph" style="background:var(--surface2);color:var(--accent-d);"><svg class="ic" style="width:46px;height:46px;"><use href="#i-building"/></svg></div><div class="lc-badges"><span class="badge badge-gold"><svg class="ic"><use href="#i-star"/></svg> Mashhur</span></div></div><div class="lc-body"><div class="lc-title">Tarixiy obidalar</div><div class="lc-sub">Me'moriy yodgorliklar va muzeylar</div></div></a>
-      <a href="{% url 'places:tourism_list' %}" class="lcard reveal" data-reveal-delay="80"><div class="lc-media"><div class="media-ph" style="background:var(--surface2);color:var(--accent-d);"><svg class="ic" style="width:46px;height:46px;"><use href="#i-pin"/></svg></div></div><div class="lc-body"><div class="lc-title">Tabiat go'shalari</div><div class="lc-sub">Bog'lar, ko'llar va istirohat</div></div></a>
-      <a href="{% url 'places:tourism_list' %}" class="lcard reveal" data-reveal-delay="160"><div class="lc-media"><div class="media-ph" style="background:var(--surface2);color:var(--accent-d);"><svg class="ic" style="width:46px;height:46px;"><use href="#i-star"/></svg></div></div><div class="lc-body"><div class="lc-title">Milliy taomlar</div><div class="lc-sub">Eng mazali joylar va restoranlar</div></div></a>
-    </div>
-  </div>
-</section>
+<!-- ══════════════════════════════════════════════════════════════════════
+     OLIB TASHLANDI: Sayohat, Imkoniyatlar, Fikrlar, CTA bo'limlari
+     ══════════════════════════════════════════════════════════════════════
+     Sabab: telefonda bosh sahifa ~12 ekran edi va foydalanuvchi asosiy
+     amalgacha (buyurtma, bron, e'lon) 3-4 ekran siljitishi kerak bo'lardi.
+     Bu to'rt blok jami ~2.9 ekranni egallardi va ularning barcha havolalari
+     navigatsiyada allaqachon bor:
+       Sayohat      -> /map/ va "Ko'proq" menyusi
+       Imkoniyatlar -> do'konlarim / yetkazish / to'lovlar navigatsiyada
+       CTA          -> e'lon joylash tugmasi navbar va pastki navda
+       Fikrlar      -> marketing matni, funksional havola yo'q
+     Qaytarish kerak bo'lsa: git show <commit>^:main/templates/home.html
+     ══════════════════════════════════════════════════════════════════════ -->
 
-<!-- ── BIZNES / YETKAZISH / DAVLAT — editorial split ────────── -->
-<section class="section section-soft">
-  <div class="wrap">
-    <div class="sc-split">
-      <div class="reveal">
-        <span class="sc-label">Imkoniyatlar</span>
-        <h2 class="sc-h2" style="margin-top:.55rem;">Biznes, yetkazish va davlat xizmatlari</h2>
-        <p class="sc-sub">Tadbirkorlar uchun vositalar va aholi uchun qulay raqamli xizmatlar — bitta hisobdan boshqariladi.</p>
-        <div style="margin-top:1.75rem;">
-          <a href="{% url 'delivery:my_stores' %}" class="btn btn-accent btn-lg"><svg class="ic"><use href="#i-building"/></svg> Do'kon ochish</a>
-        </div>
-      </div>
-      <div class="sc-split-list">
-        <div class="sc-item reveal">
-          <div class="ic-box"><svg class="ic"><use href="#i-building"/></svg></div>
-          <div>
-            <h3>Biznes uchun</h3>
-            <p>Do'kon oching, mahsulot joylang, e'lon va kursingizni reklama qiling — minglab mijozlarga yeting.</p>
-            <a href="{% url 'delivery:my_stores' %}" class="see-all">Do'konlarim <svg class="ic"><use href="#i-arrow-right"/></svg></a>
-          </div>
-        </div>
-        <div class="sc-item reveal" data-reveal-delay="80">
-          <div class="ic-box"><svg class="ic"><use href="#i-truck"/></svg></div>
-          <div>
-            <h3>Yetkazib berish</h3>
-            <p>Tez va ishonchli yetkazib berish. Buyurtmani real vaqtda kuzating, kuryer bo'lib ham ishlang.</p>
-            <a href="{% url 'delivery:store_list' %}" class="see-all">Buyurtma berish <svg class="ic"><use href="#i-arrow-right"/></svg></a>
-          </div>
-        </div>
-        <div class="sc-item reveal" data-reveal-delay="160">
-          <div class="ic-box"><svg class="ic"><use href="#i-shield"/></svg></div>
-          <div>
-            <h3>Davlat xizmatlari</h3>
-            <p>Kommunal to'lovlar va boshqa rasmiy to'lovlarni xavfsiz, tezkor va onlayn amalga oshiring.</p>
-            {% if PAYMENTS_ENABLED %}<a href="{% url 'payments:home' %}" class="see-all">To'lovga o'tish <svg class="ic"><use href="#i-arrow-right"/></svg></a>{% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── FIKRLAR — editorial kompozitsiya ─────────────────────── -->
-<section class="section">
-  <div class="wrap">
-    <div class="sc-head reveal">
-      <div>
-        <span class="sc-label">Fikrlar</span>
-        <h2 class="sc-h2" style="margin-top:.55rem;">Minglab odamlar ishonadi</h2>
-      </div>
-    </div>
-    <div class="sc-quotes">
-      <div class="sc-q-lead reveal">
-        <span class="stars">★★★★★</span>
-        <p class="qt">{% if TAXI_ENABLED %}“Taksi va yetkazib berishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi.”{% else %}“Yetkazib berish va joy bron qilishni bitta ilovadan boshqarish juda qulay. Vaqtimni tejaydi.”{% endif %}</p>
-        <div class="sc-who">
-          <div class="av">S</div>
-          <div><div class="nm">Sardor A.</div><div class="rl">Doimiy foydalanuvchi</div></div>
-        </div>
-      </div>
-      <div class="sc-q reveal" data-reveal-delay="80">
-        <span class="stars">★★★★★</span>
-        <p class="qt">“Do'konimni ochdim va birinchi haftadayoq buyurtmalar kela boshladi. Ajoyib platforma.”</p>
-        <div class="sc-who">
-          <div class="av">M</div>
-          <div><div class="nm">Malika Y.</div><div class="rl">Tadbirkor</div></div>
-        </div>
-      </div>
-      <div class="sc-q reveal" data-reveal-delay="160">
-        <span class="stars">★★★★★</span>
-        <p class="qt">“Kommunal to'lovlarni navbatga turmasdan to'layman. Hammasi bir necha soniyada.”</p>
-        <div class="sc-who">
-          <div class="av">B</div>
-          <div><div class="nm">Bobur K.</div><div class="rl">Foydalanuvchi</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── CTA ──────────────────────────────────────────────────── -->
-<section class="section-sm">
-  <div class="wrap">
-    <div class="cta-band reveal">
-      <h2>O'z e'loningizni bugun joylang</h2>
-      <p>Bir daqiqada bepul e'lon bering va minglab odamlarga yeting.</p>
-      <div class="hero-cta">
-        {% if user.is_authenticated %}
-          <a href="{% url 'ad_create' %}" class="btn btn-gold btn-lg"><svg class="ic"><use href="#i-plus"/></svg> E'lon joylash</a>
-          <a href="{% url 'dashboard' %}" class="btn btn-outline btn-lg" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.45);">Boshqaruv paneli</a>
-        {% else %}
-          <a href="{% url 'register' %}" class="btn btn-gold btn-lg"><svg class="ic"><use href="#i-sparkle"/></svg> Boshlash — bepul</a>
-          <a href="{% url 'login' %}" class="btn btn-outline btn-lg" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.45);">Kirish</a>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ── ILOVA ────────────────────────────────────────────────── -->
 <section class="section-sm">
