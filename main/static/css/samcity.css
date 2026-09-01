@@ -2035,3 +2035,26 @@ a.card:hover, .card-link:hover { transform: translateY(-4px); box-shadow: var(--
 .btn-gold:hover { background: var(--gold-d); }
 .btn-red { background: var(--red); color: #fff; box-shadow: 0 8px 18px rgba(196,67,58,.22); }
 .btn-red:hover { filter: brightness(1.05); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BO'SH HOLAT — yagona komponent
+   ═══════════════════════════════════════════════════════════════════════════
+   Ilgari uch xil nom (.empty-state, .empty-block, .empty-box) va to'rt xil
+   ta'rif bor edi: paddinglar 20px dan 4rem gacha, ranglar esa aniqlanmagan
+   --text-dim ga tayangan. Endi uchalasi bir xil ko'rinadi.
+   ═════════════════════════════════════════════════════════════════════════ */
+.empty-state, .empty-block, .empty-box {
+  text-align: center;
+  padding: var(--sp-10) var(--sp-5);
+  color: var(--text2);
+  background: var(--surface);
+  border-radius: var(--r-tile);
+}
+.empty-state .eb-ic, .empty-block .eb-ic, .empty-box .eb-ic {
+  font-size: 34px; line-height: 1; margin-bottom: var(--sp-3);
+}
+.empty-state b, .empty-block b, .empty-box b {
+  display: block; font-size: var(--fs-body-l); color: var(--text); margin-bottom: var(--sp-1);
+}
+.empty-note { color: var(--text3); font-size: var(--fs-body-s); line-height: var(--lh-normal); }

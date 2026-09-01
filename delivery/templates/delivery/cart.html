@@ -16,21 +16,21 @@
   }
   .cartx *{ box-sizing:border-box; }
   .cartx a{ text-decoration:none; }
-  .cartx .crumb{ font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+  .cartx .crumb{ font-size:13px; color:var(--text3); display:flex; align-items:center; gap:6px; }
   .cartx .crumb b{ color:var(--text); font-weight:600; }
   .cartx .crumb .sep{ opacity:.5; }
   .cartx .header-row{ display:flex; align-items:center; gap:12px; margin-top:14px; }
   .cartx .cart-icon{ width:38px; height:38px; border-radius:11px; background:var(--turquoise-soft); border:1px solid rgba(34,184,176,.35); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .cartx .cart-icon svg{ width:19px; height:19px; color:var(--turquoise); }
   .cartx h1{ font-family:'Unbounded',sans-serif; font-weight:600; font-size:26px; margin:0; letter-spacing:-.01em; color:var(--text); }
-  .cartx h1 span{ color:var(--text-dim); font-weight:500; }
+  .cartx h1 span{ color:var(--text3); font-weight:500; }
   .cartx .cart-tabs{ display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; align-items:center; }
   .cartx .cart-tab{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:11px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid var(--line); color:var(--text-muted); background:var(--surface-2); }
   .cartx .cart-tab.active{ color:var(--turquoise); background:var(--turquoise-soft); border-color:rgba(34,184,176,.4); }
   .cartx .cart-tab svg{ width:14px; height:14px; opacity:.7; }
   .cartx .cart-tab button{ all:unset; cursor:pointer; }
   .cartx .cart-input{ padding:10px 14px; border-radius:11px; border:1px dashed var(--line); background:transparent; color:var(--text); font-size:14px; width:180px; }
-  .cartx .cart-input::placeholder{ color:var(--text-dim); }
+  .cartx .cart-input::placeholder{ color:var(--text3); }
   .cartx .cart-add{ display:flex; align-items:center; gap:6px; padding:10px 16px; border-radius:11px; font-size:14px; font-weight:700; background:var(--turquoise); color:#06211F; border:none; cursor:pointer; }
   .cartx .cart-add svg{ width:14px; height:14px; }
   .cartx .cart-save{ padding:10px 16px; border-radius:11px; font-size:13.5px; font-weight:600; color:var(--text-muted); border:1px solid var(--line); background:var(--surface-2); cursor:pointer; }
@@ -39,7 +39,7 @@
   .cartx .section-tabs{ display:flex; gap:6px; margin:22px 0; padding:5px; background:var(--surface-2); border:1px solid var(--line); border-radius:14px; width:fit-content; }
   .cartx .section-tab{ display:flex; align-items:center; gap:9px; padding:11px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; color:var(--text-muted); }
   .cartx .section-tab svg{ width:16px; height:16px; opacity:.75; }
-  .cartx .section-tab .count{ font-size:11px; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--surface-3); color:var(--text-dim); }
+  .cartx .section-tab .count{ font-size:11px; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--surface-3); color:var(--text3); }
   .cartx .section-tab[data-color="violet"].active{ background:var(--violet-soft); color:var(--violet); }
   .cartx .section-tab[data-color="turquoise"].active{ background:var(--turquoise-soft); color:var(--turquoise); }
   .cartx .section-tab[data-color="terracotta"].active{ background:var(--terracotta-soft); color:var(--terracotta); }
@@ -52,17 +52,17 @@
   .cartx .layout{ display:grid; grid-template-columns:1fr 340px; gap:22px; align-items:start; }
   @media (max-width:900px){ .cartx .layout{ grid-template-columns:1fr; } }
   .cartx .left{ display:flex; flex-direction:column; gap:14px; }
-  .cartx .empty-box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; color:var(--text-dim); font-size:13.5px; }
+  .cartx .empty-box{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; color:var(--text3); font-size:13.5px; }
   .cartx .store-group{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
   .cartx .store-group-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; cursor:pointer; user-select:none; }
   .cartx .store-group-head:hover{ background:var(--surface-2); }
   .cartx .store-name-wrap{ display:flex; align-items:center; gap:10px; }
   .cartx .store-dot{ width:8px; height:8px; border-radius:2px; transform:rotate(45deg); flex-shrink:0; }
   .cartx .store-name{ font-weight:700; font-size:14.5px; color:var(--text); }
-  .cartx .store-count{ font-size:12px; color:var(--text-dim); background:var(--surface-3); padding:2px 8px; border-radius:999px; margin-left:6px; }
+  .cartx .store-count{ font-size:12px; color:var(--text3); background:var(--surface-3); padding:2px 8px; border-radius:999px; margin-left:6px; }
   .cartx .store-sub{ display:flex; align-items:center; gap:12px; }
   .cartx .store-total{ font-weight:700; font-size:14.5px; }
-  .cartx .chevron{ width:16px; height:16px; color:var(--text-dim); transition:transform .18s ease; }
+  .cartx .chevron{ width:16px; height:16px; color:var(--text3); transition:transform .18s ease; }
   .cartx .store-group.collapsed .chevron{ transform:rotate(-90deg); }
   .cartx .store-items{ border-top:1px solid var(--line); max-height:340px; overflow-y:auto; }
   .cartx .store-group.collapsed .store-items{ display:none; }
@@ -70,17 +70,17 @@
   .cartx .item-row:last-child{ border-bottom:none; }
   .cartx .thumb{ width:42px; height:42px; border-radius:9px; background:var(--surface-2); border:1px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .cartx .thumb img{ width:100%; height:100%; object-fit:cover; }
-  .cartx .thumb svg{ width:17px; height:17px; color:var(--text-dim); }
+  .cartx .thumb svg{ width:17px; height:17px; color:var(--text3); }
   .cartx .item-info{ flex:1; min-width:0; }
   .cartx .item-info .name{ font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
-  .cartx .item-info .price-each{ font-size:12px; color:var(--text-dim); }
+  .cartx .item-info .price-each{ font-size:12px; color:var(--text3); }
   .cartx .stepper{ display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; flex-shrink:0; }
   .cartx .stepper form{ margin:0; display:flex; }
   .cartx .stepper button{ width:26px; height:26px; border:none; background:transparent; color:var(--text-muted); font-size:15px; cursor:pointer; }
   .cartx .stepper button:hover{ color:var(--turquoise); }
   .cartx .stepper .qty{ min-width:22px; padding:0 2px; text-align:center; font-size:13px; font-weight:700; }
   .cartx .item-price{ width:96px; text-align:right; font-weight:700; font-size:13.5px; flex-shrink:0; }
-  .cartx .item-remove{ width:24px; height:24px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .cartx .item-remove{ width:24px; height:24px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line); color:var(--text3); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
   .cartx .item-remove:hover{ color:var(--terracotta); border-color:var(--terracotta); }
   .cartx .item-remove svg{ width:11px; height:11px; }
   .cartx .item-remove form{ margin:0; display:flex; }
@@ -104,7 +104,7 @@
   .cartx .btn-primary{ display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:12px; font-weight:700; font-size:14.5px; border:none; cursor:pointer; }
   .cartx .btn-primary svg{ width:15px; height:15px; }
   .cartx .btn-secondary{ display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:12px; background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-weight:600; font-size:14px; cursor:pointer; }
-  .cartx .sum-note{ font-size:11.5px; color:var(--text-dim); line-height:1.5; text-align:center; }
+  .cartx .sum-note{ font-size:11.5px; color:var(--text3); line-height:1.5; text-align:center; }
   .cartx .flash{ background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--turquoise); border-radius:10px; padding:12px 16px; margin-bottom:12px; font-size:13.5px; }
 </style>
 {% endblock %}
@@ -212,7 +212,7 @@
         <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--turquoise)">{{ delivery_subtotal|add:delivery_fee|uz_price }} so'm</span></div>
         {% if has_delivery %}
         <a class="btn-primary" href="{% url 'delivery:checkout' %}?section=delivery" style="background:var(--turquoise); color:#06211F;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Hammasiga birdan to'lash</a>
-        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text-dim);" disabled>Mahsulot yo'q</button>{% endif %}
+        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text3);" disabled>Mahsulot yo'q</button>{% endif %}
         <div class="sum-note">Har bir do'kondan buyurtma alohida yig'iladi va manzilingizga yetkaziladi.</div>
       </div>
     </div>
@@ -243,7 +243,7 @@
         <div class="sum-total"><span class="label">Jami to'lov</span><span class="value" style="color:var(--terracotta)">{{ mahalla_subtotal|floatformat:0 }} so'm</span></div>
         {% if has_mahalla %}
         <a class="btn-primary" href="{% url 'delivery:checkout' %}?section=mahalla" style="background:var(--terracotta); color:#2A160A;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buyurtma berish</a>
-        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text-dim);" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buyurtma berish</button>{% endif %}
+        {% else %}<button class="btn-primary" style="background:var(--surface-2);color:var(--text3);" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buyurtma berish</button>{% endif %}
         <div class="sum-note">Mahalla do'konlaridan olingan mahsulotlar yetkazib berilmaydi — do'kondan o'zingiz olib ketasiz.</div>
       </div>
     </div>

@@ -171,3 +171,19 @@
   --shadow-brand: 0 8px 24px -4px rgba(34,211,238,.22);
   --ring: 0 0 0 3px rgba(34,211,238,.28);
 }
+
+/* ── ESKI NOMLAR (legacy) ─────────────────────────────────────────────────
+   Bu o'zgaruvchilar shablonlarda ishlatilardi, lekin HECH QAYERDA
+   aniqlanmagan edi — natijada `color: var(--text-dim)` umuman ishlamay,
+   matn oddiy rangda chiqardi (so'lg'un bo'lish o'rniga). Yangi kodda
+   --text3 / --border / --surface ishlatiladi. */
+:root {
+  --text-dim: var(--text3);
+  --line: var(--border);
+  --card: var(--surface);
+}
+[data-theme="dark"] {
+  --text-dim: var(--text3);
+  --line: var(--border);
+  --card: var(--surface);
+}

@@ -161,7 +161,7 @@
   .flash-info { background: var(--accent-l); border-color: rgba(53,81,229,.2); color: var(--accent-d); }
 
   /* ── EMPTY STATE ─────────────────────────────────────────────── */
-  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text2); }
+  /* .empty-state -> css/samcity.css dagi yagona bo'sh holat bloki */
   .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: .9; display: inline-grid; place-items: center;
     width: 84px; height: 84px; border-radius: 24px; background: var(--surface2); color: var(--accent); margin-inline: auto; }
   .empty-state .icon .ic { width: 38px; height: 38px; }
@@ -339,7 +339,7 @@
 .svc-card .svc-go .ic { transition: transform .2s; }
 .g-indigo { background: linear-gradient(140deg, #6366f1, #4338ca); box-shadow: 0 12px 24px rgba(79,70,229,.28); }
 .g-gold { background: linear-gradient(140deg, #efbb52, #c98f1d); box-shadow: 0 12px 24px rgba(224,165,46,.26); }
-.g-green { background: linear-gradient(140deg, #19b97f, #0e9f6e); box-shadow: 0 12px 24px rgba(14,159,110,.24); }
+.g-green { background: linear-gradient(140deg, var(--green), var(--green-d)); box-shadow: var(--shadow-sm); }
 .g-violet { background: linear-gradient(140deg, #9277fb, #6f4cf2); box-shadow: 0 12px 24px rgba(122,90,248,.24); }
 .g-rose { background: linear-gradient(140deg, #f4666b, #e5484d); box-shadow: 0 12px 24px rgba(229,72,77,.22); }
 .g-cyan { background: linear-gradient(140deg, #38bdf8, #0e8fd0); box-shadow: 0 12px 24px rgba(14,143,208,.22); }
@@ -594,11 +594,11 @@ body { opacity: 0; animation: pageIn .6s cubic-bezier(.2,.7,.2,1) forwards; }
 [data-theme="dark"] .bubble.mine, .bubble.me, .bubble.out { background: var(--accent-l); }
 </style>
 <!-- Kengaytirilgan komponent kutubxonasi (taksi yx-*, hero, section va h.k.) — inline core stillardan keyin, additive -->
-<link rel="stylesheet" href="{% static 'css/samcity.css' %}?v=2026-08-21j">
+<link rel="stylesheet" href="{% static 'css/samcity.css' %}?v=2026-08-21l">
 {# Dizayn tokenlari — palitra, oraliq, radius, matn shkalasi, bo'lim ranglari.
    ENG OXIRIDA turadi: palitra ilgari to'rt joyda belgilangan edi va qaysi biri
    yutishi yuklanish tartibiga bog'liq edi. Endi manba bitta va u doim ustun. #}
-<link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=2026-08-21j">
+<link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=2026-08-21l">
 </head>
 <!-- Anti-FOUC: apply theme before render -->
 <script>

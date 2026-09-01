@@ -99,7 +99,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
   .mhx .stat{ flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; transition:border-color .15s, transform .15s; }
   .mhx .stat:hover{ border-color:var(--violet); transform:translateY(-2px); }
   .mhx .stat b{ display:block; font-family:'Plus Jakarta Sans','Inter',sans-serif; font-size:18px; }
-  .mhx .stat span{ font-size:11px; color:var(--text-dim); }
+  .mhx .stat span{ font-size:11px; color:var(--text3); }
   .mhx .shop-row{ display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
   .mhx .shop-card{ min-width:132px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px; font-size:12.5px; color:var(--text); text-decoration:none; transition:transform .18s cubic-bezier(.2,.8,.3,1), border-color .18s; }
   .mhx .shop-card:hover{ transform:translateY(-3px); border-color:var(--turquoise); }
@@ -121,8 +121,8 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
   .mhx .subtab[data-color="violet"].active{ background:var(--violet-soft); color:var(--violet); border-color:var(--violet); }
   .mhx .subview{ display:none; }
   .mhx .subview.active{ display:block; animation:mhxfade .2s ease; }
-  .mhx .empty-note{ color:var(--text-dim); font-size:13.5px; margin:.4rem 0 0; }
-  .mhx .empty-block{ text-align:center; padding:34px 16px; color:var(--text-dim); }
+  .mhx .empty-note{ color:var(--text3); font-size:13.5px; margin:.4rem 0 0; }
+  .mhx .empty-block{ text-align:center; padding:34px 16px; color:var(--text3); }
   .mhx .empty-block .eb-ic{ font-size:28px; margin-bottom:8px; opacity:.85; }
   .mhx .empty-block b{ color:var(--text); display:block; margin-bottom:4px; font-size:14.5px; }
   .mhx .mx-input{ width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px; transition:border-color .15s; }
@@ -254,7 +254,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
       <b>🏘️ Do'kon arizalari (tasdiqlash kutmoqda)</b>
       {% for r in store_requests %}
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:10px 0;{% if not forloop.last %}border-bottom:1px solid var(--line);{% endif %}">
-        <div style="font-size:13.5px;"><b>{{ r.name }}</b> <span style="color:var(--text-dim);">· {{ r.user.name|default:r.user.phone }}</span></div>
+        <div style="font-size:13.5px;"><b>{{ r.name }}</b> <span style="color:var(--text3);">· {{ r.user.name|default:r.user.phone }}</span></div>
         <div style="display:flex;gap:.4rem;">
           <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="approve"><button class="mx-btn">✅ Tasdiqlash</button></form>
           <form method="post" action="{% url 'delivery:store_request_review' r.pk %}" style="margin:0;">{% csrf_token %}<input type="hidden" name="action" value="reject"><button class="mx-btn ghost">Rad etish</button></form>
@@ -274,7 +274,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
 
     <div class="shop-row" style="flex-wrap:wrap;">
       {% for s in stores %}
-      <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">{% if s.logo %}<img src="{{ s.logo.url }}" alt="" loading="lazy">{% elif s.images.all %}<img src="{{ s.images.all.0.image.url }}" alt="" loading="lazy">{% else %}🛒{% endif %}</div><b>{{ s.name|truncatechars:24 }}</b>{% if s.address %}<div style="color:var(--text-dim);margin-top:3px;">{{ s.address|truncatechars:28 }}</div>{% endif %}</a>
+      <a class="shop-card" href="{% url 'delivery:store_detail' s.pk %}"><div class="thumb">{% if s.logo %}<img src="{{ s.logo.url }}" alt="" loading="lazy">{% elif s.images.all %}<img src="{{ s.images.all.0.image.url }}" alt="" loading="lazy">{% else %}🛒{% endif %}</div><b>{{ s.name|truncatechars:24 }}</b>{% if s.address %}<div style="color:var(--text3);margin-top:3px;">{{ s.address|truncatechars:28 }}</div>{% endif %}</a>
       {% empty %}
       <div class="empty-block" style="width:100%;"><div class="eb-ic">🏪</div><b>Do'kon topilmadi</b><p class="empty-note">Bu mahallada hali do'kon ro'yxatga olinmagan.</p></div>
       {% endfor %}
@@ -309,7 +309,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
     {% endif %}
     <div class="full-list">
       {% for a in announcements %}
-      <div class="card-simple announce-item"><b>{{ a.title }}</b>{{ a.text }}{% if a.image %}<div><img src="{{ a.image.url }}" style="max-width:220px;border-radius:8px;margin-top:8px;"></div>{% endif %}<div style="color:var(--text-dim);font-size:11px;margin-top:6px;">{{ a.created_at|date:"d.m.Y H:i" }}</div></div>
+      <div class="card-simple announce-item"><b>{{ a.title }}</b>{{ a.text }}{% if a.image %}<div><img src="{{ a.image.url }}" style="max-width:220px;border-radius:8px;margin-top:8px;"></div>{% endif %}<div style="color:var(--text3);font-size:11px;margin-top:6px;">{{ a.created_at|date:"d.m.Y H:i" }}</div></div>
       {% empty %}
       <div class="empty-block"><div class="eb-ic">📢</div><b>E'lonlar yo'q</b><p class="empty-note">Mahalla rasmiy e'lonlari shu yerda ko'rinadi.</p></div>
       {% endfor %}
@@ -346,7 +346,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
         {% else %}
           <p class="empty-note">Ovoz berish uchun <a href="{% url 'login' %}" style="color:var(--turquoise);">tizimga kiring</a>.</p>
         {% endif %}
-        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text-dim);"><span>{{ pd.total }} ovoz · {{ pd.poll.creator.name|default:pd.poll.creator.phone }}</span><a href="{% url 'poll_detail' pd.poll.id %}" style="color:var(--turquoise);">💬 Izohlar</a></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text3);"><span>{{ pd.total }} ovoz · {{ pd.poll.creator.name|default:pd.poll.creator.phone }}</span><a href="{% url 'poll_detail' pd.poll.id %}" style="color:var(--turquoise);">💬 Izohlar</a></div>
       </div>
       {% empty %}
       <div class="empty-block"><div class="eb-ic">🗳️</div><b>Faol so'rovnoma yo'q</b><p class="empty-note">Hozircha ovoz berish uchun so'rovnoma qo'shilmagan.</p></div>
@@ -359,7 +359,7 @@ va takroriy Google Fonts so'rovi — ortiqcha yuk va boshqacha ko'rinish.
       {% for h in help_requests %}
       <div class="card-simple" style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;"><b>{{ h.title }}</b><span class="req-badge" style="background:var(--terracotta-soft);color:var(--terracotta);">{{ h.get_kind_display }}</span></div>
-        <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">{{ h.get_category_display }}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">{{ h.get_category_display }}</div>
         <p class="empty-note">{{ h.description|truncatechars:200 }}</p>
         <a href="{% url 'help_detail' h.id %}" class="mx-btn ghost" style="margin-top:8px;">Batafsil</a>
       </div>
