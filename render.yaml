@@ -45,7 +45,9 @@ services:
       # yuklab, to'g'ridan-to'g'ri havolasini shu yerga qo'ying, aks holda
       # "APK yuklab olish" tugmasi ko'rsatilmaydi.
       - key: APK_DOWNLOAD_URL
-        value: "https://github.com/codingwithsamandar/samcity3/releases/download/v1.0.0/samcity.apk"
+        value: "https://github.com/codingwithsamandar/samcity3/releases/latest/download/samcity.apk"
+        # "latest" — har yangi relizda avtomatik eng yangisiga ishora qiladi,
+        # ya'ni bu qiymatni boshqa o'zgartirish shart emas.
       - key: SECURE_SSL_REDIRECT
         value: "True"          # Render TLS beradi; settings'da proxy header sozlangan
       # ── CORS (mobil/web klient) ──

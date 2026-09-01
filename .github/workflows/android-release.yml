@@ -1,0 +1,115 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  Android APK — bulutda yig'ish va Release'ga qo'yish
+# ═══════════════════════════════════════════════════════════════════════════
+#  Nima uchun: ishlab chiquvchi kompyuterida Android SDK bo'lmasligi mumkin
+#  (~8 GB). Bu workflow APK'ni GitHub serverida yig'adi.
+#
+#  Ikki xil ishga tushirish:
+#    1) Qo'lda  — Actions -> "Android APK" -> Run workflow.
+#       APK artefakt sifatida saqlanadi (30 kun), Release yaratilmaydi.
+#    2) Teg bilan — `git tag v1.0.1 && git push origin v1.0.1`
+#       APK yig'iladi VA o'sha tegga Release yaratilib, unga biriktiriladi.
+#
+#  Saytdagi yuklab olish havolasi (APK_DOWNLOAD_URL) doim eng yangi
+#  relizga ishora qilishi uchun quyidagi ko'rinishda bo'lsin:
+#    https://github.com/<egasi>/<repo>/releases/latest/download/samcity.apk
+#  Shunda har yangi relizda env'ni qayta o'zgartirish shart emas.
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: Android APK
+
+on:
+  workflow_dispatch:          # Actions sahifasidan qo'lda
+  push:
+    tags: ["v*"]              # v1.0.1 kabi teg push qilinganda
+
+permissions:
+  contents: write             # Release yaratish uchun
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # `secrets` ni bevosita `if` shartida ishlatish ishonchsiz —
+      # avval env ga ko'chiramiz, keyin shu bo'yicha tekshiramiz.
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Android build uchun JDK shart (Gradle)
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Flutter o'rnatish
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── Imzo kaliti ────────────────────────────────────────────────────
+      # Secrets bo'lsa — release kalit bilan imzolanadi (Play Store uchun ham,
+      # foydalanuvchi ilovani YANGILAY olishi uchun ham shu kerak).
+      # Bo'lmasa — build.gradle.kts debug kalitga tushadi va HAR YIG'ISHDA
+      # kalit boshqa bo'ladi: foydalanuvchi eskisini o'chirmasdan yangilay
+      # olmaydi. Shuning uchun secrets qo'yish tavsiya etiladi:
+      #   ANDROID_KEYSTORE_BASE64  — keystore fayli base64 ko'rinishida
+      #   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+      - name: Imzo kalitini tayyorlash (secrets bo'lsa)
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          cat > android/key.properties <<EOF
+          storeFile=release.keystore
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+          echo "✓ Release kaliti bilan imzolanadi"
+
+      - name: Imzo kaliti yo'qligi haqida ogohlantirish
+        if: env.HAS_KEYSTORE != 'true'
+        run: echo "::warning::Release keystore yo'q — APK debug kaliti bilan imzolanadi. Foydalanuvchi ilovani yangilash uchun eskisini o'chirishi kerak bo'ladi."
+
+      - name: Paketlar (pub get)
+        run: flutter pub get
+
+      - name: APK yig'ish
+        run: flutter build apk --release
+
+      # Fayl nomi doim bir xil bo'lsin — saytdagi havola o'zgarmasin
+      - name: Faylni nomlash
+        run: |
+          mkdir -p ../dist
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/samcity.apk
+          ls -lh ../dist/samcity.apk
+
+      - name: Versiyani o'qish
+        id: ver
+        run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Artefakt sifatida saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: samcity-apk-${{ steps.ver.outputs.v }}
+          path: dist/samcity.apk
+          retention-days: 30
+
+      # Teg bilan ishga tushirilgan bo'lsa — Release yaratamiz
+      - name: Release yaratish va APK'ni biriktirish
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/samcity.apk
+          name: SamCity ${{ github.ref_name }}
+          body: |
+            Android ilovasi — ${{ github.ref_name }} (pubspec: ${{ steps.ver.outputs.v }})
+
+            O'rnatish: APK'ni yuklab oling va oching. Android "Noma'lum manbadan
+            o'rnatish" ruxsatini so'raydi — bu normal.
